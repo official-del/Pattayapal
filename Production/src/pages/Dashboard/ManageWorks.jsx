@@ -5,6 +5,62 @@ import { getFullUrl, isVideoUrl } from '../../utils/mediaUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiEdit2, FiTrash2, FiEye, FiVideo, FiPlay, FiLayers, FiActivity, FiArrowRight } from 'react-icons/fi';
 
+// 🎥 Sub-component for individual media items to handle their own error/video state cleanly
+const MediaItem = ({ work, navigate }) => {
+  const [isActuallyVideo, setIsActuallyVideo] = useState(work.type === 'video');
+  const mediaUrl = getFullUrl(work.mainImage?.url || work.mediaUrl);
+
+  return (
+    <div style={{ position: 'relative', aspectRatio: '16/10', background: '#0a0a0a', overflow: 'hidden' }}>
+      {isActuallyVideo ? (
+        <>
+          <video
+            src={mediaUrl}
+            muted preload="metadata" autoPlay loop playsInline
+            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, transition: '0.5s' }}
+            onMouseOver={e => e.target.style.opacity = 1}
+            onMouseOut={e => e.target.style.opacity = 0.7}
+          />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,87,51,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px var(--accent-glow)' }}>
+              <FiPlay size={18} color="#fff" />
+            </div>
+          </div>
+        </>
+      ) : (
+        <img
+          src={mediaUrl}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6, transition: '0.5s' }}
+          onMouseOver={e => e.target.style.opacity = 1}
+          onMouseOut={e => e.target.style.opacity = 0.6}
+          onError={() => {
+            // ✅ Fix: Use state instead of manual DOM manipulation
+            if (isVideoUrl(mediaUrl)) {
+              setIsActuallyVideo(true);
+            }
+          }}
+        />
+      )}
+
+      {/* Type Indicator */}
+      <div style={{ position: 'absolute', top: '20px', left: '20px', padding: '8px 15px', borderRadius: '15px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.65rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '2px' }}>
+        {(isActuallyVideo ? 'video' : (work.type || 'image')).toUpperCase()}
+      </div>
+
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: '0.3s' }} className="hover-overlay">
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          onClick={() => navigate(`/works/${work._id}`)}
+          style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--accent)', border: 'none', color: '#fff', fontSize: '1.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <FiEye />
+        </motion.button>
+      </div>
+    </div>
+  );
+};
+
 function ManageWorks() {
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,78 +143,7 @@ function ManageWorks() {
           works.map((work) => (
             <motion.div key={work._id} variants={itemVariants} whileHover={{ y: -10 }} className="glass" style={{ borderRadius: '40px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.03)', position: 'relative' }}>
               
-              <div style={{ position: 'relative', aspectRatio: '16/10', background: '#0a0a0a', overflow: 'hidden' }}>
-                {work.type === 'video' ? (
-                  <>
-                    {work.mainImage?.url && !isVideoUrl(work.mainImage.url) ? (
-                      <img
-                        src={getFullUrl(work.mainImage.url)}
-                        alt=""
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, transition: '0.5s' }}
-                        onMouseOver={e => e.target.style.opacity = 1}
-                        onMouseOut={e => e.target.style.opacity = 0.7}
-                      />
-                    ) : (work.mainImage?.url || work.mediaUrl) ? (
-                      <video
-                        src={getFullUrl(work.mainImage?.url || work.mediaUrl)}
-                        muted preload="metadata" autoPlay loop playsInline
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, transition: '0.5s' }}
-                        onMouseOver={e => e.target.style.opacity = 1}
-                        onMouseOut={e => e.target.style.opacity = 0.7}
-                      />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <FiVideo size={40} color="#111" />
-                      </div>
-                    )}
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,87,51,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px var(--accent-glow)' }}>
-                        <FiPlay size={18} color="#fff" />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <img
-                    src={getFullUrl(work.mainImage?.url || work.mediaUrl)}
-                    alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6, transition: '0.5s' }}
-                    onMouseOver={e => e.target.style.opacity = 1}
-                    onMouseOut={e => e.target.style.opacity = 0.6}
-                    onError={e => {
-                      // If it's actually a video but type was 'image' (unlikely but possible)
-                      const url = getFullUrl(work.mainImage?.url || work.mediaUrl);
-                      if (isVideoUrl(url)) {
-                         e.target.style.display = 'none';
-                         const container = e.target.parentElement;
-                         const video = document.createElement('video');
-                         video.src = url;
-                         video.muted = true;
-                         video.autoPlay = true;
-                         video.loop = true;
-                         video.style.width = '100%';
-                         video.style.height = '100%';
-                         video.style.objectFit = 'cover';
-                         container.appendChild(video);
-                      }
-                    }}
-                  />
-                )}
-                
-                {/* Type Indicator */}
-                <div style={{ position: 'absolute', top: '20px', left: '20px', padding: '8px 15px', borderRadius: '15px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.65rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '2px' }}>
-                   {work.type?.toUpperCase()}
-                </div>
-
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: '0.3s' }} className="hover-overlay">
-                   <motion.button 
-                     whileHover={{ scale: 1.1 }}
-                     onClick={() => navigate(`/works/${work._id}`)}
-                     style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--accent)', border: 'none', color: '#fff', fontSize: '1.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                   >
-                     <FiEye />
-                   </motion.button>
-                </div>
-              </div>
+              <MediaItem work={work} navigate={navigate} />
               
               <div style={{ padding: '30px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>

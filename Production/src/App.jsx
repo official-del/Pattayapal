@@ -108,6 +108,13 @@ function App() {
             </div>
           </div>
         } />
+        <Route path="/manage-portfolio" element={
+          <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+              <ManageWorks />
+            </div>
+          </div>
+        } />
         {/* ── Public Routes ── */}
         <Route path="/"           element={<Home />} />
         <Route path="/services"   element={<Services />} />
@@ -138,7 +145,6 @@ function App() {
         {/* ── Dashboard / Workspace Routes ── */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardOverview />} />
-          <Route path="works" element={<ManageWorks />} />
           <Route path="hiring" element={<ManageJobs />} />
           <Route path="wallet" element={<ManageWallet />} />
 

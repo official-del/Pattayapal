@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { CONFIG } from '../../utils/config';
 import '../../css/VideoUploadForm.css';
 
 export default function VideoUploadForm({ onComplete }) {
@@ -38,7 +39,7 @@ export default function VideoUploadForm({ onComplete }) {
     try {
       // ✅ ยิงมาที่ Local Backend ของเราแทน Cloudinary
       const res = await axios.post(
-        `http://localhost:5000/api/upload/single`, 
+        `${CONFIG.API_BASE_URL}/api/upload/single`, 
         formData,
         {
           onUploadProgress: (e) => {

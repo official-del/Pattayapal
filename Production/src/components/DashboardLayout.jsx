@@ -60,8 +60,18 @@ function DashboardLayout() {
         {/* 🏛️ Dashboard Content Stage */}
 
         {/* ⚡ Content Stage */}
-        <div className="dashboard-content-stage" style={{ padding: '50px 40px', flex: 1 }}>
+        <div className="dashboard-content-stage" style={{ padding: '40px', flex: 1 }}>
           <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
+            
+            {/* 💎 Minimalist Section Indicator */}
+            <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+               <div style={{ width: '4px', height: '20px', background: 'var(--accent)', borderRadius: '2px', boxShadow: '0 0 10px var(--accent-glow)' }} />
+               <span style={{ color: '#333', fontSize: '0.75rem', fontWeight: '700', letterSpacing: '3px', textTransform: 'uppercase' }}>
+                 Workspace <FiChevronRight size={10} style={{ margin: '0 5px' }} /> 
+                 <span style={{ color: 'var(--accent)' }}>{getPageTitle()}</span>
+               </span>
+            </div>
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}

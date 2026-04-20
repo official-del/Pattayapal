@@ -4,7 +4,9 @@ import { worksAPI } from '../utils/api';
 import '../css/WorkSlider.css';
 import { FiArrowRight } from 'react-icons/fi';
 
-const API_URL = "http://localhost:5000";
+import { CONFIG } from '../utils/config';
+
+const API_URL = CONFIG.API_BASE_URL;
 
 function WorksSlider({ category }) {
   const [works, setWorks] = useState([]);

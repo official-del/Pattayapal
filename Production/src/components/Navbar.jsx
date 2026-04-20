@@ -87,19 +87,19 @@ function Navbar() {
     { name: 'Global Feed', href: '/feed', icon: <FiGlobe /> },
   ] : isFreelancer ? [
     { name: 'Creator Hub', href: '/dashboard', icon: <FiHome /> },
-    { name: 'Manage Portfolio', href: '/dashboard/works', icon: <FiGrid /> },
-    { name: 'Manage Job', href: '/dashboard/hiring', icon: <FiBriefcase /> },
+    { name: 'Manage Portfolio', href: '/manage-portfolio', icon: <FiGrid /> },
+    { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
     { name: 'My Coin', href: '/dashboard/wallet', icon: <FiDollarSign /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
   ] : isClient ? [
     { name: 'Client Center', href: '/dashboard', icon: <FiHome /> },
-    { name: 'Manage Job', href: '/dashboard/hiring', icon: <FiBriefcase /> },
+    { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
     { name: 'My Wallet', href: '/dashboard/wallet', icon: <FiDollarSign /> },
     { name: 'Social', href: '/feed', icon: <FiGlobe /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
   ] : [
     { name: 'Client Center', href: '/dashboard', icon: <FiHome /> },
-    { name: 'Manage Job', href: '/dashboard/hiring', icon: <FiBriefcase /> },
+    { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
     { name: 'My Wallet', href: '/dashboard/wallet', icon: <FiDollarSign /> },
     { name: 'Social', href: '/feed', icon: <FiGlobe /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },

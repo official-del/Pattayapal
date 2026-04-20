@@ -4,7 +4,9 @@ import { worksAPI } from '../utils/api';
 import { FiArrowRight, FiArrowLeft, FiPlay, FiInfo } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
-const API_URL = "http://localhost:5000"; 
+import { CONFIG } from '../utils/config';
+
+const API_URL = CONFIG.API_BASE_URL; 
 
 function VideoSlider() {
     const [slides, setSlides] = useState([]);

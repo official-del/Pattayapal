@@ -1,7 +1,9 @@
 // utils/mediaUtils.js
 // ✅ ใช้ร่วมกันทุกไฟล์ — แก้ที่นี่ที่เดียวพอ
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { CONFIG } from './config';
+
+const API_URL = CONFIG.API_BASE_URL;
 
 const VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
 
