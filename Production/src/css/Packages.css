@@ -1,0 +1,407 @@
+/* ───── Packages Page Style ───── */
+.pkg-page {
+    background-color: #0a0a0a;
+    color: #ffffff;
+    padding: 120px 0;
+    min-height: 100vh;
+    font-family: 'Kanit', sans-serif;
+}
+
+.pkg-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.pkg-hero {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.pkg-tag {
+    color: #e74c3c;
+    letter-spacing: 4px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.pkg-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.pkg-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 300;
+}
+
+/* Pricing Grid */
+.pkg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.pkg-card {
+    background: #111111;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 50px 40px;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pkg-card:hover {
+    transform: translateY(-10px);
+    border-color: rgba(231, 76, 60, 0.3);
+}
+
+/* Popular Style (The middle card) */
+.pkg-card.popular {
+    background: #161616;
+    border: 1px solid #e74c3c;
+    box-shadow: 0 20px 40px rgba(231, 76, 60, 0.1);
+    scale: 1.05; /* ขยายใหญ่กว่าตัวอื่นเล็กน้อย */
+}
+
+.popular-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #e74c3c;
+    color: #fff;
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Card Content */
+.plan-name {
+    font-size: 1.5rem;
+    color: #e74c3c;
+    margin-bottom: 20px;
+}
+
+.plan-price {
+    margin-bottom: 20px;
+}
+
+.plan-price .currency {
+    font-size: 1.5rem;
+    vertical-align: top;
+    margin-right: 5px;
+}
+
+.plan-price .amount {
+    font-size: 3.5rem;
+    font-weight: 800;
+}
+
+.plan-price .period {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+}
+
+.plan-desc {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.6;
+    margin-bottom: 40px;
+    min-height: 50px;
+}
+
+/* Features List */
+.feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 40px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 30px;
+}
+
+.feature-list li {
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.check-icon {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* Button */
+.plan-btn {
+    width: 100%;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid #e74c3c;
+    background: transparent;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.pkg-card.popular .plan-btn {
+    background: #e74c3c;
+}
+
+.plan-btn:hover {
+    background: #e74c3c;
+    box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .pkg-page {
+        padding: 100px 0;
+    }
+
+    .pkg-container {
+        padding: 0 15px;
+    }
+
+    .pkg-hero {
+        margin-bottom: 60px;
+    }
+
+    .pkg-title {
+        font-size: clamp(2rem, 6vw, 3.5rem);
+    }
+
+    .pkg-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .pkg-grid {
+        gap: 25px;
+    }
+
+    .pkg-card {
+        padding: 40px 30px;
+    }
+
+    .pkg-card.popular {
+        scale: 1;
+        margin: 20px 0;
+    }
+
+    .plan-name {
+        font-size: 1.4rem;
+    }
+
+    .plan-price .amount {
+        font-size: 3rem;
+    }
+
+    .plan-desc {
+        font-size: 0.85rem;
+        margin-bottom: 35px;
+    }
+
+    .feature-list {
+        padding-top: 25px;
+        margin-bottom: 35px;
+    }
+
+    .feature-list li {
+        font-size: 0.9rem;
+        gap: 10px;
+    }
+
+    .plan-btn {
+        padding: 16px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .pkg-page {
+        padding: 80px 0;
+    }
+
+    .pkg-hero {
+        margin-bottom: 50px;
+    }
+
+    .pkg-tag {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+
+    .pkg-title {
+        font-size: clamp(1.8rem, 6vw, 3rem);
+        margin-bottom: 16px;
+    }
+
+    .pkg-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .pkg-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .pkg-card {
+        padding: 35px 25px;
+    }
+
+    .pkg-card.popular {
+        scale: 1;
+        margin: 15px 0;
+    }
+
+    .popular-badge {
+        top: 15px;
+        right: 15px;
+        padding: 4px 12px;
+        font-size: 0.7rem;
+    }
+
+    .plan-name {
+        font-size: 1.3rem;
+        margin-bottom: 16px;
+    }
+
+    .plan-price {
+        margin-bottom: 16px;
+    }
+
+    .plan-price .currency {
+        font-size: 1.3rem;
+    }
+
+    .plan-price .amount {
+        font-size: 2.8rem;
+    }
+
+    .plan-price .period {
+        font-size: 0.85rem;
+    }
+
+    .plan-desc {
+        font-size: 0.8rem;
+        margin-bottom: 30px;
+        min-height: 40px;
+    }
+
+    .feature-list {
+        padding-top: 20px;
+        margin-bottom: 30px;
+    }
+
+    .feature-list li {
+        font-size: 0.85rem;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .plan-btn {
+        padding: 14px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pkg-page {
+        padding: 60px 0;
+    }
+
+    .pkg-container {
+        padding: 0 10px;
+    }
+
+    .pkg-hero {
+        margin-bottom: 40px;
+    }
+
+    .pkg-tag {
+        font-size: 0.75rem;
+        margin-bottom: 10px;
+    }
+
+    .pkg-title {
+        font-size: clamp(1.5rem, 6vw, 2.5rem);
+        margin-bottom: 14px;
+    }
+
+    .pkg-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .pkg-grid {
+        gap: 15px;
+    }
+
+    .pkg-card {
+        padding: 30px 20px;
+        border-radius: 20px;
+    }
+
+    .pkg-card.popular {
+        margin: 10px 0;
+    }
+
+    .popular-badge {
+        top: 12px;
+        right: 12px;
+        padding: 3px 10px;
+        font-size: 0.65rem;
+    }
+
+    .plan-name {
+        font-size: 1.2rem;
+        margin-bottom: 14px;
+    }
+
+    .plan-price {
+        margin-bottom: 14px;
+    }
+
+    .plan-price .currency {
+        font-size: 1.2rem;
+    }
+
+    .plan-price .amount {
+        font-size: 2.5rem;
+    }
+
+    .plan-price .period {
+        font-size: 0.8rem;
+    }
+
+    .plan-desc {
+        font-size: 0.75rem;
+        margin-bottom: 25px;
+        min-height: 35px;
+    }
+
+    .feature-list {
+        padding-top: 18px;
+        margin-bottom: 25px;
+    }
+
+    .feature-list li {
+        font-size: 0.8rem;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .plan-btn {
+        padding: 12px;
+        font-size: 0.85rem;
+    }
+}

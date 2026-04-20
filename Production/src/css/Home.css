@@ -1,0 +1,196 @@
+/* ───── 1. GLOBAL SYSTEM ───── */
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800;900&display=swap');
+
+:root {
+  --red: #e74c3c;
+  --black-pure: #000000;
+  --black-deep: #0a0a0a;
+  --black-card: #141414;
+  --white: #ffffff;
+  --text-gray: rgba(255, 255, 255, 0.6);
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: var(--black-pure);
+  color: var(--white);
+  font-family: 'Kanit', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ───── 2. LAYOUT ENGINE ───── */
+.home-container-width {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 25px;
+}
+
+.home-section-padding {
+  padding: 100px 0;
+}
+
+.bg-darker { background-color: var(--black-deep); }
+.text-center { text-align: center; }
+
+/* ───── 3. REUSABLE COMPONENTS ───── */
+.red-tag {
+  color: var(--red);
+  font-weight: 800;
+  letter-spacing: 3px;
+  font-size: 0.8rem;
+  display: block;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+
+.title-huge {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 20px;
+}
+
+/* ───── 4. COMPONENT OVERRIDES (แก้ส่วนที่เละ) ───── */
+
+/* Service Grid */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+  margin-top: 50px;
+}
+.service-box {
+  background: var(--black-card);
+  padding: 40px;
+  border: 1px solid var(--border);
+  transition: 0.4s;
+}
+.service-box:hover { border-color: var(--red); transform: translateY(-10px); }
+
+/* Top Ranking */
+.ranking__track {
+  display: flex;
+  overflow-x: auto;
+  gap: 50px;
+  padding: 40px 0;
+  scrollbar-width: none;
+}
+.ranking__num-outline {
+  font-size: 8rem;
+  font-weight: 700;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+  line-height: 1;
+}
+.ranking__item:hover .ranking__num-outline { color: var(--red); -webkit-text-stroke: 1px var(--red); }
+
+/* Clients */
+.clients-section { background-color: var(--black-pure) !important; }
+.client-item-card { 
+    background: var(--black-card) !important; 
+    border: 1px solid var(--border) !important; 
+}
+.client-text { color: var(--text-gray) !important; }
+
+/* Blog */
+.blog-card { background: var(--black-card); border: 1px solid var(--border); border-radius: 15px; overflow: hidden; }
+.blog-date { color: var(--red); font-weight: 600; }
+
+/* ───── 5. RESPONSIVE DESIGN ───── */
+@media (max-width: 1024px) {
+  .home-container-width {
+    padding: 0 20px;
+  }
+
+  .home-section-padding {
+    padding: 80px 0;
+  }
+
+  .grid-container {
+    gap: 20px;
+    margin-top: 40px;
+  }
+
+  .service-box {
+    padding: 30px;
+  }
+
+  .ranking__track {
+    gap: 40px;
+    padding: 30px 0;
+  }
+
+  .ranking__num-outline {
+    font-size: 6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-section-padding {
+    padding: 60px 0;
+  }
+
+  .title-huge {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  .grid-container {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+    margin-top: 30px;
+  }
+
+  .service-box {
+    padding: 25px;
+    background: #141414; /* เปลี่ยนสีเพื่อให้เห็น responsive */
+  }
+
+  .ranking__track {
+    gap: 30px;
+    padding: 25px 0;
+  }
+
+  .ranking__num-outline {
+    font-size: 5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-section-padding {
+    padding: 40px 0;
+  }
+
+  .home-container-width {
+    padding: 0 15px;
+  }
+
+  .title-huge {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+  }
+
+  .red-tag {
+    font-size: 0.75rem;
+    margin-bottom: 12px;
+  }
+
+  .grid-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 25px;
+  }
+
+  .service-box {
+    padding: 20px;
+  }
+
+  .ranking__track {
+    gap: 20px;
+    padding: 20px 0;
+  }
+
+  .ranking__num-outline {
+    font-size: 4rem;
+  }
+}

@@ -1,0 +1,576 @@
+/* ─────────────────────────────────────────
+   WorksSlider — Full-width editorial grid
+   ───────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* Loading state */
+.ws-loading {
+  padding: 80px 4%;
+  text-align: center;
+  color: #555;
+  background: #000;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Root ── */
+.ws-root {
+  background: #000;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  padding: 56px 0 0;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── Header ── */
+.ws-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 4% 28px;
+  border-bottom: 1px solid #181818;
+}
+
+.ws-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.ws-eyebrow-bar {
+  width: 3px;
+  height: 13px;
+  background: #c0392b;
+  flex-shrink: 0;
+}
+
+.ws-eyebrow-text {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: #c0392b;
+  text-transform: uppercase;
+}
+
+.ws-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 80px;
+  line-height: 0.88;
+  color: #fff;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.ws-view-all {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #444;
+  text-decoration: none;
+  padding-bottom: 4px;
+  transition: color 0.2s;
+}
+
+.ws-view-all:hover {
+  color: #fff;
+}
+
+.ws-view-all-circle {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #2a2a2a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #444;
+  line-height: 1;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.ws-view-all:hover .ws-view-all-circle {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+/* ── Grid ── */
+.ws-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: 380px 260px;
+  gap: 2px;
+  margin-top: 2px;
+  padding: 0 4%;
+}
+
+/* ── Cards ── */
+.ws-card {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  background: #0a0a0a;
+}
+
+.ws-card-featured {
+  grid-row: span 2;
+}
+
+.ws-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.75);
+  transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              filter 0.4s ease;
+}
+
+.ws-card:hover img {
+  transform: scale(1.05);
+  filter: brightness(0.9);
+}
+
+.ws-no-image {
+  width: 100%;
+  height: 100%;
+  background: #0d0d0d;
+}
+
+/* Gradient overlay */
+.ws-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.25) 45%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Red underline on hover */
+.ws-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #c0392b;
+  transition: width 0.45s ease;
+  z-index: 3;
+}
+
+.ws-card:hover::after {
+  width: 100%;
+}
+
+/* NEW badge */
+.ws-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
+/* Card number */
+.ws-num {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.2);
+  z-index: 2;
+}
+
+/* Card body (bottom overlay) */
+.ws-body {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 28px 32px;
+  z-index: 2;
+}
+
+.ws-cat {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #c0392b;
+  margin-bottom: 8px;
+}
+
+.ws-name {
+  font-family: 'Bebas Neue', sans-serif;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
+}
+
+.ws-card-featured .ws-name {
+  font-size: 52px;
+}
+
+.ws-card:not(.ws-card-featured) .ws-name {
+  font-size: 30px;
+}
+
+/* Description — featured card only */
+.ws-desc {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.55;
+  margin-bottom: 18px;
+  display: none;
+}
+
+.ws-card-featured .ws-desc {
+  display: block;
+}
+
+/* Explore button */
+.ws-explore {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  transition: color 0.25s;
+}
+
+.ws-card:hover .ws-explore {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Arrow */
+.ws-arrow {
+  width: 24px;
+  height: 1px;
+  background: currentColor;
+  position: relative;
+  transition: width 0.3s ease;
+  flex-shrink: 0;
+}
+
+.ws-card:hover .ws-arrow {
+  width: 36px;
+}
+
+.ws-arrow::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+  border-right: 1px solid currentColor;
+  border-top: 1px solid currentColor;
+  transform: rotate(45deg);
+}
+
+/* ── "More projects" filler card ── */
+.ws-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  background: #080808;
+  border: 1px solid #141414;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ws-more:hover {
+  background: #0e0e0e;
+}
+
+.ws-more-plus {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 42px;
+  color: #1f1f1f;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.ws-more:hover .ws-more-plus {
+  color: #c0392b;
+}
+
+.ws-more-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #2a2a2a;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.ws-more:hover .ws-more-label {
+  color: #555;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .ws-root {
+    padding: 48px 0 0;
+  }
+
+  .ws-header {
+    padding: 0 4% 24px;
+  }
+
+  .ws-title {
+    font-size: 60px;
+  }
+
+  .ws-grid {
+    grid-template-columns: 1.5fr 1fr;
+    grid-template-rows: 320px 220px;
+    gap: 2px;
+  }
+
+  .ws-card-featured {
+    grid-column: span 1;
+  }
+
+  .ws-body {
+    padding: 24px 28px;
+  }
+
+  .ws-card-featured .ws-name {
+    font-size: 44px;
+  }
+
+  .ws-card:not(.ws-card-featured) .ws-name {
+    font-size: 26px;
+  }
+
+  .ws-desc {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ws-root {
+    padding: 40px 0 0;
+  }
+
+  .ws-header {
+    padding: 0 4% 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .ws-eyebrow {
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .ws-eyebrow-bar {
+    width: 2px;
+    height: 11px;
+  }
+
+  .ws-eyebrow-text {
+    font-size: 10px;
+  }
+
+  .ws-title {
+    font-size: 48px;
+  }
+
+  .ws-view-all {
+    font-size: 10px;
+    gap: 8px;
+  }
+
+  .ws-view-all-circle {
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+  }
+
+  .ws-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: 360px 260px 260px 260px;
+    padding: 0 4%;
+    gap: 2px;
+  }
+
+  .ws-card-featured {
+    grid-row: span 1;
+  }
+
+  .ws-card-featured .ws-name {
+    font-size: 38px;
+  }
+
+  .ws-card:not(.ws-card-featured) .ws-name {
+    font-size: 24px;
+  }
+
+  .ws-body {
+    padding: 20px 24px;
+  }
+
+  .ws-cat {
+    font-size: 9px;
+    margin-bottom: 6px;
+  }
+
+  .ws-name {
+    margin-bottom: 8px;
+  }
+
+  .ws-desc {
+    font-size: 11px;
+    margin-bottom: 14px;
+  }
+
+  .ws-explore {
+    font-size: 9px;
+    gap: 8px;
+  }
+
+  .ws-arrow {
+    width: 20px;
+  }
+
+  .ws-card:hover .ws-arrow {
+    width: 30px;
+  }
+
+  .ws-more {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .ws-root {
+    padding: 32px 0 0;
+  }
+
+  .ws-header {
+    padding: 0 4% 16px;
+    gap: 12px;
+  }
+
+  .ws-eyebrow {
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+
+  .ws-eyebrow-bar {
+    width: 2px;
+    height: 10px;
+  }
+
+  .ws-eyebrow-text {
+    font-size: 9px;
+  }
+
+  .ws-title {
+    font-size: 36px;
+  }
+
+  .ws-view-all {
+    font-size: 9px;
+    gap: 6px;
+  }
+
+  .ws-view-all-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+
+  .ws-grid {
+    grid-template-rows: 300px 220px 220px 220px;
+    padding: 0 4%;
+    gap: 2px;
+  }
+
+  .ws-card-featured .ws-name {
+    font-size: 30px;
+  }
+
+  .ws-card:not(.ws-card-featured) .ws-name {
+    font-size: 20px;
+  }
+
+  .ws-body {
+    padding: 16px 20px;
+  }
+
+  .ws-cat {
+    font-size: 8px;
+    margin-bottom: 4px;
+  }
+
+  .ws-name {
+    margin-bottom: 6px;
+  }
+
+  .ws-desc {
+    font-size: 10px;
+    margin-bottom: 12px;
+  }
+
+  .ws-explore {
+    font-size: 8px;
+    gap: 6px;
+  }
+
+  .ws-arrow {
+    width: 18px;
+  }
+
+  .ws-card:hover .ws-arrow {
+    width: 26px;
+  }
+
+  .ws-badge {
+    top: 16px;
+    right: 16px;
+    font-size: 9px;
+    padding: 4px 8px;
+  }
+
+  .ws-num {
+    top: 16px;
+    left: 16px;
+    font-size: 12px;
+  }
+}

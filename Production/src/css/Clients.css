@@ -1,0 +1,645 @@
+/* ═══════════════════════════════════════
+   Clients Page — Dark Editorial
+   ═══════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ── Base ── */
+.cl-page {
+  background: #060606;
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: 'DM Sans', sans-serif;
+  position: relative;
+}
+
+/* ── Noise texture ── */
+.cl-noise {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── Hero ── */
+.cl-hero {
+  position: relative;
+  z-index: 1;
+  padding: 130px 6% 60px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.cl-hero-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.cl-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cl-eyebrow-line {
+  display: block;
+  width: 36px;
+  height: 2px;
+  background: #e74c3c;
+  flex-shrink: 0;
+}
+
+.cl-eyebrow-text {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  color: #e74c3c;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Title */
+.cl-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  line-height: 0.88;
+  letter-spacing: 0.02em;
+  margin: 0;
+  color: #fff;
+}
+
+.cl-title-accent {
+  color: #ff4d00;
+  /* Outline effect */
+  -webkit-text-stroke: 0px transparent;
+  position: relative;
+}
+
+.cl-title-thin {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255,255,255,0.4);
+}
+
+/* Hero bottom row */
+.cl-hero-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.cl-subtitle {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.9;
+  max-width: 480px;
+  margin: 0;
+  font-weight: 300;
+}
+
+.cl-stat {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.cl-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3rem, 5vw, 4.5rem);
+  color: #ff4d00;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.cl-stat-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: #444;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+/* Horizontal rule */
+.cl-hero-rule {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #222 30%, #222 70%, transparent);
+  margin-top: 60px;
+}
+
+/* ══════════════════════════════════════
+   Marquee
+══════════════════════════════════════ */
+.cl-marquee-section {
+  position: relative;
+  z-index: 1;
+  padding: 60px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow: hidden;
+}
+
+.cl-marquee-wrapper {
+  overflow: hidden;
+  /* Fade edges */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.cl-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 20px;
+  padding: 8px 0;
+}
+
+.cl-marquee-track.go-left {
+  animation: cl-go-left var(--speed, 35s) linear infinite;
+}
+
+.cl-marquee-track.go-right {
+  animation: cl-go-right var(--speed, 45s) linear infinite;
+}
+
+.cl-marquee-wrapper:hover .cl-marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes cl-go-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.333%); }
+}
+
+@keyframes cl-go-right {
+  from { transform: translateX(-33.333%); }
+  to   { transform: translateX(0); }
+}
+
+/* ══════════════════════════════════════
+   Client Card
+══════════════════════════════════════ */
+.cl-card {
+  position: relative;
+  width: 240px;
+  height: 140px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid #1a1a1a;
+  background: #0d0d0d;
+  overflow: hidden;
+  transition: border-color 0.35s, transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+  cursor: default;
+}
+
+.cl-card:hover {
+  border-color: #ff4d00;
+  transform: translateY(-6px) scale(1.03);
+}
+
+.cl-card-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ── ถ้ามีรูปโลโก้จริง ── */
+.cl-logo-img {
+  max-width: 140px;
+  max-height: 60px;
+  object-fit: contain;
+  /* ไม่ invert เพราะโลโก้มีสีอยู่แล้ว
+     ถ้าต้องการให้ขาวทุกตัวให้ uncomment: */
+  /* filter: brightness(0) invert(1); */
+  opacity: 0.75;
+  transition: opacity 0.35s;
+}
+
+.cl-card:hover .cl-logo-img {
+  opacity: 1;
+}
+
+/* ── Fallback: ไม่มีรูป → แสดง initials + ชื่อ ── */
+.cl-logo-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.35s;
+}
+
+.cl-card:hover .cl-logo-fallback {
+  background: #111 !important;
+}
+
+.cl-initials {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.15);
+  line-height: 1;
+  transition: color 0.35s;
+}
+
+.cl-card:hover .cl-initials {
+  color: #ff4d00;
+}
+
+.cl-fallback-name {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: #333;
+  text-transform: uppercase;
+  transition: color 0.35s;
+}
+
+.cl-card:hover .cl-fallback-name {
+  color: #888;
+}
+
+/* Shine sweep on hover */
+.cl-card-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+
+.cl-card:hover .cl-card-shine {
+  opacity: 1;
+}
+
+/* ══════════════════════════════════════
+   CTA Section
+══════════════════════════════════════ */
+.cl-cta-section {
+  position: relative;
+  z-index: 1;
+  padding: 80px 6% 120px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.cl-cta-box {
+  position: relative;
+  border: 1px solid #161616;
+  border-radius: 10px;
+  padding: 90px 60px;
+  text-align: center;
+  background: #080808;
+  overflow: hidden;
+}
+
+/* Bottom glow */
+.cl-cta-glow {
+  position: absolute;
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 200px;
+  background: radial-gradient(ellipse, rgba(255,77,0,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cl-cta-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  color: #ff4d00;
+  margin: 0 0 16px;
+  text-transform: uppercase;
+}
+
+.cl-cta-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  margin: 0 0 48px;
+  color: #fff;
+}
+
+.cl-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: #ff4d00;
+  color: #fff;
+  border: none;
+  padding: 18px 48px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 8px 32px rgba(255,77,0,0.3);
+}
+
+.cl-cta-btn:hover {
+  background: #fff;
+  color: #ff4d00;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(255,255,255,0.12);
+}
+
+.cl-cta-btn svg {
+  transition: transform 0.3s;
+}
+
+.cl-cta-btn:hover svg {
+  transform: translateX(4px);
+}
+
+/* ══════════════════════════════════════
+   Responsive
+══════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .cl-hero {
+    padding: 120px 5% 55px;
+  }
+
+  .cl-title {
+    font-size: clamp(3rem, 10vw, 7rem);
+  }
+
+  .cl-hero-bottom {
+    gap: 30px;
+  }
+
+  .cl-subtitle {
+    font-size: 0.9rem;
+    max-width: 400px;
+  }
+
+  .cl-stat-num {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .cl-marquee-section {
+    padding: 50px 0;
+    gap: 20px;
+  }
+
+  .cl-marquee-track {
+    gap: 16px;
+  }
+
+  .cl-card {
+    width: 220px;
+    height: 130px;
+  }
+
+  .cl-cta-section {
+    padding: 70px 5% 100px;
+  }
+
+  .cl-cta-box {
+    padding: 80px 50px;
+  }
+
+  .cl-cta-title {
+    font-size: clamp(2rem, 6vw, 4rem);
+    margin-bottom: 40px;
+  }
+
+  .cl-cta-btn {
+    padding: 16px 40px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .cl-hero {
+    padding: 100px 5% 50px;
+  }
+
+  .cl-hero-inner {
+    gap: 28px;
+  }
+
+  .cl-title {
+    font-size: clamp(2.5rem, 10vw, 5rem);
+  }
+
+  .cl-hero-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .cl-subtitle {
+    font-size: 0.85rem;
+    max-width: none;
+  }
+
+  .cl-stat {
+    gap: 12px;
+  }
+
+  .cl-stat-num {
+    font-size: clamp(2rem, 5vw, 3rem);
+  }
+
+  .cl-stat-label {
+    font-size: 0.6rem;
+  }
+
+  .cl-hero-rule {
+    margin-top: 50px;
+  }
+
+  .cl-marquee-section {
+    padding: 40px 0;
+    gap: 18px;
+  }
+
+  .cl-marquee-track {
+    gap: 12px;
+  }
+
+  .cl-card {
+    width: 180px;
+    height: 110px;
+  }
+
+  .cl-card-inner {
+    padding: 16px;
+  }
+
+  .cl-logo-img {
+    max-width: 120px;
+    max-height: 50px;
+  }
+
+  .cl-initials {
+    font-size: 1.8rem;
+  }
+
+  .cl-fallback-name {
+    font-size: 0.55rem;
+  }
+
+  .cl-cta-section {
+    padding: 60px 5% 80px;
+  }
+
+  .cl-cta-box {
+    padding: 60px 24px;
+  }
+
+  .cl-cta-label {
+    font-size: 0.6rem;
+    margin-bottom: 14px;
+  }
+
+  .cl-cta-title {
+    font-size: clamp(1.8rem, 6vw, 3rem);
+    margin-bottom: 36px;
+  }
+
+  .cl-cta-btn {
+    padding: 14px 32px;
+    font-size: 0.75rem;
+  }
+
+  .cl-cta-glow {
+    width: 400px;
+    height: 160px;
+    bottom: -60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cl-hero {
+    padding: 80px 5% 40px;
+  }
+
+  .cl-hero-inner {
+    gap: 24px;
+  }
+
+  .cl-eyebrow {
+    gap: 12px;
+  }
+
+  .cl-eyebrow-line {
+    width: 30px;
+  }
+
+  .cl-eyebrow-text {
+    font-size: 0.65rem;
+  }
+
+  .cl-title {
+    font-size: clamp(2rem, 10vw, 4rem);
+  }
+
+  .cl-hero-bottom {
+    gap: 16px;
+  }
+
+  .cl-subtitle {
+    font-size: 0.8rem;
+    line-height: 1.8;
+  }
+
+  .cl-stat {
+    gap: 10px;
+  }
+
+  .cl-stat-num {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+  }
+
+  .cl-stat-label {
+    font-size: 0.55rem;
+  }
+
+  .cl-hero-rule {
+    margin-top: 40px;
+  }
+
+  .cl-marquee-section {
+    padding: 30px 0;
+    gap: 16px;
+  }
+
+  .cl-marquee-track {
+    gap: 10px;
+  }
+
+  .cl-card {
+    width: 160px;
+    height: 100px;
+  }
+
+  .cl-card-inner {
+    padding: 14px;
+  }
+
+  .cl-logo-img {
+    max-width: 100px;
+    max-height: 40px;
+  }
+
+  .cl-initials {
+    font-size: 1.5rem;
+  }
+
+  .cl-fallback-name {
+    font-size: 0.5rem;
+  }
+
+  .cl-cta-section {
+    padding: 50px 5% 60px;
+  }
+
+  .cl-cta-box {
+    padding: 50px 20px;
+  }
+
+  .cl-cta-label {
+    font-size: 0.55rem;
+    margin-bottom: 12px;
+  }
+
+  .cl-cta-title {
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+    margin-bottom: 30px;
+  }
+
+  .cl-cta-btn {
+    padding: 12px 28px;
+    font-size: 0.7rem;
+    gap: 10px;
+  }
+
+  .cl-cta-glow {
+    width: 300px;
+    height: 120px;
+    bottom: -40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cl-marquee-track { animation: none !important; }
+}

@@ -1,0 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ═══════════════════════════
+   Clientses — Seamless Strip
+═══════════════════════════ */
+
+.cses-section {
+  background: transparent;
+  padding: 100px 0 110px;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.cses-inner {
+  padding: 0 6%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.cses-header {
+  margin-bottom: 64px;
+}
+
+.cses-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.cses-eyebrow-line {
+  display: block;
+  width: 32px;
+  height: 2px;
+  background: #e74c3c;
+  flex-shrink: 0;
+}
+
+.cses-eyebrow-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.38em;
+  color: #e74c3c;
+  text-transform: uppercase;
+}
+
+.cses-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 0.9;
+  color: #fff;
+  margin: 0;
+}
+
+/* ── Slider wrapper (full-bleed) ── */
+.cses-slider-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* Fade edges */
+.cses-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 180px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.cses-fade-left {
+  left: 0;
+  background: linear-gradient(to right, #060606 0%, transparent 100%);
+}
+
+.cses-fade-right {
+  right: 0;
+  background: linear-gradient(to left, #060606 0%, transparent 100%);
+}
+
+/* ── Nav arrows ── */
+.cses-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.cses-arrow:hover {
+  background: #e74c3c;
+  border-color: #e74c3c;
+  box-shadow: 0 0 20px rgba(231,76,60,0.35);
+}
+
+.cses-arrow-left  { left: 20px; }
+.cses-arrow-right { right: 20px; }
+
+@media (max-width: 768px) {
+  .cses-arrow { display: none; }
+}
+
+/* ── Track ── */
+.cses-track {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 48px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cses-track::-webkit-scrollbar { display: none; }
+
+/* ── Item ── */
+.cses-item {
+  flex: 0 0 280px;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px;
+  /* เส้นแบ่งจางๆ แทนกล่อง */
+  border-right: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+  cursor: default;
+  transition: background 0.4s;
+}
+
+.cses-item:last-child {
+  border-right: none;
+}
+
+.cses-item::before {
+  /* underline เส้นแดงวิ่งขึ้นมาตอน hover */
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1px;
+  background: #e74c3c;
+  box-shadow: 0 0 8px #e74c3c;
+  transition: width 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.cses-item:hover::before {
+  width: 60px;
+}
+
+/* Number */
+.cses-item-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  color: #e74c3c;
+  opacity: 0.35;
+  line-height: 1;
+  transition: opacity 0.4s;
+}
+
+.cses-item:hover .cses-item-num {
+  opacity: 1;
+}
+
+/* Name */
+.cses-item-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.18);
+  transition: color 0.4s, letter-spacing 0.4s;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.cses-item:hover .cses-item-name {
+  color: #fff;
+  letter-spacing: 0.22em;
+}
+
+/* Animated underline */
+.cses-item-line {
+  width: 0;
+  height: 1.5px;
+  background: #e74c3c;
+  transition: width 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 0 6px rgba(231,76,60,0.5);
+}
+
+.cses-item:hover .cses-item-line {
+  width: 36px;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .cses-item,
+  .cses-item-name,
+  .cses-item-line,
+  .cses-item-num,
+  .cses-item::before {
+    transition: none !important;
+  }
+}

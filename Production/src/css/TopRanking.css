@@ -1,0 +1,260 @@
+/* ───── 1. SECTION WRAPPER ───── */
+.ranking-3d-section {
+    background: transparent;
+    padding: 120px 0;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.ranking-edge-header {
+    padding: 0 60px;
+    margin-bottom: 80px;
+    position: relative;
+    z-index: 10;
+}
+
+.premium-main-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -2px;
+}
+
+/* ───── 2. 3D CAROUSEL CONTAINER ───── */
+.carousel-3d-wrapper {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    perspective: 1500px;
+    overflow: visible;
+}
+
+.carousel-3d-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+}
+
+/* ───── 3. 3D CARD ITEM ───── */
+.card-3d-item {
+    position: absolute;
+    width: 320px;
+    height: 480px;
+    transform-style: preserve-3d;
+    will-change: transform, opacity;
+}
+
+.ranking-item-3d {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.poster-3d-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #0a0a0a;
+    border-radius: 30px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+    transform-style: preserve-3d;
+}
+
+.ranking-video-3d, .ranking-img-3d {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.5s;
+}
+
+.card-3d-item:hover .ranking-video-3d,
+.card-3d-item:hover .ranking-img-3d {
+    transform: scale(1.1);
+}
+
+/* ───── 4. 3D NUMBERS ───── */
+.num-3d-bg {
+    position: absolute;
+    left: -80px;
+    top: 50%;
+    transform: translateY(-50%) translateZ(50px);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.num-3d-text {
+    font-size: 14rem;
+    font-weight: 700;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.15);
+    font-family: 'Outfit', sans-serif;
+    text-shadow: 0 0 30px rgba(255,255,255,0.05);
+}
+
+.card-3d-item:hover .num-3d-text {
+    -webkit-text-stroke: 2px rgba(255, 87, 51, 0.6);
+}
+
+/* ───── 5. OVERLAY ───── */
+.poster-3d-overlay {
+    position: absolute;
+    inset: 0;
+    padding: 30px;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 60%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.p3d-cat {
+    color: #ff5733;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.p3d-title {
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 5px 0 10px;
+    letter-spacing: -0.5px;
+}
+
+.p3d-stats {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* ───── 6. NAVIGATION ───── */
+.carousel-3d-nav {
+    display: flex;
+    gap: 12px;
+    margin-top: 40px;
+    z-index: 20;
+}
+
+.nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.nav-dot.active {
+    width: 30px;
+    border-radius: 5px;
+    background: #ff5733;
+    box-shadow: 0 0 15px rgba(255,87,51,0.5);
+}
+
+/* ───── 7. RESPONSIVE ───── */
+@media (max-width: 768px) {
+    .carousel-3d-wrapper { height: 500px; }
+    .card-3d-item { width: 220px; height: 330px; }
+    .num-3d-text { font-size: 8rem; }
+    .num-3d-bg { left: -40px; }
+    .ranking-edge-header { padding: 0 30px; }
+}
+ padding: 16px;
+    }
+
+    .poster-work-title {
+        font-size: 1rem;
+    }
+
+    .poster-action-text {
+        font-size: 0.6rem;
+    }
+
+    .new-corner-label {
+        padding: 5px 12px;
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ranking-full-width-section {
+        padding: 40px 0;
+    }
+
+    .ranking-edge-header {
+        padding: 0 5%;
+        margin-bottom: 20px;
+    }
+
+    .tag-group {
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+
+    .red-glow-bar {
+        width: 20px;
+        height: 2px;
+    }
+
+    .premium-tag {
+        font-size: 0.65rem;
+    }
+
+    .premium-main-title {
+        font-size: clamp(1.5rem, 6vw, 2.3rem);
+    }
+
+    .ranking-scroll-track {
+        padding: 8px 5% 30px;
+        gap: 12px;
+    }
+
+    .ranking-num-box {
+        margin-bottom: -15px;
+    }
+
+    .num-outline-text {
+        font-size: clamp(4rem, 12vw, 5.5rem);
+    }
+
+    .poster-box {
+        width: clamp(150px, 35vw, 180px);
+        height: clamp(200px, 45vw, 240px);
+    }
+
+    .poster-content-overlay {
+        padding: 14px;
+    }
+
+    .poster-work-title {
+        font-size: 0.9rem;
+    }
+
+    .poster-action-text {
+        font-size: 0.55rem;
+    }
+
+    .new-corner-label {
+        padding: 4px 10px;
+        font-size: 8px;
+    }
+}

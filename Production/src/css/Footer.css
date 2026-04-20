@@ -1,0 +1,446 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --p-red: #c0392b;
+  --p-black: #080808;
+  --p-dark: #000000;
+  --p-gray: #777;
+  --p-white: #ffffff;
+}
+
+.fp-luxury {
+  background-color: var(--p-black);
+  color: var(--p-white);
+  font-family: 'Noto Sans Thai', sans-serif;
+  padding-top: 4px;
+  position: relative;
+}
+
+/* เส้นสีแดงด้านบนสุด (หรูหราแบบ Minimal) */
+.fp-luxury::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 4px;
+  background: var(--p-red);
+}
+
+.fpl-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* ── Header Section ── */
+.fpl-header {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 60px 40px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.fpl-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.fpl-logo { width: 110px; height: auto; }
+
+.fpl-brand-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.fpl-brand-name span { color: var(--p-red); }
+
+.fpl-brand-sub {
+  font-size: 0.75rem;
+  color: var(--p-gray);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 5px;
+}
+
+.fpl-socials-label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--p-gray);
+  margin-bottom: 12px;
+  text-align: right;
+}
+
+.fpl-social-icons { display: flex; gap: 12px; }
+
+.fpl-soc-link {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #222;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--p-gray);
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.fpl-soc-link:hover {
+  background: var(--p-red);
+  color: var(--p-white);
+  border-color: var(--p-red);
+}
+
+/* ── Main Body Grid ── */
+.fpl-main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 60px 40px 80px;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+  gap: 50px;
+}
+
+.fpl-tag {
+  color: var(--p-red);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.fpl-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 35px;
+}
+
+/* ── Items (No Borders) ── */
+.fpl-item {
+  margin-bottom: 24px; /* ใช้ระยะห่างแทนเส้นขีด */
+}
+
+.fpl-label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--p-gray);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.fpl-value {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #eee;
+}
+
+/* ── Navigation (No Borders) ── */
+.fpl-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* ใช้ระยะห่างแทนเส้นขีด */
+}
+
+.fpl-nav a {
+  color: var(--p-gray);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 400;
+  transition: 0.3s;
+}
+
+.fpl-nav a:hover {
+  color: var(--p-white);
+  padding-left: 10px; /* เลื่อนขวาเล็กน้อยตอน Hover แทนการใช้ขีด */
+}
+
+/* ── QR Section ── */
+.fpl-qr-box {
+  background: white;
+  padding: 12px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.fpl-qr-box img { width: 130px; display: block; }
+
+.fpl-qr-id {
+  margin-top: 15px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.fpl-qr-id span { color: var(--p-red); }
+
+/* ── Bottom Sections ── */
+.fpl-address {
+  padding: 30px 0;
+  border-top: 1px solid #151515;
+  text-align: center;
+}
+
+.fpl-address p {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* ── Responsive Design ── */
+@media (max-width: 1024px) {
+  .fpl-container {
+    padding: 0 30px;
+  }
+
+  .fpl-header {
+    padding: 50px 30px 30px;
+    gap: 40px;
+  }
+
+  .fpl-main {
+    padding: 50px 30px 70px;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 40px;
+  }
+
+  .fpl-logo {
+    width: 100px;
+  }
+
+  .fpl-brand-name {
+    font-size: 2rem;
+  }
+
+  .fpl-title {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+  }
+
+  .fpl-value {
+    font-size: 1rem;
+  }
+
+  .fpl-nav a {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .fpl-container {
+    padding: 0 20px;
+  }
+
+  .fpl-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 40px 20px 25px;
+    gap: 20px;
+  }
+
+  .fpl-header-brand {
+    gap: 20px;
+  }
+
+  .fpl-logo {
+    width: 90px;
+  }
+
+  .fpl-brand-name {
+    font-size: 1.8rem;
+  }
+
+  .fpl-brand-sub {
+    font-size: 0.7rem;
+  }
+
+  .fpl-socials-label {
+    text-align: left;
+    margin-bottom: 10px;
+  }
+
+  .fpl-social-icons {
+    gap: 10px;
+  }
+
+  .fpl-soc-link {
+    width: 38px;
+    height: 38px;
+    font-size: 0.65rem;
+  }
+
+  .fpl-main {
+    padding: 40px 20px 60px;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+
+  .fpl-title {
+    font-size: 1.6rem;
+    margin-bottom: 25px;
+  }
+
+  .fpl-value {
+    font-size: 0.95rem;
+  }
+
+  .fpl-nav a {
+    font-size: 0.9rem;
+  }
+
+  .fpl-qr-box img {
+    width: 120px;
+  }
+
+  .fpl-qr-id {
+    font-size: 1.1rem;
+  }
+
+  .fpl-address {
+    padding: 25px 0;
+  }
+
+  .fpl-address p {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .fpl-container {
+    padding: 0 15px;
+  }
+
+  .fpl-header {
+    padding: 30px 15px 20px;
+  }
+
+  .fpl-header-brand {
+    gap: 15px;
+  }
+
+  .fpl-logo {
+    width: 80px;
+  }
+
+  .fpl-brand-name {
+    font-size: 1.6rem;
+  }
+
+  .fpl-brand-sub {
+    font-size: 0.65rem;
+  }
+
+  .fpl-social-icons {
+    gap: 8px;
+  }
+
+  .fpl-soc-link {
+    width: 35px;
+    height: 35px;
+    font-size: 0.6rem;
+  }
+
+  .fpl-main {
+    padding: 30px 15px 50px;
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .fpl-tag {
+    font-size: 0.75rem;
+    margin-bottom: 8px;
+  }
+
+  .fpl-title {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  .fpl-label {
+    font-size: 0.6rem;
+    margin-bottom: 3px;
+  }
+
+  .fpl-value {
+    font-size: 0.9rem;
+  }
+
+  .fpl-nav {
+    gap: 12px;
+  }
+
+  .fpl-nav a {
+    font-size: 0.85rem;
+  }
+
+  .fpl-qr-box {
+    padding: 10px;
+  }
+
+  .fpl-qr-box img {
+    width: 110px;
+  }
+
+  .fpl-qr-id {
+    font-size: 1rem;
+    margin-top: 12px;
+  }
+
+  .fpl-address {
+    padding: 20px 0;
+  }
+
+  .fpl-address p {
+    font-size: 0.75rem;
+  }
+}
+
+.fpl-legal {
+  background-color: var(--p-dark);
+  padding: 25px 0;
+}
+
+.fpl-legal .fpl-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fpl-copy { font-size: 0.75rem; color: #333; }
+.fpl-copy strong { color: #555; }
+
+.fpl-legal-links { display: flex; gap: 30px; }
+.fpl-legal-links a {
+  color: #333;
+  text-decoration: none;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.fpl-legal-links a:hover { color: var(--p-gray); }
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .fpl-main { grid-template-columns: 1fr 1fr; gap: 60px; }
+  .fpl-header { flex-direction: column; align-items: flex-start; gap: 40px; }
+  .fpl-socials-label { text-align: left; }
+}
+
+@media (max-width: 600px) {
+  .fpl-main { grid-template-columns: 1fr; }
+  .fpl-header-brand { flex-direction: column; align-items: flex-start; }
+}

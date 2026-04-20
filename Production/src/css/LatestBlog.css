@@ -1,0 +1,298 @@
+/* ───── 1. SECTION WRAPPER ───── */
+.modern-blog-section {
+    background: transparent;
+    padding: 100px 0;
+    width: 100%;
+}
+
+.blog-premium-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 60px;
+}
+
+.red-tag-line {
+    color: #e74c3c;
+    font-weight: 800;
+    letter-spacing: 5px;
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 15px;
+    border-left: 3px solid #e74c3c;
+    padding-left: 15px;
+}
+
+.blog-huge-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -2px;
+}
+
+/* ───── 2. VIEW ALL BUTTON ───── */
+.view-all-minimal {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: 0.3s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+}
+
+.view-all-minimal span { color: #e74c3c; margin-left: 5px; }
+
+.view-all-minimal:hover {
+    color: #fff;
+    border-color: #e74c3c;
+}
+
+/* ───── 3. BLOG GRID ───── */
+.blog-modern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 40px;
+}
+
+/* ───── 4. ARTICLE CARD (Seamless & Sharp) ───── */
+.blog-article-card {
+    background: transparent;
+    transition: 0.4s ease;
+}
+
+.blog-visual-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    margin-bottom: 25px;
+}
+
+.blog-visual-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+.blog-cat-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 6px 15px;
+    letter-spacing: 1px;
+    z-index: 2;
+}
+
+.blog-visual-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(231, 76, 60, 0);
+    transition: 0.4s;
+    z-index: 1;
+}
+
+/* ───── 5. CONTENT ───── */
+.blog-text-content {
+    padding: 0 5px;
+}
+
+.blog-red-date {
+    color: #e74c3c;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.blog-item-title {
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 20px;
+    transition: 0.3s;
+}
+
+.blog-read-link {
+    text-decoration: none;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.3s;
+}
+
+.arrow-move { color: #e74c3c; transition: 0.3s; }
+
+/* ───── 6. HOVER EFFECTS ───── */
+.blog-article-card:hover .blog-visual-wrap img {
+    transform: scale(1.1);
+}
+
+.blog-article-card:hover .blog-visual-overlay {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.blog-article-card:hover .blog-item-title {
+    color: #e74c3c;
+}
+
+.blog-article-card:hover .blog-read-link {
+    color: #e74c3c;
+    padding-left: 10px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .modern-blog-section {
+        padding: 80px 0;
+    }
+
+    .blog-premium-header {
+        margin-bottom: 50px;
+    }
+
+    .blog-huge-title {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+    }
+
+    .blog-modern-grid {
+        gap: 30px;
+    }
+
+    .blog-visual-wrap {
+        margin-bottom: 20px;
+    }
+
+    .blog-item-title {
+        font-size: 1.3rem;
+        margin-bottom: 16px;
+    }
+
+    .blog-read-link {
+        font-size: 0.8rem;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-blog-section {
+        padding: 60px 0;
+    }
+
+    .blog-premium-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 40px;
+    }
+
+    .red-tag-line {
+        font-size: 0.75rem;
+        margin-bottom: 12px;
+        padding-left: 12px;
+    }
+
+    .blog-huge-title {
+        font-size: clamp(1.8rem, 5vw, 3rem);
+    }
+
+    .view-all-minimal {
+        font-size: 0.8rem;
+        align-self: flex-start;
+    }
+
+    .blog-modern-grid {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .blog-visual-wrap {
+        margin-bottom: 18px;
+    }
+
+    .blog-cat-badge {
+        font-size: 9px;
+        padding: 5px 12px;
+    }
+
+    .blog-red-date {
+        font-size: 0.75rem;
+        margin-bottom: 10px;
+    }
+
+    .blog-item-title {
+        font-size: 1.2rem;
+        margin-bottom: 14px;
+    }
+
+    .blog-read-link {
+        font-size: 0.75rem;
+        gap: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modern-blog-section {
+        padding: 40px 0;
+    }
+
+    .blog-premium-header {
+        gap: 12px;
+        margin-bottom: 30px;
+    }
+
+    .red-tag-line {
+        font-size: 0.7rem;
+        margin-bottom: 10px;
+        padding-left: 10px;
+    }
+
+    .blog-huge-title {
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+    }
+
+    .view-all-minimal {
+        font-size: 0.75rem;
+    }
+
+    .blog-modern-grid {
+        gap: 20px;
+    }
+
+    .blog-visual-wrap {
+        margin-bottom: 16px;
+    }
+
+    .blog-cat-badge {
+        font-size: 8px;
+        padding: 4px 10px;
+    }
+
+    .blog-red-date {
+        font-size: 0.7rem;
+        margin-bottom: 8px;
+    }
+
+    .blog-item-title {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+    }
+
+    .blog-read-link {
+        font-size: 0.7rem;
+        gap: 5px;
+    }
+}

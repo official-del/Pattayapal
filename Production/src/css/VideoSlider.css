@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Kanit:wght@300;500;700&display=swap');
+
+/* --- Reset & Container --- */
+.vslider-fullscreen {
+    position: relative;
+    width: 100vw; /* เต็มความกว้างจอ */
+    height: 100vh; /* เต็มความสูงจอ */
+    height: 100dvh; /* สำหรับมือถือที่มี Navbar Browser */
+    background: #000; /* สีดำสำหรับพื้นที่ว่าง (Letterbox/Pillarbox) */
+    overflow: hidden;
+    color: #fff;
+}
+
+.vslider__track {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* --- Slide & Video --- */
+.vslider__slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1s;
+    display: flex;
+    align-items: center; /* จัดวิดีโอให้อยู่ตรงกลางสูง */
+    justify-content: center; /* จัดวิดีโอให้อยู่ตรงกลางกว้าง */
+}
+
+.vslider__slide--active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 1;
+}
+
+.vslider__video {
+    width: 100%;
+    height: 100%;
+    /* ✅ นี่คือ "หัวใจ": ขยายวิดีโอให้ใหญ่ที่สุดโดย "ขอบไม่โดนตัด" และไม่ผิดสัดส่วน */
+    object-fit: contain; 
+    display: block;
+}
+
+/* --- Decoration --- */
+.vslider__overlay {
+    position: absolute;
+    inset: 0;
+    /* แรเงาด้านล่างเพื่อให้ตัวหนังสือเด่น */
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 100%);
+    pointer-events: none; /* เพื่อให้ Swipe ได้ */
+}
+
+/* --- Content --- */
+.vslider__content {
+    position: absolute;
+    bottom: 80px; /* เว้นระยะจากล่างจอ */
+    left: 0;
+    right: 0;
+    z-index: 2;
+    padding: 0 4%; /* แพดดิ้งซ้ายขวาตาม Container หลักของเว็บ */
+    text-align: left;
+}
+
+.vslider__title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 8vw, 6rem); /* ขนาดตัวหนังสือยืดหดตามจอ */
+    line-height: 0.9;
+    margin: 0 0 10px 0;
+    letter-spacing: -1px;
+}
+
+.vslider__subtitle {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 300;
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    color: rgba(255,255,255,0.7);
+    max-width: 600px;
+    margin: 0;
+}
+
+/* --- Navigation Controls --- */
+.vslider__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.3s;
+    opacity: 0.5;
+}
+
+.vslider__arrow:hover {
+    background: #ff6b35; /* สีแบรนด์ */
+    border-color: #ff6b35;
+    opacity: 1;
+}
+
+.vslider__arrow svg {
+    width: 30px;
+    height: 30px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2;
+}
+
+.vslider__arrow--left { left: 40px; }
+.vslider__arrow--right { right: 40px; }
+
+/* --- Dots Indicator --- */
+.vslider__dots {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    display: flex;
+    gap: 12px;
+}
+
+.vslider__dot {
+    width: 10px;
+    height: 10px;
+    background: rgba(255,255,255,0.3);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.3s;
+    padding: 0;
+}
+
+.vslider__dot:hover { background: rgba(255,255,255,0.6); }
+
+.vslider__dot--active {
+    background: #ff6b35; /* สีแบรนด์ */
+    transform: scale(1.3);
+}
+
+/* --- Loading State --- */
+.vslider-loading {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    color: #ff6b35;
+    font-weight: 700;
+    letter-spacing: 4px;
+    font-size: 0.8rem;
+    gap: 20px;
+}
+
+.loader {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255,107,53,0.1);
+    border-top: 3px solid #ff6b35;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* --- Responsive Fix for Mobile --- */
+@media (max-width: 768px) {
+    .vslider__arrow { display: none; } /* ซ่อนลูกศรบนมือถือ (ใช้ Swipe เอา) */
+    .vslider__content { bottom: 60px; padding: 0 20px; }
+    .vslider__dots { bottom: 20px; }
+}
