@@ -84,7 +84,7 @@ function UserWorkForm() {
     uploadData.append('file', file);
 
     try {
-      const res = await axios.post('http://localhost:5000/api/upload/single', uploadData, {
+      const res = await axios.post(`${CONFIG.API_BASE_URL}/api/upload/single`, uploadData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setFormData(prev => ({ ...prev, mediaUrl: res.data.url }));
