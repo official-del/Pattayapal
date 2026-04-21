@@ -1,0 +1,73 @@
+# ====================================================
+# Pattayapal Portfolio - Docker Compose
+# ====================================================
+# วิธีใช้:
+#   รัน: docker-compose up -d --build
+#   หยุด: docker-compose down
+# ====================================================
+
+version: '3.9'
+
+services:
+
+  # ── Backend (Node.js + Express + Socket.io) ──
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: pattayapal-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      # ⚠️ ห้ามใส่ค่าจริงที่นี่! ดึงจาก .env file แทน
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - GCP_BUCKET_NAME=${GCP_BUCKET_NAME}
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - EASYSLIP_API_KEY=${EASYSLIP_API_KEY}
+      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - PAYMENT_RECEIVER_NAME=${PAYMENT_RECEIVER_NAME}
+    volumes:
+      # Mount GCP credentials (Service Account Key)
+      - ./Backend/gcp-key.json:/app/gcp-key.json:ro
+      # Uploads folder (local fallback)
+      - backend_uploads:/app/uploads
+    networks:
+      - pattayapal-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Frontend (React/Vite + Nginx) ──
+  frontend:
+    build:
+      context: ./Production
+      dockerfile: Dockerfile
+      args:
+        # URL ของ Backend API ที่ Browser จะเรียกหา
+        VITE_API_URL: https://pattayapal.com
+    container_name: pattayapal-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - pattayapal-network
+
+# ── Volumes ──
+volumes:
+  backend_uploads:
+    driver: local
+
+# ── Network ──
+networks:
+  pattayapal-network:
+    driver: bridge

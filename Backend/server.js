@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -159,6 +160,9 @@ app.use(express.urlencoded({ limit: '100mb', extended: true }));
 // Attach io to app to use in controllers
 app.set('io', io);
 
+// ✅ Serve static files from the 'dist' directory (Frontend Build)
+app.use(express.static(path.join(__dirname, 'dist')));
+
 // ✅ เปิดให้หน้าบ้านดึงไฟล์ในโฟลเดอร์ uploads ไปแสดงผลได้
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -178,6 +182,23 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/wallet', walletRoutes);
+
+// ✅ Health Check สำหรับ Docker / Load Balancer
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
+
+// ✅ Catch-all route เพื่อรองรับ SPA (React Router) 
+// ต้องอยู่หลัง API Routes ทั้งหมดเสมอ!
+app.get('*', (req, res) => {
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  // เช็คว่ามีไฟล์ dist หรือไม่ (ป้องกัน Error กรณีรันใน dev แล้วยังไม่ได้ build)
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Backend is running, but Frontend build (dist) not found. Please run npm run build.');
+  }
+});
 
 
 // ==========================================
@@ -222,5 +243,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 API Base URL: http://localhost:${PORT}/api`);
+  console.log(`🌐 Production mode: Ready to serve API and Frontend`);
 });

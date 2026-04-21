@@ -4,11 +4,18 @@
 
 const isProd = import.meta.env.PROD;
 
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+  if (import.meta.env.PROD) return window.location.origin;
+  return 'http://localhost:5000';
+};
+
+const baseUrl = getBaseUrl();
+
 export const CONFIG = {
-  // Use VITE_ prefix for env variables in Vite
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
-  API_URL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api`,
-  SOCKET_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+  API_BASE_URL: baseUrl,
+  API_URL: `${baseUrl}/api`,
+  SOCKET_URL: baseUrl,
 };
 
 export default CONFIG;
