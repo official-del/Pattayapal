@@ -142,10 +142,10 @@ function Discovery() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '25px' }}>
               <FiZap color="var(--accent)" size={20} />
-              <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '6px', fontSize: '0.8rem', textTransform: 'uppercase' }}>Talent Discovery</span>
+              <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem', textTransform: 'uppercase' }}>Talent Discovery</span>
             </div>
-            <h1 style={{ fontSize: '5rem', fontWeight: '700', margin: 0, letterSpacing: '-3px', lineHeight: 0.9 }}>DISCOVER THE FUTURE OF <span style={{ color: 'var(--accent)' }}>CREATION</span></h1>
-            <p style={{ color: '#555', marginTop: '30px', fontSize: '1.2rem', fontWeight: '500', maxWidth: '700px', margin: '30px auto' }}>เชื่อมต่อกับครีเอเตอร์ระดับแนวหน้าของพัทยา ค้นหาพาร์ทเนอร์ที่ใช่สำหรับโปรเจกต์ถัดไปของคุณ</p>
+            <h1 className="discovery-title" style={{ fontWeight: '700', margin: 0, letterSpacing: '-2px', lineHeight: 0.9 }}>DISCOVER THE FUTURE OF <span style={{ color: 'var(--accent)' }}>CREATION</span></h1>
+            <p style={{ color: '#555', marginTop: '30px', fontSize: 'clamp(0.9rem, 3vw, 1.2rem)', fontWeight: '500', maxWidth: '700px', margin: '30px auto' }}>เชื่อมต่อกับครีเอเตอร์ระดับแนวหน้าของพัทยา ค้นหาพาร์ทเนอร์ที่ใช่สำหรับโปรเจกต์ถัดไปของคุณ</p>
           </motion.div>
 
           {/* 🔍 Global Professional Search Engine */}
@@ -155,20 +155,21 @@ function Discovery() {
             transition={{ delay: 0.3 }}
             style={{ position: 'relative', maxWidth: '800px', margin: '40px auto 0' }}
           >
-            <div className="discovery-search-box glass" style={{ padding: '8px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center' }}>
-              <div style={{ padding: '0 25px' }}><FiSearch size={22} color="var(--accent)" /></div>
+            <div className="discovery-search-box glass">
+              <div className="search-icon-wrapper" style={{ padding: '0 25px' }}><FiSearch size={22} color="var(--accent)" /></div>
               <input 
                 type="text" 
+                className="discovery-input"
                 placeholder="ค้นหาทักษะ, ตำแหน่งงาน หรือชื่อฟรีแลนซ์..." 
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: '1.1rem', padding: '18px 0', outline: 'none', fontWeight: '500' }}
               />
               {searchLoading && <FiLoader size={20} className="spin" style={{ marginRight: '20px' }} />}
               <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '15px 35px', borderRadius: '40px', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 0 20px var(--accent-glow)' }}
+                className="discovery-btn"
+                onClick={() => handleSearch(searchQuery)}
               >
                 INITIALIZE SEARCH
               </motion.button>
@@ -233,7 +234,7 @@ function Discovery() {
             variants={containerVariants} 
             initial="hidden" 
             animate="show"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '30px' }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '30px' }}
           >
             {filteredFreelancers.map((freelancer) => (
               <motion.div 
@@ -337,7 +338,28 @@ function Discovery() {
         .filter-inactive { background: rgba(255,255,255,0.02); color: #444; border-color: rgba(255,255,255,0.05); }
         .filter-inactive:hover { background: rgba(255,255,255,0.05); color: #888; }
 
-        input::placeholder { color: #222; }
+        input::placeholder { color: #222; text-overflow: ellipsis; }
+
+        /* Responsive Hero Styles */
+        .discovery-title { font-size: clamp(2.5rem, 8vw, 5rem); }
+        .discovery-search-box {
+          padding: 8px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; background: rgba(255,255,255,0.02);
+        }
+        .discovery-input {
+          flex: 1; background: none; border: none; color: #fff; font-size: 1.1rem; padding: 18px 0; outline: none; font-weight: 500; min-width: 0;
+        }
+        .discovery-btn {
+          background: var(--accent); color: #fff; border: none; padding: 15px 35px; border-radius: 40px; font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 0 20px var(--accent-glow); flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+          .discovery-search-box { 
+            flex-direction: column; border-radius: 30px; padding: 20px 15px; gap: 15px; 
+          }
+          .search-icon-wrapper { display: none; }
+          .discovery-input { text-align: center; padding: 5px 0; font-size: 1rem; width: 100%; box-sizing: border-box; }
+          .discovery-btn { width: 100%; padding: 18px; border-radius: 20px; }
+        }
       `}</style>
 
     </div>

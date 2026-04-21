@@ -1456,7 +1456,8 @@ function Messenger() {
              backdrop-filter: blur(20px);
           }
           .call-card {
-             width: 400px;
+             width: 100%;
+             max-width: 400px;
              padding: 60px 40px;
              border-radius: 40px;
              text-align: center;

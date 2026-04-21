@@ -362,7 +362,7 @@ function UserProfile() {
             <div className="profile-content-grid" style={{ gap: '30px' }}>
 
                {/* LEFT COLUMN: INFO BLOCKS */}
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', minWidth: 0 }}>
 
                   {/* 🛡️ RANK & PROGRESS CARD [PREMIUM] */}
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass" style={{ padding: '30px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
@@ -425,9 +425,9 @@ function UserProfile() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><FiGlobe /></div>
-                           <div>
+                           <div style={{ minWidth: 0 }}>
                               <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700' }}>PERSONAL SITE</div>
-                              <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--indigo)' }}>pattaya-pal.com/{profile.username}</div>
+                              <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--indigo)', wordBreak: 'break-all' }}>pattaya-pal.com/{profile.username}</div>
                            </div>
                         </div>
                      </div>
@@ -947,12 +947,12 @@ function UserProfile() {
             }
 
             @media (max-width: 992px) {
-               .profile-header-grid { grid-template-columns: 1fr; text-align: center; justify-items: center; }
+               .profile-header-grid { grid-template-columns: minmax(0, 1fr); text-align: center; justify-items: center; }
                .profile-header-grid > div:first-child { flex-direction: column; align-items: center !important; }
                .profile-header-grid > div:last-child { justify-content: center; flex-wrap: wrap; }
-               .profile-content-grid { grid-template-columns: 1fr; }
-               .profile-stats-grid { grid-template-columns: 1fr; text-align: center; }
-               .edit-row-grid, .edit-skills-grid { grid-template-columns: 1fr; }
+               .profile-content-grid { grid-template-columns: minmax(0, 1fr); }
+               .profile-stats-grid { grid-template-columns: minmax(0, 1fr); text-align: center; }
+               .edit-row-grid, .edit-skills-grid { grid-template-columns: minmax(0, 1fr); }
             }
 
             .profile-main-container {

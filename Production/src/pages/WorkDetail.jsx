@@ -349,7 +349,7 @@ function WorkDetail() {
             <h3 style={{ fontSize: '2.5rem', fontWeight: '700', color: '#fff', letterSpacing: '-1px' }}>You Might Like</h3>
             <p style={{ color: '#222', fontWeight: '700', letterSpacing: '4px', fontSize: '1.2rem', marginTop: '10px' }}>More Like This</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '40px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '40px' }}>
             {recommendedWorks.map(rec => ( // <--- ตัวแปร rec จะถูกนิยามตรงนี้
               <motion.div whileHover={{ y: -10 }} key={rec._id}>
                 <Link to={`/works/${rec._id}`} style={{ textDecoration: 'none' }}>

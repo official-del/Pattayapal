@@ -41,7 +41,7 @@ function ServiceGrid() {
       whileInView="show"
       viewport={{ once: true }}
       style={{
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))',
         gap: '25px', padding: '20px 0'
       }}
     >

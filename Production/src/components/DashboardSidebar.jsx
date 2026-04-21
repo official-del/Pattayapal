@@ -113,7 +113,7 @@ function DashboardSidebar({ show, onClose }) {
         </h1>
       </div>
 
-      <nav style={{ flex: 1 }}>
+      <nav style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', paddingRight: '15px' }} className="sidebar-nav-scroll">
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {menuItems.map((item) => (
             <li key={item.name} style={{ marginBottom: '10px' }}>
@@ -170,6 +170,8 @@ function DashboardSidebar({ show, onClose }) {
         @media (min-width: 1025px) {
           .dashboard-sidebar { transform: none !important; }
         }
+        .sidebar-nav-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-nav-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
       `}</style>
     </aside>
   );

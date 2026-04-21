@@ -60,9 +60,20 @@ function Navbar() {
     return () => socket.off('new_notification');
   }, [currentToken, userInfo?._id, socket]);
 
-  // Dispatch event when mobile menu opens/closes
+  // Dispatch event when mobile menu opens/closes and toggle body scroll
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('navbarToggle', { detail: isOpen }));
+    
+    // Lock body scroll when mobile menu is open
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOpen]);
 
   const handleLogout = () => {
@@ -310,6 +321,10 @@ function Navbar() {
         .avatar-main img { width: 100%; height: 100%; object-fit: cover; }
         .user-meta h4 { margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; }
         .user-meta p { margin: 4px 0 0; font-size: 0.7rem; color: #444; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+
+        .sidebar-scrollable { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding-right: 10px; }
+        .sidebar-scrollable::-webkit-scrollbar { width: 4px; }
+        .sidebar-scrollable::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 
         .section-label { font-size: 0.65rem; color: #333; font-weight: 700; letter-spacing: 4px; margin-bottom: 20px; text-transform: uppercase; }
         .mega-nav-new ul { list-style: none; padding: 0; margin: 0; }

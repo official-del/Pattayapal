@@ -192,7 +192,7 @@ function Friends() {
                 </div>
 
                 {searchResults.length > 0 ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '25px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 400px), 1fr))', gap: '25px' }}>
                     {searchResults.map(user => {
                       const isFriend = friendIds.has(user._id);
                       const isSent = sentRequests.has(user._id);

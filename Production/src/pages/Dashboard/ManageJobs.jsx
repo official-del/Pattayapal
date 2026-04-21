@@ -229,8 +229,8 @@ function ManageJobs() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} key={job._id} className="glass job-card-grid" style={{
               borderRadius: '40px', padding: '45px', border: '1px solid rgba(255,255,255,0.03)', alignItems: 'center'
             }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
                   <StatusBadge status={job.status} />
                   <span style={{ color: '#222', fontSize: '0.75rem', fontWeight: '700', letterSpacing: '1px' }}>#{job._id.slice(-8).toUpperCase()}</span>
                   <span style={{ color: '#333', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}><FiCalendar /> {new Date(job.createdAt).toLocaleDateString()}</span>
@@ -255,7 +255,7 @@ function ManageJobs() {
                 <p style={{ color: '#555', fontSize: '1.05rem', lineHeight: '1.7', marginBottom: '25px', maxWidth: '850px', fontWeight: '500' }}>{job.description}</p>
 
                 {job.location && job.location.address && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '35px', background: 'rgba(255,255,255,0.02)', padding: '12px 20px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '35px', background: 'rgba(255,255,255,0.02)', padding: '12px 20px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', boxSizing: 'border-box', width: '100%' }}>
                     <FiMapPin color="var(--accent)" style={{ flexShrink: 0 }} />
                     <span style={{ fontSize: '0.85rem', color: '#888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.location.address}</span>
                     {job.location.lat && job.location.lng && (
@@ -371,7 +371,7 @@ function ManageJobs() {
         }
 
         @media (max-width: 992px) {
-          .job-card-grid { grid-template-columns: 1fr; gap: 30px; padding: 30px !important; }
+          .job-card-grid { grid-template-columns: minmax(0, 1fr); gap: 30px; padding: 30px !important; }
           .job-action-card {
             border-left: none; padding-left: 0; text-align: left !important;
             align-items: flex-start !important; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 30px;
