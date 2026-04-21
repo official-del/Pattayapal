@@ -19,9 +19,7 @@
 /* ── Root ── */
 .ws-root {
   background: #000;
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
-  margin-right: calc(-50vw + 50%);
+  width: 100%;
   padding: 56px 0 0;
   font-family: 'DM Sans', sans-serif;
 }

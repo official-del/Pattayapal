@@ -424,7 +424,7 @@ function Messenger() {
   );
 
   return (
-    <div className="messenger-root">
+    <div className={`messenger-root ${currentChat ? 'chat-active' : ''}`}>
        {/* 🧩 PANEL 1: Global Navigation (Far Left) */}
        <div className="nav-panel">
           <div className="nav-top">
@@ -1446,7 +1446,7 @@ function Messenger() {
              position: fixed;
              top: 0;
              left: 0;
-             width: 100vw;
+             width: 100%;
              height: 100vh;
              background: rgba(0,0,0,0.9);
              z-index: 9999;
@@ -1566,7 +1566,7 @@ function Messenger() {
            .lightbox-overlay {
              position: fixed;
              top: 0; left: 0; 
-             width: 100vw; height: 100vh;
+             width: 100%; height: 100vh;
              background: rgba(0,0,0,0.92);
              backdrop-filter: blur(15px);
              z-index: 10000;

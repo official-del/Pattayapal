@@ -255,9 +255,9 @@ function ManageJobs() {
                 <p style={{ color: '#555', fontSize: '1.05rem', lineHeight: '1.7', marginBottom: '25px', maxWidth: '850px', fontWeight: '500' }}>{job.description}</p>
 
                 {job.location && job.location.address && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '35px', background: 'rgba(255,255,255,0.02)', padding: '12px 20px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', width: 'fit-content' }}>
-                    <FiMapPin color="var(--accent)" />
-                    <span style={{ fontSize: '0.85rem', color: '#888', maxWidth: '500px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.location.address}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '35px', background: 'rgba(255,255,255,0.02)', padding: '12px 20px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', width: '100%' }}>
+                    <FiMapPin color="var(--accent)" style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.85rem', color: '#888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.location.address}</span>
                     {job.location.lat && job.location.lng && (
                        <a 
                          href={`https://www.google.com/maps?q=${job.location.lat},${job.location.lng}`} 

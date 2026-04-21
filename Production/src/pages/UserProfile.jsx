@@ -469,7 +469,7 @@ function UserProfile() {
                         <motion.div key={activeTab} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} style={{ padding: '40px' }}>
 
                            {activeTab === 'portfolio' && (
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '30px' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '30px' }}>
                                  {works.length > 0 ? works.map(w => (
                                     <motion.div whileHover={{ y: -10 }} key={w._id} onClick={() => navigate(`/works/${w._id}`)} style={{ cursor: 'pointer', borderRadius: '30px', overflow: 'hidden', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)' }}>
                                        <div style={{ height: '240px', overflow: 'hidden', position: 'relative', background: '#111' }}>
@@ -509,7 +509,7 @@ function UserProfile() {
                            )}
 
                            {activeTab === 'packages' && (
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '30px' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 400px), 1fr))', gap: '30px' }}>
                                  {profile.servicePackages?.map((pkg, i) => (
                                     <div key={i} className="glass" style={{ padding: '40px', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
                                        <div style={{
@@ -567,7 +567,7 @@ function UserProfile() {
                                  </div>
 
                                  {/* PERSONAL DATA & TAGS (Small Grid below) */}
-                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '40px' }}>
+                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '30px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '40px' }}>
                                     <div className="glass" style={{ padding: '30px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                        <h5 style={{ color: '#555', margin: '0 0 15px', letterSpacing: '1px', fontSize: '0.7rem', fontWeight: '700' }}>PERSONAL DATA</h5>
                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>

@@ -135,7 +135,8 @@
 /* ── EDITORIAL GRID ── */
 .works-editorial-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  /* ใช้ min(100%, 360px) เพื่อให้หดลงได้บนมือถือเล็กๆ */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
   gap: 50px 30px;
   padding-bottom: 100px;
 }

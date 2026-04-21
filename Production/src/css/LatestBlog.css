@@ -51,14 +51,14 @@
     border-color: #e74c3c;
 }
 
-/* ───── 3. BLOG GRID ───── */
-.blog-modern-grid {
+/* ── 4. Main Grid Layout ── */
+.blog-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
     gap: 40px;
-}
-
-/* ───── 4. ARTICLE CARD (Seamless & Sharp) ───── */
+    position: relative;
+    z-index: 10;
+}/* ───── 4. ARTICLE CARD (Seamless & Sharp) ───── */
 .blog-article-card {
     background: transparent;
     transition: 0.4s ease;
