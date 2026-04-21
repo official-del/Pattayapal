@@ -5,7 +5,6 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
-import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -141,7 +140,7 @@ app.use(helmet({
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  standardHeaders: true, 
+  standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests from this IP, please try again after 15 minutes' }
 });
