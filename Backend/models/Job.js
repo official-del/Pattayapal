@@ -39,6 +39,11 @@ const jobSchema = new mongoose.Schema({
     enum: ['unpaid', 'escrow_held', 'released', 'refunded'], 
     default: 'unpaid' 
   },
+  location: {
+    lat: Number,
+    lng: Number,
+    address: String
+  },
   createdAt: { 
     type: Date, 
     default: Date.now 

@@ -13,8 +13,22 @@ const messageSchema = new mongoose.Schema({
   },
   text: {
     type: String,
-    required: true
+    required: false
   },
+  messageType: {
+    type: String,
+    enum: ['text', 'image', 'file', 'audio', 'call_log', 'location'],
+    default: 'text'
+  },
+  attachments: [
+    {
+      url: { type: String },
+      fileType: { type: String },
+      fileName: { type: String },
+      fileSize: { type: Number }
+    }
+  ],
+  callDuration: { type: Number }, // in seconds
   isRead: {
     type: Boolean,
     default: false

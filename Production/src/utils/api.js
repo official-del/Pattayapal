@@ -155,8 +155,8 @@ export const chatAPI = {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => res.data),
 
-  getMyConversations: (token) =>
-    API.get('/chat/conversations', {
+  getMyConversations: (token, filter = null) =>
+    API.get(`/chat/conversations${filter ? `?filter=${filter}` : ''}`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => res.data),
 
@@ -167,11 +167,23 @@ export const chatAPI = {
 
   sendMessage: (data, token) =>
     API.post('/chat/message', data, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { 
+        Authorization: `Bearer ${token}`
+      }
     }).then(res => res.data),
 
   markAsRead: (conversationId, token) =>
     API.patch(`/chat/${conversationId}/read`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => res.data),
+
+  toggleArchive: (conversationId, archived, token) =>
+    API.patch(`/chat/${conversationId}/archive`, { archived }, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => res.data),
+
+  createGroup: (data, token) =>
+    API.post('/chat/groups', data, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => res.data)
 };

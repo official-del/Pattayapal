@@ -87,6 +87,32 @@ io.on('connection', (socket) => {
     socket.to(data.roomId).emit('user_stop_typing', { userId: data.userId });
   });
 
+  // 📞 WebRTC Signaling for Video/Voice Calls
+  socket.on('call_user', (data) => {
+    // data: { to: recipientId, offer, from, name, type: 'video' | 'voice' }
+    io.to(data.to).emit('call_incoming', {
+      offer: data.offer,
+      from: data.from,
+      name: data.name,
+      type: data.type
+    });
+  });
+
+  socket.on('answer_call', (data) => {
+    // data: { to: callerId, answer }
+    io.to(data.to).emit('call_answered', { answer: data.answer });
+  });
+
+  socket.on('ice_candidate', (data) => {
+    // data: { to: otherPartyId, candidate }
+    io.to(data.to).emit('ice_candidate', { candidate: data.candidate });
+  });
+
+  socket.on('end_call', (data) => {
+    // data: { to: otherPartyId }
+    io.to(data.to).emit('call_ended');
+  });
+
   socket.on('disconnect', async () => {
     const userId = userSocketMap.get(socket.id);
     if (userId) {
@@ -185,7 +211,10 @@ const createFirstAdmin = async () => {
 // ==========================================
 // 4. ERROR HANDLING (ตัวดักจับ Error สุดท้าย)
 // ==========================================
+import fs from 'fs';
 app.use((err, req, res, next) => {
+  const errorDetails = `[${new Date().toISOString()}] ${req.method} ${req.url}\n${err.stack}\n\n`;
+  fs.appendFileSync(path.join(__dirname, 'error_log.txt'), errorDetails);
   console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });

@@ -7,7 +7,7 @@ import { updateUserStats } from '../utils/rankHandler.js';
 // Create Job
 export const createJob = async (req, res) => {
   try {
-    const { freelancerId, title, description, budget } = req.body;
+    const { freelancerId, title, description, budget, location } = req.body;
     const employerId = req.user.id;
 
     if (employerId === freelancerId) {
@@ -32,7 +32,8 @@ export const createJob = async (req, res) => {
       description,
       budget,
       escrowAmount: budget,
-      paymentStatus: 'escrow_held'
+      paymentStatus: 'escrow_held',
+      location
     });
 
     await newJob.save();

@@ -3,7 +3,7 @@ import { jobsAPI } from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
 import { getFullUrl } from '../../utils/mediaUtils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBriefcase, FiCheckCircle, FiXCircle, FiTruck, FiMail, FiSend, FiCalendar, FiShield, FiActivity, FiZap, FiLayers } from 'react-icons/fi';
+import { FiBriefcase, FiCheckCircle, FiXCircle, FiTruck, FiMail, FiSend, FiCalendar, FiShield, FiActivity, FiZap, FiLayers, FiMapPin } from 'react-icons/fi';
 import { CoinIcon, CoinBadge } from '../../components/CoinIcon';
 
 const PROGRESS_STAGES = ['AWAITING_START', 'IN_PROGRESS', 'SUBMITTED', 'REVISING', 'COMPLETED'];
@@ -252,7 +252,24 @@ function ManageJobs() {
                   </div>
                 </div>
 
-                <p style={{ color: '#555', fontSize: '1.05rem', lineHeight: '1.7', marginBottom: '35px', maxWidth: '850px', fontWeight: '500' }}>{job.description}</p>
+                <p style={{ color: '#555', fontSize: '1.05rem', lineHeight: '1.7', marginBottom: '25px', maxWidth: '850px', fontWeight: '500' }}>{job.description}</p>
+
+                {job.location && job.location.address && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '35px', background: 'rgba(255,255,255,0.02)', padding: '12px 20px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', width: 'fit-content' }}>
+                    <FiMapPin color="var(--accent)" />
+                    <span style={{ fontSize: '0.85rem', color: '#888', maxWidth: '500px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.location.address}</span>
+                    {job.location.lat && job.location.lng && (
+                       <a 
+                         href={`https://www.google.com/maps?q=${job.location.lat},${job.location.lng}`} 
+                         target="_blank" 
+                         rel="noreferrer"
+                         style={{ color: 'var(--accent)', fontSize: '0.75rem', fontWeight: '700', textDecoration: 'none', marginLeft: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}
+                       >
+                         OPEN MAPS
+                       </a>
+                    )}
+                  </div>
+                )}
 
                 {job.status === 'accepted' && (
                   <div style={{ marginBottom: '40px' }}>

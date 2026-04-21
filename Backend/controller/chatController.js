@@ -2,8 +2,9 @@ import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
+import { uploadToGCS } from '../utils/gcs.js';
 
-// ── เริ่มต้นห้องแชท หรือ ดึงห้องแชทที่มีอยู่แล้ว ──
+// ── เริ่มต้นห้องแชท หรือ ดึงห้องแชทที่มีอยู่แล้ว (1:1) ──
 export const getOrCreateConversation = async (req, res) => {
   try {
     const { receiverId } = req.body;
@@ -13,14 +14,19 @@ export const getOrCreateConversation = async (req, res) => {
       return res.status(400).json({ message: "ไม่สามารถคุยกับตัวเองได้" });
     }
 
-    // ค้นหาห้องแชทที่มีทั้ง sender และ receiver
+    // ค้นหาห้องแชทที่มีทั้ง sender และ receiver (เฉพาะแบบ 1:1)
     let conversation = await Conversation.findOne({
-      participants: { $all: [senderId, receiverId] }
+      isGroup: false,
+      "participants.user": { $all: [senderId, receiverId] }
     });
 
     if (!conversation) {
       conversation = new Conversation({
-        participants: [senderId, receiverId]
+        participants: [
+          { user: senderId },
+          { user: receiverId }
+        ],
+        isGroup: false
       });
       await conversation.save();
     }
@@ -35,14 +41,35 @@ export const getOrCreateConversation = async (req, res) => {
 export const getMyConversations = async (req, res) => {
   try {
     const userId = req.user.id;
-    const conversations = await Conversation.find({
-      participants: userId
-    })
-      .populate('participants', 'name profileImage profession')
+    const { filter } = req.query; // 'archived', 'unread', or null (default: all non-archived)
+
+    let query = { "participants.user": userId };
+
+    const conversations = await Conversation.find(query)
+      .populate('participants.user', 'name profileImage profession isOnline lastSeen')
       .populate('lastMessage')
       .sort({ updatedAt: -1 });
 
-    res.status(200).json(conversations);
+    // Filter results based on user-specific states in memory (or complex aggregation)
+    let filtered = conversations.map(c => {
+      const myState = c.participants.find(p => p.user._id.toString() === userId);
+      return { ...c._doc, myState };
+    });
+
+    if (filter === 'archived') {
+      filtered = filtered.filter(c => c.myState?.isArchived);
+    } else {
+      filtered = filtered.filter(c => !c.myState?.isArchived);
+      if (filter === 'unread') {
+        filtered = filtered.filter(c => 
+          c.lastMessage && 
+          !c.lastMessage.isRead && 
+          c.lastMessage.sender.toString() !== userId
+        );
+      }
+    }
+
+    res.status(200).json(filtered);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -98,13 +125,45 @@ export const markMessagesAsRead = async (req, res) => {
 // ── ส่งข้อความและบันทึกลง Database ──
 export const sendMessage = async (req, res) => {
   try {
-    const { conversationId, text } = req.body;
+    const { conversationId, text, messageType } = req.body;
     const senderId = req.user.id;
+    let attachments = [];
+
+    // 🔥 จัดการไฟล์แนบ (ถ้ามีผ่าน Multer)
+    if (req.files && req.files.length > 0) {
+      const uploadPromises = req.files.map(async (file) => {
+        try {
+          const url = await uploadToGCS(file);
+          return {
+            url,
+            fileType: file.mimetype,
+            fileName: file.originalname,
+            fileSize: file.size
+          };
+        } catch (uploadErr) {
+          console.error("GCS Upload Error for file:", file.originalname, uploadErr);
+          throw uploadErr;
+        }
+      });
+      attachments = await Promise.all(uploadPromises);
+    }
+
+    // Determine message type smartly
+    let detectedType = 'text';
+    if (attachments.length > 0) {
+      const allImages = attachments.every(a => a.fileType.startsWith('image/'));
+      const allAudio = attachments.every(a => a.fileType.startsWith('audio/'));
+      if (allImages) detectedType = 'image';
+      else if (allAudio) detectedType = 'audio';
+      else detectedType = 'file';
+    }
 
     const newMessage = new Message({
       conversationId,
       sender: senderId,
-      text
+      text,
+      messageType: messageType || detectedType,
+      attachments
     });
 
     await newMessage.save();
@@ -112,34 +171,97 @@ export const sendMessage = async (req, res) => {
     // อัปเดตข้อความล่าสุดใน Conversation
     const conversation = await Conversation.findByIdAndUpdate(conversationId, {
       lastMessage: newMessage._id
-    });
+    }, { new: true });
 
-    // 🔔 สร้างการแจ้งเตือน (Notification)
-    const recipientId = conversation.participants.find(p => p.toString() !== senderId.toString());
+    if (!conversation) {
+      console.error("Conversation not found after update:", conversationId);
+      return res.status(404).json({ message: "ไม่พบห้องสนทนา" });
+    }
+
+    // 🔔 สร้างการแจ้งเตือน (Notification) สำหรับทุกคนในกลุ่มยกเว้นตัวเอง
+    const recipients = conversation.participants.filter(p => p.user && p.user.toString() !== senderId.toString());
     const sender = await User.findById(senderId).select('name profileImage');
 
-    try {
-      const note = new Notification({
-        recipient: recipientId,
-        sender: senderId,
-        type: 'message',
-        referenceId: conversationId,
-        text: `${sender.name} ส่งข้อความถึงคุณ: "${text.length > 20 ? text.substring(0, 20) + '...' : text}"`,
-        link: '/messenger'
-      });
-      await note.save();
+    if (sender) {
+      recipients.forEach(async (r) => {
+        try {
+          if (!r.user) return;
+          
+          const noteText = text 
+            ? (text.length > 20 ? text.substring(0, 20) + '...' : text) 
+            : (attachments.length > 0 ? `[${attachments[0].fileType.split('/')[0]}]` : '[Message]');
 
-      // ส่งผ่าน Socket
-      const io = req.app.get('io');
-      if (io) {
-        io.to(recipientId.toString()).emit('new_notification', {
-          ...note._doc,
-          sender: { name: sender.name, profileImage: sender.profileImage }
-        });
-      }
-    } catch (err) { console.error("Chat Notification Error:", err); }
+          const note = new Notification({
+            recipient: r.user,
+            sender: senderId,
+            type: 'message',
+            referenceId: conversationId,
+            text: `${sender.name}: ${noteText}`,
+            link: '/messenger'
+          });
+          await note.save();
+
+          const io = req.app.get('io');
+          if (io) {
+            io.to(r.user.toString()).emit('new_notification', {
+              ...note._doc,
+              sender: { name: sender.name, profileImage: sender.profileImage }
+            });
+          }
+        } catch (err) { console.error("Chat Notification Error:", err); }
+      });
+    }
 
     res.status(201).json(newMessage);
+  } catch (err) {
+    console.error("Send Message FATAL Error:", err);
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const errorDetails = `[${new Date().toISOString()}] FATAL Error in sendMessage:\n${err.stack}\n\n`;
+      fs.appendFileSync(path.resolve('./error_log.txt'), errorDetails);
+    } catch (logErr) {
+      console.error("Failed to log fatal error to file", logErr);
+    }
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── จัดการสถานะห้องแชท (Archive/Unarchive) ──
+export const toggleArchiveConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { archived } = req.body;
+    const userId = req.user.id;
+
+    await Conversation.updateOne(
+      { _id: conversationId, "participants.user": userId },
+      { $set: { "participants.$.isArchived": archived } }
+    );
+
+    res.status(200).json({ message: archived ? 'Archived' : 'Unarchived' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── สร้างห้องแชทกลุ่ม ──
+export const createGroup = async (req, res) => {
+  try {
+    const { name, members } = req.body; // members = array of user IDs
+    const creatorId = req.user.id;
+
+    const participants = [creatorId, ...members].map(id => ({ user: id }));
+
+    const conversation = new Conversation({
+      participants,
+      isGroup: true,
+      groupName: name,
+      admins: [creatorId]
+    });
+
+    await conversation.save();
+    res.status(201).json(conversation);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

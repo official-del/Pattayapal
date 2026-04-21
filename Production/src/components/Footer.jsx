@@ -78,8 +78,8 @@ function Footer() {
             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#fff', marginBottom: '35px' }}>About</h3>
             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '15px' }}>
               {[
-                { n: 'My Profile', p: '/profile/me' },
-                { n: 'Our Works', p: '/works' },
+                { n: 'My Profile', p: '/profile/' },
+                { n: 'User Works', p: '/works' },
                 { n: 'Rankings Hub', p: '/rankings' },
                 { n: 'Privacy Policy', p: '/privacy' }
               ].map(item => (
