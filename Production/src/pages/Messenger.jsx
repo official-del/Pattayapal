@@ -548,17 +548,22 @@ function Messenger() {
                    </div>
                    
                    <div className="chat-actions">
-                      <button className="icon-action-btn" onClick={() => startCall('voice')}><FiPhone /></button>
-                      <button className="icon-action-btn" onClick={() => startCall('video')}><FiVideo /></button>
-                      <div className="action-menu-container">
-                         <button className="icon-action-btn"><FiMoreVertical /></button>
-                         <div className="dropdown-content">
-                            <button onClick={handleToggleArchive}>
-                               <FiArchive /> {currentChat.myState?.isArchived ? 'Unarchive' : 'Archive'}
-                            </button>
-                         </div>
-                      </div>
-                   </div>
+                       <div className="action-menu-container">
+                          <button className="icon-action-btn"><FiMoreVertical /></button>
+                          <div className="dropdown-content">
+                             <button onClick={() => startCall('voice')}>
+                                <FiPhone /> Voice Call
+                             </button>
+                             <button onClick={() => startCall('video')}>
+                                <FiVideo /> Video Call
+                             </button>
+                             <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '5px 0' }} />
+                             <button onClick={handleToggleArchive}>
+                                <FiArchive /> {currentChat.myState?.isArchived ? 'Unarchive' : 'Archive'}
+                             </button>
+                          </div>
+                       </div>
+                    </div>
                 </div>
 
                 <div 
@@ -1127,7 +1132,7 @@ function Messenger() {
              position: relative;
           }
           .chat-header {
-             padding: 15px 280px 15px 25px; /* Offset to prevent overlap with global floating navbar dock */
+             padding: 15px 350px 15px 25px; /* Increased offset to prevent overlap with global floating navbar dock */
              border-bottom: 1px solid rgba(255,255,255,0.05);
              display: flex;
              justify-content: space-between;

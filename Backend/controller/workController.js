@@ -10,6 +10,8 @@ export const createWork = async (req, res) => {
     const workData = { ...req.body };
     const mediaUrl = req.body.mainImageUrl || req.body.mediaUrl;
 
+    console.log("🛠️ [CreateWork] Payload:", req.body);
+
     // 🎬 Video Logic
     if (req.body.type === 'video') {
       if (mediaUrl) {
@@ -22,22 +24,22 @@ export const createWork = async (req, res) => {
         const url = await uploadToGCS(req.files['mainImage'][0]);
         workData.mainImage = { url, publicId: path.basename(url) };
       } else if (mediaUrl) {
-        workData.mainImage = { url: mediaUrl, publicId: '' };
+        workData.mainImage = { url: mediaUrl, publicId: 'manual-upload' };
       }
     }
 
     // 📂 Album Logic
+    const finalAlbum = [];
     if (req.files && req.files['album']) {
-      const uploads = [];
       for (const file of req.files['album']) {
         const url = await uploadToGCS(file);
-        uploads.push({ url, publicId: path.basename(url) });
+        finalAlbum.push({ url, publicId: path.basename(url) });
       }
-      workData.album = uploads;
     }
+    workData.album = finalAlbum;
 
     // Handle Category safely
-    if (workData.category === '') delete workData.category;
+    if (workData.category === '' || workData.category === 'undefined') delete workData.category;
 
     const work = new Work({
       ...workData,
@@ -46,10 +48,11 @@ export const createWork = async (req, res) => {
     });
 
     await work.save();
+    console.log("✅ [CreateWork] Success:", work._id);
     res.status(201).json({ message: 'Created successfully', work });
   } catch (error) {
-    console.error("🔥 Create Work Error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("🔥 Create Work Error Details:", error);
+    res.status(500).json({ message: `Database Save Error: ${error.message}` });
   }
 };
 
@@ -58,6 +61,8 @@ export const updateWork = async (req, res) => {
   try {
     let work = await Work.findById(req.params.id);
     if (!work) return res.status(404).json({ message: 'Not found' });
+
+    console.log("🛠️ [UpdateWork] Payload:", req.body);
 
     // 🔐 Ownership Check
     const isOwner = work.createdBy.toString() === req.user.id;
@@ -82,14 +87,24 @@ export const updateWork = async (req, res) => {
         const url = await uploadToGCS(req.files['mainImage'][0]);
         updateData.mainImage = { url, publicId: path.basename(url) };
       } else if (mediaUrl) {
-        updateData.mainImage = { url: mediaUrl, publicId: '' };
+        updateData.mainImage = { url: mediaUrl, publicId: work.mainImage?.publicId || 'manual-update' };
       }
     }
 
     // 📂 Album Logic
     let finalAlbum = [];
     if (req.body.existingAlbum) {
-      finalAlbum = JSON.parse(req.body.existingAlbum);
+      try {
+        const parsed = JSON.parse(req.body.existingAlbum);
+        // Ensure every item has a publicId to satisfy Mongoose validation
+        finalAlbum = parsed.map(img => ({
+          ...img,
+          publicId: img.publicId || (img.url ? path.basename(img.url) : 'legacy-img')
+        }));
+      } catch (pErr) {
+        console.error("Album Parse Error:", pErr);
+        finalAlbum = [];
+      }
     }
 
     if (req.files && req.files['album']) {
@@ -101,13 +116,14 @@ export const updateWork = async (req, res) => {
     updateData.album = finalAlbum;
 
     // Handle Category safely
-    if (updateData.category === '') delete updateData.category;
+    if (updateData.category === '' || updateData.category === 'undefined') delete updateData.category;
 
-    const updated = await Work.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const updated = await Work.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+    console.log("✅ [UpdateWork] Success:", updated._id);
     res.status(200).json({ message: 'Updated', work: updated });
   } catch (error) {
-    console.error("🔥 Update Work Error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("🔥 Update Work Error Details:", error);
+    res.status(500).json({ message: `Update Error: ${error.message}` });
   }
 };
 
