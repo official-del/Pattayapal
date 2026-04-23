@@ -93,7 +93,6 @@ function Works() {
           {FILTERS.map(f => (
             <motion.button
               key={f}
-              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleFilter(f)}
               style={{
@@ -103,7 +102,10 @@ function Works() {
                 border: activeFilter === f ? 'none' : '1px solid rgba(255,255,255,0.05)',
                 fontSize: '0.85rem', fontWeight: '700', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', letterSpacing: '0.5px'
               }}
-              whileHover={activeFilter !== f ? { background: 'rgba(255,255,255,0.08)', color: '#fff' } : {}}
+              whileHover={{ 
+                scale: 1.02, 
+                ...(activeFilter !== f ? { background: 'rgba(255,255,255,0.08)', color: '#fff' } : {}) 
+              }}
             >
               {f}
             </motion.button>
