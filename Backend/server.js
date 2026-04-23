@@ -145,16 +145,25 @@ const apiLimiter = rateLimit({
   message: { message: 'Too many requests from this IP, please try again after 15 minutes' }
 });
 
+// ✅ Relaxed Rate Limiting for uploads and works to support large files
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500, // Increase to 500 requests per 15 mins for uploads
+  message: { message: 'Too many uploads from this IP, please try again later' }
+});
+
 app.use('/api/auth', apiLimiter);
-app.use('/api/upload', apiLimiter);
+app.use('/api/upload', uploadLimiter);
+app.use('/api/works', uploadLimiter);
 
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
 }));
 // ✅ ยุบรวม express.json ให้เหลือตัวเดียว และตั้ง Limit รับรูปขนาดใหญ่
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
+// ✅ ยุบรวม express.json ให้เหลือตัวเดียว และตั้ง Limit รับรูปขนาดใหญ่ (2GB)
+app.use(express.json({ limit: '2000mb' }));
+app.use(express.urlencoded({ limit: '2000mb', extended: true }));
 
 // Attach io to app to use in controllers
 app.set('io', io);

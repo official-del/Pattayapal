@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { worksAPI } from '../utils/api';
 import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
-import { FiArrowUpRight, FiClock, FiUser, FiLoader, FiGrid, FiLayers, FiSearch, FiZap, FiLayout, FiActivity } from 'react-icons/fi';
+import { FiArrowUpRight, FiClock, FiUser, FiLoader, FiGrid, FiLayers, FiSearch, FiZap, FiLayout, FiActivity, FiAlertTriangle } from 'react-icons/fi';
 import Footer from '../components/Footer';
 
 const FILTERS = ['All', 'Productions', 'Online Marketing', 'Graphic Design', 'Web Application', 'Motion Graphic', 'Photography'];
@@ -130,7 +130,7 @@ function Works() {
             animate="show"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(300px, 100%, 400px), 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))',
               gap: '40px 30px', paddingBottom: '100px'
             }}
           >
@@ -228,7 +228,7 @@ function Works() {
             <motion.button
               whileHover={{ scale: 1.02, background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff' }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setVisible(v => v + 3)}
+              onClick={() => setVisible(v => v + 6)}
               style={{
                 padding: '18px 50px', borderRadius: '15px', color: '#888',
                 fontWeight: '700', letterSpacing: '2px', fontSize: '0.85rem', cursor: 'pointer',

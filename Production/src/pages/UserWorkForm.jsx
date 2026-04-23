@@ -100,7 +100,7 @@ function UserWorkForm() {
   const handleVideoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 500 * 1024 * 1024) return alert('ไฟล์วิดีโอต้องมีขนาดไม่เกิน 500MB');
+    // Removed 500MB limit for unlimited uploads
 
     setVideoUploading(true);
     setUploadProgress(0);
@@ -126,12 +126,13 @@ function UserWorkForm() {
 
   const handleAlbumChange = (e) => {
     const files = Array.from(e.target.files);
-    const newImgs = files.map(file => ({
+    const newFiles = files.map(file => ({
       previewUrl: URL.createObjectURL(file),
       file: file,
+      type: file.type.startsWith('video') ? 'video' : 'image',
       isNew: true
     }));
-    setAlbumImages(prev => [...prev, ...newImgs]);
+    setAlbumImages(prev => [...prev, ...newFiles]);
   };
 
   const removeAlbumItem = (index) => {
@@ -317,24 +318,30 @@ function UserWorkForm() {
             )}
           </div>
 
-          {/* อัลบั้มรูปเพิ่มเติม (ถ้าเป็นภาพ) */}
-          {formData.type === 'image' && (
-            <div style={{ marginTop: '40px', padding: '40px', background: 'rgba(255,255,255,0.01)', borderRadius: '35px' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#444', marginBottom: '25px', letterSpacing: '1px' }}>รูปภาพในอัลบั้มเพิ่มเติม / ALBUM SCAN</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '15px' }}>
-                {albumImages.map((img, i) => (
-                  <div key={i} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '15px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <img src={img.previewUrl || getFullUrl(img.url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <button type="button" onClick={() => removeAlbumItem(i)} style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(239,68,68,0.8)', border: 'none', color: '#fff', width: '25px', height: '25px', borderRadius: '5px', cursor: 'pointer' }}><FiX /></button>
+          {/* อัลบั้มสื่อเพิ่มเติม (รองรับทั้งรูปภาพและวิดีโอ) */}
+          <div style={{ marginTop: '40px', padding: '40px', background: 'rgba(255,255,255,0.01)', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.03)' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#444', marginBottom: '25px', letterSpacing: '1px' }}>อัลบั้มสื่อเพิ่มเติม / ALBUM ASSETS</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '15px' }}>
+              {albumImages.map((item, i) => {
+                const isVid = item.type === 'video' || (item.url && (item.url.endsWith('.mp4') || item.url.endsWith('.mov') || item.url.endsWith('.webm')));
+                return (
+                  <div key={i} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '15px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', background: '#080808' }}>
+                    {isVid ? (
+                      <video src={item.previewUrl || getFullUrl(item.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <img src={item.previewUrl || getFullUrl(item.url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                    {isVid && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', pointerEvents: 'none' }}><FiVideo size={20} color="#fff" /></div>}
+                    <button type="button" onClick={() => removeAlbumItem(i)} style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(239,68,68,0.9)', border: 'none', color: '#fff', width: '25px', height: '25px', borderRadius: '5px', cursor: 'pointer', zIndex: 10 }}><FiX /></button>
                   </div>
-                ))}
-                <label style={{ aspectRatio: '1/1', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                  <input type="file" multiple hidden accept="image/*" onChange={handleAlbumChange} />
-                  <FiPlus color="#222" />
-                </label>
-              </div>
+                );
+              })}
+              <label style={{ aspectRatio: '1/1', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }} onMouseOver={e => e.currentTarget.style.borderColor='var(--accent)'} onMouseOut={e => e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}>
+                <input type="file" multiple hidden accept="image/*,video/*" onChange={handleAlbumChange} />
+                <FiPlus color="#222" size={24} />
+              </label>
             </div>
-          )}
+          </div>
 
           {/* บุ่มบันทึก */}
           <motion.button

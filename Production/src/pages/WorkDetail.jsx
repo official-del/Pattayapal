@@ -24,7 +24,8 @@ function WorkDetail() {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedImg, setSelectedImg] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState(null);
 
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
@@ -153,13 +154,28 @@ function WorkDetail() {
 
       {/* 🖼️ Full-Res Immersive Overlay */}
       <AnimatePresence>
-        {selectedImg && (
+        {selectedMedia && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setSelectedImg(null)}
+            onClick={() => setSelectedMedia(null)}
             style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.98)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", cursor: 'zoom-out', backdropFilter: 'blur(20px)' }}
           >
-            <motion.img initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} src={getFullUrl(selectedImg)} style={{ maxHeight: "90vh", maxWidth: "95vw", borderRadius: "10px", boxShadow: '0 0 100px rgba(0,0,0,1)' }} />
+            {selectedMedia.match(/\.(mp4|webm|mov)$/i) ? (
+              <motion.video 
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
+                src={getFullUrl(selectedMedia)} 
+                controls autoPlay 
+                style={{ maxHeight: "90vh", maxWidth: "95vw", borderRadius: "10px", boxShadow: '0 0 100px rgba(0,0,0,1)' }} 
+                onClick={(e) => e.stopPropagation()} 
+              />
+            ) : (
+              <motion.img 
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
+                src={getFullUrl(selectedMedia)} 
+                style={{ maxHeight: "90vh", maxWidth: "95vw", borderRadius: "10px", boxShadow: '0 0 100px rgba(0,0,0,1)' }} 
+                onClick={(e) => e.stopPropagation()} 
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -179,7 +195,7 @@ function WorkDetail() {
               {workIsVideo(work) ? (
                 <video src={getMediaUrl(work)} controls autoPlay muted loop style={{ width: '100%', display: 'block' }} />
               ) : (
-                <img src={getMediaUrl(work)} style={{ width: '100%', display: 'block', cursor: 'zoom-in' }} onClick={() => setSelectedImg(getMediaUrl(work))} />
+                <img src={getMediaUrl(work)} style={{ width: '100%', display: 'block', cursor: 'zoom-in' }} onClick={() => setSelectedMedia(getMediaUrl(work))} />
               )}
             </div>
 
@@ -201,15 +217,23 @@ function WorkDetail() {
                   <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#222', letterSpacing: '4px' }}>Project Assets</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px' }}>
-                  {work.album.map((img, i) => (
-                    <motion.div
-                      whileHover={{ y: -10, scale: 1.02 }}
-                      key={i} onClick={() => setSelectedImg(img.url)}
-                      style={{ aspectRatio: '16/10', borderRadius: '35px', overflow: 'hidden', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.03)', cursor: 'zoom-in' }}
-                    >
-                      <img src={getFullUrl(img.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </motion.div>
-                  ))}
+                  {work.album.map((item, i) => {
+                    const isVid = item.url && item.url.match(/\.(mp4|webm|mov)$/i);
+                    return (
+                      <motion.div
+                        whileHover={{ y: -10, scale: 1.02 }}
+                        key={i} onClick={() => setSelectedMedia(item.url)}
+                        style={{ position: 'relative', aspectRatio: '16/10', borderRadius: '35px', overflow: 'hidden', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer' }}
+                      >
+                        {isVid ? (
+                          <video src={getFullUrl(item.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <img src={getFullUrl(item.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        )}
+                        {isVid && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}><FiMaximize2 size={30} color="#fff" /></div>}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </div>
             )}
