@@ -51,7 +51,7 @@ export const PRODUCTION_SKILLS = [
 function UserProfile() {
    const { userId } = useParams();
    const navigate = useNavigate();
-   const { user: contextUser, token: contextToken, fetchProfile: refreshContext } = useContext(AuthContext);
+   const { user: contextUser, token: contextToken, fetchProfile: refreshContext, updateUser } = useContext(AuthContext);
 
    const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
    const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -235,6 +235,7 @@ function UserProfile() {
          };
          await usersAPI.updateProfile(updatePayload, currentToken);
          setProfile(p => ({ ...p, ...updatePayload }));
+         if (updateUser) updateUser(updatePayload);
          if (refreshContext) refreshContext();
          setEditingProfile(false);
       } catch { alert('Profile update failed.'); }
@@ -262,6 +263,7 @@ function UserProfile() {
          try {
             const res = await usersAPI.updateProfileImage(formData, currentToken);
             setProfile(p => ({ ...p, profileImage: res.profileImage }));
+            if (updateUser) updateUser({ profileImage: res.profileImage });
             if (refreshContext) refreshContext();
          } catch { alert('Image upload failed.'); }
          finally { setAvatarLoading(false); }
@@ -270,6 +272,7 @@ function UserProfile() {
          try {
             const res = await usersAPI.updateCoverImage(formData, currentToken);
             setProfile(p => ({ ...p, coverImage: res.coverImage }));
+            if (updateUser) updateUser({ coverImage: res.coverImage });
             if (refreshContext) refreshContext();
          } catch { alert('Cover upload failed.'); }
          finally { setCoverLoading(false); }

@@ -110,10 +110,19 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('userInfo');
+  };
+
+  const updateUser = (newData) => {
+    setUser(prev => {
+      const updated = { ...prev, ...newData };
+      localStorage.setItem('userInfo', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, fetchProfile, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, fetchProfile, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
