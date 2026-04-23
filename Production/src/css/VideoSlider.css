@@ -64,15 +64,15 @@
 }
 
 .vslider__title {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-title);
     font-size: clamp(2.5rem, 8vw, 6rem); /* ขนาดตัวหนังสือยืดหดตามจอ */
     line-height: 0.9;
     margin: 0 0 10px 0;
-    letter-spacing: -1px;
+    letter-spacing: -2px;
 }
 
 .vslider__subtitle {
-    font-family: 'Kanit', sans-serif;
+    font-family: 'Prompt', var(--font-main);
     font-weight: 300;
     font-size: clamp(0.9rem, 1.5vw, 1.2rem);
     color: rgba(255,255,255,0.7);
@@ -173,8 +173,45 @@
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
 /* --- Responsive Fix for Mobile --- */
+.vslider__actions {
+    display: flex;
+    gap: 20px;
+    margin-top: clamp(30px, 5vw, 50px);
+}
+
+.vslider__btn {
+    padding: clamp(12px, 2vw, 18px) clamp(25px, 4vw, 45px);
+    border-radius: 40px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: clamp(0.85rem, 1.2vw, 1rem);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: none;
+    white-space: nowrap;
+    transition: 0.3s;
+}
+
+.vslider__btn--primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.vslider__btn--secondary {
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
 @media (max-width: 768px) {
-    .vslider__arrow { display: none; } /* ซ่อนลูกศรบนมือถือ (ใช้ Swipe เอา) */
-    .vslider__content { bottom: 60px; padding: 0 20px; }
-    .vslider__dots { bottom: 20px; }
+    .vslider__arrow { display: none; }
+    .vslider__content { bottom: 80px; padding: 0 30px; }
+    .vslider__dots { bottom: 30px; }
+    .vslider__actions { gap: 12px; flex-wrap: wrap; }
+    .vslider__btn { width: auto; padding: 12px 25px; }
+}
+
+@media (max-width: 480px) {
+    .vslider__actions { gap: 10px; }
+    .vslider__btn { padding: 10px 20px; font-size: 0.8rem; }
 }

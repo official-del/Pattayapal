@@ -23,6 +23,31 @@ import { CONFIG } from '../utils/config';
 
 const API_BASE_URL = CONFIG.API_BASE_URL;
 
+export const PRODUCTION_SKILLS = [
+   // 🎬 Video & Film
+   "Adobe Premiere Pro", "After Effects", "DaVinci Resolve", "Final Cut Pro", "Color Grading", 
+   "Video Editing", "Motion Graphics", "Cinematography", "Directing", "Scriptwriting", 
+   "Sound Design", "Audio Mixing", "Visual Effects (VFX)", "3D Animation", "Drone Pilot",
+   
+   // 📷 Photography
+   "Adobe Photoshop", "Adobe Lightroom", "Photography", "Studio Photography", "Portrait Photography", 
+   "Product Photography", "Event Photography", "Retouching",
+
+   // 🎨 Design & Digital
+   "Adobe Illustrator", "InDesign", "Graphic Design", "UI/UX Design", "Figma", "Canva", 
+   "Logo Design", "Branding", "Social Media Content", "Digital Artist", "Web Development", "2D Animation",
+
+   // 🏗️ 3D & Tech
+   "Blender", "Cinema 4D", "Unreal Engine", "Unity", "3ds Max", "Maya", "3D Modeling", "VFX",
+   
+   // 🛠️ Production & Technical
+   "Camera Operation", "Lighting Design", "Gaffer", "Grip", "Production Manager", 
+   "Live Streaming", "OBS Studio", "Technical Director", "Gimbal Operation", "Storyboard Artist",
+
+   // ✍️ Marketing & Others
+   "Copywriting", "Content Marketing", "SEO", "Translation", "Voice Over", "Music Production"
+];
+
 function UserProfile() {
    const { userId } = useParams();
    const navigate = useNavigate();
@@ -310,14 +335,20 @@ function UserProfile() {
             <div className="profile-header-grid" style={{ gap: '30px', alignItems: 'flex-end', marginBottom: '50px' }}>
                <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-end' }}>
                   <div style={{ position: 'relative' }}>
-                     <div style={{ width: '220px', height: '220px', borderRadius: '30px', border: '5px solid #050505', overflow: 'hidden', background: '#222', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
-                        {profile.profileImage?.url ? (
-                           <img src={getFullUrl(profile.profileImage.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '5rem', fontWeight: '700', color: '#444' }}>{(profile.name || 'U')[0]}</div>
-                        )}
+                     <div style={{ width: '220px', height: '220px', borderRadius: '30px', border: '5px solid #050505', overflow: 'hidden', background: '#222', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {profile.profileImage?.url || (typeof profile.profileImage === 'string' && profile.profileImage) ? (
+                           <img 
+                              src={getFullUrl(profile.profileImage.url || profile.profileImage)} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                           />
+                        ) : null}
+                        <div style={{ display: (profile.profileImage?.url || typeof profile.profileImage === 'string') ? 'none' : 'flex', fontSize: '5rem', fontWeight: '700', color: '#444' }}>
+                           {(profile.name || 'U')[0]}
+                        </div>
+
                         {isMyProfile && (
-                           <div onClick={() => fileInputRef.current.click()} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', opacity: 0, cursor: 'pointer', transition: '0.3s' }} className="av-up">
+                           <div onClick={() => fileInputRef.current.click()} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', opacity: 0, cursor: 'pointer', transition: '0.3s', zIndex: 10 }} className="av-up">
                               <FiCamera size={40} />
                            </div>
                         )}
@@ -717,16 +748,26 @@ function UserProfile() {
                                  </button>
 
                                  <div className="edit-skills-grid" style={{ gap: '25px', alignItems: 'center' }}>
-                                    <input
-                                       value={skill.name}
-                                       onChange={e => {
-                                          const newSkills = [...skills];
-                                          newSkills[index].name = e.target.value;
-                                          setSkills(newSkills);
-                                       }}
-                                       placeholder="Skill Name (e.g. Photoshop)"
-                                       style={{ background: 'transparent', border: 'none', borderBottom: '1px solid #222', padding: '10px 0', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
-                                    />
+                                    <div style={{ position: 'relative', width: '100%' }}>
+                                       <input
+                                          value={skill.name}
+                                          list={`production-skills-${index}`}
+                                          onChange={e => {
+                                             const newSkills = [...skills];
+                                             newSkills[index].name = e.target.value;
+                                             setSkills(newSkills);
+                                          }}
+                                          placeholder="Skill Name (e.g. Photoshop)"
+                                          style={{ background: 'transparent', border: 'none', borderBottom: '1px solid #222', padding: '10px 0', color: '#fff', outline: 'none', fontSize: '0.9rem', width: '100%' }}
+                                       />
+                                       {/* 📋 Per-row Searchable Skills Datalist (Shows only when typing) */}
+                                       <datalist id={`production-skills-${index}`}>
+                                          {skill.name.length >= 1 && PRODUCTION_SKILLS
+                                             .filter(s => s.toLowerCase().includes(skill.name.toLowerCase()))
+                                             .map(s => <option key={s} value={s} />)
+                                          }
+                                       </datalist>
+                                    </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                        <input
                                           type="range"
@@ -954,7 +995,6 @@ function UserProfile() {
                .profile-stats-grid { grid-template-columns: minmax(0, 1fr); text-align: center; }
                .edit-row-grid, .edit-skills-grid { grid-template-columns: minmax(0, 1fr); }
             }
-
             .profile-main-container {
                max-width: 1400px;
                width: 100%;
@@ -965,13 +1005,21 @@ function UserProfile() {
 
             @media (max-width: 768px) {
                .profile-main-container {
-                  padding: 0 15px 80px;
-                  margin-top: -80px;
+                  padding: 0 20px 80px;
+                  margin-top: -100px;
                }
-               /* Fix for cards leaning to the left */
-               .profile-content-grid {
-                  gap: 20px !important;
+               .profile-header-grid h1 { font-size: 2.2rem !important; }
+               .profile-content-grid { gap: 20px !important; }
+               .profile-header-grid > div:first-child { gap: 20px !important; }
+               .profile-header-grid img[alt="me"], .profile-header-grid div[style*="width: 220px"] {
+                 width: 150px !important; height: 150px !important;
                }
+            }
+            @media (max-width: 480px) {
+               .profile-header-grid h1 { font-size: 1.8rem !important; }
+               .profile-header-grid > div:last-child { width: 100%; }
+               .profile-header-grid button { width: 100%; padding: 15px !important; font-size: 0.9rem !important; }
+               .profile-main-container { padding: 0 15px 60px; margin-top: -60px; }
             }
          `}</style>
       </motion.div>

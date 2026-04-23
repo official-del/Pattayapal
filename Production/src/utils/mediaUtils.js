@@ -10,17 +10,18 @@ const VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
 // normalize path ให้เป็น full URL
 export const getFullUrl = (path) => {
   if (!path) return "";
-  // ✅ ถ้าเป็น URL สมบูรณ์แล้ว (http/https) หรือเป็นของ Cloud (Google Storage / Cloudinary) ให้ใช้ค่านั้นได้เลย
-  if (
-    path.startsWith("http://") || 
-    path.startsWith("https://") || 
-    path.includes("storage.googleapis.com") ||
-    path.includes("res.cloudinary.com")
-  ) {
+  
+  // If it's already a full URL (http/https), return it as is
+  if (path.startsWith("http://") || path.startsWith("https://")) {
     return path;
   }
-  const clean = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
-  return `${API_URL}/uploads/${clean}`;
+
+  // Remove leading slashes and redundant 'uploads/' prefix
+  // This handles paths like '/uploads/file.jpg', 'uploads/file.jpg', and '/file.jpg'
+  const cleanPath = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
+  
+  // Return absolute URL pointing to the backend's uploads directory
+  return `${API_URL}/uploads/${cleanPath}`;
 };
 
 // เช็คว่า URL นี้เป็นไฟล์วิดีโอไหม (ดู extension)

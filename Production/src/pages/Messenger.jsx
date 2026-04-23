@@ -1127,7 +1127,7 @@ function Messenger() {
              position: relative;
           }
           .chat-header {
-             padding: 15px 25px;
+             padding: 15px 280px 15px 25px; /* Offset to prevent overlap with global floating navbar dock */
              border-bottom: 1px solid rgba(255,255,255,0.05);
              display: flex;
              justify-content: space-between;
@@ -1555,6 +1555,7 @@ function Messenger() {
 
           @media (max-width: 1024px) {
              .inbox-panel { width: 300px; }
+             .chat-header { padding: 15px 80px 15px 25px; } /* Adjust for mobile menu */
           }
           @media (max-width: 768px) {
              .nav-panel { display: none; }
@@ -1563,6 +1564,7 @@ function Messenger() {
              .chat-active .inbox-panel { display: none; }
              .chat-active .chat-panel { display: flex; width: 100%; }
              .mobile-back { display: block; border: none; background: none; color: #fff; margin-right: 10px; }
+             .chat-header { padding: 15px 60px 15px 15px; } /* Account for mobile hamburger */
           }
            .lightbox-overlay {
              position: fixed;

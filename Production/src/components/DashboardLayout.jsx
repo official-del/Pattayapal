@@ -52,6 +52,7 @@ function DashboardLayout() {
         flex: 1,
         height: '100vh',
         overflowY: 'auto',
+        overflowX: 'hidden',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column'

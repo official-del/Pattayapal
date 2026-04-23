@@ -129,7 +129,7 @@ function ManageWorks() {
       </header>
 
       {/* 🧬 Works Grid */}
-      <motion.div variants={containerVariants} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '30px' }}>
+      <motion.div variants={containerVariants} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(300px, 100%, 360px), 1fr))', gap: '30px' }}>
         {works.length === 0 ? (
           <motion.div variants={itemVariants} style={{ gridColumn: '1/-1', textAlign: 'center', padding: '120px 40px', background: 'rgba(255,255,255,0.01)', borderRadius: '50px', border: '1px dashed rgba(255,255,255,0.05)' }}>
             <div style={{ fontSize: '4rem', marginBottom: '25px', color: '#111' }}><FiVideo /></div>

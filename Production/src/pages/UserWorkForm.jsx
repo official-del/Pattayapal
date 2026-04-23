@@ -6,6 +6,7 @@ import VideoUploadForm from './Admin/VideoUploadForm';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getFullUrl } from '../utils/mediaUtils';
 import {
   FiArrowLeft, FiImage, FiVideo, FiPlus, FiCheckCircle,
   FiLoader, FiX, FiCheck, FiUploadCloud, FiTrash2, FiFileText, FiTag, FiZap, FiActivity
@@ -175,7 +176,7 @@ function UserWorkForm() {
     <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingBottom: '150px' }}>
 
       {/* 🔮 Strategic Header */}
-      <section style={{ padding: '120px 5% 60px' }}>
+      <section className="form-header-section" style={{ padding: '120px 5% 60px' }}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <button onClick={() => navigate(-1)} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', width: '50px', height: '50px', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
             <FiArrowLeft size={20} />
@@ -184,7 +185,7 @@ function UserWorkForm() {
             <FiZap color="var(--accent)" size={18} />
             <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '5px', fontSize: '0.8rem' }}>UPLOAD DATA</span>
           </div>
-          <h1 style={{ fontSize: '3.5rem', fontWeight: '700', margin: 0, letterSpacing: '-2px' }}>
+          <h1 className="fluid-h1" style={{ fontSize: 'clamp(2rem, 8vw, 3.5rem)', fontWeight: '700', margin: 0, letterSpacing: '-2px' }}>
             {isEdit ? 'แก้ไขผลงาน' : 'เพิ่มผลงานใหม่'}
           </h1>
           <p style={{ color: '#444', marginTop: '10px', fontWeight: '700' }}>แชร์ผลงานของคุณให้โลกเห็นในคลังข้อมูลอัจฉริยะ</p>
@@ -194,7 +195,7 @@ function UserWorkForm() {
       <form className="work-form-grid" onSubmit={handleSave} style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 5%', gap: '50px', alignItems: 'start' }}>
 
         {/* 🧬 Metadata Section */}
-        <motion.section initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass" style={{ padding: '50px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.03)' }}>
+        <motion.section initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass form-card" style={{ padding: 'clamp(20px, 5vw, 50px)', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '40px', color: '#333' }}>
             <FiFileText size={20} />
             <span style={{ fontWeight: '700', letterSpacing: '2px', fontSize: '0.75rem' }}>ข้อมูลพื้นฐาน</span>
@@ -231,8 +232,8 @@ function UserWorkForm() {
         </motion.section>
 
         {/* 🎬 Media Assets Section */}
-        <motion.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass" style={{ padding: '50px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px' }}>
+        <motion.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass form-card" style={{ padding: 'clamp(20px, 5vw, 50px)', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)' }}>
+          <div className="media-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#333' }}>
               <FiUploadCloud size={20} />
               <span style={{ fontWeight: '700', letterSpacing: '2px', fontSize: '0.75rem' }}>ไฟล์มัลติมีเดีย</span>
@@ -270,7 +271,7 @@ function UserWorkForm() {
             {formData.type === 'video' ? (
               formData.mediaUrl ? (
                 <div style={{ borderRadius: '30px', overflow: 'hidden', position: 'relative' }}>
-                  <video src={formData.mediaUrl} controls style={{ width: '100%', display: 'block' }} />
+                  <video src={getFullUrl(formData.mediaUrl)} controls style={{ width: '100%', display: 'block' }} />
                   <button type="button" onClick={() => setFormData({ ...formData, mediaUrl: '' })} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: '30px', cursor: 'pointer', fontWeight: '700', fontSize: '0.75rem', backdropFilter: 'blur(10px)' }}>เปลี่ยนวิดีโอ</button>
                 </div>
               ) : videoUploading ? (
@@ -297,7 +298,7 @@ function UserWorkForm() {
             ) : (
               formData.mediaUrl ? (
                 <div style={{ borderRadius: '30px', overflow: 'hidden', position: 'relative' }}>
-                  <img src={formData.mediaUrl} alt="Main" style={{ width: '100%', display: 'block' }} />
+                  <img src={getFullUrl(formData.mediaUrl)} alt="Main" style={{ width: '100%', display: 'block' }} />
                   <button type="button" onClick={() => setFormData({ ...formData, mediaUrl: '' })} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: '30px', cursor: 'pointer', fontWeight: '700', fontSize: '0.75rem', backdropFilter: 'blur(10px)' }}>เปลี่ยนรูปภาพ</button>
                 </div>
               ) : (
@@ -323,7 +324,7 @@ function UserWorkForm() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '15px' }}>
                 {albumImages.map((img, i) => (
                   <div key={i} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '15px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <img src={img.url || img.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={img.previewUrl || getFullUrl(img.url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <button type="button" onClick={() => removeAlbumItem(i)} style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(239,68,68,0.8)', border: 'none', color: '#fff', width: '25px', height: '25px', borderRadius: '5px', cursor: 'pointer' }}><FiX /></button>
                   </div>
                 ))}
@@ -358,10 +359,13 @@ function UserWorkForm() {
           display: grid;
           grid-template-columns: 1fr 1.2fr;
         }
-        @media (max-width: 992px) {
-          .work-form-grid {
-            grid-template-columns: 1fr;
-          }
+        @media (max-width: 1200px) {
+          .work-form-grid { grid-template-columns: 1fr; }
+          .form-header-section { padding-top: 80px !important; }
+        }
+        @media (max-width: 600px) {
+          .media-section-header { flex-direction: column; align-items: flex-start !important; }
+          .glass.form-card { border-radius: 20px !important; }
         }
       `}</style>
     </div>

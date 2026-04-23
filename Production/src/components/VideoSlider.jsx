@@ -1,12 +1,14 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
-import { worksAPI } from '../utils/api'; 
+import { worksAPI } from '../utils/api';
 import { FiArrowRight, FiArrowLeft, FiPlay, FiInfo } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 import { CONFIG } from '../utils/config';
 
-const API_URL = CONFIG.API_BASE_URL; 
+import '../css/VideoSlider.css';
+
+const API_URL = CONFIG.API_BASE_URL;
 
 function VideoSlider() {
     const [slides, setSlides] = useState([]);
@@ -35,9 +37,9 @@ function VideoSlider() {
 
     const getMediaUrl = (work) => {
         let path = work.mediaUrl || work.mainImage?.url;
-        if (!path || path === "" || path === "null") return null; 
+        if (!path || path === "" || path === "null") return null;
         if (path.startsWith('http')) return path;
-        const cleanPath = path.replace(/^\/+/, ''); 
+        const cleanPath = path.replace(/^\/+/, '');
         return `${API_URL}/${cleanPath.startsWith('uploads') ? cleanPath : 'uploads/' + cleanPath}`;
     };
 
@@ -48,7 +50,7 @@ function VideoSlider() {
             if (i === current) {
                 video.muted = true;
                 video.currentTime = 0;
-                video.play().catch(() => {});
+                video.play().catch(() => { });
             } else {
                 video.pause();
             }
@@ -72,7 +74,7 @@ function VideoSlider() {
         <div style={{ height: '100vh', width: '100%', position: 'relative', overflow: 'hidden', background: '#000' }}>
             <AnimatePresence mode="wait">
                 {slides.map((slide, i) => i === current && (
-                    <motion.div 
+                    <motion.div
                         key={slide._id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -86,30 +88,29 @@ function VideoSlider() {
                             style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.6)' }}
                             loop muted playsInline preload="auto"
                         />
-                        
+
                         {/* 🌌 Cinematic Overlays */}
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent, rgba(0,0,0,0.4))' }} />
-                        
+
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 8%' }}>
                             <div style={{ maxWidth: '900px' }}>
                                 <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-                                    <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '6px', fontSize: '0.9rem', display: 'block', marginBottom: '20px' }}>FEATURED_PROJECT</span>
+                                    <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '6px', fontSize: '0.9rem', display: 'block', marginBottom: '20px' }}>POPULAR PROJECT</span>
                                     <h2 style={{ fontSize: 'clamp(3.5rem, 8vw, 7rem)', fontWeight: '700', margin: 0, lineHeight: 0.9, letterSpacing: '-4px', color: '#fff' }}>{slide.title}</h2>
                                     <p style={{ fontSize: '1.4rem', color: '#ccc', marginTop: '30px', maxWidth: '600px', lineHeight: 1.6, fontWeight: '400' }}>{slide.description}</p>
-                                    
-                                    <div style={{ display: 'flex', gap: '20px', marginTop: '50px' }}>
-                                        <motion.button 
+
+                                    <div className="vslider__actions">
+                                        <motion.button
                                             whileHover={{ scale: 1.05, boxShadow: '0 0 30px var(--accent-glow)' }}
                                             onClick={() => navigate(`/works/${slide._id}`)}
-                                            style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '18px 45px', borderRadius: '40px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem' }}
+                                            className="vslider__btn vslider__btn--primary"
                                         >
                                             <FiPlay fill="#fff" /> ดูผลงานนี้
                                         </motion.button>
-                                        <motion.button 
+                                        <motion.button
                                             whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.1)' }}
                                             onClick={() => navigate('/works')}
-                                            className="glass"
-                                            style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '18px 45px', borderRadius: '40px', fontWeight: '700', cursor: 'pointer', fontSize: '1rem' }}
+                                            className="vslider__btn vslider__btn--secondary glass"
                                         >
                                             สำรวจผลงานทั้งหมด
                                         </motion.button>
@@ -131,19 +132,19 @@ function VideoSlider() {
                         <FiArrowRight size={24} />
                     </button>
                 </div>
-                
+
                 <div style={{ height: '60px', width: '1px', background: 'rgba(255,255,255,0.1)' }} />
-                
+
                 <div style={{ display: 'flex', gap: '12px' }}>
                     {slides.map((_, i) => (
-                        <button 
-                            key={i} 
+                        <button
+                            key={i}
                             onClick={() => setCurrent(i)}
-                            style={{ 
-                                width: i === current ? '40px' : '10px', height: '10px', borderRadius: '10px', 
-                                background: i === current ? 'var(--accent)' : 'rgba(255,255,255,0.2)', 
-                                border: 'none', cursor: 'pointer', transition: '0.5s' 
-                            }} 
+                            style={{
+                                width: i === current ? '40px' : '10px', height: '10px', borderRadius: '10px',
+                                background: i === current ? 'var(--accent)' : 'rgba(255,255,255,0.2)',
+                                border: 'none', cursor: 'pointer', transition: '0.5s'
+                            }}
                         />
                     ))}
                 </div>

@@ -8,16 +8,25 @@ import path from 'path';
 export const createWork = async (req, res) => {
   try {
     const workData = { ...req.body };
+    const mediaUrl = req.body.mainImageUrl || req.body.mediaUrl;
 
-    // รูปหลัก
-    if (req.files && req.files['mainImage']) {
-      const url = await uploadToGCS(req.files['mainImage'][0]);
-      workData.mainImage = { url, publicId: path.basename(url) };
-    } else if (req.body.mainImageUrl) {
-      workData.mainImage = { url: req.body.mainImageUrl, publicId: '' };
+    // 🎬 Video Logic
+    if (req.body.type === 'video') {
+      if (mediaUrl) {
+        workData.videoUrl = mediaUrl;
+        workData.mainImage = { url: mediaUrl, publicId: '' };
+      }
+    } else {
+      // 🖼️ Image Logic
+      if (req.files && req.files['mainImage']) {
+        const url = await uploadToGCS(req.files['mainImage'][0]);
+        workData.mainImage = { url, publicId: path.basename(url) };
+      } else if (mediaUrl) {
+        workData.mainImage = { url: mediaUrl, publicId: '' };
+      }
     }
 
-    // รูปอัลบั้ม
+    // 📂 Album Logic
     if (req.files && req.files['album']) {
       const uploads = [];
       for (const file of req.files['album']) {
@@ -27,15 +36,19 @@ export const createWork = async (req, res) => {
       workData.album = uploads;
     }
 
+    // Handle Category safely
+    if (workData.category === '') delete workData.category;
+
     const work = new Work({
       ...workData,
-      technologies: typeof workData.technologies === 'string' ? workData.technologies.split(',').map(t => t.trim()) : workData.technologies,
+      technologies: typeof workData.technologies === 'string' ? workData.technologies.split(',').map(t => t.trim()) : (workData.technologies || []),
       createdBy: req.user.id
     });
 
     await work.save();
     res.status(201).json({ message: 'Created successfully', work });
   } catch (error) {
+    console.error("🔥 Create Work Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -54,18 +67,26 @@ export const updateWork = async (req, res) => {
     }
 
     const updateData = { ...req.body };
+    const mediaUrl = req.body.mainImageUrl || req.body.mediaUrl;
 
-    // 1. จัดการรูปหลัก
-    if (req.files && req.files['mainImage']) {
-      // ลบรูปเก่าถ้ามี
-      if (work.mainImage?.url) await deleteFromGCS(work.mainImage.url);
-      const url = await uploadToGCS(req.files['mainImage'][0]);
-      updateData.mainImage = { url, publicId: path.basename(url) };
-    } else if (req.body.mainImageUrl) {
-      updateData.mainImage = { url: req.body.mainImageUrl, publicId: '' };
+    // 🎬 Video Logic
+    if (req.body.type === 'video') {
+      if (mediaUrl) {
+        updateData.videoUrl = mediaUrl;
+        updateData.mainImage = { url: mediaUrl, publicId: '' };
+      }
+    } else {
+      // 🖼️ Image Logic
+      if (req.files && req.files['mainImage']) {
+        if (work.mainImage?.url) await deleteFromGCS(work.mainImage.url);
+        const url = await uploadToGCS(req.files['mainImage'][0]);
+        updateData.mainImage = { url, publicId: path.basename(url) };
+      } else if (mediaUrl) {
+        updateData.mainImage = { url: mediaUrl, publicId: '' };
+      }
     }
 
-    // 2. จัดการอัลบั้ม (รูปเก่า + รูปใหม่)
+    // 📂 Album Logic
     let finalAlbum = [];
     if (req.body.existingAlbum) {
       finalAlbum = JSON.parse(req.body.existingAlbum);
@@ -79,12 +100,18 @@ export const updateWork = async (req, res) => {
     }
     updateData.album = finalAlbum;
 
+    // Handle Category safely
+    if (updateData.category === '') delete updateData.category;
+
     const updated = await Work.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.status(200).json({ message: 'Updated', work: updated });
   } catch (error) {
+    console.error("🔥 Update Work Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 export const getWorks = async (req, res) => {
   try {

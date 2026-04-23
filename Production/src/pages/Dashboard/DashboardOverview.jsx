@@ -98,9 +98,10 @@ function DashboardOverview() {
         </motion.header>
 
         {!isClient && rankProgress && (
-          <motion.div variants={itemVariants} className="glass" style={{
-            padding: '24px 30px', borderRadius: '30px', minWidth: '380px', display: 'flex', gap: '20px', alignItems: 'center',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)'
+          <motion.div variants={itemVariants} className="glass rank-progress-card" style={{
+            padding: '24px 30px', borderRadius: '30px', flex: 1, display: 'flex', gap: '20px', alignItems: 'center',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)',
+            minWidth: 'min(380px, 100%)'
           }}>
             <RankBadge rank={rankProgress.currentRank} size="xl" showName={false} />
             <div style={{ flex: 1 }}>
@@ -237,12 +238,29 @@ function DashboardOverview() {
           }
         }
 
+        @media (max-width: 768px) {
+          h1 {
+            font-size: clamp(2rem, 10vw, 3.5rem) !important;
+          }
+          .rank-progress-card {
+            padding: 20px !important;
+            flex-direction: column;
+            text-align: center;
+          }
+          .rank-progress-card > div {
+            width: 100%;
+          }
+        }
+
         @media (max-width: 480px) {
           .client-stats-grid {
             grid-template-columns: 1fr;
           }
           h1 {
-            font-size: 2.5rem !important;
+            font-size: 2.2rem !important;
+          }
+          p {
+            font-size: 1.2rem !important;
           }
         }
       `}</style>

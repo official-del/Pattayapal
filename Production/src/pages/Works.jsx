@@ -129,7 +129,7 @@ function Works() {
             animate="show"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(300px, 100%, 400px), 1fr))',
               gap: '40px 30px', paddingBottom: '100px'
             }}
           >

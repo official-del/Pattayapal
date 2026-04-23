@@ -59,6 +59,10 @@ function App() {
   const isAdminPage = location.pathname.startsWith('/admin');
 
   const [showSplash, setShowSplash] = useState(() => {
+     // ⚖️ ไม่แสดงเกมในหน้ากฎหมาย (Terms / Privacy)
+     const path = window.location.pathname;
+     if (path === '/terms' || path === '/privacy') return false;
+
      // ข้ามเกมทันทีถ้าล็อกอินแล้ว
      const hasToken = localStorage.getItem('userToken') || localStorage.getItem('token');
      if (hasToken) return false;
@@ -87,11 +91,22 @@ function App() {
     return () => document.removeEventListener('click', handleGlobalClick);
   }, []);
 
+  // ⚖️ ตรวจสอบว่าเป็นหน้ากฎหมายหรือไม่ (สำหรับการซ่อน Splash ขณะเปลี่ยน Route)
+  const isLegalPage = ['/terms', '/privacy'].includes(location.pathname);
+
+  // ⚖️ ถ้าเข้าหน้ากฎหมาย ให้ถือว่าข้ามการแสดง Splash ไปเลย เพื่อไม่ให้มันเด้งขึ้นมาตอนกดย้อนกลับ
+  useEffect(() => {
+    if (isLegalPage) {
+      sessionStorage.setItem('hasSeenSplash', 'true');
+      setShowSplash(false);
+    }
+  }, [isLegalPage]);
+
   return (
     <AuthProvider> 
       <SocketProvider>
       <AnimatePresence>
-        {showSplash && <PixelSplashIntro onComplete={handleSplashComplete} />}
+        {showSplash && !isLegalPage && <PixelSplashIntro onComplete={handleSplashComplete} />}
       </AnimatePresence>
 
 
@@ -146,6 +161,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardOverview />} />
           <Route path="hiring" element={<ManageJobs />} />
+          <Route path="works" element={<ManageWorks />} />
           <Route path="wallet" element={<ManageWallet />} />
 
           <Route path="account" element={<UserProfile />} /> {/* Reuse Profile as settings for now */}

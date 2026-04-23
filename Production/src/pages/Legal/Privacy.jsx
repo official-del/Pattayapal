@@ -10,7 +10,16 @@ function Privacy() {
     <div style={{ background: '#000', minHeight: '100vh', color: '#fff', padding: '150px 5% 100px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         
-        <button onClick={() => navigate(-1)} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer', padding: '12px 25px', borderRadius: '15px', display: "flex", alignItems: "center", gap: '10px', marginBottom: '40px', fontWeight: '700', fontSize: '0.8rem' }}>
+        <button 
+          onClick={() => {
+            if (window.history.state && window.history.state.idx > 0) {
+              navigate(-1);
+            } else {
+              navigate('/');
+            }
+          }} 
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer', padding: '12px 25px', borderRadius: '15px', display: "flex", alignItems: "center", gap: '10px', marginBottom: '40px', fontWeight: '700', fontSize: '0.8rem' }}
+        >
           <FiArrowLeft /> BACK
         </button>
 

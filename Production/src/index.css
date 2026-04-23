@@ -1,5 +1,6 @@
 :root {
-  --font-main: 'Outfit', 'Mitr', sans-serif;
+  --font-main: 'Inter', 'Prompt', sans-serif;
+  --font-title: 'Outfit', 'Prompt', sans-serif;
   --accent: #ff5733;
   --accent-glow: rgba(255, 87, 51, 0.4);
   --indigo: #6366f1;
@@ -13,6 +14,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  letter-spacing: -0.01em; /* Tighter letter spacing for Inter */
 }
 
 button,
@@ -20,10 +22,12 @@ input,
 select,
 textarea {
   font-family: var(--font-main);
+  line-height: 1.5;
 }
 
 html, body {
   font-family: var(--font-main);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-deep);
@@ -224,3 +228,28 @@ img, video, iframe, table {
     padding: 12px !important;
   }
 }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* 🌍 Global Dropdown & Select Styling */
+select {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+select option {
+  background-color: #111 !important;
+  color: #fff !important;
+  padding: 10px;
+}
+
+/* Remove default appearance in some browsers for consistency */
+select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 10px var(--accent-glow) !important;
+}
+

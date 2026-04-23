@@ -111,20 +111,16 @@ export default function UserAuth() {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass"
+        className="glass auth-card"
         style={{ 
-          maxWidth: '550px', width: '100%', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.03)', padding: '60px', position: 'relative', zIndex: 10, overflow: 'hidden'
+          maxWidth: '550px', width: '100%', borderRadius: 'clamp(30px, 5vw, 50px)', border: '1px solid rgba(255,255,255,0.03)', padding: 'clamp(30px, 8vw, 60px)', position: 'relative', zIndex: 10, overflow: 'hidden'
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.02)', padding: '8px 20px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)', marginBottom: '25px' }}>
-              <FiShield color="var(--accent)" size={16} />
-              <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--accent)' }}></span>
-           </div>
-           <h2 style={{ fontSize: '3rem', fontWeight: '700', margin: 0, letterSpacing: '-1.5px', color: '#fff' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'clamp(30px, 8vw, 50px)' }}>
+           <h1 style={{ fontSize: 'clamp(1.8rem, 8vw, 3rem)', fontWeight: '700', margin: 0, letterSpacing: '-1.5px', color: '#fff', lineHeight: 1.1 }}>
              {isLogin ? 'เข้าสู่ระบบ / LOGIN' : 'สมัครสมาชิก / REGISTER'}
-           </h2>
-           <p style={{ color: '#444', marginTop: '15px', fontWeight: '700', letterSpacing: '0.5px', fontSize: '1rem' }}>
+           </h1>
+           <p style={{ color: '#444', marginTop: '15px', fontWeight: '700', letterSpacing: '0.5px', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
              {isLogin ? 'กรุณายืนยันตัวตนเพื่อเข้าสู่ระบบการทำงาน' : 'ลงทะเบียนเพื่อเริ่มต้นโปรเจกต์สร้างสรรค์ของคุณ'}
            </p>
         </div>
@@ -224,7 +220,8 @@ export default function UserAuth() {
       </motion.div>
 
       <style>{`
-        select option { background: #000; color: #fff; }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

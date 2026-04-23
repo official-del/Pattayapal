@@ -31,7 +31,7 @@ function Home() {
       </section>
 
       {/* 📡 Phase 2: Tactical Intelligence (Trending) */}
-      <section style={{ padding: '120px 0', position: 'relative' }}>
+      <section style={{ padding: 'clamp(60px, 10vw, 120px) 0', position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,87,51,0.1), transparent)' }} />
         <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 5%' }}>
           <TopRanking label="HEATING UP THE FEED" />
@@ -39,7 +39,7 @@ function Home() {
       </section>
 
       {/* 🚀 Phase 3: Service Ecosystem */}
-      <section style={{ padding: '150px 0', background: 'radial-gradient(circle at 50% 50%, rgba(255,87,51,0.03) 0%, transparent 70%)' }}>
+      <section style={{ padding: 'clamp(80px, 15vw, 150px) 0', background: 'radial-gradient(circle at 50% 50%, rgba(255,87,51,0.03) 0%, transparent 70%)' }}>
         <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 5%' }}>
           <motion.div
             variants={containerVariants}
@@ -68,7 +68,7 @@ function Home() {
       </section>
 
       {/* 🧬 Phase 4: Discovery Grid (Works) */}
-      <section style={{ padding: '150px 0', background: '#000', borderTop: '1px solid rgba(255,255,255,0.03)', position: 'relative' }}>
+      <section style={{ padding: 'clamp(80px, 15vw, 150px) 0', background: '#000', borderTop: '1px solid rgba(255,255,255,0.03)', position: 'relative' }}>
         {/* Floating background identifier */}
         <div style={{ position: 'absolute', top: '100px', right: '-100px', fontSize: '15rem', fontWeight: '700', color: 'rgba(255,255,255,0.01)', pointerEvents: 'none', userSelect: 'none' }}>ARCHIVE</div>
 
@@ -79,8 +79,8 @@ function Home() {
                 <FiLayers color="var(--accent)" size={20} />
                 <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.8rem' }}></span>
               </div>
-              <h3 style={{ fontSize: '4.5rem', fontWeight: '700', margin: 0, letterSpacing: '-px' }}>USER CREATIONS</h3>
-              <motion.p variants={itemVariants} style={{ color: '#444', maxWidth: '800px', margin: '40px auto 0', fontSize: '1rem', fontWeight: '500', lineHeight: 1.6 }}>User Creations" refers to any digital content, artwork, tools, or projects that are built, designed, and uploaded by the platform's users User-Generated Content, rather than by the platform's official team.</motion.p>
+              <h3 style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', fontWeight: '700', margin: 0, letterSpacing: '-px', lineHeight: 1 }}>USER CREATIONS</h3>
+              <motion.p variants={itemVariants} style={{ color: '#444', maxWidth: '800px', margin: '30px auto 0', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)', fontWeight: '500', lineHeight: 1.6 }}>User Creations" refers to any digital content, artwork, tools, or projects that are built, designed, and uploaded by the platform's users User-Generated Content, rather than by the platform's official team.</motion.p>
             </div>
           </div>
 
@@ -137,7 +137,7 @@ function Home() {
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h4 style={{ fontSize: '0.8rem', fontWeight: '700', color: '#333', letterSpacing: '6px' }}>TRUSTED PARTNERS</h4>
           </div>
-          <Clientses />
+          {/* <Clientses /> */}
         </div>
       </section>
 

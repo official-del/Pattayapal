@@ -25,7 +25,7 @@ function Footer() {
       <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 40px' }}>
 
         {/* 📧 ROW 1: SUBSCRIBE TERMINAL */}
-        <div style={{
+        {/* <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '60px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: '40px', flexWrap: 'wrap'
         }}>
@@ -46,7 +46,7 @@ function Footer() {
               <FiChevronRight size={24} />
             </motion.button>
           </div>
-        </div>
+        </div> */}
 
         {/* 🌐 ROW 2: MAIN INFO MATRIX */}
         <div className="footer-main-grid">
@@ -103,7 +103,7 @@ function Footer() {
                 { n: 'Feed Community', p: '/feed' }
               ].map(item => (
                 <li key={item.n}>
-                  <Link to={item.p} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#444', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '600', transition: '0.2s' }} onMouseOver={e => e.target.style.color = '#fff'} onMouseOut={e => e.target.style.color = '#444'}>
+                  <Link to={item.p} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#666', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500', transition: '0.2s' }} onMouseOver={e => e.target.style.color = '#fff'} onMouseOut={e => e.target.style.color = '#666'}>
                     <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#333' }} /> {item.n}
                   </Link>
                 </li>
@@ -122,7 +122,7 @@ function Footer() {
                 { n: 'Terms of Use', p: '/terms' }
               ].map(item => (
                 <li key={item.n}>
-                  <Link to={item.p} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#444', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '600', transition: '0.2s' }} onMouseOver={e => e.target.style.color = '#fff'} onMouseOut={e => e.target.style.color = '#444'}>
+                  <Link to={item.p} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#666', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500', transition: '0.2s' }} onMouseOver={e => e.target.style.color = '#fff'} onMouseOut={e => e.target.style.color = '#666'}>
                     <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#333' }} /> {item.n}
                   </Link>
                 </li>
@@ -135,11 +135,11 @@ function Footer() {
             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#fff', marginBottom: '35px' }}>Contact</h3>
             <div style={{ marginBottom: '25px' }}>
               <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff', marginBottom: '5px' }}>Call :</div>
-              <div style={{ fontSize: '0.85rem', color: '#444', fontWeight: '600' }}>085-552-5695</div>
+              <div style={{ fontSize: '0.85rem', color: '#666', fontWeight: '500' }}>085-552-5695</div>
             </div>
             <div style={{ marginBottom: '25px' }}>
               <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff', marginBottom: '5px' }}>Email :</div>
-              <div style={{ fontSize: '0.85rem', color: '#444', fontWeight: '600' }}>info@pattayapal.com</div>
+              <div style={{ fontSize: '0.85rem', color: '#666', fontWeight: '500' }}>info@pattayapal.com</div>
             </div>
 
             {/* 🗺️ LIVE GOOGLE MAP */}

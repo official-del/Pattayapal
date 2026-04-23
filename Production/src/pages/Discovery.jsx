@@ -11,6 +11,7 @@ import {
 import ProfileFrame from '../components/ProfileFrame';
 import HireModal from '../components/HireModal';
 import { play8BitSuccess } from '../utils/soundEffects';
+import { PRODUCTION_SKILLS } from './UserProfile';
 
 function Discovery() {
   const { user: contextUser, token: contextToken } = useContext(AuthContext);
@@ -160,10 +161,16 @@ function Discovery() {
               <input 
                 type="text" 
                 className="discovery-input"
+                list="discovery-skills"
                 placeholder="ค้นหาทักษะ, ตำแหน่งงาน หรือชื่อฟรีแลนซ์..." 
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
               />
+              <datalist id="discovery-skills">
+                {PRODUCTION_SKILLS.map(skill => (
+                  <option key={skill} value={skill} />
+                ))}
+              </datalist>
               {searchLoading && <FiLoader size={20} className="spin" style={{ marginRight: '20px' }} />}
               <motion.button 
                 whileHover={{ scale: 1.05 }}
@@ -246,7 +253,18 @@ function Discovery() {
                 <div style={{ padding: '35px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
                     <ProfileFrame rank={freelancer.rank} size="90px">
-                       <img src={freelancer.profileImage?.url ? getFullUrl(freelancer.profileImage.url) : 'https://via.placeholder.com/90'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                       <div style={{ width: '100%', height: '100%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                         {freelancer.profileImage?.url || (typeof freelancer.profileImage === 'string' && freelancer.profileImage) ? (
+                           <img 
+                            src={getFullUrl(freelancer.profileImage.url || freelancer.profileImage)} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                           />
+                         ) : null}
+                         <div style={{ display: (freelancer.profileImage?.url || typeof freelancer.profileImage === 'string') ? 'none' : 'flex' }}>
+                           <FiUsers size={30} color="#444" />
+                         </div>
+                       </div>
                     </ProfileFrame>
                     <div style={{ textAlign: 'right' }}>
                       <span className="rank-label" style={{ 
@@ -353,12 +371,19 @@ function Discovery() {
         }
 
         @media (max-width: 768px) {
+          .discovery-title { font-size: 2.5rem; }
           .discovery-search-box { 
             flex-direction: column; border-radius: 30px; padding: 20px 15px; gap: 15px; 
           }
           .search-icon-wrapper { display: none; }
           .discovery-input { text-align: center; padding: 5px 0; font-size: 1rem; width: 100%; box-sizing: border-box; }
           .discovery-btn { width: 100%; padding: 18px; border-radius: 20px; }
+          section { padding-left: 20px !important; padding-right: 20px !important; }
+        }
+        @media (max-width: 480px) {
+          .discovery-title { font-size: 2rem; }
+          .talent-card { border-radius: 25px !important; }
+          .talent-card > div { padding: 25px !important; }
         }
       `}</style>
 
