@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const [profileUpdateTag, setProfileUpdateTag] = useState(Date.now());
   const isFetching = useRef(false);
 
   useEffect(() => {
@@ -61,6 +62,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
       isFetching.current = false;
+      setProfileUpdateTag(Date.now());
     }
   };
 
@@ -119,10 +121,11 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('userInfo', JSON.stringify(updated));
       return updated;
     });
+    setProfileUpdateTag(Date.now());
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, fetchProfile, updateUser, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, fetchProfile, updateUser, profileUpdateTag, loading }}>
       {children}
     </AuthContext.Provider>
   );

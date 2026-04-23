@@ -4,11 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiCamera, FiVideo, FiEdit, FiLayers, FiEye, FiAward, FiZap, FiActivity } from 'react-icons/fi';
 import { usersAPI } from '../utils/api';
 import { getFullUrl } from '../utils/mediaUtils';
+import { AuthContext } from '../context/AuthContext';
 import RankBadge from '../components/RankBadge';
 import ProfileFrame from '../components/ProfileFrame';
 import { CoinIcon, CoinBadge } from '../components/CoinIcon';
 
 const RoleRankings = () => {
+  const { user: currentUser, profileUpdateTag } = React.useContext(AuthContext);
   const [category, setCategory] = useState('views'); // 'views' | 'earnings'
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -150,7 +152,7 @@ const RoleRankings = () => {
                            </div>
                            <ProfileFrame rank={user.rank} size="55px">
                              <img 
-                               src={user.profileImage?.url ? getFullUrl(user.profileImage.url) : 'https://via.placeholder.com/55'} 
+                               src={user.profileImage?.url ? (getFullUrl(user.profileImage.url) + (user._id === (currentUser?._id || currentUser?.id) ? `?t=${profileUpdateTag}` : '')) : 'https://via.placeholder.com/55'} 
                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                              />
                            </ProfileFrame>

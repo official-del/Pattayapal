@@ -27,7 +27,7 @@ const FileIcon = ({ type, name }) => {
 };
 
 function Messenger() {
-  const { user: contextUser, token: contextToken, logout } = useContext(AuthContext);
+  const { user: contextUser, token: contextToken, logout, profileUpdateTag } = useContext(AuthContext);
   const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
   const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo'));
   const contextUserId = currentUser?._id || currentUser?.id;
@@ -429,7 +429,7 @@ function Messenger() {
        <div className="nav-panel">
           <div className="nav-top">
              <div className="user-profile-trigger">
-                <img src={currentUser?.profileImage?.url ? getFullUrl(currentUser.profileImage.url) : 'https://via.placeholder.com/40'} alt="me" />
+                <img src={currentUser?.profileImage?.url ? (getFullUrl(currentUser.profileImage.url) + `?t=${profileUpdateTag}`) : 'https://via.placeholder.com/40'} alt="me" />
                 <div className="online-indicator" />
              </div>
              

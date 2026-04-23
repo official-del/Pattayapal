@@ -51,7 +51,7 @@ export const PRODUCTION_SKILLS = [
 function UserProfile() {
    const { userId } = useParams();
    const navigate = useNavigate();
-   const { user: contextUser, token: contextToken, fetchProfile: refreshContext, updateUser } = useContext(AuthContext);
+   const { user: contextUser, token: contextToken, fetchProfile: refreshContext, updateUser, profileUpdateTag } = useContext(AuthContext);
 
    const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
    const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -325,7 +325,7 @@ function UserProfile() {
 
          {/* ── HERO SECTION ── */}
          <div style={{ width: '100%', height: '400px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, background: profile.coverImage?.url ? `url(${getFullUrl(profile.coverImage.url)}) center/cover` : 'linear-gradient(45deg, #111, #222)', filter: 'brightness(0.7)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: profile.coverImage?.url ? `url(${getFullUrl(profile.coverImage.url) + (isMyProfile ? `?t=${profileUpdateTag}` : '')}) center/cover` : 'linear-gradient(45deg, #111, #222)', filter: 'brightness(0.7)' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, #050505 100%)' }} />
 
 
@@ -341,7 +341,7 @@ function UserProfile() {
                      <div style={{ width: '220px', height: '220px', borderRadius: '30px', border: '5px solid #050505', overflow: 'hidden', background: '#222', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {profile.profileImage?.url || (typeof profile.profileImage === 'string' && profile.profileImage) ? (
                            <img 
-                              src={getFullUrl(profile.profileImage.url || profile.profileImage)} 
+                              src={getFullUrl(profile.profileImage.url || profile.profileImage) + (isMyProfile ? `?t=${profileUpdateTag}` : '')} 
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                               onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                            />

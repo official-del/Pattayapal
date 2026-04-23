@@ -23,7 +23,7 @@ function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const { user, token, logout } = useContext(AuthContext);
+  const { user, token, logout, profileUpdateTag } = useContext(AuthContext);
   const localUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
   const userInfo = user || localUserInfo;
   const { socket } = useSocket();
@@ -189,7 +189,7 @@ function Navbar() {
               >
                 {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
                   <img
-                    src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage)}
+                    src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage) + `?t=${profileUpdateTag}`}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     alt={userInfo?.name?.[0] || 'U'}
                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
@@ -251,7 +251,7 @@ function Navbar() {
                     <div className="avatar-main">
                       {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
                         <img
-                          src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage)}
+                          src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage) + `?t=${profileUpdateTag}`}
                           alt=""
                           onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                         />

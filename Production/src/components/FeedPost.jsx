@@ -7,7 +7,7 @@ import { getFullUrl } from '../utils/mediaUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function FeedPost({ post, onPostDeleted }) {
-  const { user, token: contextToken } = useContext(AuthContext);
+  const { user, token: contextToken, profileUpdateTag } = useContext(AuthContext);
   const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
   const userInfo = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
 
@@ -22,6 +22,7 @@ function FeedPost({ post, onPostDeleted }) {
   const [expandedReplies, setExpandedReplies] = useState({});
 
   const isAuthor = userInfo && (post.author?._id === (userInfo._id || userInfo.id));
+  const displayAuthor = isAuthor ? userInfo : post.author;
   const isHiring = post.postType === 'hiring';
   const accentColor = isHiring ? '#3b82f6' : '#22c55e';
 
@@ -90,7 +91,7 @@ function FeedPost({ post, onPostDeleted }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Link to={`/profile/${post.author?._id}`} style={{ textDecoration: 'none' }}>
             <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#000', border: `2px solid rgba(255,255,255,0.05)`, overflow: 'hidden' }}>
-              <img src={post.author?.profileImage?.url ? getFullUrl(post.author.profileImage.url) : 'https://via.placeholder.com/60'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+              <img src={displayAuthor?.profileImage?.url ? (getFullUrl(displayAuthor.profileImage.url) + (isAuthor ? `?t=${profileUpdateTag}` : '')) : 'https://via.placeholder.com/60'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
             </div>
           </Link>
           <div>
@@ -256,7 +257,7 @@ function FeedPost({ post, onPostDeleted }) {
               {currentToken && (
                 <form onSubmit={handleComment} style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                   <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#000', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
-                    <img src={userInfo?.profileImage?.url ? getFullUrl(userInfo.profileImage.url) : 'https://via.placeholder.com/45'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                    <img src={userInfo?.profileImage?.url ? (getFullUrl(userInfo.profileImage.url) + `?t=${profileUpdateTag}`) : 'https://via.placeholder.com/45'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                   </div>
                   <div className="glass" style={{ flex: 1, borderRadius: '40px', display: 'flex', alignItems: 'center', padding: '5px 25px', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <input

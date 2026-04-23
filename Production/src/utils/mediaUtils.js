@@ -8,20 +8,22 @@ const API_URL = CONFIG.API_BASE_URL;
 const VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
 
 // normalize path ให้เป็น full URL
-export const getFullUrl = (path) => {
+export const getFullUrl = (path, bustCache = false) => {
   if (!path) return "";
   
   // If it's already a full URL (http/https), return it as is
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
+  let finalUrl = path;
+  if (!path.startsWith("http://") && !path.startsWith("https://")) {
+    const cleanPath = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
+    finalUrl = `${API_URL}/uploads/${cleanPath}`;
   }
 
-  // Remove leading slashes and redundant 'uploads/' prefix
-  // This handles paths like '/uploads/file.jpg', 'uploads/file.jpg', and '/file.jpg'
-  const cleanPath = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
-  
-  // Return absolute URL pointing to the backend's uploads directory
-  return `${API_URL}/uploads/${cleanPath}`;
+  if (bustCache) {
+    const separator = finalUrl.includes('?') ? '&' : '?';
+    finalUrl = `${finalUrl}${separator}t=${new Date().getTime()}`;
+  }
+
+  return finalUrl;
 };
 
 // เช็คว่า URL นี้เป็นไฟล์วิดีโอไหม (ดู extension)

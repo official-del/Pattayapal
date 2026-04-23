@@ -5,12 +5,14 @@ import { FiAward, FiTrendingUp, FiDollarSign, FiUsers } from 'react-icons/fi';
 import RankBadge from '../components/RankBadge';
 import { getFullUrl } from '../utils/mediaUtils';
 import { CoinIcon, CoinBadge } from '../components/CoinIcon';
+import { AuthContext } from '../context/AuthContext';
 
 import { CONFIG } from '../utils/config';
 
 const API_BASE_URL = CONFIG.API_BASE_URL;
 
 const Leaderboard = () => {
+  const { user: currentUser, profileUpdateTag } = React.useContext(AuthContext);
   const [category, setCategory] = useState('points');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -112,7 +114,7 @@ const Leaderboard = () => {
                       <td style={{ padding: '20px' }}>
                         <Link to={`/profile/${user._id}`} style={{ display: 'flex', alignItems: 'center', gap: '15px', textDecoration: 'none' }}>
                           <img 
-                            src={user.profileImage?.url ? getFullUrl(user.profileImage.url) : 'https://via.placeholder.com/40'} 
+                            src={user.profileImage?.url ? (getFullUrl(user.profileImage.url) + (user._id === (currentUser?._id || currentUser?.id) ? `?t=${profileUpdateTag}` : '')) : 'https://via.placeholder.com/40'} 
                             alt={user.name}
                             style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #222' }}
                           />
