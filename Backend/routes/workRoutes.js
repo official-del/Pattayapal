@@ -19,7 +19,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // ✅ Define upload fields for Multer
 const uploadFields = upload.fields([
   { name: 'mainImage', maxCount: 1 },
-  { name: 'album', maxCount: 100 }
+  { name: 'album', maxCount: 10 }
 ]);
 
 // ✅ Define missing routes

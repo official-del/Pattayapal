@@ -126,6 +126,16 @@ function UserWorkForm() {
 
   const handleAlbumChange = (e) => {
     const files = Array.from(e.target.files);
+    
+    // Check limit
+    if (albumImages.length + files.length > 10) {
+      alert('คุณสามารถอัปโหลดไฟล์ในอัลบั้มได้สูงสุด 10 ไฟล์เท่านั้น');
+      // Slice the new files to fit the remaining slots
+      const availableSlots = 10 - albumImages.length;
+      if (availableSlots <= 0) return;
+      files.splice(availableSlots);
+    }
+
     const newFiles = files.map(file => ({
       previewUrl: URL.createObjectURL(file),
       file: file,
@@ -320,7 +330,8 @@ function UserWorkForm() {
 
           {/* อัลบั้มสื่อเพิ่มเติม (รองรับทั้งรูปภาพและวิดีโอ) */}
           <div style={{ marginTop: '40px', padding: '40px', background: 'rgba(255,255,255,0.01)', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.03)' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#444', marginBottom: '25px', letterSpacing: '1px' }}>อัลบั้มสื่อเพิ่มเติม / ALBUM ASSETS</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#444', marginBottom: '10px', letterSpacing: '1px' }}>อัลบั้มสื่อเพิ่มเติม / ALBUM ASSETS</label>
+            <p style={{ color: '#666', fontSize: '0.8rem', marginBottom: '25px', fontWeight: '500' }}>รองรับรูปภาพและวิดีโอ (อัปโหลดได้สูงสุด 10 ไฟล์)</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '15px' }}>
               {albumImages.map((item, i) => {
                 const isVid = item.type === 'video' || (item.url && (item.url.endsWith('.mp4') || item.url.endsWith('.mov') || item.url.endsWith('.webm')));
@@ -336,10 +347,12 @@ function UserWorkForm() {
                   </div>
                 );
               })}
-              <label style={{ aspectRatio: '1/1', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }} onMouseOver={e => e.currentTarget.style.borderColor='var(--accent)'} onMouseOut={e => e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}>
-                <input type="file" multiple hidden accept="image/*,video/*" onChange={handleAlbumChange} />
-                <FiPlus color="#222" size={24} />
-              </label>
+              {albumImages.length < 10 && (
+                <label style={{ aspectRatio: '1/1', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }} onMouseOver={e => e.currentTarget.style.borderColor='var(--accent)'} onMouseOut={e => e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}>
+                  <input type="file" multiple hidden accept="image/*,video/*" onChange={handleAlbumChange} />
+                  <FiPlus color="#222" size={24} />
+                </label>
+              )}
             </div>
           </div>
 

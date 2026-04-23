@@ -103,6 +103,7 @@ function Navbar() {
     { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
     { name: 'My Coin', href: '/dashboard/wallet', icon: <FiDollarSign /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
+    { name: 'Social', href: '/feed', icon: <FiGlobe /> },
   ] : isClient ? [
     { name: 'Client Center', href: '/dashboard', icon: <FiHome /> },
     { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
