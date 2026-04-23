@@ -1,11 +1,12 @@
 import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { notificationsAPI } from '../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFullUrl } from '../../utils/mediaUtils';
 import {
   FiBell, FiBriefcase, FiDollarSign, FiInfo, FiCheck, FiTrash2,
-  FiCheckCircle, FiFilter, FiZap
+  FiCheckCircle, FiFilter, FiZap, FiMessageCircle, FiMessageSquare
 } from 'react-icons/fi';
 
 const TABS = [
@@ -20,9 +21,14 @@ const TYPE_MAP = {
   payment: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', icon: <FiDollarSign size={16} /> },
   system: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiInfo size={16} /> },
   friend: { color: '#ec4899', bg: 'rgba(236,72,153,0.08)', icon: <FiZap size={16} /> },
+  message: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiMessageCircle size={16} /> },
+  messenger: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiMessageCircle size={16} /> },
+  comment: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiMessageSquare size={16} /> },
+  reply: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiMessageSquare size={16} /> },
 };
 
 function Notifications() {
+  const navigate = useNavigate();
   const { token } = useContext(AuthContext);
   const currentToken = token || localStorage.getItem('userToken') || localStorage.getItem('token');
 
@@ -64,6 +70,35 @@ function Notifications() {
       await notificationsAPI.delete(id, currentToken);
       setNotifications(prev => prev.filter(n => n._id !== id));
     } catch (err) { console.error(err); }
+  };
+
+  const handleNotificationClick = async (notif) => {
+    // 1. Mark as read
+    if (!notif.isRead) {
+      handleMarkOne(notif._id);
+    }
+
+    // 2. Navigate based on type
+    const type = notif.type?.toLowerCase() || '';
+    if (type.includes('message') || type.includes('messenger')) {
+      navigate('/messenger');
+    } else if (type.includes('job')) {
+      navigate('/dashboard/hiring');
+    } else if (type.includes('comment') || type.includes('reply')) {
+      if (notif.link) {
+        navigate(notif.link);
+      } else if (notif.relatedId) {
+        navigate(`/works/${notif.relatedId}`);
+      } else {
+        navigate('/works');
+      }
+    } else if (type.includes('friend')) {
+      navigate('/friends');
+    } else if (type.includes('payment') || type.includes('wallet')) {
+      navigate('/dashboard/wallet');
+    } else if (type.includes('system')) {
+      // Stay on notifications or go to a help page
+    }
   };
 
   const filtered = activeTab === 'all'
@@ -164,12 +199,14 @@ function Notifications() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   className="glass"
+                  onClick={() => handleNotificationClick(notif)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '20px',
                     padding: '22px 28px', borderRadius: '24px',
                     border: `1px solid ${notif.isRead ? 'rgba(255,255,255,0.02)' : 'rgba(255,87,51,0.08)'}`,
                     background: notif.isRead ? 'rgba(255,255,255,0.01)' : 'rgba(255,87,51,0.02)',
-                    transition: '0.3s', position: 'relative', overflow: 'hidden'
+                    transition: '0.3s', position: 'relative', overflow: 'hidden',
+                    cursor: 'pointer'
                   }}
                 >
                   {/* Unread dot */}
