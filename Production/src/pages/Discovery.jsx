@@ -145,8 +145,8 @@ function Discovery() {
               <FiZap color="var(--accent)" size={20} />
               <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem', textTransform: 'uppercase' }}>Talent Discovery</span>
             </div>
-            <h1 className="discovery-title" style={{ fontWeight: '700', margin: 0, letterSpacing: '-2px', lineHeight: 0.9 }}>DISCOVER THE FUTURE OF <span style={{ color: 'var(--accent)' }}>CREATION</span></h1>
-            <p style={{ color: '#555', marginTop: '30px', fontSize: 'clamp(0.9rem, 3vw, 1.2rem)', fontWeight: '500', maxWidth: '700px', margin: '30px auto' }}>เชื่อมต่อกับครีเอเตอร์ระดับแนวหน้าของพัทยา ค้นหาพาร์ทเนอร์ที่ใช่สำหรับโปรเจกต์ถัดไปของคุณ</p>
+            <h1 className="discovery-title" style={{ fontWeight: '900', margin: 0, letterSpacing: '-3px', lineHeight: 1.1, textTransform: 'uppercase' }}>DISCOVER THE FUTURE OF <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 15px var(--accent-glow))' }}>CREATION</span></h1>
+            <p style={{ color: '#888', marginTop: '30px', fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', fontWeight: '400', maxWidth: '700px', margin: '30px auto', lineHeight: 1.6 }}>เชื่อมต่อกับครีเอเตอร์ระดับแนวหน้าของพัทยา ค้นหาพาร์ทเนอร์ที่ใช่สำหรับโปรเจกต์ถัดไปของคุณ</p>
           </motion.div>
 
           {/* 🔍 Global Professional Search Engine */}
@@ -190,7 +190,7 @@ function Discovery() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'center', justifyContent: 'space-between' }}>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <span style={{ fontSize: '0.65rem', color: '#333', fontWeight: '700', letterSpacing: '4px' }}>PROFESSIONAL FILTER</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px' }}>PROFESSIONAL FILTER</span>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {professions.map(p => (
                 <button
@@ -208,7 +208,7 @@ function Discovery() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-             <span style={{ fontSize: '0.65rem', color: '#333', fontWeight: '700', letterSpacing: '4px' }}>RANK EXCLUSIVITY</span>
+             <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px' }}>RANK EXCLUSIVITY</span>
              <div style={{ display: 'flex', gap: '10px' }}>
                {ranks.map(r => (
                   <button 
@@ -234,7 +234,7 @@ function Discovery() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '100px 0' }}>
             <FiLoader size={50} className="spin" color="var(--accent)" />
-            <p style={{ marginTop: '20px', color: '#333', letterSpacing: '3px', fontWeight: '700' }}>SYNCHRONIZING TALENT POOL...</p>
+            <p style={{ marginTop: '20px', color: '#666', letterSpacing: '4px', fontWeight: '700', fontSize: '0.8rem' }}>SYNCHRONIZING TALENT POOL...</p>
           </div>
         ) : filteredFreelancers.length > 0 ? (
           <motion.div 
@@ -285,13 +285,13 @@ function Discovery() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '30px' }}>
                     {(freelancer.skills || []).slice(0, 3).map((skill, idx) => (
                       <span key={idx} style={{ 
-                        fontSize: '0.7rem', padding: '6px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', 
-                        border: '1px solid rgba(255,255,255,0.05)', color: '#666', fontWeight: '700' 
+                        fontSize: '0.7rem', padding: '6px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', 
+                        border: '1px solid rgba(255,255,255,0.1)', color: '#888', fontWeight: '600' 
                       }}>
                         {skill.name}
                       </span>
                     ))}
-                    {(freelancer.skills?.length > 3) && <span style={{ fontSize: '0.7rem', color: '#222', alignSelf: 'center' }}>+{freelancer.skills.length - 3}</span>}
+                    {(freelancer.skills?.length > 3) && <span style={{ fontSize: '0.7rem', color: '#444', alignSelf: 'center', fontWeight: '700' }}>+{freelancer.skills.length - 3}</span>}
                   </div>
 
                   <div style={{ display: 'flex', gap: '15px' }}>
@@ -327,9 +327,9 @@ function Discovery() {
           </motion.div>
         ) : (
           <div style={{ textAlign: 'center', padding: '100px 0' }}>
-             <FiTarget size={60} color="#111" />
-             <h2 style={{ fontSize: '2rem', color: '#222', fontWeight: '700', marginTop: '30px' }}>EXCEPTION: NO TALENT DETECTED</h2>
-             <p style={{ color: '#444' }}>ลองปรับเปลี่ยนคำค้นหาหรือตัวกรองเพื่อค้นหาครีเอเตอร์ที่คุณต้องการ</p>
+             <FiTarget size={60} color="#222" />
+             <h2 style={{ fontSize: '2.5rem', color: '#fff', fontWeight: '900', marginTop: '30px', letterSpacing: '-1px' }}>EXCEPTION: NO TALENT DETECTED</h2>
+             <p style={{ color: '#666', fontWeight: '500' }}>ลองปรับเปลี่ยนคำค้นหาหรือตัวกรองเพื่อค้นหาครีเอเตอร์ที่คุณต้องการ</p>
           </div>
         )}
       </section>
@@ -350,13 +350,13 @@ function Discovery() {
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
-        .talent-card:hover { transform: translateY(-15px) scale(1.02); border-color: var(--accent-glow); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+        .talent-card:hover { transform: translateY(-15px) scale(1.02); border-color: var(--accent-glow); box-shadow: 0 40px 80px rgba(0,0,0,0.8); }
         
-        .filter-active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 10px 20px var(--accent-glow); }
-        .filter-inactive { background: rgba(255,255,255,0.02); color: #444; border-color: rgba(255,255,255,0.05); }
-        .filter-inactive:hover { background: rgba(255,255,255,0.05); color: #888; }
+        .filter-active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 0 25px var(--accent-glow); }
+        .filter-inactive { background: rgba(255,255,255,0.03); color: #888; border-color: rgba(255,255,255,0.05); }
+        .filter-inactive:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.1); }
 
-        input::placeholder { color: #222; text-overflow: ellipsis; }
+        input::placeholder { color: #444; text-overflow: ellipsis; }
 
         /* Responsive Hero Styles */
         .discovery-title { font-size: clamp(2.5rem, 8vw, 5rem); }

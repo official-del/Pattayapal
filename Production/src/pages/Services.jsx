@@ -47,10 +47,10 @@ function Services() {
             <FiLayers color="var(--accent)" size={20} />
             <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.8rem' }}></span>
           </div>
-          <h1 style={{ fontSize: 'clamp(3rem, 10vw, 7rem)', fontWeight: '700', margin: 0, letterSpacing: '-5px', lineHeight: 0.85 }}>
-            บริการ <br /> <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 15px var(--accent-glow))' }}>อัจฉริยะ</span>
+          <h1 style={{ fontSize: 'clamp(3rem, 10vw, 7rem)', fontWeight: '900', margin: 0, letterSpacing: '-5px', lineHeight: 0.9, textTransform: 'uppercase' }}>
+            บริการ <br /> <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 20px var(--accent-glow))' }}>อัจฉริยะ</span>
           </h1>
-          <p style={{ color: '#444', maxWidth: '850px', margin: '40px auto 0', fontSize: '1.25rem', lineHeight: 1.7, fontWeight: '700' }}>
+          <p style={{ color: '#888', maxWidth: '850px', margin: '40px auto 0', fontSize: 'clamp(1.1rem, 2.5vw, 1.3rem)', lineHeight: 1.7, fontWeight: '400' }}>
             เราผสานความคิดสร้างสรรค์เข้ากับเทคโนโลยีสมัยใหม่ เพื่อขับเคลื่อนธุรกิจของคุณสู่ความสำเร็จในระดับสากล
           </p>
         </motion.div>
@@ -72,8 +72,8 @@ function Services() {
                 {s.icon}
               </div>
 
-              <h2 style={{ fontSize: '2.8rem', fontWeight: '700', color: '#fff', margin: '0 0 25px', letterSpacing: '-1.5px' }}>{s.title}</h2>
-              <p style={{ color: '#555', lineHeight: 1.8, marginBottom: '50px', fontSize: '1.15rem', fontWeight: '500' }}>{s.description}</p>
+              <h2 style={{ fontSize: 'clamp(2rem, 5vw, 2.8rem)', fontWeight: '700', color: '#fff', margin: '0 0 25px', letterSpacing: '-1.5px' }}>{s.title}</h2>
+              <p style={{ color: '#999', lineHeight: 1.8, marginBottom: '50px', fontSize: '1.1rem', fontWeight: '400' }}>{s.description}</p>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
                 {s.items.map((item, ii) => (
@@ -108,10 +108,10 @@ function Services() {
                 { label: 'OPERATIONAL STATUS', value: 'จันทร์ - ศุกร์: 09:00 - 18:00 น.', icon: <FiClock /> },
               ].map((info, i) => (
                 <div key={i} style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-                  <div className="glass" style={{ width: '65px', height: '65px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', border: '1px solid rgba(255,255,255,0.05)', fontSize: '1.4rem' }}>{info.icon}</div>
+                  <div className="glass" style={{ width: '65px', height: '65px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', border: '1px solid rgba(255,255,255,0.1)', fontSize: '1.4rem', background: 'rgba(255,87,51,0.05)' }}>{info.icon}</div>
                   <div>
-                    <span style={{ fontSize: '0.65rem', fontWeight: '700', color: '#222', letterSpacing: '2px', display: 'block', marginBottom: '8px' }}></span>
-                    <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#fff' }}>{info.value}</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '3px', display: 'block', marginBottom: '8px', opacity: 0.8 }}>{info.label}</span>
+                    <span style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff', letterSpacing: '-0.5px' }}>{info.value}</span>
                   </div>
                 </div>
               ))}
@@ -140,8 +140,8 @@ function Services() {
           className="glass"
           style={{ padding: '100px', borderRadius: '70px', border: '1px solid rgba(255,87,51,0.1)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}
         >
-          <h3 style={{ fontSize: '3.5rem', fontWeight: '700', margin: '0 0 25px', letterSpacing: '-2px' }}>เริ่มภารกิจใหม่กับเรา</h3>
-          <p style={{ color: '#555', marginBottom: '50px', fontWeight: '700', fontSize: '1.2rem' }}>ส่งซิกนัลเพื่อขอรับคำปรึกษาและวางแผนกลยุทธ์สำหรับธุรกิจของคุณ</p>
+          <h3 style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', fontWeight: '900', margin: '0 0 25px', letterSpacing: '-2px', textTransform: 'uppercase' }}>เริ่มภารกิจใหม่กับเรา</h3>
+          <p style={{ color: '#888', marginBottom: '50px', fontWeight: '400', fontSize: '1.25rem' }}>ส่งซิกนัลเพื่อขอรับคำปรึกษาและวางแผนกลยุทธ์สำหรับธุรกิจของคุณ</p>
           <motion.button
             whileHover={{ scale: 1.05, boxShadow: '0 20px 50px var(--accent-glow)' }}
             style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '25px 60px', borderRadius: '40px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '20px', margin: '0 auto', fontSize: '1.2rem' }}

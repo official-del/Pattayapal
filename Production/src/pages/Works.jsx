@@ -67,13 +67,13 @@ function Works() {
               <h1 style={{ fontSize: 'clamp(3rem, 8vw, 6rem)', fontWeight: '700', margin: 0, letterSpacing: '-3px', lineHeight: 0.9 }}>USER<br /><span style={{ color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.2)' }}>CREATIONS</span></h1>
             </div>
             <div style={{ maxWidth: '400px', paddingBottom: '10px' }}>
-              <p style={{ color: '#555', lineHeight: 1.6, fontSize: '1rem', marginBottom: '25px', fontWeight: '500' }}>
+              <p style={{ color: '#888', lineHeight: 1.7, fontSize: '1.1rem', marginBottom: '25px', fontWeight: '400' }}>
                 Exploring the intersection of digital craft and cinematic storytelling. A selection of projects that push the boundaries of modern production.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <div className="glass" style={{ padding: '12px 24px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#fff', lineHeight: 1 }}>{works.length}</div>
-                  <div style={{ fontSize: '0.6rem', color: '#444', fontWeight: '700', letterSpacing: '1px', lineHeight: 1.2 }}>TOTAL<br />PROJECTS</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '2px', lineHeight: 1.2 }}>TOTAL<br />PROJECTS</div>
                 </div>
               </div>
             </div>
@@ -97,12 +97,13 @@ function Works() {
               whileTap={{ scale: 0.98 }}
               onClick={() => handleFilter(f)}
               style={{
-                background: activeFilter === f ? 'var(--accent)' : 'rgba(255,255,255,0.02)',
-                color: activeFilter === f ? '#fff' : '#666',
+                background: activeFilter === f ? 'var(--accent)' : 'rgba(255,255,255,0.03)',
+                color: activeFilter === f ? '#fff' : '#888',
                 padding: '12px 24px', borderRadius: '15px', cursor: 'pointer',
                 border: activeFilter === f ? 'none' : '1px solid rgba(255,255,255,0.05)',
-                fontSize: '0.8rem', fontWeight: '700', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', letterSpacing: '0.5px'
+                fontSize: '0.85rem', fontWeight: '700', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', letterSpacing: '0.5px'
               }}
+              whileHover={activeFilter !== f ? { background: 'rgba(255,255,255,0.08)', color: '#fff' } : {}}
             >
               {f}
             </motion.button>
@@ -113,7 +114,7 @@ function Works() {
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '150px', gap: '20px' }}>
             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '40px', height: '40px', border: '3px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }} />
-            <span style={{ fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem', color: '#444' }}>SYNCING ARCHIVE...</span>
+            <span style={{ fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem', color: '#666' }}>SYNCING ARCHIVE...</span>
           </div>
         ) : fetchError ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '150px', gap: '20px', textAlign: 'center' }}>
@@ -199,13 +200,13 @@ function Works() {
 
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#111', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#111', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
                                 {work.createdBy?.profileImage?.url ?
                                   <img src={getFullUrl(work.createdBy.profileImage.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> :
-                                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: '#222', fontSize: '0.7rem' }}><FiUser /></div>
+                                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: '#333', fontSize: '0.7rem' }}><FiUser /></div>
                                 }
                               </div>
-                              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#555' }}>{work.createdBy?.name || 'Anonymous'}</span>
+                              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#888' }}>{work.createdBy?.name || 'Anonymous'}</span>
                             </div>
                             <div style={{ color: '#222', fontSize: '0.8rem' }}>
                               <FiActivity />
@@ -229,9 +230,9 @@ function Works() {
               whileTap={{ scale: 0.98 }}
               onClick={() => setVisible(v => v + 3)}
               style={{
-                padding: '18px 50px', borderRadius: '15px', color: '#666',
-                fontWeight: '700', letterSpacing: '2px', fontSize: '0.8rem', cursor: 'pointer',
-                border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)', transition: '0.3s'
+                padding: '18px 50px', borderRadius: '15px', color: '#888',
+                fontWeight: '700', letterSpacing: '2px', fontSize: '0.85rem', cursor: 'pointer',
+                border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', transition: '0.3s'
               }}
             >
               LOAD MORE ARCHIVES
