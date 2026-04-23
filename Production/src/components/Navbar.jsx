@@ -64,14 +64,14 @@ function Navbar() {
   // Dispatch event when mobile menu opens/closes and toggle body scroll
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('navbarToggle', { detail: isOpen }));
-    
+
     // Lock body scroll when mobile menu is open
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-    
+
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -188,10 +188,10 @@ function Navbar() {
                 }}
               >
                 {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
-                  <img 
-                    src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage)} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    alt={userInfo?.name?.[0] || 'U'} 
+                  <img
+                    src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage)}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    alt={userInfo?.name?.[0] || 'U'}
                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                   />
                 ) : null}
@@ -250,9 +250,9 @@ function Navbar() {
                   <div className="user-profile-card-new">
                     <div className="avatar-main">
                       {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
-                        <img 
-                          src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage)} 
-                          alt="" 
+                        <img
+                          src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage)}
+                          alt=""
                           onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                         />
                       ) : null}
@@ -269,9 +269,9 @@ function Navbar() {
 
                 <div className="nav-group-label">MAIN MENU</div>
                 {navLinks.map((link, idx) => (
-                  <Link 
-                    key={idx} 
-                    to={link.href} 
+                  <Link
+                    key={idx}
+                    to={link.href}
                     className={`nav-item-new ${location.pathname === link.href ? 'active' : ''}`}
                     onClick={() => setIsOpen(false)}
                   >
@@ -282,9 +282,9 @@ function Navbar() {
 
                 <div className="nav-group-label" style={{ marginTop: '30px' }}>SYSTEM ACCESS</div>
                 {otherLinks.map((link, idx) => (
-                  <Link 
-                    key={idx} 
-                    to={link.href} 
+                  <Link
+                    key={idx}
+                    to={link.href}
                     className={`nav-item-new ${location.pathname === link.href ? 'active' : ''}`}
                     onClick={() => setIsOpen(false)}
                   >
@@ -302,7 +302,7 @@ function Navbar() {
                     <span className="logout-label">SYSTEM TERMINATE</span>
                   </button>
                 ) : (
-                  <Link to="/auth" className="logout-btn-new" onClick={() => setIsOpen(false)} style={{ textDecoration: 'none' }}>
+                  <Link to="/login" className="logout-btn-new" onClick={() => setIsOpen(false)} style={{ textDecoration: 'none' }}>
                     <FiZap size={22} />
                     <span className="logout-label">INITIALIZE LOGIN</span>
                   </Link>
