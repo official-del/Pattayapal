@@ -24,7 +24,6 @@ function WorkDetail() {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
 
   const [replyingTo, setReplyingTo] = useState(null);
