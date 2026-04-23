@@ -66,7 +66,7 @@ function ServiceGrid() {
             {role.icon}
           </div>
           <h3 style={{ fontSize: '1.6rem', fontWeight: '700', color: '#fff', margin: '0 0 15px', letterSpacing: '-0.5px' }}>{role.name}</h3>
-          <p style={{ color: '#555', fontSize: '1rem', lineHeight: 1.6, fontWeight: '500', marginBottom: '0' }}>{role.description}</p>
+          <p style={{ color: '#888', fontSize: '1rem', lineHeight: 1.6, fontWeight: '400', marginBottom: '0' }}>{role.description}</p>
 
           <div style={{ marginTop: 'auto', paddingTop: '30px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent)', fontWeight: '700', fontSize: '0.8rem', letterSpacing: '2px' }}>
             FIND TALENT <FiArrowRight size={14} />

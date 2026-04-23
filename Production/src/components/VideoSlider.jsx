@@ -96,8 +96,8 @@ function VideoSlider() {
                             <div style={{ maxWidth: '900px' }}>
                                 <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
                                     <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '6px', fontSize: '0.9rem', display: 'block', marginBottom: '20px' }}>POPULAR PROJECT</span>
-                                    <h2 style={{ fontSize: 'clamp(3.5rem, 8vw, 7rem)', fontWeight: '700', margin: 0, lineHeight: 0.9, letterSpacing: '-4px', color: '#fff' }}>{slide.title}</h2>
-                                    <p style={{ fontSize: '1.4rem', color: '#ccc', marginTop: '30px', maxWidth: '600px', lineHeight: 1.6, fontWeight: '400' }}>{slide.description}</p>
+                                    <h2 className="vslider__title">{slide.title}</h2>
+                                    <p className="vslider__subtitle" style={{ marginTop: '20px' }}>{slide.description}</p>
 
                                     <div className="vslider__actions">
                                         <motion.button
@@ -123,7 +123,7 @@ function VideoSlider() {
             </AnimatePresence>
 
             {/* 🛠️ Modern Navigation */}
-            <div style={{ position: 'absolute', bottom: '60px', right: '8%', display: 'flex', alignItems: 'center', gap: '30px', zIndex: 10 }}>
+            <div className="vslider__nav" style={{ position: 'absolute', bottom: '60px', right: '8%', display: 'flex', alignItems: 'center', gap: '30px', zIndex: 10 }}>
                 <div style={{ display: 'flex', gap: '15px' }}>
                     <button onClick={() => goTo(current - 1)} className="glass" style={{ width: '60px', height: '60px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <FiArrowLeft size={24} />
@@ -133,7 +133,7 @@ function VideoSlider() {
                     </button>
                 </div>
 
-                <div style={{ height: '60px', width: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                <div className="vslider__nav-divider" style={{ height: '60px', width: '1px', background: 'rgba(255,255,255,0.1)' }} />
 
                 <div style={{ display: 'flex', gap: '12px' }}>
                     {slides.map((_, i) => (
@@ -151,8 +151,8 @@ function VideoSlider() {
             </div>
 
             {/* 📟 Slide Counter */}
-            <div style={{ position: 'absolute', top: '50%', right: '40px', transform: 'translateY(-50%)', writingMode: 'vertical-rl', mixBlendMode: 'difference' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', letterSpacing: '5px', color: '#333' }}>
+            <div className="vslider__counter">
+                <span>
                     0{current + 1} / 0{slides.length}
                 </span>
             </div>

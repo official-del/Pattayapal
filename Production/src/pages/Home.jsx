@@ -52,11 +52,11 @@ function Home() {
               <FiZap color="var(--accent)" size={24} />
               <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.8rem' }}></span>
             </motion.div>
-            <motion.h2 variants={itemVariants} style={{ fontSize: 'clamp(3.5rem, 8vw, 6.5rem)', fontWeight: '700', margin: 0, letterSpacing: '-4px', lineHeight: 0.85 }}>
-              <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 15px var(--accent-glow))' }}>Power Your Ideas</span> <br />
-              <span style={{ color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.05)' }}>with Modern Tech</span>
+            <motion.h2 variants={itemVariants} style={{ fontSize: 'clamp(3rem, 10vw, 6.5rem)', fontWeight: '700', margin: 0, letterSpacing: '-4px', lineHeight: 0.9 }}>
+              <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 20px var(--accent-glow))' }}>Power Your Ideas</span> <br />
+              <span style={{ color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.1)' }}>with Modern Tech</span>
             </motion.h2>
-            <motion.p variants={itemVariants} style={{ color: '#444', maxWidth: '800px', margin: '40px auto 0', fontSize: '1.25rem', fontWeight: '500', lineHeight: 1.6 }}>
+            <motion.p variants={itemVariants} style={{ color: '#888', maxWidth: '800px', margin: '40px auto 0', fontSize: 'clamp(1rem, 2vw, 1.25rem)', fontWeight: '400', lineHeight: 1.7 }}>
               We are the driver of creative business and premium digital innovation, ensuring high-performance outcomes for your brand.
             </motion.p>
           </motion.div>
@@ -79,8 +79,10 @@ function Home() {
                 <FiLayers color="var(--accent)" size={20} />
                 <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.8rem' }}></span>
               </div>
-              <h3 style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', fontWeight: '700', margin: 0, letterSpacing: '-px', lineHeight: 1 }}>USER CREATIONS</h3>
-              <motion.p variants={itemVariants} style={{ color: '#444', maxWidth: '800px', margin: '30px auto 0', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)', fontWeight: '500', lineHeight: 1.6 }}>User Creations" refers to any digital content, artwork, tools, or projects that are built, designed, and uploaded by the platform's users User-Generated Content, rather than by the platform's official team.</motion.p>
+              <h3 style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', fontWeight: '700', margin: 0, letterSpacing: '-2px', lineHeight: 1.1 }}>USER CREATIONS</h3>
+              <motion.p variants={itemVariants} style={{ color: '#888', maxWidth: '800px', marginTop: '30px', fontSize: 'clamp(1rem, 2vw, 1.1rem)', fontWeight: '400', lineHeight: 1.7 }}>
+                Explore a vast archive of high-fidelity projects, tools, and digital experiences crafted by our global community of freelancers and creators.
+              </motion.p>
             </div>
           </div>
 

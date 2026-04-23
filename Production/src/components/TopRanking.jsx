@@ -80,7 +80,7 @@ function TopRanking({ label }) {
                   dragConstraints={{ left: 0, right: 0 }}
                   onDragEnd={handleDragEnd}
                   style={{
-                    position: 'absolute', width: '380px', height: '520px', cursor: "grab",
+                    position: 'absolute', width: 'clamp(280px, 85vw, 380px)', height: 'clamp(400px, 60vh, 520px)', cursor: "grab",
                     transformStyle: 'preserve-3d', pointerEvents: index === currentIndex ? 'auto' : 'none'
                   }}
                 >
