@@ -14,7 +14,8 @@ export const protect = async (req, res, next) => {
 
       // 🛡️ [SECURITY] Check Token Version
       // หาก tokenVersion ในบัตรไม่ตรงกับใน DB (เช่น เพิ่งเปลี่ยนรหัสผ่าน) จะถือว่าบัตรหมดอายุ
-      if (typeof decoded.tokenVersion !== 'undefined' && decoded.tokenVersion !== user.tokenVersion) {
+      // ใช้ || 0 เพื่อรองรับกรณีที่ยูสเซอร์เก่าในฐานข้อมูลยังไม่มีฟิลด์นี้
+      if (typeof decoded.tokenVersion !== 'undefined' && decoded.tokenVersion !== (user.tokenVersion || 0)) {
         return res.status(401).json({ message: 'Session ของคุณถูกยกเลิกเนื่องจากมีการเปลี่ยนรหัสผ่านหรือความปลอดภัย, กรุณาล็อกอินใหม่' });
       }
 
