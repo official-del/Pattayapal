@@ -23,9 +23,6 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
 
-  useEffect(() => {
-    if (fetchProfile) fetchProfile();
-  }, []);
 
   useEffect(() => {
     if (showMap && mapContainerRef.current && !mapInstanceRef.current) {
