@@ -11,7 +11,10 @@ export const authAPI = {
     API.post('/auth/login', { email, password }).then(res => res.data),
   getProfile: (token) =>
     API.get('/auth/profile', {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'x-auth-token': token  // 🔄 Fallback for proxies that strip Authorization
+      }
     }).then(res => res.data)
 };
 

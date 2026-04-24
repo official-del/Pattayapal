@@ -3,23 +3,33 @@ import User from '../models/User.js';
 
 export const protect = async (req, res, next) => {
   let token;
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
-      const secret = process.env.JWT_SECRET || 'pattayapal_secret_key'; // 👈 เพิ่ม Fallback ให้ตรงกับตอน Login
-      const decoded = jwt.verify(token, secret);
-      
-      const user = await User.findById(decoded.id).select('-password');
-      if (!user) return res.status(401).json({ message: 'ไม่พบผู้ใช้งานนี้ในระบบ' });
 
-      req.user = user;
-      next();
-    } catch (error) {
-      console.error('🛡️ Auth Middleware Error:', error.message);
-      return res.status(401).json({ message: 'Token ไม่ถูกต้องหรือหมดอายุ' });
-    }
+  // ✅ รับ Token จาก Authorization header (มาตรฐาน)
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
   }
-  if (!token) return res.status(401).json({ message: 'ไม่มีสิทธิ์เข้าถึง, กรุณาล็อกอิน' });
+  // 🔄 Fallback: รับจาก x-auth-token (กรณี Proxy สกัด Authorization header)
+  else if (req.headers['x-auth-token']) {
+    token = req.headers['x-auth-token'];
+  }
+
+  if (!token) {
+    return res.status(401).json({ message: 'ไม่มีสิทธิ์เข้าถึง, กรุณาล็อกอิน' });
+  }
+
+  try {
+    const secret = process.env.JWT_SECRET || 'pattayapal_secret_key';
+    const decoded = jwt.verify(token, secret);
+
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) return res.status(401).json({ message: 'ไม่พบผู้ใช้งานนี้ในระบบ' });
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('🛡️ Auth Middleware Error:', error.message);
+    return res.status(401).json({ message: 'Token ไม่ถูกต้องหรือหมดอายุ' });
+  }
 };
 
 export const admin = (req, res, next) => {

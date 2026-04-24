@@ -227,6 +227,19 @@ app.use('/api/works', workRoutes);
 
 // Removed from here
 
+// 🔍 [DEBUG] Echo headers to check what Hostinger proxy passes through
+app.get('/api/debug-headers', (req, res) => {
+  res.json({
+    receivedHeaders: {
+      authorization: req.headers.authorization || '❌ MISSING',
+      'x-auth-token': req.headers['x-auth-token'] || '❌ MISSING',
+      host: req.headers.host,
+      origin: req.headers.origin,
+    },
+    note: 'If authorization is MISSING, Hostinger proxy is stripping it.'
+  });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/chat', chatRoutes);
