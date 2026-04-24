@@ -55,7 +55,8 @@ export const AuthProvider = ({ children }) => {
       const status = error.response?.status;
       // 🕵️ Only logout if it's explicitly 401 (Unauthorized)
       if (status === 401) {
-        console.warn('🔑 Session expired. Logging out...');
+        console.error('🔑 Session expired due to 401. Reason:', error.response?.data?.message || 'Unknown');
+        console.warn('Logging out...');
         logout();
       } else {
         // Network error, 500, or server restarting - DO NOT logout.
