@@ -698,7 +698,7 @@ function UserProfile() {
          <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={e => onFileSelect(e, 'profile')} />
          <input type="file" ref={coverInputRef} style={{ display: 'none' }} onChange={e => onFileSelect(e, 'cover')} />
 
-         {showHireModal && <HireModal freelancerId={targetId} freelancerName={profile?.name} currentToken={currentToken} initialData={selectedPackage ? { title: `จ้างงาน: ${selectedPackage.title}`, budget: selectedPackage.price, description: `จ้างงานตามแพ็กเกจ ${selectedPackage.title}` } : null} onClose={() => { setShowHireModal(false); setSelectedPackage(null); }} />}
+         {showHireModal && <HireModal freelancerId={targetProfileId} freelancerName={profile?.name} currentToken={currentToken} initialData={selectedPackage ? { title: `จ้างงาน: ${selectedPackage.title}`, budget: selectedPackage.price, description: `จ้างงานตามแพ็กเกจ ${selectedPackage.title}` } : null} onClose={() => { setShowHireModal(false); setSelectedPackage(null); }} />}
 
 
 
