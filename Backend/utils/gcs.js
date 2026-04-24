@@ -10,14 +10,27 @@ import fs from 'fs';
 const keyPath = path.join(__dirname, '../config/gcs-key.json'); 
 const keyExists = fs.existsSync(keyPath);
 
-if (!keyExists) {
-    console.warn("⚠️ [GCS] Warning: gcs-key.json not found. System will try using Environment Default Credentials (ADC) or fallback to LOCAL storage.");
+// 🛡️ [NEW] Support for Environment Variable Credentials (for Hostinger/Heroku)
+let credentials;
+if (process.env.GCP_KEY_JSON) {
+    try {
+        credentials = JSON.parse(process.env.GCP_KEY_JSON);
+        console.log("🚀 [GCS] Using credentials from Environment Variable (GCP_KEY_JSON)");
+    } catch (e) {
+        console.error("❌ [GCS] Error parsing GCP_KEY_JSON environment variable:", e.message);
+    }
 }
 
 const storage = new Storage({
     projectId: process.env.GCP_PROJECT_ID,
-    ...(keyExists ? { keyFilename: keyPath } : {}),
+    ...(credentials ? { credentials } : (keyExists ? { keyFilename: keyPath } : {})),
 });
+
+const isConfigured = !!(credentials || keyExists || process.env.GCP_PROJECT_ID);
+
+if (!isConfigured) {
+    console.warn("⚠️ [GCS] Warning: No credentials found (file or env). Fallback to LOCAL storage.");
+}
 
 /** 
  * 📤 อัปโหลดไฟล์: ลอง GCS ก่อน ถ้าพลาด (หรือไม่มีกุญแจ) จะเซฟลงโฟลเดอร์ uploads ในเครื่องแทน
@@ -26,8 +39,8 @@ export const uploadToGCS = async (file) => {
     if (!file) throw new Error("No file provided");
     if (!file.path) throw new Error("File must be uploaded to disk first (missing file.path)");
 
-    // 1. ลองอัปโหลดขึ้น GCS ถ้ามีกุญแจ หรือ มี Project ID (ใช้ ADC)
-    if (keyExists || process.env.GCP_PROJECT_ID) {
+    // 1. ลองอัปโหลดขึ้น GCS ถ้ามีการตั้งค่ากุญแจไว้
+    if (isConfigured) {
         try {
             const bucketName = process.env.GCP_BUCKET_NAME;
             const bucket = storage.bucket(bucketName);
