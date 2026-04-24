@@ -12,7 +12,11 @@ import {
 } from '../controller/chatController.js';
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+import path from 'path';
+import fs from 'fs';
+const tempDir = path.join(process.cwd(), 'uploads/temp');
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+const upload = multer({ dest: tempDir });
 
 // 🔒 ทุกเส้นทางต้องผ่านการตรวจสอบ Token (protect)
 router.post('/conversation', protect, getOrCreateConversation);

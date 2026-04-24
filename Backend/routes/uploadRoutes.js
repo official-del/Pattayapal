@@ -3,7 +3,11 @@ import multer from 'multer';
 import { uploadToGCS, deleteFromGCS } from '../utils/gcs.js'; 
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+import path from 'path';
+import fs from 'fs';
+const tempDir = path.join(process.cwd(), 'uploads/temp');
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+const upload = multer({ dest: tempDir });
 
 router.post('/single', upload.single('file'), async (req, res) => {
     try {

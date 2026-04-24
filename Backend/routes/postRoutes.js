@@ -4,7 +4,11 @@ import { protect } from '../middleware/auth.js';
 import multer from 'multer';
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() }); // ✅ ใช้ MemoryStorage เพื่อส่งไป GCS ต่อ
+import path from 'path';
+import fs from 'fs';
+const tempDir = path.join(process.cwd(), 'uploads/temp');
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+const upload = multer({ dest: tempDir });
 
 router.route('/')
   .get(getPosts)

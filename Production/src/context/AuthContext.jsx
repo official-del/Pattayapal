@@ -112,6 +112,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('userToken'); // 👈 เพิ่มการลบตัวนี้ด้วย
     localStorage.removeItem('userInfo');
   };
 

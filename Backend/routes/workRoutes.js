@@ -14,7 +14,11 @@ import {
 import Work from '../models/Work.js';
 import { updateUserStats } from '../utils/rankHandler.js';
 
-const upload = multer({ storage: multer.memoryStorage() });
+import path from 'path';
+import fs from 'fs';
+const tempDir = path.join(process.cwd(), 'uploads/temp');
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+const upload = multer({ dest: tempDir });
 
 // ✅ Define upload fields for Multer
 const uploadFields = upload.fields([

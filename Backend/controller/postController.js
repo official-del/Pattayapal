@@ -2,7 +2,7 @@ import Post from '../models/Post.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { updateUserStats } from '../utils/rankHandler.js';
-import { uploadToGCS } from '../utils/gcs.js';
+import { uploadToGCS, deleteFromGCS } from '../utils/gcs.js';
 import path from 'path';
 
 export const getPosts = async (req, res) => {

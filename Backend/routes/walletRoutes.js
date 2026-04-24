@@ -5,7 +5,11 @@ import { topupWallet, getWalletTransactions, requestWithdrawal, getAdminWithdraw
 import { topupLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+import path from 'path';
+import fs from 'fs';
+const tempDir = path.join(process.cwd(), 'uploads/temp');
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+const upload = multer({ dest: tempDir });
 
 // Topup with Slip
 router.post('/topup', protect, topupLimiter, upload.single('slip'), topupWallet);

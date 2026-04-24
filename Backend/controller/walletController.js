@@ -4,6 +4,7 @@ import AuditLog from '../models/AuditLog.js';
 import axios from 'axios';
 import FormData from 'form-data';
 import path from 'path';
+import fs from 'fs';
 import { uploadToGCS } from '../utils/gcs.js';
 const EASYSLIP_API_KEY = () => process.env.EASYSLIP_API_KEY?.trim();
 
@@ -28,7 +29,11 @@ export const topupWallet = async (req, res) => {
 
     // ── อัปโหลดสลิปขึ้น GCS เพื่อเก็บเป็นหลักฐานถาวร ──
     const slipUrl = await uploadToGCS(req.file);
-    const fileBuffer = req.file.buffer;
+    
+    // 🛡️ [FIX] Multer DiskStorage doesn't provide buffer. We must read it from path.
+    const fileBuffer = req.file.buffer || (req.file.path ? fs.readFileSync(req.file.path) : null);
+    
+    if (!fileBuffer) throw new Error("ไม่สามารถอ่านข้อมูลไฟล์สลิปได้");
 
     const apiKey = EASYSLIP_API_KEY();
     if (!apiKey) {

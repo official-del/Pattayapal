@@ -247,7 +247,7 @@ function Navbar() {
 
               {/* Navigation Group */}
               <div className="sidebar-scrollable">
-                {currentToken && (
+                {currentToken && userInfo?.name && (
                   <div className="user-profile-card-new">
                     <div className="avatar-main">
                       {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
@@ -262,8 +262,8 @@ function Navbar() {
                       </div>
                     </div>
                     <div className="user-details-new">
-                      <span className="u-name">{userInfo?.name || 'Welcome'}</span>
-                      <span className="u-role">{userInfo?.role || 'User'}</span>
+                      <span className="u-name">{userInfo.name}</span>
+                      <span className="u-role">{userInfo.role || 'Member'}</span>
                     </div>
                   </div>
                 )}

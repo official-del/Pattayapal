@@ -116,15 +116,21 @@ io.on('connection', (socket) => {
   socket.on('disconnect', async () => {
     const userId = userSocketMap.get(socket.id);
     if (userId) {
-      try {
-        await User.findByIdAndUpdate(userId, {
-          isOnline: false,
-          lastSeen: new Date()
-        });
-        userSocketMap.delete(socket.id);
-        io.emit('status_change', { userId, isOnline: false, lastSeen: new Date() });
-      } catch (err) {
-        console.error('Update status error:', err);
+      userSocketMap.delete(socket.id);
+      
+      // 🕵️ Check if user has other active sockets (e.g., other tabs)
+      const isStillConnected = [...userSocketMap.values()].includes(userId);
+      
+      if (!isStillConnected) {
+        try {
+          await User.findByIdAndUpdate(userId, {
+            isOnline: false,
+            lastSeen: new Date()
+          });
+          io.emit('status_change', { userId, isOnline: false, lastSeen: new Date() });
+        } catch (err) {
+          console.error('Update status error:', err);
+        }
       }
     }
   });
@@ -134,12 +140,12 @@ io.on('connection', (socket) => {
 // 1. MIDDLEWARE (ต้องประกาศก่อน Routes เสมอ!)
 // ==========================================
 app.use(helmet({
-  crossOriginResourcePolicy: false, // 💡 สำคัญ: เพื่อให้หน้าบ้านดึงรูปจาก Google Cloud/Local ได้โดยไม่ติดเรื่อง URL
+  crossOriginResourcePolicy: false, 
 }));
-// ✅ Rate Limiting for security
+// ✅ Rate Limiting for security - INCREASED for modern SPA usage
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  max: 1000, // Limit each IP to 1000 requests per 15 mins
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests from this IP, please try again after 15 minutes' }

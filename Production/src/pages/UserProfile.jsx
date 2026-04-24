@@ -56,8 +56,9 @@ function UserProfile() {
    const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
    const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo') || '{}');
 
-   const targetId = userId || currentUser?._id || currentUser?.id;
-   const isMyProfile = currentUser?._id === targetId || currentUser?.id === targetId;
+   const currentUserId = String(currentUser?._id || currentUser?.id || "");
+   const targetProfileId = String(userId || currentUserId);
+   const isMyProfile = !!currentUserId && (currentUserId === targetProfileId);
 
    const [profile, setProfile] = useState(null);
    const [works, setWorks] = useState([]);
@@ -110,23 +111,56 @@ function UserProfile() {
    }, [profile]);
 
    useEffect(() => {
-      if (!socket || !targetId) return;
+      if (!socket || !targetProfileId) return;
       const handleStatusChange = (data) => {
-         if (data.userId === targetId) {
+         if (data.userId === targetProfileId) {
             setIsOnline(data.isOnline);
             if (data.lastSeen) setLastSeen(data.lastSeen);
          }
       };
+      
+      const handleProfileUpdate = (data) => {
+         if (data.userId === targetProfileId) {
+            setProfile(prev => {
+                if (!prev) return prev;
+                return { ...prev, ...data };
+            });
+         }
+      };
+      
+      const handleWorkUpdate = (data) => {
+         if (!data || !data.work) return;
+         const updatedWork = data.work;
+         if (updatedWork.createdBy?._id === targetProfileId || updatedWork.createdBy === targetProfileId) {
+             setWorks(prevWorks => {
+                 if (data.action === 'create') return [updatedWork, ...prevWorks];
+                 if (data.action === 'update') return prevWorks.map(w => w._id === updatedWork._id ? updatedWork : w);
+                 if (data.action === 'delete') return prevWorks.filter(w => w._id !== data.workId);
+                 return prevWorks;
+             });
+         } else if (data.action === 'delete') {
+             // Delete action might only send workId
+             setWorks(prevWorks => prevWorks.filter(w => w._id !== data.workId));
+         }
+      };
+
       socket.on('status_change', handleStatusChange);
-      return () => socket.off('status_change', handleStatusChange);
-   }, [socket, targetId]);
+      socket.on('profile_updated', handleProfileUpdate);
+      socket.on('work_updated', handleWorkUpdate);
+      
+      return () => {
+          socket.off('status_change', handleStatusChange);
+          socket.off('profile_updated', handleProfileUpdate);
+          socket.off('work_updated', handleWorkUpdate);
+      };
+   }, [socket, targetProfileId]);
 
    useEffect(() => {
       const fetchData = async () => {
-         if (!targetId) return;
+         if (!targetProfileId) return;
          setLoading(true);
          try {
-            const data = await usersAPI.getPublicProfile(targetId);
+            const data = await usersAPI.getPublicProfile(targetProfileId);
             setProfile(data.user);
             setRecentComments(data.recentComments || []);
             setBioText(data.user?.bio || '');
@@ -143,11 +177,11 @@ function UserProfile() {
             setSkills(data.user?.skills || []);
             setServicePackages(data.user?.servicePackages || []);
 
-            const wRes = await worksAPI.getByUser(targetId);
+            const wRes = await worksAPI.getByUser(targetProfileId);
             setWorks(wRes.works || []);
 
             if (currentToken && !isMyProfile) {
-               const statusRes = await usersAPI.getFriendStatus(targetId, currentToken);
+               const statusRes = await usersAPI.getFriendStatus(targetProfileId, currentToken);
                setFriendStatus(statusRes.status);
             }
 
@@ -162,25 +196,25 @@ function UserProfile() {
       };
       fetchData();
       window.scrollTo(0, 0);
-   }, [targetId, currentToken]);
+   }, [targetProfileId, currentToken]);
 
    const handleFriendAction = async () => {
       if (!currentToken) return alert('กรุณาเข้าสู่ระบบก่อนครับ');
       setFriendLoading(true);
       try {
          if (friendStatus === 'none') {
-            await usersAPI.sendFriendRequest(targetId, currentToken);
+            await usersAPI.sendFriendRequest(targetProfileId, currentToken);
             setFriendStatus('pending_sent');
          } else if (friendStatus === 'pending_sent') {
-            await usersAPI.cancelFriendRequest(targetId, currentToken);
+            await usersAPI.cancelFriendRequest(targetProfileId, currentToken);
             setFriendStatus('none');
          } else if (friendStatus === 'pending_received') {
-            await usersAPI.respondFriendRequest(targetId, 'accept', currentToken);
+            await usersAPI.respondFriendRequest(targetProfileId, 'accept', currentToken);
             setFriendStatus('friends');
             setProfile(p => ({ ...p, friends: [...(p.friends || []), { _id: currentUser._id, name: currentUser.name }] }));
          } else if (friendStatus === 'friends') {
             if (!window.confirm(`ยกเลิกเพื่อนกับ ${profile?.name}?`)) return;
-            await usersAPI.removeFriend(targetId, currentToken);
+            await usersAPI.removeFriend(targetProfileId, currentToken);
             setFriendStatus('none');
          }
       } catch { alert('Operation failed.'); }
@@ -560,12 +594,18 @@ function UserProfile() {
                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#666', marginBottom: '25px', fontSize: '0.9rem' }}><FiClock /> <span>{pkg.deliveryTime} DAYS DELIVERY</span></div>
                                        <p style={{ color: '#888', lineHeight: '1.6', marginBottom: '30px' }}>{pkg.description}</p>
                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '25px' }}>
-                                          <button 
-                                             onClick={() => { setSelectedPackage(pkg); setShowHireModal(true); }}
-                                             style={{ width: '100%', padding: '18px', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', fontWeight: '700', cursor: 'pointer' }}
-                                          >
-                                             REQUEST BOOKING
-                                          </button>
+                                          {!isMyProfile ? (
+                                             <button 
+                                                onClick={() => { setSelectedPackage(pkg); setShowHireModal(true); }}
+                                                style={{ width: '100%', padding: '18px', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', fontWeight: '700', cursor: 'pointer' }}
+                                             >
+                                                REQUEST BOOKING
+                                             </button>
+                                          ) : (
+                                             <div style={{ width: '100%', padding: '15px', borderRadius: '15px', background: 'rgba(255,255,255,0.02)', color: '#444', fontWeight: '700', textAlign: 'center', fontSize: '0.8rem' }}>
+                                                YOUR PACKAGE
+                                             </div>
+                                          )}
                                        </div>
                                     </div>
                                  ))}

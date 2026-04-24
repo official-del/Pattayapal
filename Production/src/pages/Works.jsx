@@ -5,6 +5,7 @@ import { worksAPI } from '../utils/api';
 import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
 import { FiArrowUpRight, FiClock, FiUser, FiLoader, FiGrid, FiLayers, FiSearch, FiZap, FiLayout, FiActivity, FiAlertTriangle } from 'react-icons/fi';
 import Footer from '../components/Footer';
+import { useSocket } from '../context/SocketContext';
 
 const FILTERS = ['All', 'Productions', 'Online Marketing', 'Graphic Design', 'Web Application', 'Motion Graphic', 'Photography'];
 
@@ -15,6 +16,7 @@ function Works() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [visible, setVisible] = useState(8);
+  const { socket } = useSocket();
 
   useEffect(() => {
     const fetchWorks = async () => {
@@ -35,6 +37,56 @@ function Works() {
     fetchWorks();
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleWorkUpdate = (data) => {
+        if (!data || !data.work) {
+            if (data?.action === 'delete' && data.workId) {
+                setWorks(prev => prev.filter(w => w._id !== data.workId));
+                setFiltered(prev => prev.filter(w => w._id !== data.workId));
+            }
+            return;
+        }
+        
+        const updatedWork = data.work;
+        if (data.action === 'create' && updatedWork.status === 'published') {
+            setWorks(prev => [updatedWork, ...prev]);
+            setFiltered(prev => (activeFilter === 'All' || activeFilter === updatedWork.category?.name) ? [updatedWork, ...prev] : prev);
+        } else if (data.action === 'update') {
+            if (updatedWork.status !== 'published') {
+                // If it was unpublished
+                setWorks(prev => prev.filter(w => w._id !== updatedWork._id));
+                setFiltered(prev => prev.filter(w => w._id !== updatedWork._id));
+            } else {
+                setWorks(prev => {
+                    const idx = prev.findIndex(w => w._id === updatedWork._id);
+                    if (idx > -1) {
+                        const newArr = [...prev];
+                        newArr[idx] = updatedWork;
+                        return newArr;
+                    }
+                    return [updatedWork, ...prev]; // if not found but is published now
+                });
+                setFiltered(prev => {
+                    if (activeFilter !== 'All' && activeFilter !== updatedWork.category?.name) {
+                        return prev.filter(w => w._id !== updatedWork._id);
+                    }
+                    const idx = prev.findIndex(w => w._id === updatedWork._id);
+                    if (idx > -1) {
+                        const newArr = [...prev];
+                        newArr[idx] = updatedWork;
+                        return newArr;
+                    }
+                    return [updatedWork, ...prev];
+                });
+            }
+        }
+    };
+    
+    socket.on('work_updated', handleWorkUpdate);
+    return () => socket.off('work_updated', handleWorkUpdate);
+  }, [socket, activeFilter]);
 
   const handleFilter = (cat) => {
     setActive(cat);

@@ -48,8 +48,16 @@ export const createWork = async (req, res) => {
     });
 
     await work.save();
+    
+    // Populate before emitting
+    const savedWork = await Work.findById(work._id).populate('category').populate('createdBy', 'name profileImage');
+    
+    // 📡 Emit Real-Time Event
+    const io = req.app.get('io');
+    if (io) io.emit('work_updated', { action: 'create', work: savedWork });
+
     console.log("✅ [CreateWork] Success:", work._id);
-    res.status(201).json({ message: 'Created successfully', work });
+    res.status(201).json({ message: 'Created successfully', work: savedWork });
   } catch (error) {
     console.error("🔥 Create Work Error Details:", error);
     res.status(500).json({ message: `Database Save Error: ${error.message}` });
@@ -101,10 +109,27 @@ export const updateWork = async (req, res) => {
           ...img,
           publicId: img.publicId || (img.url ? path.basename(img.url) : 'legacy-img')
         }));
+        
+        // 🗑️ GCS Garbage Collection: ลบรูปที่หายไปจาก finalAlbum ออกจาก Cloud
+        if (work.album && work.album.length > 0) {
+            const newUrls = finalAlbum.map(a => a.url);
+            for (const oldItem of work.album) {
+                if (oldItem.url && !newUrls.includes(oldItem.url)) {
+                    await deleteFromGCS(oldItem.url);
+                }
+            }
+        }
       } catch (pErr) {
         console.error("Album Parse Error:", pErr);
         finalAlbum = [];
       }
+    } else {
+        // ถ้าไม่มี existingAlbum ส่งมาเลย แสดงว่าผู้ใช้ลบรูปเก่าทิ้งหมด
+        if (work.album && work.album.length > 0) {
+            for (const oldItem of work.album) {
+                if (oldItem.url) await deleteFromGCS(oldItem.url);
+            }
+        }
     }
 
     if (req.files && req.files['album']) {
@@ -118,7 +143,14 @@ export const updateWork = async (req, res) => {
     // Handle Category safely
     if (updateData.category === '' || updateData.category === 'undefined') delete updateData.category;
 
-    const updated = await Work.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+    const updated = await Work.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true })
+      .populate('category')
+      .populate('createdBy', 'name profileImage');
+      
+    // 📡 Emit Real-Time Event
+    const io = req.app.get('io');
+    if (io) io.emit('work_updated', { action: 'update', work: updated });
+
     console.log("✅ [UpdateWork] Success:", updated._id);
     res.status(200).json({ message: 'Updated', work: updated });
   } catch (error) {
@@ -191,6 +223,11 @@ export const deleteWork = async (req, res) => {
     }
 
     await Work.findByIdAndDelete(req.params.id);
+    
+    // 📡 Emit Real-Time Event
+    const io = req.app.get('io');
+    if (io) io.emit('work_updated', { action: 'delete', workId: req.params.id });
+
     res.status(200).json({ message: 'Deleted' });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };

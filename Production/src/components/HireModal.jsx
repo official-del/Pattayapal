@@ -119,6 +119,12 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // 🛡️ Client-side safety check
+    if (userInfo?._id === freelancerId || userInfo?.id === freelancerId) {
+      return alert("คุณไม่สามารถจ้างงานตนเองได้ครับ");
+    }
+
     setLoading(true);
     try {
       await jobsAPI.create({

@@ -230,6 +230,11 @@ const updateProfile = async (req, res) => {
       updateData,
       { new: true }
     ).select('-password');
+    
+    // 📡 Emit Real-Time Event
+    const io = req.app.get('io');
+    if (io) io.emit('profile_updated', { userId: req.user.id, ...updateData });
+
     res.json({ message: 'อัปเดตโปรไฟล์สำเร็จ', user });
   } catch (err) {
     res.status(500).json({ message: err.message });

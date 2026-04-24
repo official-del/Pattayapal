@@ -11,7 +11,7 @@ const keyPath = path.join(__dirname, '../config/gcs-key.json');
 const keyExists = fs.existsSync(keyPath);
 
 if (!keyExists) {
-    console.warn("⚠️ [GCS] Warning: gcs-key.json not found. System will fallback to LOCAL storage by default.");
+    console.warn("⚠️ [GCS] Warning: gcs-key.json not found. System will try using Environment Default Credentials (ADC) or fallback to LOCAL storage.");
 }
 
 const storage = new Storage({
@@ -24,39 +24,38 @@ const storage = new Storage({
  */
 export const uploadToGCS = async (file) => {
     if (!file) throw new Error("No file provided");
+    if (!file.path) throw new Error("File must be uploaded to disk first (missing file.path)");
 
-    // 1. ลองอัปโหลดขึ้น GCS ถ้ามีกุญแจ
-    if (keyExists) {
+    // 1. ลองอัปโหลดขึ้น GCS ถ้ามีกุญแจ หรือ มี Project ID (ใช้ ADC)
+    if (keyExists || process.env.GCP_PROJECT_ID) {
         try {
             const bucketName = process.env.GCP_BUCKET_NAME;
             const bucket = storage.bucket(bucketName);
             
             const fileExtension = path.extname(file.originalname);
             const gcsFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
-            const blob = bucket.file(gcsFileName);
 
-            const publicUrl = await new Promise((resolve, reject) => {
-                const blobStream = blob.createWriteStream({
-                    resumable: false, // ปิด resumable เพื่อความเร็วในไฟล์เล็ก
+            await bucket.upload(file.path, {
+                destination: gcsFileName,
+                gzip: true,
+                metadata: {
                     contentType: file.mimetype,
-                    gzip: true,
-                });
-
-                blobStream.on('error', (err) => reject(err));
-                blobStream.on('finish', () => {
-                    resolve(`https://storage.googleapis.com/${bucket.name}/${blob.name}`);
-                });
-                blobStream.end(file.buffer);
+                },
             });
             
+            const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
             console.log("✅ [GCS] Uploaded successfully:", publicUrl);
+            
+            // ลบไฟล์ชั่วคราว
+            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            
             return publicUrl;
         } catch (gcsError) {
             console.error("❌ [GCS] Upload failed, falling back to LOCAL:", gcsError.message);
         }
     }
 
-    // 2. ระบบสำรอง: LOCAL STORAGE (ถ้า GCS พลาด หรือหากุญแจไม่เจอ)
+    // 2. ระบบสำรอง: LOCAL STORAGE
     try {
         const uploadDir = path.join(__dirname, '../uploads');
         if (!fs.existsSync(uploadDir)) {
@@ -65,16 +64,18 @@ export const uploadToGCS = async (file) => {
 
         const fileExtension = path.extname(file.originalname);
         const localFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
-        const filePath = path.join(uploadDir, localFileName);
+        const targetPath = path.join(uploadDir, localFileName);
 
-        fs.writeFileSync(filePath, file.buffer);
+        // ย้ายไฟล์ชั่วคราวมาเก็บที่ uploads
+        fs.renameSync(file.path, targetPath);
         
-        // คืนค่าเป็น Path สั้น เพื่อให้ getFullUrl ฝั่งหน้าบ้านจัดการต่อ
         const localPath = `uploads/${localFileName}`;
         console.log("📂 [Local] Saved successfully:", localPath);
         return localPath;
     } catch (localError) {
         console.error("🔥 [FATAL] Both GCS and Local storage failed:", localError.message);
+        // ลบไฟล์ชั่วคราวถ้าทุกอย่างล้มเหลว
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
         throw localError;
     }
 };

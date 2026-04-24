@@ -11,7 +11,10 @@ import path from 'path';
 const router = express.Router();
 
 // ── 📸 ตั้งค่า Multer สำหรับอัปโหลดรูปโปรไฟล์ ──
-const upload = multer({ storage: multer.memoryStorage() });
+import fs from 'fs';
+const tempDir = path.join(process.cwd(), 'uploads/temp');
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+const upload = multer({ dest: tempDir });
 
 
 // ==========================================

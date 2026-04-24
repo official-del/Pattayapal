@@ -26,7 +26,9 @@ import {
 } from '../controller/userController.js';
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const tempDir = path.join(process.cwd(), 'uploads/temp');
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+const upload = multer({ dest: tempDir });
 
 // Auth Routes
 router.post('/register', register);
@@ -51,6 +53,10 @@ router.patch('/profile-image', protect, upload.single('image'), async (req, res)
 
     user.profileImage = { url: imageUrl, publicId: path.basename(imageUrl) };
     await user.save();
+    
+    const io = req.app.get('io');
+    if (io) io.emit('profile_updated', { userId: user._id, profileImage: user.profileImage });
+    
     res.status(200).json({ message: "อัปเดตสำเร็จ", profileImage: user.profileImage });
   } catch (err) {
     res.status(500).json({ message: "เกิดข้อผิดพลาด: " + err.message });
@@ -72,6 +78,10 @@ router.patch('/cover-image', protect, upload.single('image'), async (req, res) =
     
     user.coverImage = { url: imageUrl, publicId: path.basename(imageUrl) };
     await user.save();
+
+    const io = req.app.get('io');
+    if (io) io.emit('profile_updated', { userId: user._id, coverImage: user.coverImage });
+    
     res.status(200).json({ message: "อัปเดตสำเร็จ", coverImage: user.coverImage });
   } catch (err) {
     res.status(500).json({ message: "เกิดข้อผิดพลาด: " + err.message });
