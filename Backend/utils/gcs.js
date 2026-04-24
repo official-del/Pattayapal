@@ -15,6 +15,9 @@ let credentials;
 if (process.env.GCP_KEY_JSON) {
     let keyContent = process.env.GCP_KEY_JSON.trim();
     
+    // 🛡️ [NEW] Strip surrounding quotes if added by the host
+    keyContent = keyContent.replace(/^["']|["']$/g, '');
+    
     // Try parsing as raw JSON first
     try {
         credentials = JSON.parse(keyContent);

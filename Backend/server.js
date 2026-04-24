@@ -170,7 +170,10 @@ app.get('/api/gcs-check', (req, res) => {
   
   let keyStatus = "❌ Not Found";
   if (hasKey) {
-    const keyContent = process.env.GCP_KEY_JSON.trim();
+    let keyContent = process.env.GCP_KEY_JSON.trim();
+    // Strip surrounding quotes
+    keyContent = keyContent.replace(/^["']|["']$/g, '');
+    
     try {
       JSON.parse(keyContent);
       keyStatus = "✅ Found & Valid Raw JSON";
