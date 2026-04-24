@@ -162,6 +162,31 @@ app.use('/api/auth', apiLimiter);
 app.use('/api/upload', uploadLimiter);
 app.use('/api/works', uploadLimiter);
 
+// 🔍 [DEBUG] Route to check GCS configuration status on Live Server (Top Priority)
+app.get('/api/gcs-check', (req, res) => {
+  const hasKey = !!process.env.GCP_KEY_JSON;
+  const bucket = process.env.GCP_BUCKET_NAME;
+  const project = process.env.GCP_PROJECT_ID;
+  
+  let keyStatus = "❌ Not Found";
+  if (hasKey) {
+    try {
+      JSON.parse(process.env.GCP_KEY_JSON);
+      keyStatus = "✅ Found & Valid JSON";
+    } catch (e) {
+      keyStatus = "⚠️ Found but Invalid JSON: " + e.message;
+    }
+  }
+
+  res.json({
+    status: "Checking GCS...",
+    GCP_KEY_JSON: keyStatus,
+    GCP_BUCKET_NAME: bucket || "❌ Not Set",
+    GCP_PROJECT_ID: project || "❌ Not Set",
+    hint: "If Key is 'Not Found', please check Hostinger Environment Variables."
+  });
+});
+
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
@@ -188,6 +213,10 @@ app.use('/api/users', userAuthRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/works', workRoutes);
+// Route placeholder removed from here
+
+// Removed from here
+
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/chat', chatRoutes);
