@@ -101,13 +101,17 @@ const userSchema = new mongoose.Schema({
 
 // 🔒 เข้ารหัสผ่านอัตโนมัติก่อนบันทึกลง Database
 userSchema.pre('save', async function (next) {
+  // 🕵️ เช็คเฉพาะเมื่อมีการแก้รหัสผ่านจริงๆ เท่านั้น
   if (this.isModified('password')) {
-    this.password = await bcrypt.hash(this.password, 10);
-    
-    // 🛡️ [SECURITY] ถ้ามีการเปลี่ยนรหัสผ่าน ให้ขยับเวอร์ชัน Token 
-    // เพื่อเตะ Session เก่าออกทั้งหมดทันที
-    if (!this.isNew) {
-      this.tokenVersion = (this.tokenVersion || 0) + 1;
+    // ป้องกันกรณีที่ password เป็นค่าว่างหรือไม่ได้ตั้งใจส่งมา
+    if (this.password) {
+      this.password = await bcrypt.hash(this.password, 10);
+      
+      // 🛡️ เพิ่มเวอร์ชัน Token เฉพาะเมื่อเป็นการ "เปลี่ยนรหัสผ่าน" ของยูสเซอร์เดิม
+      // ถ้าเป็นยูสเซอร์ใหม่ (isNew) ไม่ต้องเพิ่ม เพราะเพิ่งได้บัตรใบแรก
+      if (!this.isNew) {
+        this.tokenVersion = (this.tokenVersion || 0) + 1;
+      }
     }
   }
   next();
