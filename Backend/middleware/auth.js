@@ -14,6 +14,7 @@ export const protect = async (req, res, next) => {
   }
 
   if (!token) {
+    console.error('🛡️ Auth Middleware Error: Token missing from headers');
     return res.status(401).json({ message: 'ไม่มีสิทธิ์เข้าถึง, กรุณาล็อกอิน' });
   }
 
@@ -22,12 +23,15 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, secret);
 
     const user = await User.findById(decoded.id).select('-password');
-    if (!user) return res.status(401).json({ message: 'ไม่พบผู้ใช้งานนี้ในระบบ' });
+    if (!user) {
+      console.error(`🛡️ Auth Middleware Error: User not found for ID ${decoded.id}`);
+      return res.status(401).json({ message: 'ไม่พบผู้ใช้งานนี้ในระบบ' });
+    }
 
     req.user = user;
     next();
   } catch (error) {
-    console.error('🛡️ Auth Middleware Error:', error.message);
+    console.error('🛡️ Auth Middleware Error: JWT verify failed', error.message);
     return res.status(401).json({ message: 'Token ไม่ถูกต้องหรือหมดอายุ' });
   }
 };
