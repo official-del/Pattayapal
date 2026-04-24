@@ -5,12 +5,23 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  
+  // 🧹 Sanitize token: remove literal 'null' or 'undefined' strings
+  const initialToken = localStorage.getItem('token');
+  const [token, setToken] = useState(initialToken === 'null' || initialToken === 'undefined' ? null : initialToken);
+  
   const [loading, setLoading] = useState(true);
   const [profileUpdateTag, setProfileUpdateTag] = useState(Date.now());
   const isFetching = useRef(false);
 
   useEffect(() => {
+    // 🧹 Extra safety: if token becomes literal string somehow, clear it
+    if (token === 'null' || token === 'undefined') {
+       setToken(null);
+       localStorage.removeItem('token');
+       return;
+    }
+
     if (token) {
       fetchProfile();
     } else {
@@ -19,7 +30,7 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const fetchProfile = async () => {
-    if (isFetching.current) return; // ป้องกัน double call
+    if (isFetching.current || !token) return; // ป้องกัน double call และ token ว่าง
     isFetching.current = true;
     try {
       const data = await authAPI.getProfile(token);
