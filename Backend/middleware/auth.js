@@ -12,13 +12,6 @@ export const protect = async (req, res, next) => {
       const user = await User.findById(decoded.id).select('-password');
       if (!user) return res.status(401).json({ message: 'ไม่พบผู้ใช้งานนี้ในระบบ' });
 
-      // 🛡️ [SECURITY] Check Token Version
-      // หาก tokenVersion ในบัตรไม่ตรงกับใน DB (เช่น เพิ่งเปลี่ยนรหัสผ่าน) จะถือว่าบัตรหมดอายุ
-      // ใช้ || 0 เพื่อรองรับกรณีที่ยูสเซอร์เก่าในฐานข้อมูลยังไม่มีฟิลด์นี้
-      if (typeof decoded.tokenVersion !== 'undefined' && decoded.tokenVersion !== (user.tokenVersion || 0)) {
-        return res.status(401).json({ message: 'Session ของคุณถูกยกเลิกเนื่องจากมีการเปลี่ยนรหัสผ่านหรือความปลอดภัย, กรุณาล็อกอินใหม่' });
-      }
-
       req.user = user;
       next();
     } catch (error) {
