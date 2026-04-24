@@ -170,11 +170,18 @@ app.get('/api/gcs-check', (req, res) => {
   
   let keyStatus = "❌ Not Found";
   if (hasKey) {
+    const keyContent = process.env.GCP_KEY_JSON.trim();
     try {
-      JSON.parse(process.env.GCP_KEY_JSON);
-      keyStatus = "✅ Found & Valid JSON";
+      JSON.parse(keyContent);
+      keyStatus = "✅ Found & Valid Raw JSON";
     } catch (e) {
-      keyStatus = "⚠️ Found but Invalid JSON: " + e.message;
+      try {
+        const decoded = Buffer.from(keyContent, 'base64').toString();
+        JSON.parse(decoded);
+        keyStatus = "✅ Found & Valid Base64 JSON";
+      } catch (b64Error) {
+        keyStatus = "⚠️ Found but Invalid format (tried JSON and Base64)";
+      }
     }
   }
 

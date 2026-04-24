@@ -13,11 +13,21 @@ const keyExists = fs.existsSync(keyPath);
 // 🛡️ [NEW] Support for Environment Variable Credentials (for Hostinger/Heroku)
 let credentials;
 if (process.env.GCP_KEY_JSON) {
+    let keyContent = process.env.GCP_KEY_JSON.trim();
+    
+    // Try parsing as raw JSON first
     try {
-        credentials = JSON.parse(process.env.GCP_KEY_JSON);
-        console.log("🚀 [GCS] Using credentials from Environment Variable (GCP_KEY_JSON)");
+        credentials = JSON.parse(keyContent);
+        console.log("🚀 [GCS] Using raw JSON from Environment Variable");
     } catch (e) {
-        console.error("❌ [GCS] Error parsing GCP_KEY_JSON environment variable:", e.message);
+        // If raw JSON fails, try Base64 decoding (more robust for some hosts)
+        try {
+            const decoded = Buffer.from(keyContent, 'base64').toString();
+            credentials = JSON.parse(decoded);
+            console.log("🚀 [GCS] Using Base64 encoded JSON from Environment Variable");
+        } catch (b64Error) {
+            console.error("❌ [GCS] Error parsing GCP_KEY_JSON (tried JSON and Base64):", e.message);
+        }
     }
 }
 
