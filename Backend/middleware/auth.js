@@ -6,10 +6,22 @@ export const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
+      const secret = process.env.JWT_SECRET || 'pattayapal_secret_key'; // 👈 เพิ่ม Fallback ให้ตรงกับตอน Login
+      const decoded = jwt.verify(token, secret);
+      
+      const user = await User.findById(decoded.id).select('-password');
+      if (!user) return res.status(401).json({ message: 'ไม่พบผู้ใช้งานนี้ในระบบ' });
+
+      // 🛡️ [SECURITY] Check Token Version
+      // หาก tokenVersion ในบัตรไม่ตรงกับใน DB (เช่น เพิ่งเปลี่ยนรหัสผ่าน) จะถือว่าบัตรหมดอายุ
+      if (typeof decoded.tokenVersion !== 'undefined' && decoded.tokenVersion !== user.tokenVersion) {
+        return res.status(401).json({ message: 'Session ของคุณถูกยกเลิกเนื่องจากมีการเปลี่ยนรหัสผ่านหรือความปลอดภัย, กรุณาล็อกอินใหม่' });
+      }
+
+      req.user = user;
       next();
     } catch (error) {
+      console.error('🛡️ Auth Middleware Error:', error.message);
       return res.status(401).json({ message: 'Token ไม่ถูกต้องหรือหมดอายุ' });
     }
   }

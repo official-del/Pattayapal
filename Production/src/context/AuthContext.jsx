@@ -52,12 +52,22 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('userInfo', JSON.stringify(userData));
     } catch (error) {
-      // Only logout if it's actually a 401 (unauthorized), not a network error
-      if (error.response?.status === 401) {
+      const status = error.response?.status;
+      // 🕵️ Only logout if it's explicitly 401 (Unauthorized)
+      if (status === 401) {
+        console.warn('🔑 Session expired. Logging out...');
         logout();
       } else {
-        // Network error or server down - keep user logged in
-        console.warn('Could not fetch profile:', error.message);
+        // Network error, 500, or server restarting - DO NOT logout.
+        // We keep the last known 'user' from localStorage if possible.
+        console.warn('📡 Network/Server error during profile fetch:', error.message);
+        
+        const cachedUser = localStorage.getItem('userInfo');
+        if (cachedUser && !user) {
+           try {
+             setUser(JSON.parse(cachedUser));
+           } catch (e) {}
+        }
       }
     } finally {
       setLoading(false);

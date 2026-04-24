@@ -45,9 +45,9 @@ router.post('/login', async (req, res) => {
 
     // สร้าง Token (บัตรผ่านประตู)
     const token = jwt.sign(
-      { id: user._id, role: user.role }, 
+      { id: user._id, role: user.role, tokenVersion: user.tokenVersion || 0 }, 
       process.env.JWT_SECRET || 'pattayapal_secret_key', 
-      { expiresIn: '7d' } // ให้อยู่ในระบบได้ 7 วัน
+      { expiresIn: '3650d' } // 👈 อยู่ยาวๆ 10 ปี จนกว่าจะกด Logout เอง
     );
 
     res.status(200).json({

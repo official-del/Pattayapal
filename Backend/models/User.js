@@ -94,13 +94,22 @@ const userSchema = new mongoose.Schema({
       name: { type: String },
       level: { type: Number, default: 0, min: 0, max: 100 }
     }
-  ]
+  ],
+  // 🛡️ [NEW] Token Versioning for Security
+  tokenVersion: { type: Number, default: 0 }
 }, { timestamps: true });
 
 // 🔒 เข้ารหัสผ่านอัตโนมัติก่อนบันทึกลง Database
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 10);
+    
+    // 🛡️ [SECURITY] ถ้ามีการเปลี่ยนรหัสผ่าน ให้ขยับเวอร์ชัน Token 
+    // เพื่อเตะ Session เก่าออกทั้งหมดทันที
+    if (!this.isNew) {
+      this.tokenVersion = (this.tokenVersion || 0) + 1;
+    }
+  }
   next();
 });
 

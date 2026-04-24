@@ -24,9 +24,9 @@ export const register = async (req, res) => {
 
     // Create JWT token
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, tokenVersion: user.tokenVersion || 0 },
       process.env.JWT_SECRET,
-      { expiresIn: '30d' }
+      { expiresIn: '3650d' }
     );
 
     res.status(201).json({
@@ -74,9 +74,9 @@ export const login = async (req, res) => {
 
     // Create JWT token
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, tokenVersion: user.tokenVersion || 0 },
       process.env.JWT_SECRET,
-      { expiresIn: '30d' }
+      { expiresIn: '3650d' }
     );
 
     res.status(200).json({
