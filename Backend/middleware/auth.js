@@ -13,9 +13,9 @@ export const protect = async (req, res, next) => {
     token = req.headers['x-auth-token'];
   }
 
-  if (!token) {
-    console.error('🛡️ Auth Middleware Error: Token missing from headers');
-    return res.status(401).json({ message: 'ไม่มีสิทธิ์เข้าถึง, กรุณาล็อกอิน' });
+  if (!token || token === 'null' || token === 'undefined') {
+    console.error('🛡️ Auth Middleware Error: Token missing or null from headers');
+    return res.status(401).json({ message: 'ไม่มีสิทธิ์เข้าถึง, Token เป็นค่าว่าง', tokenValue: token });
   }
 
   try {
@@ -25,14 +25,14 @@ export const protect = async (req, res, next) => {
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {
       console.error(`🛡️ Auth Middleware Error: User not found for ID ${decoded.id}`);
-      return res.status(401).json({ message: 'ไม่พบผู้ใช้งานนี้ในระบบ' });
+      return res.status(401).json({ message: `ไม่พบผู้ใช้งานนี้ในระบบ (ID: ${decoded.id})` });
     }
 
     req.user = user;
     next();
   } catch (error) {
     console.error('🛡️ Auth Middleware Error: JWT verify failed', error.message);
-    return res.status(401).json({ message: 'Token ไม่ถูกต้องหรือหมดอายุ' });
+    return res.status(401).json({ message: `Token ไม่ถูกต้องหรือหมดอายุ: ${error.message}`, tokenStart: token.substring(0, 10) });
   }
 };
 
