@@ -142,6 +142,28 @@ function Navbar() {
         </div>
       </div>
 
+      {/* 💎 Desktop Top Actions (3-Buttons Hub) */}
+      {currentToken && (
+        <div className="desktop-top-actions hide-mobile">
+          <div className="d-coin-box">
+            <CoinIcon size={18} />
+            <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span>
+          </div>
+          <div className="d-btn-group">
+            <Link to="/notifications" className="d-action-btn" title="Notifications">
+              <FiBell />
+              {unreadCount > 0 && <span className="d-badge">{unreadCount}</span>}
+            </Link>
+            <Link to="/messenger" className="d-action-btn" title="Messages">
+              <FiMessageCircle />
+            </Link>
+            <Link to={`/profile/${userId}`} className="d-action-btn" title="My Profile">
+              <FiUser />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* 🛸 Neo-Cyber Premium Sidebar */}
       <AnimatePresence>
         {(isOpen || window.innerWidth > 992) && (

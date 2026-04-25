@@ -391,4 +391,77 @@
   body {
     padding-top: 65px;
   }
-}
+}
+/* ?? Desktop Top Hub (Fixed UI) */
+.desktop-top-actions {
+  position: fixed;
+  top: 25px;
+  right: 30px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.d-coin-box {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 8px 15px;
+  border-radius: 100px;
+  color: #f59e0b;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.d-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.d-action-btn {
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.d-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  color: var(--p-accent);
+}
+
+.d-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff4444;
+  color: white;
+  font-size: 0.6rem;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  border: 1px solid #000;
+}
+
+@media (max-width: 992px) {
+  .hide-mobile { display: none !important; }
+}
