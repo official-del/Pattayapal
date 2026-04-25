@@ -92,6 +92,7 @@ const userSchema = new mongoose.Schema({
   skills: [
     {
       name: { type: String },
+      category: { type: String, default: 'General' },
       level: { type: Number, default: 0, min: 0, max: 100 }
     }
   ],

@@ -48,6 +48,16 @@ export const PRODUCTION_SKILLS = [
    "Copywriting", "Content Marketing", "SEO", "Translation", "Voice Over", "Music Production"
 ];
 
+export const SKILL_CATEGORIES = [
+   "Video & Film",
+   "Photography",
+   "Design & Digital",
+   "3D & Tech",
+   "Production & Technical",
+   "Marketing & Others",
+   "General"
+];
+
 function UserProfile() {
    const { userId } = useParams();
    const navigate = useNavigate();
@@ -657,7 +667,10 @@ function UserProfile() {
                                           {profile.skills?.length > 0 ? profile.skills.map((skill, index) => (
                                              <div key={index}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
-                                                   <span style={{ fontWeight: '800', color: '#fff' }}>{skill.name}</span>
+                                                   <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                      <span style={{ fontWeight: '800', color: '#fff' }}>{skill.name}</span>
+                                                      <span style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700' }}>{skill.category?.toUpperCase() || 'GENERAL'}</span>
+                                                   </div>
                                                    <span style={{ fontWeight: '700', color: 'var(--accent)' }}>{skill.level}%</span>
                                                 </div>
                                                 <div style={{ height: '6px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -774,7 +787,7 @@ function UserProfile() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                            <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>PROFESSIONAL SKILLS & PROFICIENCY</label>
                            <button
-                              onClick={() => setSkills([...skills, { name: '', level: 50 }])}
+                              onClick={() => setSkills([...skills, { name: '', category: 'General', level: 50 }])}
                               style={{ background: 'rgba(99, 102, 241, 0.1)', border: 'none', padding: '8px 15px', borderRadius: '10px', color: '#6366f1', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
                            >
                               + ADD SKILL
@@ -792,25 +805,37 @@ function UserProfile() {
                                  </button>
 
                                  <div className="edit-skills-grid" style={{ gap: '25px', alignItems: 'center' }}>
-                                    <div style={{ position: 'relative', width: '100%' }}>
-                                       <input
-                                          value={skill.name}
-                                          list={`production-skills-${index}`}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', flex: 1 }}>
+                                       <div style={{ position: 'relative', width: '100%' }}>
+                                          <input
+                                             value={skill.name}
+                                             list={`production-skills-${index}`}
+                                             onChange={e => {
+                                                const newSkills = [...skills];
+                                                newSkills[index].name = e.target.value;
+                                                setSkills(newSkills);
+                                             }}
+                                             placeholder="Skill Name (e.g. Photoshop)"
+                                             style={{ background: 'transparent', border: 'none', borderBottom: '1px solid #222', padding: '10px 0', color: '#fff', outline: 'none', fontSize: '0.9rem', width: '100%' }}
+                                          />
+                                          <datalist id={`production-skills-${index}`}>
+                                             {skill.name.length >= 1 && PRODUCTION_SKILLS
+                                                .filter(s => s.toLowerCase().includes(skill.name.toLowerCase()))
+                                                .map(s => <option key={s} value={s} />)
+                                             }
+                                          </datalist>
+                                       </div>
+                                       <select 
+                                          value={skill.category || 'General'} 
                                           onChange={e => {
                                              const newSkills = [...skills];
-                                             newSkills[index].name = e.target.value;
+                                             newSkills[index].category = e.target.value;
                                              setSkills(newSkills);
                                           }}
-                                          placeholder="Skill Name (e.g. Photoshop)"
-                                          style={{ background: 'transparent', border: 'none', borderBottom: '1px solid #222', padding: '10px 0', color: '#fff', outline: 'none', fontSize: '0.9rem', width: '100%' }}
-                                       />
-                                       {/* 📋 Per-row Searchable Skills Datalist (Shows only when typing) */}
-                                       <datalist id={`production-skills-${index}`}>
-                                          {skill.name.length >= 1 && PRODUCTION_SKILLS
-                                             .filter(s => s.toLowerCase().includes(skill.name.toLowerCase()))
-                                             .map(s => <option key={s} value={s} />)
-                                          }
-                                       </datalist>
+                                          style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: '8px', borderRadius: '10px', color: '#aaa', fontSize: '0.75rem', outline: 'none' }}
+                                       >
+                                          {SKILL_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                       </select>
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                        <input
