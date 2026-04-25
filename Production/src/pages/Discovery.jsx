@@ -4,9 +4,9 @@ import { usersAPI } from '../utils/api';
 import { getFullUrl } from '../utils/mediaUtils';
 import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiSearch, FiFilter, FiZap, FiTarget, FiLoader, FiArrowRight, FiCheckCircle, 
-  FiUserPlus, FiAward, FiMessageSquare, FiBriefcase, FiUsers, FiStar, FiGrid, FiArrowUpRight 
+import {
+  FiSearch, FiFilter, FiZap, FiTarget, FiLoader, FiArrowRight, FiCheckCircle,
+  FiUserPlus, FiAward, FiMessageSquare, FiBriefcase, FiUsers, FiStar, FiGrid, FiArrowUpRight
 } from 'react-icons/fi';
 import ProfileFrame from '../components/ProfileFrame';
 import HireModal from '../components/HireModal';
@@ -25,11 +25,11 @@ function Discovery() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [activeProfession, setActiveProfession] = useState('All');
   const [activeRank, setActiveRank] = useState('All');
-  
+
   // Hire Modal State
   const [hireModal, setHireModal] = useState({ show: false, freelancerId: null, freelancerName: '' });
 
-  const professions = ['All', 'Photographer', 'Editor', 'Videographer', 'Director', 'Production Design', 'Creative Content', 'Film Production', 'Post Production', 'Digital Artist'];
+  const professions = ['All', 'Photographer', 'Editor', 'Videographer', 'Director', 'Production Design', 'Creative Content', 'Film Production', 'Post Production', 'Digital Artist', 'AI Operations'];
   const ranks = ['All', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
 
   useEffect(() => {
@@ -126,17 +126,17 @@ function Discovery() {
 
   return (
     <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingBottom: '150px' }}>
-      
+
       {/* 🚀 Immersive Hero Section */}
-      <section style={{ 
-        position: 'relative', height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+      <section style={{
+        position: 'relative', height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
         overflow: 'hidden', padding: '0 5%', background: 'radial-gradient(circle at 50% 50%, #111 0%, #000 100%)'
       }}>
         {/* Animated Background Elements */}
-        <motion.div 
-           animate={{ scale: [1, 1.2, 1], opacity: [0.05, 0.1, 0.05] }} 
-           transition={{ duration: 10, repeat: Infinity }}
-           style={{ position: 'absolute', width: '800px', height: '800px', background: 'var(--accent)', borderRoll: '50%', filter: 'blur(200px)', zIndex: 0 }} 
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.05, 0.1, 0.05] }}
+          transition={{ duration: 10, repeat: Infinity }}
+          style={{ position: 'absolute', width: '800px', height: '800px', background: 'var(--accent)', borderRoll: '50%', filter: 'blur(200px)', zIndex: 0 }}
         />
 
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '1000px' }}>
@@ -150,19 +150,19 @@ function Discovery() {
           </motion.div>
 
           {/* 🔍 Global Professional Search Engine */}
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }} 
-            animate={{ scale: 1, opacity: 1 }} 
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3 }}
             style={{ position: 'relative', maxWidth: '800px', margin: '40px auto 0' }}
           >
             <div className="discovery-search-box glass">
               <div className="search-icon-wrapper" style={{ padding: '0 25px' }}><FiSearch size={22} color="var(--accent)" /></div>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="discovery-input"
                 list="discovery-skills"
-                placeholder="ค้นหาทักษะ, ตำแหน่งงาน หรือชื่อฟรีแลนซ์..." 
+                placeholder="ค้นหาทักษะ, ตำแหน่งงาน หรือชื่อฟรีแลนซ์..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
               />
@@ -172,7 +172,7 @@ function Discovery() {
                 ))}
               </datalist>
               {searchLoading && <FiLoader size={20} className="spin" style={{ marginRight: '20px' }} />}
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="discovery-btn"
@@ -188,7 +188,7 @@ function Discovery() {
       {/* 🧬 Advanced Filter System */}
       <section style={{ padding: '60px 5% 0', maxWidth: '1440px', margin: '0 auto' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'center', justifyContent: 'space-between' }}>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px' }}>PROFESSIONAL FILTER</span>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -208,23 +208,23 @@ function Discovery() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-             <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px' }}>RANK EXCLUSIVITY</span>
-             <div style={{ display: 'flex', gap: '10px' }}>
-               {ranks.map(r => (
-                  <button 
-                    key={r}
-                    onClick={() => selectRank(r)}
-                    style={{
-                      padding: '0 12px', height: '40px', borderRadius: '12px', background: activeRank === r ? 'var(--accent-glow)' : 'rgba(255,255,255,0.02)',
-                      border: `1px solid ${activeRank === r ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}`, color: activeRank === r ? '#fff' : '#444',
-                      fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      minWidth: '40px'
-                    }}
-                  >
-                    {r.toUpperCase()}
-                  </button>
-               ))}
-             </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px' }}>RANK EXCLUSIVITY</span>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {ranks.map(r => (
+                <button
+                  key={r}
+                  onClick={() => selectRank(r)}
+                  style={{
+                    padding: '0 12px', height: '40px', borderRadius: '12px', background: activeRank === r ? 'var(--accent-glow)' : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${activeRank === r ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}`, color: activeRank === r ? '#fff' : '#444',
+                    fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    minWidth: '40px'
+                  }}
+                >
+                  {r.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -237,15 +237,15 @@ function Discovery() {
             <p style={{ marginTop: '20px', color: '#666', letterSpacing: '4px', fontWeight: '700', fontSize: '0.8rem' }}>SYNCHRONIZING TALENT POOL...</p>
           </div>
         ) : filteredFreelancers.length > 0 ? (
-          <motion.div 
-            variants={containerVariants} 
-            initial="hidden" 
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
             animate="show"
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '30px' }}
           >
             {filteredFreelancers.map((freelancer) => (
-              <motion.div 
-                key={freelancer._id} 
+              <motion.div
+                key={freelancer._id}
                 variants={itemVariants}
                 className="talent-card glass"
                 style={{ borderRadius: '35px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.03)', transition: '0.4s' }}
@@ -253,23 +253,23 @@ function Discovery() {
                 <div style={{ padding: '35px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
                     <ProfileFrame rank={freelancer.rank} size="90px">
-                       <div style={{ width: '100%', height: '100%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                         {freelancer.profileImage?.url || (typeof freelancer.profileImage === 'string' && freelancer.profileImage) ? (
-                           <img 
-                            src={getFullUrl(freelancer.profileImage.url || freelancer.profileImage)} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      <div style={{ width: '100%', height: '100%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {freelancer.profileImage?.url || (typeof freelancer.profileImage === 'string' && freelancer.profileImage) ? (
+                          <img
+                            src={getFullUrl(freelancer.profileImage.url || freelancer.profileImage)}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                           />
-                         ) : null}
-                         <div style={{ display: (freelancer.profileImage?.url || typeof freelancer.profileImage === 'string') ? 'none' : 'flex' }}>
-                           <FiUsers size={30} color="#444" />
-                         </div>
-                       </div>
+                          />
+                        ) : null}
+                        <div style={{ display: (freelancer.profileImage?.url || typeof freelancer.profileImage === 'string') ? 'none' : 'flex' }}>
+                          <FiUsers size={30} color="#444" />
+                        </div>
+                      </div>
                     </ProfileFrame>
                     <div style={{ textAlign: 'right' }}>
-                      <span className="rank-label" style={{ 
-                        fontSize: '0.65rem', fontWeight: '700', padding: '6px 12px', borderRadius: '10px', 
-                        background: 'rgba(255,255,255,0.05)', color: 'var(--accent)', border: '1px solid var(--accent-glow)' 
+                      <span className="rank-label" style={{
+                        fontSize: '0.65rem', fontWeight: '700', padding: '6px 12px', borderRadius: '10px',
+                        background: 'rgba(255,255,255,0.05)', color: 'var(--accent)', border: '1px solid var(--accent-glow)'
                       }}>
                         {freelancer.rank.toUpperCase()}
                       </span>
@@ -280,13 +280,13 @@ function Discovery() {
                     <h3 style={{ fontSize: '1.8rem', color: '#fff', margin: '0 0 5px 0', fontWeight: '700', letterSpacing: '-0.5px' }}>{freelancer.name}</h3>
                   </Link>
                   <p style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '20px' }}>{freelancer.profession || 'CREATIVE'}</p>
-                  
+
                   {/* Skill Badge Cloud */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '30px' }}>
                     {(freelancer.skills || []).slice(0, 3).map((skill, idx) => (
-                      <span key={idx} style={{ 
-                        fontSize: '0.7rem', padding: '6px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', 
-                        border: '1px solid rgba(255,255,255,0.1)', color: '#888', fontWeight: '600' 
+                      <span key={idx} style={{
+                        fontSize: '0.7rem', padding: '6px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.1)', color: '#888', fontWeight: '600'
                       }}>
                         {skill.name}
                       </span>
@@ -295,25 +295,25 @@ function Discovery() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '15px' }}>
-                    <motion.button 
+                    <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setHireModal({ show: true, freelancerId: freelancer._id, freelancerName: freelancer.name })}
-                      style={{ 
-                        flex: 2, background: 'var(--accent)', color: '#fff', border: 'none', padding: '18px', 
+                      style={{
+                        flex: 2, background: 'var(--accent)', color: '#fff', border: 'none', padding: '18px',
                         borderRadius: '20px', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer',
                         boxShadow: '0 10px 20px var(--accent-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
                       }}
                     >
                       HIRE TALENT <FiArrowRight size={18} />
                     </motion.button>
-                    
+
                     <Link to={`/profile/${freelancer._id}`} style={{ flex: 1 }}>
-                      <motion.button 
+                      <motion.button
                         whileHover={{ background: 'rgba(255,255,255,0.05)' }}
-                        style={{ 
-                          width: '100%', height: '100%', background: 'transparent', color: '#fff', 
-                          border: '1px solid rgba(255,255,255,0.1)', padding: '18px', borderRadius: '20px', 
+                        style={{
+                          width: '100%', height: '100%', background: 'transparent', color: '#fff',
+                          border: '1px solid rgba(255,255,255,0.1)', padding: '18px', borderRadius: '20px',
                           fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}
                       >
@@ -327,9 +327,9 @@ function Discovery() {
           </motion.div>
         ) : (
           <div style={{ textAlign: 'center', padding: '100px 0' }}>
-             <FiTarget size={60} color="#222" />
-             <h2 style={{ fontSize: '2.5rem', color: '#fff', fontWeight: '900', marginTop: '30px', letterSpacing: '-1px' }}>EXCEPTION: NO TALENT DETECTED</h2>
-             <p style={{ color: '#666', fontWeight: '500' }}>ลองปรับเปลี่ยนคำค้นหาหรือตัวกรองเพื่อค้นหาครีเอเตอร์ที่คุณต้องการ</p>
+            <FiTarget size={60} color="#222" />
+            <h2 style={{ fontSize: '2.5rem', color: '#fff', fontWeight: '900', marginTop: '30px', letterSpacing: '-1px' }}>EXCEPTION: NO TALENT DETECTED</h2>
+            <p style={{ color: '#666', fontWeight: '500' }}>ลองปรับเปลี่ยนคำค้นหาหรือตัวกรองเพื่อค้นหาครีเอเตอร์ที่คุณต้องการ</p>
           </div>
         )}
       </section>
@@ -337,7 +337,7 @@ function Discovery() {
       {/* 🛒 Modular Overlay components */}
       <AnimatePresence>
         {hireModal.show && (
-          <HireModal 
+          <HireModal
             freelancerId={hireModal.freelancerId}
             freelancerName={hireModal.freelancerName}
             currentToken={currentToken}

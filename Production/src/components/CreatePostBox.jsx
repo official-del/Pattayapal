@@ -45,7 +45,7 @@ function CreatePostBox({ onPostCreated }) {
     try {
       const formData = new FormData();
       formData.append('content', content);
-      formData.append('postType', isGeneral ? 'hiring' : 'looking for work');
+      formData.append('postType', isGeneral ? 'hiring' : 'looking_for_work');
       if (media) formData.append('media', media);
 
       const newPost = await postsAPI.create(formData, currentToken);

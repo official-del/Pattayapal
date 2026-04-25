@@ -60,9 +60,11 @@ export const likePost = async (req, res) => {
     if (index === -1) {
       post.likes.push(req.user.id);
       
-      // 🏆 Reward Author for the like
-      const io = req.app.get('io');
-      updateUserStats(post.author, 'LIKE', {}, io).catch(err => console.error(err));
+      // 🏆 Reward Author for the like (if not self-like)
+      if (post.author.toString() !== req.user.id.toString()) {
+        const io = req.app.get('io');
+        updateUserStats(post.author, 'LIKE', {}, io).catch(err => console.error(err));
+      }
     } else {
       post.likes.splice(index, 1);
     }
