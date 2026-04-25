@@ -337,15 +337,58 @@
     display: flex;
   }
 
+  /* 🎯 Icon-Only Mode for Responsive */
+  .p-item-label, 
+  .p-group-label,
+  .p-user-info,
+  .p-brand-text {
+    display: none !important;
+  }
+
   .premium-sidebar-container {
     top: 0;
     left: -100%;
-    width: 280px !important;
+    width: 80px !important; /* แคบลงเพื่อโชว์แค่ไอคอน */
     height: 100vh;
-    background: #0a0a0a;
+    background: rgba(5, 5, 5, 0.95);
+    backdrop-filter: blur(20px);
     border-right: 1px solid var(--p-border);
     transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    border-radius: 0; /* มือถือไม่ต้องมนมาก */
+  }
+
+  .p-identity-card {
+    width: 50px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    justify-content: center;
+    margin: 0 auto;
+  }
+
+  .p-avatar-wrapper {
+    width: 45px;
+    height: 45px;
+  }
+
+  .p-nav-item {
+    padding-left: 0;
+    justify-content: center;
+    margin: 10px auto;
+    width: 50px;
+  }
+
+  .p-item-icon {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .p-sidebar-header {
+    padding: 0;
+    justify-content: center;
+  }
+  
+  .p-logout-action, .p-login-action {
+    padding-left: 0;
+    justify-content: center;
   }
 
   .premium-sidebar-container.m-open {
@@ -358,31 +401,6 @@
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
     z-index: 999;
-  }
-
-  /* จัดระเบียบข้อความข้างในตอนเปิดมือถือ */
-  .p-brand-text, 
-  .p-user-info, 
-  .p-item-label, 
-  .p-group-label {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: none !important;
-  }
-
-  .p-identity-card {
-    width: calc(100% - 30px) !important;
-    margin: 0 15px;
-    background: rgba(255, 255, 255, 0.03) !important;
-    padding: 15px !important;
-  }
-  
-  .p-nav-item {
-    padding-left: 20px;
-  }
-  
-  .p-group-label {
-    padding-left: 20px;
   }
 }
 

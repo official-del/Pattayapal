@@ -113,6 +113,34 @@ function DashboardSidebar({ show, onClose }) {
         </h1>
       </div>
 
+      {/* 👤 User Identity (Clickable) */}
+      <div style={{ marginBottom: '40px' }}>
+        <Link 
+          to={`/profile/${userInfo?._id || userInfo?.id}`} 
+          style={{ 
+            display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', 
+            background: 'rgba(255,255,255,0.02)', borderRadius: '20px', textDecoration: 'none',
+            border: '1px solid rgba(255,255,255,0.03)'
+          }}
+          onClick={() => { if (window.innerWidth < 1024) onClose(); }}
+        >
+          <div style={{ 
+            width: '45px', height: '45px', borderRadius: '12px', overflow: 'hidden', 
+            border: '2px solid var(--accent)', flexShrink: 0 
+          }}>
+            <img 
+              src={userInfo?.profileImage?.url ? (userInfo.profileImage.url.startsWith('http') ? userInfo.profileImage.url : `https://storage.googleapis.com/pattayapal-storage/${userInfo.profileImage.url}`) : 'https://via.placeholder.com/100'} 
+              alt="" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </div>
+          <div style={{ overflow: 'hidden' }}>
+            <div style={{ color: '#fff', fontWeight: '700', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userInfo?.name}</div>
+            <div style={{ color: 'var(--accent)', fontSize: '0.6rem', fontWeight: '800', textTransform: 'uppercase' }}>{userInfo?.role}</div>
+          </div>
+        </Link>
+      </div>
+
       <nav style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', paddingRight: '15px' }} className="sidebar-nav-scroll">
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {menuItems.map((item) => (

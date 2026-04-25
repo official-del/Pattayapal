@@ -180,7 +180,6 @@ function Navbar() {
                     to={`/profile/${userId}`} 
                     className="p-identity-card"
                     onClick={() => setIsOpen(false)}
-                    style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}
                   >
                     <div className="p-avatar-wrapper">
                       {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
