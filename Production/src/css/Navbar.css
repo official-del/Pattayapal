@@ -525,34 +525,39 @@
   box-shadow: 0 10px 25px var(--p-accent-glow);
 }
 
-/* 📱 Bottom Navigation (Responsive) */
+/* 📱 Bottom Navigation (Modern Responsive) */
 .mobile-bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 75px;
+  height: 70px;
   background: rgba(10, 10, 10, 0.85);
-  backdrop-filter: blur(25px);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  z-index: 1100;
-  display: none;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 9999;
+  display: none; /* ซ่อนเป็นค่าเริ่มต้น จะแสดงใน Media Query */
   justify-content: space-around;
   align-items: center;
-  padding: 0 10px;
   padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
 }
 
 .b-nav-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  color: #555;
+  justify-content: center;
+  gap: 4px;
+  color: #888;
   text-decoration: none;
-  transition: 0.3s;
   background: none;
   border: none;
+  padding: 8px 0;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .b-nav-item svg {
@@ -568,67 +573,56 @@
   color: var(--p-accent);
 }
 
-.m-top-icons {
-  display: flex;
-  gap: 10px;
+.b-nav-item:active {
+  transform: scale(0.9);
 }
 
-.m-icon-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 1.2rem;
-  position: relative;
-  text-decoration: none;
-}
-
-.m-dot {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 8px;
-  height: 8px;
-  background: var(--p-accent);
-  border-radius: 50%;
-  border: 1px solid #000;
-}
-
-/* Hide Sidebar on Mobile by default to let Bottom Nav take over */
+/* 📱 Responsive Adjustments */
 @media (max-width: 992px) {
-  .mobile-bottom-nav { display: flex; }
-  .p-top-right-actions { display: none; }
-  
-  .premium-sidebar-container {
-    width: 280px !important; /* เมื่อเปิดในมือถือให้กว้างปกติเพื่ออ่านง่าย */
+  .mobile-bottom-nav {
+    display: flex; /* แสดงเฉพาะในมือถือ */
   }
-  
-  .p-item-label, .p-group-label, .p-user-info, .p-brand-text {
-    display: block !important; /* แสดงข้อความใน Sidebar เมื่อเปิดในมือถือ */
+
+  /* ซ่อน Sidebar ด้านซ้ายในมือถือ เพื่อให้จอว่าง */
+  .premium-sidebar-container {
+    left: -100%;
+    width: 280px !important;
+    z-index: 10000; /* ให้ทับ Bottom Nav ตอนเปิด */
+  }
+
+  .premium-sidebar-container.m-open {
+    left: 0;
+  }
+
+  /* คืนค่าลาเบลใน Sidebar เมื่อเปิดในมือถือ */
+  .p-item-label, 
+  .p-group-label, 
+  .p-user-info, 
+  .p-brand-text {
+    display: block !important;
     opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
   }
 
   body {
-    padding-bottom: 80px; /* เว้นที่ให้ Bottom Nav */
+    padding-bottom: 75px !important; /* เว้นที่ให้แถบล่าง */
   }
 }
 
 .premium-sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
-    z-index: 999;
-  }
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9998;
 }
 
 /* ปรับระยะห่างคอนเทนต์ให้ไม่โดน Header ทับ */
 @media (max-width: 992px) {
   body {
     padding-top: 65px;
+    padding-bottom: 75px !important;
   }
-}
+}
