@@ -128,184 +128,122 @@ function Navbar() {
 
   return (
     <>
-      {/* 🛸 Desktop Floating Navigation Tactical Dock */}
-      <motion.div
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="hide-mobile"
-        style={{
-          position: 'fixed', top: '24px', right: '40px',
-          zIndex: 991, width: 'max-content', display: 'flex', gap: '12px', alignItems: 'center'
-        }}
-      >
-        <motion.button
-          whileHover={{ scale: 1.05, boxShadow: '0 0 20px var(--accent-glow)' }}
-          whileTap={{ scale: 0.95 }}
-          className="glass"
-          style={{
-            padding: '12px 24px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.05)',
-            color: '#fff', fontSize: '0.8rem', fontWeight: '700', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '10px',
-            cursor: 'pointer', background: 'rgba(255,255,255,0.02)'
-          }}
-          onClick={() => setIsOpen(true)}
-        >
-          <FiMenu style={{ fontSize: '1.2rem', color: 'var(--accent)' }} />
-        </motion.button>
-
-        {currentToken && (
-          <div className="glass" style={{ display: 'flex', gap: '8px', padding: '6px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              style={{
-                position: 'relative', width: '45px', height: '45px', borderRadius: '40px', background: 'rgba(255,255,255,0.02)',
-                border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
-              }}
-              onClick={() => navigate('/notifications')}
-            >
-              <FiBell size={20} />
-              {unreadCount > 0 && <span className="notif-badge-new">{unreadCount}</span>}
-            </motion.button>
-
-            <Link to="/dashboard/wallet" style={{ textDecoration: 'none' }}>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                style={{
-                  height: '45px', padding: '0 20px', borderRadius: '40px', background: 'rgba(245, 158, 11, 0.05)',
-                  border: '1px solid rgba(245, 158, 11, 0.1)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '10px',
-                  fontWeight: '700', cursor: 'pointer'
-                }}
-              >
-                <CoinIcon size={20} />
-                <span>{(user?.coinBalance || localUserInfo?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span>
-              </motion.div>
-            </Link>
-
-            <Link to={userId ? `/profile/${userId}` : '#'} style={{ textDecoration: 'none' }}>
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                style={{
-                  width: '45px', height: '45px', borderRadius: '40px', overflow: 'hidden', border: '2px solid var(--accent)',
-                  background: '#0a0a0a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}
-              >
-                {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
-                  <img
-                    src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage) + `?t=${profileUpdateTag}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    alt={userInfo?.name?.[0] || 'U'}
-                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                  />
-                ) : null}
-                <div style={{ display: (userInfo?.profileImage?.url || typeof userInfo?.profileImage === 'string') ? 'none' : 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                  <FiUser />
-                </div>
-              </motion.div>
-            </Link>
-          </div>
-        )}
-      </motion.div>
-
-      {/* 📱 Mobile Header */}
-      <div className="mobile-header show-mobile-flex glass">
-        <Link to="/" className="mobile-logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src={logo} alt="P" style={{ height: '35px', filter: 'drop-shadow(0 0 5px var(--sb-accent))' }} />
+      {/* 📱 Mobile Top Navigation */}
+      <div className="mobile-top-nav show-mobile-flex">
+        <Link to="/" className="m-logo-box">
+          <img src={logo} alt="P" />
           <span>PATTAYA <span>PAL</span></span>
         </Link>
-        <button className="mobile-toggle-btn" onClick={() => setIsOpen(!isOpen)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.8rem' }}>
-          {isOpen ? <FiX /> : <FiMenu />}
-        </button>
+        <div className="m-actions">
+           {currentToken && <div className="m-coin"><CoinIcon size={16} /> <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span></div>}
+           <button className="m-toggle-btn" onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <FiX /> : <FiMenu />}
+          </button>
+        </div>
       </div>
 
-      {/* 🛸 Premium Vertical Sidebar Drawer */}
+      {/* 🛸 Neo-Cyber Premium Sidebar */}
       <AnimatePresence>
-        {isOpen && (
+        {(isOpen || window.innerWidth > 992) && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="sidebar-overlay-new"
-              onClick={() => setIsOpen(false)}
-            />
+            {isOpen && window.innerWidth <= 992 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="premium-sidebar-overlay"
+                onClick={() => setIsOpen(false)}
+              />
+            )}
+            
             <motion.aside
-              initial={{ x: '-100%' }}
+              initial={window.innerWidth <= 992 ? { x: '-100%' } : { x: 0 }}
               animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
+              exit={window.innerWidth <= 992 ? { x: '-100%' } : { x: 0 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className={`sidebar-container-new open`}
+              className={`premium-sidebar-container ${isOpen ? 'm-open' : ''}`}
             >
-              {/* Brand Section */}
-              <div className="sidebar-brand-new">
-                <Link to="/" onClick={() => setIsOpen(false)}>
-                  <img src={logo} alt="Logo" />
-                  <div className="brand-text">PATTAYA <span>PAL</span></div>
+              {/* Brand Logo Section */}
+              <div className="p-sidebar-header">
+                <Link to="/" onClick={() => setIsOpen(false)} className="p-brand-link">
+                  <div className="p-logo-wrapper">
+                    <img src={logo} alt="PattayaPal" />
+                  </div>
+                  <div className="p-brand-text">PATTAYA <span>PAL</span></div>
                 </Link>
-                <button className="close-sidebar-tactical" onClick={() => setIsOpen(false)} style={{ position: 'absolute', right: '20px', background: 'none', border: 'none', color: '#333', cursor: 'pointer' }}>
-                  <FiX size={24} />
-                </button>
               </div>
 
-              {/* Navigation Group */}
-              <div className="sidebar-scrollable">
-                {currentToken && userInfo?.name && (
-                  <div className="user-profile-card-new">
-                    <div className="avatar-main">
+              {/* User Identity Section */}
+              {currentToken && (
+                <div className="p-user-section">
+                  <Link 
+                    to={`/profile/${userId}`} 
+                    className="p-identity-card"
+                    onClick={() => setIsOpen(false)}
+                    style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}
+                  >
+                    <div className="p-avatar-wrapper">
                       {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
                         <img
                           src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage) + `?t=${profileUpdateTag}`}
                           alt=""
-                          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                         />
-                      ) : null}
-                      <div style={{ display: (userInfo?.profileImage?.url || typeof userInfo?.profileImage === 'string') ? 'none' : 'flex' }}>
-                        <FiUser />
-                      </div>
+                      ) : <FiUser />}
+                      <div className="p-status-dot"></div>
                     </div>
-                    <div className="user-details-new">
-                      <span className="u-name">{userInfo.name}</span>
-                      <span className="u-role">{userInfo.role || 'Member'}</span>
+                    <div className="p-user-info">
+                      <span className="p-name">{userInfo.name}</span>
+                      <span className="p-role">{userInfo.role || 'Member'}</span>
                     </div>
-                  </div>
-                )}
-
-                <div className="nav-group-label">MAIN MENU</div>
-                {navLinks.map((link, idx) => (
-                  <Link
-                    key={idx}
-                    to={link.href}
-                    className={`nav-item-new ${location.pathname === link.href ? 'active' : ''}`}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <div className="ni-icon">{link.icon}</div>
-                    <div className="ni-label">{link.name}</div>
                   </Link>
-                ))}
+                </div>
+              )}
 
-                <div className="nav-group-label" style={{ marginTop: '30px' }}>SYSTEM ACCESS</div>
-                {otherLinks.map((link, idx) => (
-                  <Link
-                    key={idx}
-                    to={link.href}
-                    className={`nav-item-new ${location.pathname === link.href ? 'active' : ''}`}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <div className="ni-icon">{link.icon}</div>
-                    <div className="ni-label">{link.name}</div>
-                  </Link>
-                ))}
+              {/* Navigation Engine */}
+              <div className="p-nav-engine">
+                <div className="p-nav-group">
+                  <span className="p-group-label">OPERATIONS</span>
+                  {navLinks.map((link, idx) => (
+                    <Link
+                      key={idx}
+                      to={link.href}
+                      className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <div className="p-item-icon">{link.icon}</div>
+                      <span className="p-item-label">{link.name}</span>
+                      {link.name === 'Notifications' && unreadCount > 0 && <span className="p-notif-count">{unreadCount}</span>}
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="p-nav-group">
+                  <span className="p-group-label">DISCOVERY</span>
+                  {otherLinks.map((link, idx) => (
+                    <Link
+                      key={idx}
+                      to={link.href}
+                      className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <div className="p-item-icon">{link.icon}</div>
+                      <span className="p-item-label">{link.name}</span>
+                    </Link>
+                  ))}
+                </div>
               </div>
 
-              {/* Footer / Logout */}
-              <div className="sidebar-footer-new">
+              {/* Sidebar Footer */}
+              <div className="p-sidebar-footer">
                 {currentToken ? (
-                  <button className="logout-btn-new" onClick={handleLogout}>
-                    <FiLogOut size={22} />
-                    <span className="logout-label">SYSTEM TERMINATE</span>
+                  <button className="p-logout-action" onClick={handleLogout}>
+                    <div className="p-item-icon"><FiLogOut /></div>
+                    <span className="p-item-label">DISCONNECT</span>
                   </button>
                 ) : (
-                  <Link to="/login" className="logout-btn-new" onClick={() => setIsOpen(false)} style={{ textDecoration: 'none' }}>
-                    <FiZap size={22} />
-                    <span className="logout-label">INITIALIZE LOGIN</span>
+                  <Link to="/login" className="p-login-action" onClick={() => setIsOpen(false)}>
+                    <div className="p-item-icon"><FiZap /></div>
+                    <span className="p-item-label">INITIALIZE</span>
                   </Link>
                 )}
               </div>
@@ -313,9 +251,6 @@ function Navbar() {
           </>
         )}
       </AnimatePresence>
-      <style>{`
-        .notif-badge-new { position: absolute; top: -5px; right: -5px; background: var(--sb-accent); color: #fff; font-size: 0.6rem; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #000; }
-      `}</style>
     </>
   );
 }

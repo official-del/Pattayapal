@@ -156,6 +156,7 @@ export const notificationsAPI = {
   markAllRead: () => API.patch('/notifications/read-all', {}).then(res => res.data),
   markAsRead: (id) => API.patch(`/notifications/${id}/read`, {}).then(res => res.data),
   delete: (id) => API.delete(`/notifications/${id}`).then(res => res.data),
+  deleteAll: () => API.delete('/notifications/clear-all').then(res => res.data),
 };
 
 export const postsAPI = {

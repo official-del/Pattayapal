@@ -3,10 +3,14 @@
 /* --- Reset & Container --- */
 .vslider-fullscreen {
     position: relative;
-    width: 100%; /* เปลี่ยนจาก 100vw เป็น 100% ป้องกันจอล้น */
-    height: 100vh; /* เต็มความสูงจอ */
-    height: 100dvh; /* สำหรับมือถือที่มี Navbar Browser */
-    background: #000; /* สีดำสำหรับพื้นที่ว่าง (Letterbox/Pillarbox) */
+    width: 100%;
+    /* เปลี่ยนจาก 100vw เป็น 100% ป้องกันจอล้น */
+    height: 100vh;
+    /* เต็มความสูงจอ */
+    height: 100dvh;
+    /* สำหรับมือถือที่มี Navbar Browser */
+    background: #000;
+    /* สีดำสำหรับพื้นที่ว่าง (Letterbox/Pillarbox) */
     overflow: hidden;
     color: #fff;
 }
@@ -25,8 +29,10 @@
     visibility: hidden;
     transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1s;
     display: flex;
-    align-items: center; /* จัดวิดีโอให้อยู่ตรงกลางสูง */
-    justify-content: center; /* จัดวิดีโอให้อยู่ตรงกลางกว้าง */
+    align-items: center;
+    /* จัดวิดีโอให้อยู่ตรงกลางสูง */
+    justify-content: center;
+    /* จัดวิดีโอให้อยู่ตรงกลางกว้าง */
 }
 
 .vslider__slide--active {
@@ -39,7 +45,7 @@
     width: 100%;
     height: 100%;
     /* ✅ นี่คือ "หัวใจ": ขยายวิดีโอให้ใหญ่ที่สุดโดย "ขอบไม่โดนตัด" และไม่ผิดสัดส่วน */
-    object-fit: contain; 
+    object-fit: contain;
     display: block;
 }
 
@@ -48,18 +54,21 @@
     position: absolute;
     inset: 0;
     /* แรเงาด้านล่างเพื่อให้ตัวหนังสือเด่น */
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 100%);
-    pointer-events: none; /* เพื่อให้ Swipe ได้ */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 40%, transparent 100%);
+    pointer-events: none;
+    /* เพื่อให้ Swipe ได้ */
 }
 
 /* --- Content --- */
 .vslider__content {
     position: absolute;
-    bottom: 80px; /* เว้นระยะจากล่างจอ */
+    bottom: 80px;
+    /* เว้นระยะจากล่างจอ */
     left: 0;
     right: 0;
     z-index: 2;
-    padding: 0 4%; /* แพดดิ้งซ้ายขวาตาม Container หลักของเว็บ */
+    padding: 0 4%;
+    /* แพดดิ้งซ้ายขวาตาม Container หลักของเว็บ */
     text-align: left;
 }
 
@@ -79,7 +88,7 @@
     font-family: 'Kanit', var(--font-main, sans-serif);
     font-weight: 300;
     font-size: clamp(1rem, 3vw, 1.4rem);
-    color: rgba(255,255,255,0.8);
+    color: rgba(255, 255, 255, 0.8);
     max-width: 600px;
     margin: 0;
     line-height: 1.6;
@@ -91,8 +100,8 @@
     top: 50%;
     transform: translateY(-50%);
     z-index: 3;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     width: 60px;
     height: 60px;
@@ -105,7 +114,8 @@
 }
 
 .vslider__arrow:hover {
-    background: #ff6b35; /* สีแบรนด์ */
+    background: #ff6b35;
+    /* สีแบรนด์ */
     border-color: #ff6b35;
     opacity: 1;
 }
@@ -118,8 +128,13 @@
     stroke-width: 2;
 }
 
-.vslider__arrow--left { left: 40px; }
-.vslider__arrow--right { right: 40px; }
+.vslider__arrow--left {
+    left: 40px;
+}
+
+.vslider__arrow--right {
+    right: 40px;
+}
 
 /* --- Dots Indicator --- */
 .vslider__dots {
@@ -135,7 +150,7 @@
 .vslider__dot {
     width: 10px;
     height: 10px;
-    background: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.3);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -143,10 +158,13 @@
     padding: 0;
 }
 
-.vslider__dot:hover { background: rgba(255,255,255,0.6); }
+.vslider__dot:hover {
+    background: rgba(255, 255, 255, 0.6);
+}
 
 .vslider__dot--active {
-    background: #ff6b35; /* สีแบรนด์ */
+    background: #ff6b35;
+    /* สีแบรนด์ */
     transform: scale(1.3);
 }
 
@@ -164,19 +182,23 @@
     font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 5px;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .loader {
     width: 40px;
     height: 40px;
-    border: 3px solid rgba(255,107,53,0.1);
+    border: 3px solid rgba(255, 107, 53, 0.1);
     border-top: 3px solid #ff6b35;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
 
 /* --- Responsive Fix for Mobile --- */
 .vslider__actions {
@@ -206,72 +228,108 @@
 
 .vslider__btn--secondary {
     color: #fff;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 992px) {
     .vslider__content {
         padding: 0 5%;
     }
+
     .vslider__nav {
         right: 5% !important;
         bottom: 40px !important;
         gap: 15px !important;
     }
+
     .vslider__counter {
         right: 20px !important;
     }
 }
 
 @media (max-width: 768px) {
-    .vslider__arrow { display: none; }
-    .vslider__content { bottom: 80px; padding: 0 30px; }
-    .vslider__dots { bottom: 30px; }
-    .vslider__actions { gap: 12px; flex-wrap: wrap; margin-top: 30px; }
-    .vslider__btn { width: auto; padding: 12px 25px; font-size: 0.9rem; }
+    .vslider__arrow {
+        display: none;
+    }
+
+    .vslider__content {
+        bottom: 80px;
+        padding: 0 30px;
+    }
+
+    .vslider__dots {
+        bottom: 30px;
+    }
+
+    .vslider__actions {
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 30px;
+    }
+
+    .vslider__btn {
+        width: auto;
+        padding: 12px 25px;
+        font-size: 0.9rem;
+    }
+
     .vslider__nav {
         left: 30px !important;
         right: auto !important;
         bottom: 30px !important;
     }
-    .vslider__nav-divider { display: none !important; }
+
+    .vslider__nav-divider {
+        display: none !important;
+    }
 }
 
 @media (max-width: 480px) {
-    .vslider__content { padding: 0 20px; bottom: 130px; }
-    .vslider__title { 
-        font-size: 2.2rem; 
-        line-height: 1.2; 
+    .vslider__content {
+        padding: 0 20px;
+        bottom: 130px;
+    }
+
+    .vslider__title {
+        font-size: 5rem;
+        line-height: 1.2;
+        font-weight: 300;
         overflow-wrap: anywhere;
         margin-bottom: 20px;
     }
-    .vslider__subtitle { 
-        font-size: 0.9rem; 
-        margin-top: 20px !important; 
+
+    .vslider__subtitle {
+        font-size: 0.9rem;
+        margin-top: 20px !important;
         line-height: 1.5;
         opacity: 0.9;
     }
-    .vslider__actions { 
-        gap: 15px; 
-        flex-direction: column; 
-        width: 100%; 
-        margin-top: 40px; 
+
+    .vslider__actions {
+        gap: 15px;
+        flex-direction: column;
+        width: 100%;
+        margin-top: 40px;
     }
-    .vslider__btn { 
-        width: 100%; 
-        justify-content: center; 
-        padding: 18px 20px; 
-        font-size: 0.95rem; 
+
+    .vslider__btn {
+        width: 100%;
+        justify-content: center;
+        padding: 18px 20px;
+        font-size: 0.95rem;
         height: 60px;
     }
-    .vslider__nav { 
-        left: 20px !important; 
-        bottom: 30px !important; 
+
+    .vslider__nav {
+        left: 20px !important;
+        bottom: 30px !important;
         gap: 20px !important;
     }
-    .vslider__counter { 
-        right: 15px; 
+
+    .vslider__counter {
+        right: 15px;
     }
+
     .vslider__counter span {
         font-size: 0.75rem;
     }

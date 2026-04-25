@@ -152,16 +152,6 @@ function Footer() {
           </div>
         </div>
 
-        {/* 💬 THANK YOU BOX (FLOATING) */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-40px', position: 'relative', zIndex: 10 }}>
-          <div className="glass" style={{
-            padding: '20px 40px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)',
-            color: '#fff', fontWeight: '700', fontSize: '0.9rem', letterSpacing: '0.5px',
-            boxShadow: '0 15px 35px rgba(0,0,0,0.5)'
-          }}>
-            THANK YOU FOR VISITING OUR LUXURY ARENA
-          </div>
-        </div>
 
         {/* ⚖️ ROW 3: BASE BAR */}
         <div className="footer-base-bar" style={{ padding: '60px 0 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>

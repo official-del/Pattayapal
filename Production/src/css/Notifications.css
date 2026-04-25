@@ -1,0 +1,266 @@
+/* ── 🔔 Notifications: Premium Redesign ── */
+:root {
+    --nt-accent: #ff5733;
+    --nt-accent-glow: rgba(255, 87, 51, 0.3);
+    --nt-bg-card: rgba(15, 15, 20, 0.7);
+    --nt-border: rgba(255, 255, 255, 0.05);
+}
+
+.notifications-container {
+    padding-bottom: 100px;
+}
+
+/* 🚀 Header Luxury */
+.nt-header {
+    margin-bottom: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 30px;
+}
+
+.nt-main-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: -2px;
+    background: linear-gradient(to bottom, #fff, #555);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+.nt-action-group {
+    display: flex;
+    gap: 12px;
+}
+
+/* 🧬 Tab Navigation */
+.nt-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 45px;
+    overflow-x: auto;
+    padding-bottom: 15px;
+}
+
+.nt-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.nt-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--nt-border);
+    border-radius: 22px;
+    color: #555;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    white-space: nowrap;
+}
+
+.nt-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #888;
+}
+
+.nt-tab-btn.active {
+    background: rgba(255, 87, 51, 0.08);
+    border-color: rgba(255, 87, 51, 0.2);
+    color: var(--nt-accent);
+    box-shadow: 0 10px 25px rgba(255, 87, 51, 0.1);
+}
+
+.nt-badge {
+    background: #111;
+    color: #444;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    margin-left: 5px;
+}
+
+.active .nt-badge {
+    background: var(--nt-accent);
+    color: #fff;
+    box-shadow: 0 0 15px var(--nt-accent-glow);
+}
+
+/* 📦 Notification Card */
+.nt-card {
+    background: var(--nt-bg-card);
+    border: 1px solid var(--nt-border);
+    border-radius: 30px;
+    padding: 25px 35px;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    cursor: pointer;
+    transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+}
+
+.nt-card:hover {
+    transform: translateX(10px);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.nt-card.unread {
+    background: rgba(255, 87, 51, 0.02);
+    border-color: rgba(255, 87, 51, 0.1);
+}
+
+.unread-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--nt-accent);
+    box-shadow: 0 0 15px var(--nt-accent-glow);
+}
+
+/* 👤 Avatar & Icon */
+.nt-media {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.nt-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 📝 Content */
+.nt-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.nt-text {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: #888;
+    font-weight: 500;
+}
+
+.unread .nt-text {
+    color: #fff;
+    font-weight: 700;
+}
+
+.nt-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.nt-time {
+    font-size: 0.75rem;
+    color: #333;
+    font-weight: 800;
+}
+
+.nt-type-tag {
+    font-size: 0.6rem;
+    font-weight: 900;
+    padding: 3px 12px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+}
+
+/* 🛠️ Action Buttons */
+.nt-actions {
+    display: flex;
+    gap: 10px;
+    opacity: 0.3;
+    transition: 0.3s;
+}
+
+.nt-card:hover .nt-actions {
+    opacity: 1;
+}
+
+.nt-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+    color: #444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+
+.nt-btn-check:hover {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.2);
+}
+
+.nt-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* 🚀 Header Actions */
+.btn-header {
+    border: none;
+    padding: 14px 24px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btn-read-all {
+    background: rgba(34, 197, 94, 0.08);
+    color: #22c55e;
+    border: 1px solid rgba(34,197,94,0.1);
+}
+
+.btn-delete-all {
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.1);
+}
+
+.btn-header:hover {
+    transform: scale(1.05);
+}
+
+/* 📱 Mobile */
+@media (max-width: 768px) {
+    .nt-main-title { font-size: 2.5rem; }
+    .nt-card { padding: 20px; gap: 15px; }
+    .nt-media { width: 45px; height: 45px; }
+    .nt-text { font-size: 0.95rem; }
+    .nt-header { flex-direction: column; align-items: flex-start; }
+    .nt-actions { opacity: 1; }
+}

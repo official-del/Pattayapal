@@ -145,7 +145,7 @@ function Discovery() {
               <FiZap color="var(--accent)" size={20} />
               <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem', textTransform: 'uppercase' }}>Talent Discovery</span>
             </div>
-            <h1 className="discovery-title" style={{ fontWeight: '900', margin: 0, letterSpacing: '-3px', lineHeight: 1.1, textTransform: 'uppercase' }}>DISCOVER THE FUTURE OF <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 15px var(--accent-glow))' }}>CREATION</span></h1>
+            <h1 className="discovery-title" style={{ fontWeight: '900', margin: 0, letterSpacing: '-1px', lineHeight: 1.1, textTransform: 'uppercase' }}>DISCOVER THE FUTURE OF <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 15px var(--accent-glow))' }}>CREATION</span></h1>
             <p style={{ color: '#888', marginTop: '30px', fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', fontWeight: '400', maxWidth: '700px', margin: '30px auto', lineHeight: 1.6 }}>เชื่อมต่อกับครีเอเตอร์ระดับแนวหน้าของพัทยา ค้นหาพาร์ทเนอร์ที่ใช่สำหรับโปรเจกต์ถัดไปของคุณ</p>
           </motion.div>
 
@@ -178,56 +178,66 @@ function Discovery() {
                 className="discovery-btn"
                 onClick={() => handleSearch(searchQuery)}
               >
-                INITIALIZE SEARCH
+                SEARCH
               </motion.button>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* 🧬 Advanced Filter System */}
-      <section style={{ padding: '60px 5% 0', maxWidth: '1440px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* 🧬 Advanced Filter System (Hidden by default, shows when typing) */}
+      <AnimatePresence>
+        {searchQuery && (
+          <motion.section 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.5, ease: "circOut" }}
+            style={{ padding: '40px 5% 0', maxWidth: '1440px', margin: '0 auto', overflow: 'hidden' }}
+          >
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px' }}>PROFESSIONAL FILTER</span>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {professions.map(p => (
-                <button
-                  key={p}
-                  onClick={() => selectProfession(p)}
-                  className={activeProfession === p ? 'filter-active' : 'filter-inactive'}
-                  style={{
-                    padding: '12px 24px', borderRadius: '15px', border: '1px solid', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', transition: '0.3s'
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px' }}>PROFESSIONAL FILTER</span>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  {professions.map(p => (
+                    <button
+                      key={p}
+                      onClick={() => selectProfession(p)}
+                      className={activeProfession === p ? 'filter-active' : 'filter-inactive'}
+                      style={{
+                        padding: '12px 24px', borderRadius: '15px', border: '1px solid', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', transition: '0.3s'
+                      }}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px' }}>RANK EXCLUSIVITY</span>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {ranks.map(r => (
-                <button
-                  key={r}
-                  onClick={() => selectRank(r)}
-                  style={{
-                    padding: '0 12px', height: '40px', borderRadius: '12px', background: activeRank === r ? 'var(--accent-glow)' : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${activeRank === r ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}`, color: activeRank === r ? '#fff' : '#444',
-                    fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    minWidth: '40px'
-                  }}
-                >
-                  {r.toUpperCase()}
-                </button>
-              ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px' }}>RANK EXCLUSIVITY</span>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {ranks.map(r => (
+                    <button
+                      key={r}
+                      onClick={() => selectRank(r)}
+                      style={{
+                        padding: '0 12px', height: '40px', borderRadius: '12px', background: activeRank === r ? 'var(--accent-glow)' : 'rgba(255,255,255,0.02)',
+                        border: `1px solid ${activeRank === r ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}`, color: activeRank === r ? '#fff' : '#444',
+                        fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        minWidth: '40px'
+                      }}
+                    >
+                      {r.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </motion.section>
+        )}
+      </AnimatePresence>
 
       {/* 📊 Discovery Grid */}
       <section style={{ padding: '80px 5%', maxWidth: '1440px', margin: '0 auto' }}>
@@ -359,29 +369,32 @@ function Discovery() {
         input::placeholder { color: #444; text-overflow: ellipsis; }
 
         /* Responsive Hero Styles */
-        .discovery-title { font-size: clamp(2.5rem, 8vw, 5rem); }
+        .discovery-title { font-size: clamp(2rem, 6vw, 4rem); }
         .discovery-search-box {
-          padding: 8px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; background: rgba(255,255,255,0.02);
+          display: flex; align-items: center; gap: 15px; padding: 10px 10px 10px 30px; border-radius: 35px;
+          border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.01);
         }
         .discovery-input {
-          flex: 1; background: none; border: none; color: #fff; font-size: 1.1rem; padding: 18px 0; outline: none; font-weight: 500; min-width: 0;
+          flex: 1; background: none; border: none; color: #fff; font-size: 1.1rem; outline: none; padding: 15px 0;
         }
         .discovery-btn {
-          background: var(--accent); color: #fff; border: none; padding: 15px 35px; border-radius: 40px; font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 0 20px var(--accent-glow); flex-shrink: 0;
+          background: #fff; color: #000; border: none; padding: 18px 40px; border-radius: 28px;
+          font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; alignItems: center; gap: 10px;
         }
+        .discovery-btn:hover { background: var(--accent); color: #fff; }
 
         @media (max-width: 768px) {
-          .discovery-title { font-size: 2.5rem; }
+          .discovery-title { font-size: 2.2rem; }
           .discovery-search-box { 
-            flex-direction: column; border-radius: 30px; padding: 20px 15px; gap: 15px; 
+            flex-direction: column; padding: 25px; border-radius: 40px; gap: 20px;
+            background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1);
           }
-          .search-icon-wrapper { display: none; }
           .discovery-input { text-align: center; padding: 5px 0; font-size: 1rem; width: 100%; box-sizing: border-box; }
           .discovery-btn { width: 100%; padding: 18px; border-radius: 20px; }
-          section { padding-left: 20px !important; padding-right: 20px !important; }
         }
+
         @media (max-width: 480px) {
-          .discovery-title { font-size: 2rem; }
+          .discovery-title { font-size: 1.8rem; }
           .talent-card { border-radius: 25px !important; }
           .talent-card > div { padding: 25px !important; }
         }

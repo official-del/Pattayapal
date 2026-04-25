@@ -1,0 +1,277 @@
+/* ── 📊 Dashboard Overview: Premium Luxury Edition ── */
+:root {
+    --p-accent: #ff5733;
+    --p-accent-glow: rgba(255, 87, 51, 0.4);
+    --p-bg-card: rgba(255, 255, 255, 0.02);
+    --p-border: rgba(255, 255, 255, 0.05);
+    --p-text-main: #ffffff;
+    --p-text-muted: #666666;
+    --p-glass-blur: 20px;
+}
+
+.dashboard-overview-container {
+    padding: 40px;
+    padding-bottom: 120px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* 🌌 Header Section */
+.db-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-bottom: 60px;
+}
+
+.db-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: -3px;
+    line-height: 0.9;
+    color: var(--p-text-main);
+}
+
+.db-accent-text {
+    color: var(--p-accent);
+    filter: drop-shadow(0 0 10px var(--p-accent-glow));
+}
+
+.db-subtitle {
+    color: #444;
+    margin-top: 15px;
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* 🎖️ Rank Progress Card */
+.rank-progress-card {
+    flex: 1;
+    min-width: min(450px, 100%);
+    display: flex;
+    gap: 25px;
+    align-items: center;
+    padding: 30px !important;
+}
+
+.rank-details { flex: 1; }
+
+.rank-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.rank-label {
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: var(--p-accent);
+    letter-spacing: 2px;
+}
+
+.rank-name {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #fff;
+}
+
+.rank-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.rank-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--p-accent), #ffbd33);
+    box-shadow: 0 0 20px var(--p-accent-glow);
+    border-radius: 20px;
+}
+
+.rank-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    width: 100%;
+}
+
+.rank-footer span:first-child {
+    color: #fff; /* พอยต์ให้เด่นเป็นสีขาว */
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.rank-footer span:last-child {
+    color: var(--p-accent); /* เป้าหมายต่อไปใช้สี Accent */
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+/* เพิ่มเติม: ปรับหัวข้อ Experience Level ให้เว้นระยะดีขึ้น */
+.rank-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+/* ⚡ Stats Grid */
+.db-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 60px;
+}
+
+.stat-card {
+    background: var(--p-bg-card);
+    backdrop-filter: blur(var(--p-glass-blur));
+    border: 1px solid var(--p-border);
+    border-radius: 35px;
+    padding: 35px;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 87, 51, 0.3);
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.stat-icon-box {
+    width: 75px;
+    height: 75px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.02);
+}
+
+.stat-label {
+    font-size: 0.65rem;
+    color: #555;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 5px;
+}
+
+.stat-value {
+    font-size: 2.8rem;
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    color: #fff;
+}
+
+/* 📈 Analytics Charts */
+.db-charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+.chart-container {
+    background: var(--p-bg-card);
+    backdrop-filter: blur(var(--p-glass-blur));
+    border: 1px solid var(--p-border);
+    border-radius: 45px;
+    padding: 45px;
+}
+
+.chart-header { margin-bottom: 40px; }
+
+.chart-title {
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chart-icon-main {
+    color: var(--p-accent);
+    font-size: 1.4rem;
+}
+
+.pie-chart-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.p-group-label-small {
+    color: var(--p-accent);
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 5px;
+    margin-bottom: 20px;
+}
+
+.pie-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.75rem;
+    color: #555;
+    font-weight: 800;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+/* 📱 Responsive Perfection */
+@media (max-width: 1200px) {
+    .db-charts-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .dashboard-overview-container { padding: 20px; }
+    .db-title { font-size: 2.5rem; letter-spacing: -1.5px; }
+    .db-subtitle { font-size: 1.2rem; }
+    .rank-progress-card { flex-direction: column; text-align: center; }
+    .stat-card { padding: 25px; }
+    .stat-value { font-size: 2.2rem; }
+}
+
+@media (max-width: 480px) {
+    .db-stats-grid { grid-template-columns: 1fr; }
+    .stat-icon-box { width: 60px; height: 60px; font-size: 1.8rem; }
+}

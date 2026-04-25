@@ -1,6 +1,7 @@
 :root {
-  --font-main: 'Inter', 'Prompt', sans-serif;
-  --font-title: 'Outfit', 'Prompt', sans-serif;
+  /* 🖋️ New Readable Fonts */
+  --font-main: 'Inter', 'Sarabun', sans-serif;
+  --font-title: 'Kanit', 'Outfit', sans-serif;
   --accent: #ff5733;
   --accent-glow: rgba(255, 87, 51, 0.4);
   --indigo: #6366f1;
@@ -14,7 +15,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  letter-spacing: -0.01em; /* Tighter letter spacing for Inter */
+  letter-spacing: 0.01em; /* เพิ่มระยะห่างให้อ่านภาษาไทยง่ายขึ้น */
 }
 
 button,

@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import RankBadge from '../../components/RankBadge';
 import { CONFIG } from '../../utils/config';
+import '../../css/DashboardOverview.css';
 
 const API_BASE_URL = CONFIG.API_BASE_URL;
 
@@ -86,41 +87,34 @@ function DashboardOverview() {
   };
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="show" className="fadeIn" style={{ paddingBottom: '100px' }}>
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="dashboard-overview-container">
 
       {/* 🌌 Header & Rank Progress */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '30px', marginBottom: '50px' }}>
-        <motion.header variants={itemVariants}>
-          <h1 style={{ fontSize: '3.5rem', fontWeight: '700', margin: 0, letterSpacing: '-3px', lineHeight: 1 }}>
-            DASHBOARD <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 10px var(--accent-glow))' }}>/ {isClient ? 'CLIENT' : 'CREATOR'}</span>
+      <div className="db-header-row">
+        <motion.header variants={itemVariants} className="db-header">
+          <h1 className="db-title">
+            DASHBOARD <span className="db-accent-text">/ {isClient ? 'CLIENT' : 'CREATOR'}</span>
           </h1>
-          <p style={{ color: '#444', marginTop: '12px', fontWeight: '700', fontSize: '1.8rem', letterSpacing: '1px' }}>Freshly Updated</p>
+          <p className="db-subtitle">Freshly Updated</p>
         </motion.header>
 
         {!isClient && rankProgress && (
-          <motion.div variants={itemVariants} className="glass rank-progress-card" style={{
-            padding: '24px 30px', borderRadius: '30px', flex: 1, display: 'flex', gap: '20px', alignItems: 'center',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)',
-            minWidth: 'min(380px, 100%)'
-          }}>
+          <motion.div variants={itemVariants} className="rank-progress-card stat-card">
             <RankBadge rank={rankProgress.currentRank} size="xl" showName={false} />
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '2px' }}>EXPERIENCE LEVEL</span>
-                <span style={{ fontSize: '1.2rem', fontWeight: '700' }}>{rankProgress.currentRank.toUpperCase()}</span>
+            <div className="rank-details">
+              <div className="rank-header">
+                <span className="rank-label">EXPERIENCE LEVEL</span>
+                <span className="rank-name">{rankProgress.currentRank.toUpperCase()}</span>
               </div>
-              <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', position: 'relative' }}>
+              <div className="rank-bar-bg">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${rankProgress.progress}%` }}
                   transition={{ duration: 1.5, ease: "circOut" }}
-                  style={{
-                    height: '100%', background: 'linear-gradient(90deg, var(--accent), #ffbd33)',
-                    boxShadow: '0 0 15px var(--accent-glow)'
-                  }}
+                  className="rank-bar-fill"
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '0.7rem', color: '#333', fontWeight: '700' }}>
+              <div className="rank-footer">
                 <span>{rankProgress.currentPoints.toLocaleString()} PTS</span>
                 <span>Next Milestone: {rankProgress.nextRank}</span>
               </div>
@@ -130,26 +124,24 @@ function DashboardOverview() {
       </div>
 
       {/* ⚡ Stats Grid */}
-      <div className="client-stats-grid">
+      <div className="db-stats-grid">
         {statCards.map((card) => (
           <motion.div
             key={card.label}
             variants={itemVariants}
             whileHover={{ y: -5 }}
-            className="glass-card"
-            style={{ padding: '35px', borderRadius: '35px', display: 'flex', alignItems: 'center', gap: '25px', position: 'relative', overflow: 'hidden' }}
+            className="stat-card"
           >
-            <div style={{
-              width: '70px', height: '70px', borderRadius: '24px', background: `${card.color}15`, color: card.color,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem'
-            }}>
+            <div className="stat-icon-box" style={{ background: `${card.color}15`, color: card.color }}>
               {card.icon}
             </div>
-            <div>
-              <div style={{ fontSize: '2.5rem', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>
-                {card.isCoin ? <CoinBadge amount={card.value} size="xl" /> : card.value}
+            <div className="stat-content">
+              <span className="stat-label">{card.label}</span>
+              <div className="stat-value-group">
+                <span className="stat-value">
+                  {card.isCoin ? <CoinBadge amount={card.value} size="xl" /> : card.value}
+                </span>
               </div>
-              <p style={{ margin: 0, fontSize: '0.6rem', color: '#444', fontWeight: '700', letterSpacing: '2px', opacity: 0.6 }}>{card.label}</p>
             </div>
           </motion.div>
         ))}
@@ -157,37 +149,39 @@ function DashboardOverview() {
 
       {/* 📈 Analytics Section */}
       {!isClient && (
-        <div className="analytics-grid">
-          <motion.div variants={itemVariants} className="glass" style={{ borderRadius: '40px', padding: '40px', border: '1px solid rgba(255,255,255,0.03)' }}>
-            <h3 style={{ margin: '0 0 35px', fontSize: '1rem', fontWeight: '700', letterSpacing: '2px', color: '#fff' }}>
-              <FiBarChart2 style={{ color: 'var(--accent)', verticalAlign: 'middle', marginRight: '10px' }} /> ENGAGEMENT TREND (7D)
-            </h3>
-            <div style={{ width: '100%', height: 350 }}>
-              <ResponsiveContainer width="100%" height="100%">
+        <div className="db-charts-row">
+          <motion.div variants={itemVariants} className="chart-container">
+            <div className="chart-header">
+              <h3 className="chart-title">
+                <FiBarChart2 className="chart-icon-main" /> ENGAGEMENT TREND (7D)
+              </h3>
+            </div>
+            <div className="chart-wrapper">
+              <ResponsiveContainer width="100%" height={350}>
                 <AreaChart data={viewData}>
                   <defs>
                     <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--p-accent)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--p-accent)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="name" stroke="#222" tick={{ fill: '#222', fontSize: 10, fontWeight: 900 }} axisLine={false} tickLine={false} />
-                  <YAxis stroke="#222" tick={{ fill: '#222', fontSize: 10, fontWeight: 900 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" stroke="#444" tick={{ fill: '#444', fontSize: 10, fontWeight: 900 }} axisLine={false} tickLine={false} />
+                  <YAxis stroke="#444" tick={{ fill: '#444', fontSize: 10, fontWeight: 900 }} axisLine={false} tickLine={false} />
                   <RechartsTooltip
-                    contentStyle={{ background: '#050505', border: '1px solid #222', borderRadius: '15px' }}
+                    contentStyle={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '15px' }}
                     itemStyle={{ color: '#fff', fontWeight: 'bold' }}
                   />
-                  <Area type="monotone" dataKey="views" stroke="var(--accent)" strokeWidth={4} fillOpacity={1} fill="url(#colorViews)" />
+                  <Area type="monotone" dataKey="views" stroke="var(--p-accent)" strokeWidth={4} fillOpacity={1} fill="url(#colorViews)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="glass" style={{ borderRadius: '40px', padding: '40px', display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: 'var(--accent)', fontSize: '0.75rem', fontWeight: '700', letterSpacing: '5px' }}>ภาพรวม / OVERVIEW</span>
-            <div style={{ width: '100%', flex: 1, minHeight: 250 }}>
-              <ResponsiveContainer width="100%" height="100%">
+          <motion.div variants={itemVariants} className="chart-container pie-chart-section">
+            <span className="p-group-label-small">ภาพรวม / OVERVIEW</span>
+            <div className="pie-wrapper">
+              <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
                     data={platformData}
@@ -202,15 +196,15 @@ function DashboardOverview() {
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    contentStyle={{ background: '#050505', border: '1px solid #222', borderRadius: '15px' }}
+                    contentStyle={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '15px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '20px' }}>
+            <div className="pie-legend">
               {platformData.map((entry, index) => (
-                <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem', color: '#444', fontWeight: '700' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: COLORS[index] }}></div>
+                <div key={entry.name} className="legend-item">
+                  <div className="legend-dot" style={{ background: COLORS[index] }}></div>
                   {entry.name.toUpperCase()}
                 </div>
               ))}
@@ -218,52 +212,6 @@ function DashboardOverview() {
           </motion.div>
         </div>
       )}
-
-      <style>{`
-        .client-stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 25px;
-          margin-bottom: 50px;
-        }
-        .analytics-grid {
-          display: grid;
-          grid-template-columns: 2fr 1fr;
-          gap: 30px;
-        }
-
-        @media (max-width: 992px) {
-          .analytics-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        @media (max-width: 768px) {
-          h1 {
-            font-size: clamp(2rem, 10vw, 3.5rem) !important;
-          }
-          .rank-progress-card {
-            padding: 20px !important;
-            flex-direction: column;
-            text-align: center;
-          }
-          .rank-progress-card > div {
-            width: 100%;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .client-stats-grid {
-            grid-template-columns: 1fr;
-          }
-          h1 {
-            font-size: 2.2rem !important;
-          }
-          p {
-            font-size: 1.2rem !important;
-          }
-        }
-      `}</style>
     </motion.div>
   );
 }

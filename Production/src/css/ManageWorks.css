@@ -1,0 +1,304 @@
+/* ── 🎨 Manage Works: Premium Gallery Edition ── */
+:root {
+    --mw-accent: #ff5733;
+    --mw-bg-card: rgba(255, 255, 255, 0.02);
+    --mw-border: rgba(255, 255, 255, 0.05);
+    --mw-glass-blur: 25px;
+}
+
+.manage-works-container {
+    padding: 40px;
+    padding-bottom: 120px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* 🚀 Header & New Work Button */
+.mw-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 40px;
+    margin-bottom: 70px;
+}
+
+.mw-title-group {
+    flex: 1;
+}
+
+.mw-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.mw-badge-text {
+    color: var(--mw-accent);
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+}
+
+.mw-main-title {
+    font-size: 3.8rem;
+    font-weight: 800;
+    /* ลดลงจาก 900 เพื่อไม่ให้หนาเกินไป */
+    letter-spacing: -1px;
+    /* ปรับให้ไม่บีบตัวอักษรมากเกินไป */
+    line-height: 1.1;
+    margin: 0;
+    color: #fff;
+}
+
+.mw-subtitle {
+    color: #555;
+    margin-top: 20px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+}
+
+.mw-subtitle span {
+    color: #fff;
+    font-size: 1.4rem;
+}
+
+.mw-add-btn {
+    background: var(--mw-accent);
+    color: #fff;
+    text-decoration: none;
+    padding: 20px 40px;
+    border-radius: 25px;
+    font-weight: 900;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 15px 40px rgba(255, 87, 51, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.mw-add-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 50px rgba(255, 87, 51, 0.4);
+}
+
+/* 🧬 Works Grid */
+.mw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 35px;
+}
+
+/* 🖼️ Work Card */
+.work-card {
+    background: var(--mw-bg-card);
+    backdrop-filter: blur(var(--mw-glass-blur));
+    border: 1px solid var(--mw-border);
+    border-radius: 45px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.work-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 87, 51, 0.3);
+    transform: translateY(-12px);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* 📹 Media Container */
+.mw-media-box {
+    position: relative;
+    aspect-ratio: 16/10;
+    background: #000;
+    overflow: hidden;
+}
+
+.mw-media-box video,
+.mw-media-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.7;
+    transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.5s;
+}
+
+.work-card:hover .mw-media-box video,
+.work-card:hover .mw-media-box img {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.mw-type-tag {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    padding: 8px 18px;
+    border-radius: 100px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--mw-accent);
+    letter-spacing: 2px;
+    z-index: 2;
+}
+
+.mw-play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+}
+
+.play-icon-glow {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: rgba(255, 87, 51, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 25px var(--mw-accent);
+}
+
+/* 📝 Card Info */
+.mw-card-content {
+    padding: 35px;
+}
+
+.work-title {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #fff;
+    margin: 0 0 15px;
+    letter-spacing: -0.5px;
+}
+
+.tag-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 35px;
+}
+
+.status-tag {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 7px 18px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.status-published {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.status-draft {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.category-tag {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 7px 18px;
+    border-radius: 100px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #666;
+}
+
+/* 🔘 Action Buttons */
+.action-row {
+    display: flex;
+    gap: 15px;
+}
+
+.edit-btn {
+    flex: 1;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s;
+}
+
+.edit-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.delete-btn {
+    width: 60px;
+    height: 60px;
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border-radius: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    transition: all 0.3s;
+}
+
+.delete-btn:hover {
+    background: #ef4444;
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+}
+
+/* 📱 Responsive */
+@media (max-width: 992px) {
+    .mw-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .mw-main-title {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .manage-works-container {
+        padding: 25px;
+    }
+
+    .mw-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mw-main-title {
+        font-size: 2.4rem;
+    }
+
+    .mw-header {
+        margin-bottom: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mw-main-title {
+        font-size: 3rem !important;
+        font-weight: 500;
+    }
+}
