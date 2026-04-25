@@ -128,63 +128,18 @@ function Navbar() {
 
   return (
     <>
-      {/* 📱 Mobile Top Navigation (Minimalist) */}
+      {/* 📱 Mobile Top Navigation */}
       <div className="mobile-top-nav show-mobile-flex">
         <Link to="/" className="m-logo-box">
           <img src={logo} alt="P" />
           <span>PATTAYA <span>PAL</span></span>
         </Link>
         <div className="m-actions">
-           {currentToken && (
-             <div className="m-top-icons">
-               <Link to="/notifications" className="m-icon-btn">
-                 <FiBell />
-                 {unreadCount > 0 && <span className="m-dot"></span>}
-               </Link>
-               <Link to="/messenger" className="m-icon-btn"><FiMessageCircle /></Link>
-             </div>
-           )}
+           {currentToken && <div className="m-coin"><CoinIcon size={16} /> <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span></div>}
+           <button className="m-toggle-btn" onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <FiX /> : <FiMenu />}
+          </button>
         </div>
-      </div>
-
-      {/* 📱 Mobile Bottom Navigation (Modern Tab Bar) */}
-      <div className="mobile-bottom-nav show-mobile-flex">
-        <Link to="/" className={`b-nav-item ${location.pathname === '/' ? 'active' : ''}`}><FiHome /><span>หน้าแรก</span></Link>
-        <Link to="/works" className={`b-nav-item ${location.pathname === '/works' ? 'active' : ''}`}><FiSearch /><span>ค้นหา</span></Link>
-        <Link to="/dashboard" className={`b-nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}><FiGrid /><span>แดชบอร์ด</span></Link>
-        <Link to="/messenger" className={`b-nav-item ${location.pathname === '/messenger' ? 'active' : ''}`}><FiMessageCircle /><span>แชท</span></Link>
-        <button className="b-nav-item" onClick={() => setIsOpen(!isOpen)}><FiMenu /><span>เมนู</span></button>
-      </div>
-
-      {/* 💎 Desktop Top Actions (Premium 3-Button Hub) */}
-      <div className="p-top-right-actions">
-        {currentToken ? (
-          <>
-            <div className="p-top-coin">
-              <CoinIcon size={18} />
-              <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span>
-            </div>
-            <div className="p-top-btn-group">
-              <Link to="/notifications" className="p-icon-action" title="Notifications">
-                <FiBell />
-                {unreadCount > 0 && <span className="p-badge">{unreadCount}</span>}
-              </Link>
-              <Link to="/messenger" className="p-icon-action" title="Messages">
-                <FiMessageCircle />
-              </Link>
-              <Link to={`/profile/${userId}`} className="p-icon-action" title="My Profile">
-                <FiUser />
-              </Link>
-            </div>
-            <button className="p-top-toggle" onClick={() => setIsOpen(!isOpen)} title="Menu">
-              {isOpen ? <FiX /> : <FiMenu />}
-            </button>
-          </>
-        ) : (
-          <Link to="/login" className="p-login-btn">
-            <FiZap /> INITIALIZE
-          </Link>
-        )}
       </div>
 
       {/* 🛸 Neo-Cyber Premium Sidebar */}
@@ -225,6 +180,7 @@ function Navbar() {
                     to={`/profile/${userId}`} 
                     className="p-identity-card"
                     onClick={() => setIsOpen(false)}
+                    style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}
                   >
                     <div className="p-avatar-wrapper">
                       {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
