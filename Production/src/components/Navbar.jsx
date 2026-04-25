@@ -118,6 +118,27 @@ function Navbar() {
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
   ];
 
+  const handleNotificationClick = async (notif) => {
+    if (!notif.isRead) {
+      try { await notificationsAPI.markAsRead(notif._id); } catch(e){}
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+
+    const type = notif.type?.toLowerCase() || '';
+    if (type.includes('message') || type.includes('messenger')) {
+      const convId = notif.relatedId || (notif.link && notif.link.includes('messenger/') ? notif.link.split('/').pop() : null);
+      navigate(convId ? `/messenger/${convId}` : '/messenger');
+    } else if (type.includes('job')) {
+      navigate('/dashboard/hiring');
+    } else if (type.includes('friend')) {
+      navigate('/friends');
+    } else if (type.includes('payment') || type.includes('wallet')) {
+      navigate('/dashboard/wallet');
+    } else if (notif.link) {
+      navigate(notif.link);
+    }
+  };
+
   const otherLinks = [
     { name: 'Find Freelancers', href: '/freelancers', icon: <FiSearch /> },
     { name: 'User Creations', href: '/works', icon: <FiLayers /> },
@@ -223,21 +244,21 @@ function Navbar() {
 
               {/* Navigation Engine */}
               <div className="p-nav-engine">
-                <div className="p-nav-group">
-                  <span className="p-group-label">OPERATIONS</span>
-                  {navLinks.map((link, idx) => (
-                    <Link
-                      key={idx}
-                      to={link.href}
-                      className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <div className="p-item-icon">{link.icon}</div>
-                      <span className="p-item-label">{link.name}</span>
-                      {link.name === 'Notifications' && unreadCount > 0 && <span className="p-notif-count">{unreadCount}</span>}
-                    </Link>
-                  ))}
-                </div>
+                    <div className="p-nav-group">
+                      <span className="p-group-label">OPERATIONS</span>
+                      {navLinks.map((link, idx) => (
+                        <Link
+                          key={idx}
+                          to={link.href}
+                          className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
+                          onClick={() => setIsOpen(false)}
+                        >
+                          <div className="p-item-icon">{link.icon}</div>
+                          <span className="p-item-label">{link.name}</span>
+                          {link.name === 'Notifications' && unreadCount > 0 && <span className="p-notif-count">{unreadCount}</span>}
+                        </Link>
+                      ))}
+                    </div>
 
                 <div className="p-nav-group">
                   <span className="p-group-label">DISCOVERY</span>

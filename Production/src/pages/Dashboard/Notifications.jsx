@@ -91,7 +91,8 @@ function Notifications() {
 
     const type = notif.type?.toLowerCase() || '';
     if (type.includes('message') || type.includes('messenger')) {
-      navigate('/messenger');
+      const convId = notif.relatedId || (notif.link && notif.link.includes('messenger/') ? notif.link.split('/').pop() : null);
+      navigate(convId ? `/messenger/${convId}` : '/messenger');
     } else if (type.includes('job')) {
       navigate('/dashboard/hiring');
     } else if (type.includes('comment') || type.includes('reply')) {
