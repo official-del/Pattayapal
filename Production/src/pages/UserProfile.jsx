@@ -318,7 +318,7 @@ function UserProfile() {
    const handleStartChat = async () => {
       if (!currentToken) return alert('กรุณาเข้าสู่ระบบก่อนครับ');
       try {
-         await chatAPI.getOrCreateConversation(targetId, currentToken);
+         await chatAPI.getOrCreateConversation(targetProfileId, currentToken);
          navigate('/messenger');
       } catch { alert('Secure connection failed.'); }
    };
