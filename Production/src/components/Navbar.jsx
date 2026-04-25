@@ -120,7 +120,7 @@ function Navbar() {
 
   const handleNotificationClick = async (notif) => {
     if (!notif.isRead) {
-      try { await notificationsAPI.markAsRead(notif._id); } catch(e){}
+      try { await notificationsAPI.markAsRead(notif._id); } catch (e) { }
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
 
@@ -156,8 +156,8 @@ function Navbar() {
           <span>PATTAYA <span>PAL</span></span>
         </Link>
         <div className="m-actions">
-           {currentToken && <div className="m-coin"><CoinIcon size={16} /> <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span></div>}
-           <button className="m-toggle-btn" onClick={() => setIsOpen(!isOpen)}>
+          {currentToken && <div className="m-coin"><CoinIcon size={16} /> <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span></div>}
+          <button className="m-toggle-btn" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <FiX /> : <FiMenu />}
           </button>
         </div>
@@ -198,7 +198,7 @@ function Navbar() {
                 onClick={() => setIsOpen(false)}
               />
             )}
-            
+
             <motion.aside
               initial={window.innerWidth <= 992 ? { x: '-100%' } : { x: 0 }}
               animate={{ x: 0 }}
@@ -219,8 +219,8 @@ function Navbar() {
               {/* User Identity Section */}
               {currentToken && (
                 <div className="p-user-section">
-                  <Link 
-                    to={`/profile/${userId}`} 
+                  <Link
+                    to={`/profile/${userId}`}
                     className="p-identity-card"
                     onClick={() => setIsOpen(false)}
                     style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}
@@ -244,21 +244,21 @@ function Navbar() {
 
               {/* Navigation Engine */}
               <div className="p-nav-engine">
-                    <div className="p-nav-group">
-                      <span className="p-group-label">OPERATIONS</span>
-                      {navLinks.map((link, idx) => (
-                        <Link
-                          key={idx}
-                          to={link.href}
-                          className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
-                          onClick={() => setIsOpen(false)}
-                        >
-                          <div className="p-item-icon">{link.icon}</div>
-                          <span className="p-item-label">{link.name}</span>
-                          {link.name === 'Notifications' && unreadCount > 0 && <span className="p-notif-count">{unreadCount}</span>}
-                        </Link>
-                      ))}
-                    </div>
+                <div className="p-nav-group">
+                  <span className="p-group-label">OPERATIONS</span>
+                  {navLinks.map((link, idx) => (
+                    <Link
+                      key={idx}
+                      to={link.href}
+                      className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <div className="p-item-icon">{link.icon}</div>
+                      <span className="p-item-label">{link.name}</span>
+                      {link.name === 'Notifications' && unreadCount > 0 && <span className="p-notif-count">{unreadCount}</span>}
+                    </Link>
+                  ))}
+                </div>
 
                 <div className="p-nav-group">
                   <span className="p-group-label">DISCOVERY</span>
