@@ -53,7 +53,7 @@ export const SocketProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('userToken');
       if (!token) return;
-      const ids = await usersAPI.getOnlineUsers(token);
+      const ids = await usersAPI.getOnlineUsers();
       setOnlineUsers(new Set(ids.map(String)));
     } catch (err) {
       console.error('fetchOnlineUsers error:', err.message);

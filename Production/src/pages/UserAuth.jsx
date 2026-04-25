@@ -154,6 +154,12 @@ export default function UserAuth() {
                       <option value="Editor">Editor</option>
                       <option value="Director">Director</option>
                       <option value="AI Operations">AI Operations</option>
+                      <option value="AI Artist">AI Artist</option>
+                      <option value="AI Animator">AI Animator</option>
+                      <option value="AI Sound Designer">AI Sound Designer</option>
+                      <option value="AI 3D Artist">AI 3D Artist</option>
+                      <option value="AI Director">AI Director</option>
+                      <option value="AI Producer">AI Producer</option>
                     </select>
                   </div>
                 </div>

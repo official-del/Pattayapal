@@ -13,7 +13,9 @@ const userSchema = new mongoose.Schema({
     enum: [
       'Photographer', 'Editor', 'Videographer', 'Director', 
       'Production Design', 'Creative Content', 'Film Production', 
-      'Post Production', 'Digital Artist', 'General'
+      'Post Production', 'Digital Artist', 'General',
+      'AI Operations', 'AI Artist', 'AI Animator', 'AI Sound Designer', 
+      'AI 3D Artist', 'AI Director', 'AI Producer'
     ], 
     default: 'General' 
   },

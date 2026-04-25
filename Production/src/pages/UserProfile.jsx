@@ -25,27 +25,28 @@ const API_BASE_URL = CONFIG.API_BASE_URL;
 
 export const PRODUCTION_SKILLS = [
    // 🎬 Video & Film
-   "Adobe Premiere Pro", "After Effects", "DaVinci Resolve", "Final Cut Pro", "Color Grading", 
-   "Video Editing", "Motion Graphics", "Cinematography", "Directing", "Scriptwriting", 
-   "Sound Design", "Audio Mixing", "Visual Effects (VFX)", "3D Animation", "Drone Pilot",
-   
+   "Adobe Premiere Pro", "After Effects", "DaVinci Resolve", "Final Cut Pro", "Color Grading",
+   "Video Editing", "Motion Graphics", "Cinematography", "Directing", "Scriptwriting",
+   "Sound Design", "Audio Mixing", "Visual Effects (VFX)", "3D Animation", "Drone Pilot", "AI Media Producer",
+
    // 📷 Photography
-   "Adobe Photoshop", "Adobe Lightroom", "Photography", "Studio Photography", "Portrait Photography", 
+   "Adobe Photoshop", "Adobe Lightroom", "Photography", "Studio Photography", "Portrait Photography",
    "Product Photography", "Event Photography", "Retouching",
 
    // 🎨 Design & Digital
-   "Adobe Illustrator", "InDesign", "Graphic Design", "UI/UX Design", "Figma", "Canva", 
+   "Adobe Illustrator", "InDesign", "Graphic Design", "UI/UX Design", "Figma", "Canva",
    "Logo Design", "Branding", "Social Media Content", "Digital Artist", "Web Development", "2D Animation",
 
    // 🏗️ 3D & Tech
    "Blender", "Cinema 4D", "Unreal Engine", "Unity", "3ds Max", "Maya", "3D Modeling", "VFX",
-   
+
    // 🛠️ Production & Technical
-   "Camera Operation", "Lighting Design", "Gaffer", "Grip", "Production Manager", 
+   "Camera Operation", "Lighting Design", "Gaffer", "Grip", "Production Manager",
    "Live Streaming", "OBS Studio", "Technical Director", "Gimbal Operation", "Storyboard Artist",
 
    // ✍️ Marketing & Others
-   "Copywriting", "Content Marketing", "SEO", "Translation", "Voice Over", "Music Production"
+   "Copywriting", "Content Marketing", "SEO", "Translation", "Voice Over", "Music Production",
+   "AI Content Specialist"
 ];
 
 export const SKILL_CATEGORIES = [
@@ -128,40 +129,40 @@ function UserProfile() {
             if (data.lastSeen) setLastSeen(data.lastSeen);
          }
       };
-      
+
       const handleProfileUpdate = (data) => {
          if (data.userId === targetProfileId) {
             setProfile(prev => {
-                if (!prev) return prev;
-                return { ...prev, ...data };
+               if (!prev) return prev;
+               return { ...prev, ...data };
             });
          }
       };
-      
+
       const handleWorkUpdate = (data) => {
          if (!data || !data.work) return;
          const updatedWork = data.work;
          if (updatedWork.createdBy?._id === targetProfileId || updatedWork.createdBy === targetProfileId) {
-             setWorks(prevWorks => {
-                 if (data.action === 'create') return [updatedWork, ...prevWorks];
-                 if (data.action === 'update') return prevWorks.map(w => w._id === updatedWork._id ? updatedWork : w);
-                 if (data.action === 'delete') return prevWorks.filter(w => w._id !== data.workId);
-                 return prevWorks;
-             });
+            setWorks(prevWorks => {
+               if (data.action === 'create') return [updatedWork, ...prevWorks];
+               if (data.action === 'update') return prevWorks.map(w => w._id === updatedWork._id ? updatedWork : w);
+               if (data.action === 'delete') return prevWorks.filter(w => w._id !== data.workId);
+               return prevWorks;
+            });
          } else if (data.action === 'delete') {
-             // Delete action might only send workId
-             setWorks(prevWorks => prevWorks.filter(w => w._id !== data.workId));
+            // Delete action might only send workId
+            setWorks(prevWorks => prevWorks.filter(w => w._id !== data.workId));
          }
       };
 
       socket.on('status_change', handleStatusChange);
       socket.on('profile_updated', handleProfileUpdate);
       socket.on('work_updated', handleWorkUpdate);
-      
+
       return () => {
-          socket.off('status_change', handleStatusChange);
-          socket.off('profile_updated', handleProfileUpdate);
-          socket.off('work_updated', handleWorkUpdate);
+         socket.off('status_change', handleStatusChange);
+         socket.off('profile_updated', handleProfileUpdate);
+         socket.off('work_updated', handleWorkUpdate);
       };
    }, [socket, targetProfileId]);
 
@@ -384,9 +385,9 @@ function UserProfile() {
                   <div style={{ position: 'relative' }}>
                      <div style={{ width: '220px', height: '220px', borderRadius: '30px', border: '5px solid #050505', overflow: 'hidden', background: '#222', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {profile.profileImage?.url || (typeof profile.profileImage === 'string' && profile.profileImage) ? (
-                           <img 
-                              src={getFullUrl(profile.profileImage.url || profile.profileImage) + (isMyProfile ? `?t=${profileUpdateTag}` : '')} 
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                           <img
+                              src={getFullUrl(profile.profileImage.url || profile.profileImage) + (isMyProfile ? `?t=${profileUpdateTag}` : '')}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                               onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                            />
                         ) : null}
@@ -606,7 +607,7 @@ function UserProfile() {
                                        <p style={{ color: '#888', lineHeight: '1.6', marginBottom: '30px' }}>{pkg.description}</p>
                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '25px' }}>
                                           {!isMyProfile ? (
-                                             <button 
+                                             <button
                                                 onClick={() => { setSelectedPackage(pkg); setShowHireModal(true); }}
                                                 style={{ width: '100%', padding: '18px', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', fontWeight: '700', cursor: 'pointer' }}
                                              >
@@ -825,8 +826,8 @@ function UserProfile() {
                                              }
                                           </datalist>
                                        </div>
-                                       <select 
-                                          value={skill.category || 'General'} 
+                                       <select
+                                          value={skill.category || 'General'}
                                           onChange={e => {
                                              const newSkills = [...skills];
                                              newSkills[index].category = e.target.value;

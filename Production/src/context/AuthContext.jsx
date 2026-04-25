@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
     if (isFetching.current || !token) return; // ป้องกัน double call และ token ว่าง
     isFetching.current = true;
     try {
-      const data = await authAPI.getProfile(token);
+      const data = await authAPI.getProfile();
       // Ensure we get the user object even if wrapped in { user: ... } or { data: ... }
       const userData = data.user || data.data || data;
       
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
       // This fixes the issue where the backend profile doesn't include monetary stats
       if (balance === 0) {
         try {
-          const txs = await walletAPI.getTransactions(token);
+          const txs = await walletAPI.getTransactions();
           if (txs && txs.length > 0) {
              balance = txs.reduce((acc, tx) => {
                const amt = Number(tx.amount) || 0;
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
         if (balance === 0) {
             try {
               const { walletAPI } = await import('../utils/api.js');
-              const txs = await walletAPI.getTransactions(data.token);
+              const txs = await walletAPI.getTransactions();
               if (txs && txs.length > 0) {
                  balance = txs.reduce((acc, tx) => {
                    const amt = Number(tx.amount) || 0;
