@@ -128,7 +128,7 @@ function Navbar() {
 
   return (
     <>
-      {/* 📱 Mobile Top Navigation */}
+      {/* 📱 Mobile Top Navigation (Original) */}
       <div className="mobile-top-nav show-mobile-flex">
         <Link to="/" className="m-logo-box">
           <img src={logo} alt="P" />
@@ -140,6 +140,19 @@ function Navbar() {
             {isOpen ? <FiX /> : <FiMenu />}
           </button>
         </div>
+      </div>
+
+      {/* 💎 Desktop Top Actions (Floating Right) */}
+      <div className="p-top-right-actions show-desktop-flex">
+        {currentToken && (
+          <div className="p-top-coin">
+            <CoinIcon size={18} />
+            <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span>
+          </div>
+        )}
+        <button className="p-top-toggle" onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <FiX /> : <FiMenu />}
+        </button>
       </div>
 
       {/* 🛸 Neo-Cyber Premium Sidebar */}
