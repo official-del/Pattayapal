@@ -154,6 +154,7 @@ function App() {
         } />
         <Route path="/friends" element={<Friends />} />
         <Route path="/messenger" element={<Messenger />} />
+        <Route path="/messenger/:conversationId" element={<Messenger />} />
         <Route path="/upload-work" element={<UserWorkForm />} />
         <Route path="/edit-work/:id" element={<UserWorkForm />} />
 

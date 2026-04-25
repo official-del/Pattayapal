@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { chatAPI } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
@@ -27,6 +28,7 @@ const FileIcon = ({ type, name }) => {
 };
 
 function Messenger() {
+  const { conversationId } = useParams();
   const { user: contextUser, token: contextToken, logout, profileUpdateTag } = useContext(AuthContext);
   const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
   const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo'));
@@ -148,6 +150,16 @@ function Messenger() {
     fetchConversations(activeTab);
     if (refreshOnlineUsers) refreshOnlineUsers();
   }, [currentToken, refreshOnlineUsers, activeTab]);
+
+  // 🔗 Auto-select conversation from URL
+  useEffect(() => {
+    if (conversationId && conversations.length > 0) {
+      const selected = conversations.find(c => c._id === conversationId);
+      if (selected) {
+        setCurrentChat(selected);
+      }
+    }
+  }, [conversationId, conversations]);
 
   // 🔍 Filtering Logic
   useEffect(() => {

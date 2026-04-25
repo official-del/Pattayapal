@@ -318,8 +318,8 @@ function UserProfile() {
    const handleStartChat = async () => {
       if (!currentToken) return alert('กรุณาเข้าสู่ระบบก่อนครับ');
       try {
-         await chatAPI.getOrCreateConversation(targetProfileId, currentToken);
-         navigate('/messenger');
+         const conv = await chatAPI.getOrCreateConversation(targetProfileId, currentToken);
+         navigate(`/messenger/${conv._id}`);
       } catch { alert('Secure connection failed.'); }
    };
 
