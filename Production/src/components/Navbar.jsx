@@ -157,7 +157,7 @@ function Navbar() {
       </div>
 
       {/* 💎 Desktop Top Actions (Premium 3-Button Hub) */}
-      <div className="p-top-right-actions show-desktop-flex">
+      <div className="p-top-right-actions">
         {currentToken ? (
           <>
             <div className="p-top-coin">

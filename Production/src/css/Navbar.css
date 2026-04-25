@@ -437,28 +437,19 @@
   transition: all 0.3s ease;
 }
 
-.p-top-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--p-accent);
-  color: var(--p-accent);
-  transform: translateY(-2px);
-}
-
-.show-desktop-flex { display: flex; }
-@media (max-width: 992px) {
-  .show-desktop-flex { display: none; }
-  .p-top-right-actions { display: none; }
-}
-
 /* 💎 Top Right Actions (Desktop Premium) */
 .p-top-right-actions {
   position: fixed;
   top: 25px;
   right: 30px;
-  z-index: 1200;
+  z-index: 2000; /* ให้สูงที่สุด */
   display: flex;
   align-items: center;
   gap: 20px;
+}
+
+@media (max-width: 992px) {
+  .p-top-right-actions { display: none !important; }
 }
 
 .p-top-coin {
