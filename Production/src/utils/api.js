@@ -162,6 +162,11 @@ export const chatAPI = {
     API.get(`/chat/conversations${filter ? `?filter=${filter}` : ''}`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => res.data),
+    
+  getConversation: (conversationId, token) =>
+    API.get(`/chat/${conversationId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => res.data),
 
   getMessages: (conversationId, token) =>
     API.get(`/chat/${conversationId}/messages`, {

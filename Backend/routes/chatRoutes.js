@@ -8,7 +8,8 @@ import {
   getMessages,
   sendMessage,
   markMessagesAsRead,
-  toggleArchiveConversation
+  toggleArchiveConversation,
+  getConversationById
 } from '../controller/chatController.js';
 
 const router = express.Router();
@@ -22,6 +23,7 @@ const upload = multer({ dest: tempDir });
 router.post('/conversation', protect, getOrCreateConversation);
 router.post('/groups', protect, createGroup);
 router.get('/conversations', protect, getMyConversations);
+router.get('/:conversationId', protect, getConversationById);
 router.get('/:conversationId/messages', protect, getMessages);
 router.patch('/:conversationId/read', protect, markMessagesAsRead);
 router.patch('/:conversationId/archive', protect, toggleArchiveConversation);

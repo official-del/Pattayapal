@@ -266,3 +266,29 @@ export const createGroup = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+// ── ดึงข้อมูลห้องแชทเดียว ──
+export const getConversationById = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation.findById(conversationId)
+      .populate('participants.user', 'name profileImage profession isOnline lastSeen')
+      .populate('lastMessage');
+
+    if (!conversation) {
+      return res.status(404).json({ message: "ไม่พบห้องแชทนี้" });
+    }
+
+    // ตรวจสอบว่าเป็นสมาชิกในห้องแชทหรือไม่
+    const isParticipant = conversation.participants.some(p => p.user._id.toString() === userId);
+    if (!isParticipant) {
+      return res.status(403).json({ message: "คุณไม่มีสิทธิ์เข้าถึงห้องแชทนี้" });
+    }
+
+    const myState = conversation.participants.find(p => p.user._id.toString() === userId);
+    res.status(200).json({ ...conversation._doc, myState });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

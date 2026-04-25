@@ -153,13 +153,34 @@ function Messenger() {
 
   // 🔗 Auto-select conversation from URL
   useEffect(() => {
-    if (conversationId && conversations.length > 0) {
-      const selected = conversations.find(c => c._id === conversationId);
-      if (selected) {
-        setCurrentChat(selected);
+    const handleUrlConversation = async () => {
+      if (!conversationId || !currentToken) return;
+
+      // 1. Check if already in the current conversations list
+      const existing = conversations.find(c => c._id === conversationId);
+      if (existing) {
+        if (currentChat?._id !== existing._id) setCurrentChat(existing);
+        return;
       }
-    }
-  }, [conversationId, conversations]);
+
+      // 2. If not in list, fetch it directly (handles direct links or new chats)
+      try {
+        const conv = await chatAPI.getConversation(conversationId, currentToken);
+        if (conv) {
+          setConversations(prev => {
+             // Double check to avoid duplicates during state updates
+             if (prev.some(p => p._id === conv._id)) return prev;
+             return [conv, ...prev];
+          });
+          setCurrentChat(conv);
+        }
+      } catch (err) {
+        console.error("Failed to fetch conversation from URL:", err);
+      }
+    };
+
+    handleUrlConversation();
+  }, [conversationId, currentToken, conversations]);
 
   // 🔍 Filtering Logic
   useEffect(() => {
