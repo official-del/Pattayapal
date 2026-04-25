@@ -22,7 +22,8 @@ import {
   getAllUsersAdmin,
   getOnlineUsers,
   getLeaderboard,
-  getRankProgress
+  getRankProgress,
+  changePassword
 } from '../controller/userController.js';
 
 const router = express.Router();
@@ -145,6 +146,7 @@ router.put('/:id/friend-request', protect, respondFriendRequest);
 router.delete('/:id/friend', protect, removeFriend);
 router.delete('/:id/friend-request', protect, cancelFriendRequest);
 router.patch('/me/profile', protect, updateProfile);
+router.patch('/me/password', protect, changePassword);
 router.get('/search', protect, searchUsers);
 router.get('/admin/stats', protect, admin, getAdminStats);
 router.get('/admin/all', protect, admin, getAllUsersAdmin);

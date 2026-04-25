@@ -31,7 +31,7 @@ function DashboardSidebar({ show, onClose }) {
       { name: 'Global Workspace', icon: <FiGlobe />, href: '/feed' },
       { name: 'Rankings & Hall of Fame', icon: <FiZap />, href: '/rankings' },
       { name: 'Withdrawal Requests', icon: <FiArrowLeft style={{ transform: 'rotate(-45deg)' }} />, href: '/admin/withdrawals' },
-      // { name: 'System Notifications', icon: <FiBell />, href: '/notifications' },
+      { name: 'Account Settings', icon: <FiSettings />, href: '/dashboard/account' },
     ];
   } else if (isFreelancer) {
     menuItems = [
@@ -39,7 +39,7 @@ function DashboardSidebar({ show, onClose }) {
       { name: 'Creator Leaderboards', icon: <FiZap />, href: '/rankings' },
       { name: 'Manage Job', icon: <FiBriefcase />, href: '/dashboard/hiring' },
       { name: 'My Coins', icon: <FiDollarSign />, href: '/dashboard/wallet' },
-      // { name: 'Notifications', icon: <FiBell />, href: '/notifications' },
+      { name: 'Account Settings', icon: <FiSettings />, href: '/dashboard/account' },
     ];
   } else {
     menuItems = [
@@ -47,7 +47,7 @@ function DashboardSidebar({ show, onClose }) {
       { name: 'Manage Job', icon: <FiBriefcase />, href: '/dashboard/hiring' },
       { name: 'My Wallet', icon: <FiDollarSign />, href: '/dashboard/wallet' },
       { name: 'Support / Help', icon: <FiMessageCircle />, href: '/messenger' },
-      // { name: 'Notifications', icon: <FiBell />, href: '/notifications' },
+      { name: 'Account Settings', icon: <FiSettings />, href: '/dashboard/account' },
     ];
   }
 

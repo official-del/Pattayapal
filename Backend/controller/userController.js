@@ -489,6 +489,26 @@ const getAllUsersAdmin = async (req, res) => {
   }
 };
 
+// Change Password
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+
+    const isMatch = await user.matchPassword(oldPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'รหัสผ่านเดิมไม่ถูกต้อง' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export {
   getPublicProfile,
   getFriendStatus,
@@ -504,5 +524,6 @@ export {
   getAllUsersAdmin,
   getOnlineUsers,
   getLeaderboard,
-  getRankProgress
+  getRankProgress,
+  changePassword
 };

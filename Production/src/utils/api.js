@@ -64,6 +64,9 @@ export const usersAPI = {
 
   updateProfile: (data) =>
     API.patch('/users/me/profile', data).then(res => res.data),
+  
+  changePassword: (data) =>
+    API.patch('/users/me/password', data).then(res => res.data),
 
   getMyFriendRequests: () =>
     API.get('/users/me/friend-requests').then(res => res.data),

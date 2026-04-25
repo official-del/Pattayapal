@@ -36,6 +36,7 @@ import ManageWorks from './pages/Dashboard/ManageWorks';
 import ManageJobs from './pages/Dashboard/ManageJobs';
 import ManageWallet from './pages/Dashboard/ManageWallet';
 import Notifications from './pages/Dashboard/Notifications';
+import AccountSettings from './pages/Dashboard/AccountSettings';
 
 
 // ── Auth Pages ──
@@ -165,7 +166,7 @@ function App() {
           <Route path="works" element={<ManageWorks />} />
           <Route path="wallet" element={<ManageWallet />} />
 
-          <Route path="account" element={<UserProfile />} /> {/* Reuse Profile as settings for now */}
+          <Route path="account" element={<AccountSettings />} />
         </Route>
 
         {/* ── Login / Register ── */}
