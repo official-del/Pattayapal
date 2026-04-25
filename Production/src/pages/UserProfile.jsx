@@ -519,13 +519,14 @@ function UserProfile() {
                <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
 
                   {/* TABS CONTAINER */}
-                  <div className="glass" style={{ padding: '10px', borderRadius: '25px', display: 'flex', gap: '10px', width: 'fit-content', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="glass tabs-container" style={{ padding: '10px', borderRadius: '25px', display: 'flex', gap: '10px', width: 'fit-content', maxWidth: '100%', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)' }}>
+                     <style>{`.tabs-container::-webkit-scrollbar { display: none; }`}</style>
                      {[
                         { id: 'portfolio', label: 'TIMELINE', icon: <FiActivity /> },
                         { id: 'packages', label: 'PACKAGES', icon: <FiZap /> },
                         { id: 'about', label: 'EXPERIENCE', icon: <FiAward /> }
                      ].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? 'var(--accent)' : 'transparent', border: 'none', padding: '12px 25px', borderRadius: '18px', color: activeTab === tab.id ? '#fff' : '#666', fontWeight: '700', cursor: 'pointer', transition: '0.3s', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? 'var(--accent)' : 'transparent', border: 'none', padding: '12px 25px', borderRadius: '18px', color: activeTab === tab.id ? '#fff' : '#666', fontWeight: '700', cursor: 'pointer', transition: '0.3s', display: 'flex', alignItems: 'center', gap: '10px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                            {tab.icon} {tab.label}
                         </button>
                      ))}
