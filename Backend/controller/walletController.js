@@ -68,7 +68,35 @@ export const topupWallet = async (req, res) => {
     }
 
     if (!slipData) {
-      // Method B: Multipart image upload (fallback)
+      // Method B: EasySlip v2 Multipart image upload (Better than v1)
+      console.log('🚀 Calling EasySlip v2 with image upload...');
+      try {
+        const formDataV2 = new FormData();
+        formDataV2.append('file', fileBuffer, {
+          filename: req.file.originalname || 'slip.jpg',
+          contentType: req.file.mimetype || 'image/jpeg',
+        });
+
+        const response = await axios.post(
+          'https://developer.easyslip.com/api/v2/verify',
+          formDataV2,
+          {
+            headers: {
+              ...formDataV2.getHeaders(),
+              Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
+            },
+          }
+        );
+        slipData = response.data;
+        console.log('📋 EasySlip (v2-image) response:', JSON.stringify(slipData, null, 2));
+      } catch (v2Err) {
+        console.warn('⚠️ EasySlip v2 image failed, trying v1 fallback...', v2Err.response?.data || v2Err.message);
+        slipData = null;
+      }
+    }
+
+    if (!slipData) {
+      // Method C: Multipart image upload (v1 fallback)
       console.log('🚀 Calling EasySlip v1 with image upload...');
       try {
         const formDataV1 = new FormData();
@@ -90,8 +118,7 @@ export const topupWallet = async (req, res) => {
         slipData = response.data;
         console.log('📋 EasySlip (v1-image) response:', JSON.stringify(slipData, null, 2));
       } catch (v1Err) {
-        console.error('❌ EasySlip v1 failed:', v1Err.response?.data || v1Err.message);
-        // If both failed, we let the validation below handle the null slipData
+        console.error('❌ All EasySlip methods failed:', v1Err.response?.data || v1Err.message);
         slipData = null; 
       }
     }
@@ -100,7 +127,11 @@ export const topupWallet = async (req, res) => {
        return res.status(400).json({
           status: 'ANOMALY',
           code: 'VERIFICATION_FAILED',
-          message: 'ไม่สามารถตรวจสอบสลิปได้: ระบบอ่านข้อมูลในรูปภาพไม่สำเร็จ หรือ API ตรวจสอบสลิปขัดข้อง'
+          message: 'ไม่สามารถตรวจสอบสลิปได้: ระบบอ่านข้อมูลในรูปภาพไม่สำเร็จ หรือ API ตรวจสอบสลิปขัดข้อง (กรุณาใช้สลิปที่มี QR Code ที่ชัดเจน)',
+          debug: {
+            qrDetected: !!qrPayload,
+            timestamp: new Date().toISOString()
+          }
        });
     }
 
