@@ -39,11 +39,22 @@ export const topupWallet = async (req, res) => {
       return res.status(500).json({ message: 'ระบบยังไม่ได้ตั้งค่า EasySlip API Key' });
     }
 
-    // ── STEP 2: Call EasySlip API using URL (Most robust for Hosted Environments) ──
+    // 🛡️ [DIAGNOSTIC] Check if GCS is working (Required for Hosted environments)
+    const isGcsUrl = slipUrl && (slipUrl.startsWith('http://') || slipUrl.startsWith('https://'));
+    if (!isGcsUrl) {
+       console.error('❌ GCS Failure: slipUrl is local or empty:', slipUrl);
+       return res.status(400).json({
+          status: 'ANOMALY',
+          code: 'STORAGE_ERROR',
+          message: 'ระบบเก็บไฟล์สลิป (GCS) ไม่ทำงาน กรุณาตรวจสอบการตั้งค่า GCP_KEY_JSON และ BUCKET_NAME บน Hostinger'
+       });
+    }
+
+    // ── STEP 2: Call EasySlip API using URL ──
     let slipData = null;
     let lastErrorMsg = '';
 
-    console.log('🚀 Calling EasySlip v2 via GCS URL:', slipUrl);
+    console.log('🚀 Calling EasySlip v2 via URL:', slipUrl);
     try {
       const response = await axios.post(
         'https://developer.easyslip.com/api/v2/verify',
@@ -53,17 +64,18 @@ export const topupWallet = async (req, res) => {
             Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
           },
+          timeout: 15000 // ⏱️ Increase timeout
         }
       );
       slipData = response.data;
     } catch (urlErr) {
       lastErrorMsg = urlErr.response?.data?.message || urlErr.message;
-      console.warn('⚠️ EasySlip URL verification failed, trying fallback scan...', lastErrorMsg);
+      console.warn('⚠️ EasySlip URL verification failed:', lastErrorMsg);
       
-      // FALLBACK: If URL fails, try Method A: QR Payload
-      const qrPayload = await scanQRFromBuffer(fileBuffer);
-      if (qrPayload) {
-        try {
+      // FINAL FALLBACK: Local Buffer Scan
+      try {
+        const qrPayload = await scanQRFromBuffer(fileBuffer);
+        if (qrPayload) {
           const response = await axios.post(
             'https://developer.easyslip.com/api/v2/verify',
             { payload: qrPayload },
@@ -75,9 +87,9 @@ export const topupWallet = async (req, res) => {
             }
           );
           slipData = response.data;
-        } catch (qrErr) {
-          lastErrorMsg = qrErr.response?.data?.message || qrErr.message;
         }
+      } catch (qrErr) {
+        lastErrorMsg = `URL_ERR: ${lastErrorMsg} | QR_ERR: ${qrErr.message}`;
       }
     }
 
@@ -85,11 +97,8 @@ export const topupWallet = async (req, res) => {
        return res.status(400).json({
           status: 'ANOMALY',
           code: 'VERIFICATION_FAILED',
-          message: `ไม่สามารถตรวจสอบสลิปได้: ${lastErrorMsg} (กรุณาใช้สลิปที่มี QR Code ที่ชัดเจน)`,
-          debug: {
-            urlUsed: !!slipUrl,
-            timestamp: new Date().toISOString()
-          }
+          message: `ไม่สามารถตรวจสอบสลิปได้: ${lastErrorMsg}`,
+          debug: { url: slipUrl }
        });
     }
 
