@@ -180,7 +180,7 @@ function WorkDetail() {
         )}
       </AnimatePresence>
 
-      <div style={{ maxWidth: "1600px", margin: "0 auto", padding: "150px 5% 0" }}>
+      <div className="work-detail-container" style={{ maxWidth: "1600px", margin: "0 auto", padding: "150px 5% 0" }}>
 
         {/* 📑 Tactical Case Grid */}
         <div className="work-detail-grid" style={{ gap: '80px', alignItems: 'start' }}>
@@ -205,7 +205,7 @@ function WorkDetail() {
                 <FiZap color="var(--accent)" size={18} />
                 <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '1.3rem', letterSpacing: '5px' }}>Project Detail</span>
               </div>
-              <h3 style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', fontWeight: '700', margin: '0 0 35px', letterSpacing: '-3px', lineHeight: 0.9 }}>{work.title}</h3>
+              <h3 className="work-title" style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', fontWeight: '700', margin: '0 0 35px', letterSpacing: '-3px', lineHeight: 0.9 }}>{work.title}</h3>
               <div style={{ width: '60px', height: '4px', background: 'var(--accent)', marginBottom: '50px', borderRadius: '2px', boxShadow: '0 0 15px var(--accent-glow)' }}></div>
             </div>
 
@@ -322,7 +322,7 @@ function WorkDetail() {
                       {/* Reply Input Box */}
                       <AnimatePresence>
                         {replyingTo === c._id && (
-                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ marginLeft: '53px', marginTop: '5px' }}>
+                          <motion.div className="comment-reply-container" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ marginLeft: '53px', marginTop: '5px' }}>
                             <form onSubmit={(e) => handleReplySubmit(e, c._id)} style={{ display: 'flex', gap: '10px' }}>
                               <input value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Reply to this comment..." style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '20px', padding: '10px 15px', fontSize: '0.85rem' }} />
                               <button type="submit" disabled={!replyText.trim()} style={{ background: replyText.trim() ? 'var(--accent)' : '#222', color: '#000', border: 'none', borderRadius: '20px', padding: '0 15px', fontWeight: '700', cursor: 'pointer' }}>ส่ง</button>
@@ -334,7 +334,7 @@ function WorkDetail() {
                       {/* Render Replies */}
                       <AnimatePresence>
                         {expandedReplies[c._id] && c.replies?.length > 0 && (
-                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginLeft: '53px', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '5px' }}>
+                          <motion.div className="comment-reply-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginLeft: '53px', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '5px' }}>
                             {c.replies.map((reply, rIdx) => (
                               <div key={reply._id || rIdx} style={{ display: 'flex', gap: '12px' }}>
                                 <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#000', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
@@ -373,7 +373,7 @@ function WorkDetail() {
             <h3 style={{ fontSize: '2.5rem', fontWeight: '700', color: '#fff', letterSpacing: '-1px' }}>You Might Like</h3>
             <p style={{ color: '#222', fontWeight: '700', letterSpacing: '4px', fontSize: '1.2rem', marginTop: '10px' }}>More Like This</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '40px' }}>
+          <div className="recommendation-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '40px' }}>
             {recommendedWorks.map(rec => ( // <--- ตัวแปร rec จะถูกนิยามตรงนี้
               <motion.div whileHover={{ y: -10 }} key={rec._id}>
                 <Link to={`/works/${rec._id}`} style={{ textDecoration: 'none' }}>
@@ -413,11 +413,29 @@ function WorkDetail() {
           display: grid;
           grid-template-columns: minmax(0, 1.8fr) 450px;
         }
+        @media (max-width: 1200px) {
+          .work-detail-grid { grid-template-columns: minmax(0, 1.5fr) 400px; gap: 40px !important; }
+        }
         @media (max-width: 1024px) {
           .work-detail-grid {
             grid-template-columns: 1fr;
-            gap: 40px !important;
+            gap: 50px !important;
           }
+          .work-detail-container { padding-top: 100px !important; }
+        }
+        @media (max-width: 768px) {
+          .work-detail-container { padding: 80px 4% 0 !important; }
+          .work-title { font-size: 3rem !important; margin-bottom: 25px !important; }
+          .glass { padding: 30px !important; border-radius: 40px !important; }
+        }
+        @media (max-width: 480px) {
+          .work-detail-container { padding: 60px 15px 0 !important; }
+          .work-title { font-size: 2.2rem !important; }
+          .recommendation-grid { gap: 20px !important; }
+          .comment-reply-container { margin-left: 20px !important; }
+        }
+        @media (max-width: 1024px) {
+          .work-detail-grid aside { position: static !important; }
         }
       `}</style>
     </motion.div>
