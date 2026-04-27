@@ -46,7 +46,7 @@ function TopRanking({ label }) {
           <FiActivity color="var(--accent)" size={18} />
           <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px', fontSize: '1.5rem' }}>Trending Now</span>
         </div>
-        <h2 style={{ fontSize: '4rem', fontWeight: '700', margin: 0, letterSpacing: '-3px' }}>{label || "ยอดฮิตสัปดาห์นี้"}</h2>
+        <h2 style={{ fontSize: '4rem', fontWeight: '700', margin: 0, letterSpacing: '3px' }}>{label || "ยอดฮิตสัปดาห์นี้"}</h2>
       </div>
 
       <div style={{ position: 'relative', height: '600px', width: '100%', perspective: '2000px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

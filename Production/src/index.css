@@ -153,11 +153,7 @@ textarea {
   }
 }
 
-@media (max-width: 992px) {
-  #root {
-    padding-top: 70px;
-  }
-}
+/* Removed redundant padding that caused black gaps */
 
 /* ══════════════════════════════════════
    🛡️ GLOBAL RESPONSIVE ESSENTIALS

@@ -133,10 +133,10 @@ function ManageJobs() {
 
   const StatusBadge = ({ status }) => {
     const colors = {
-      pending: { bg: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', text: 'รอการอนุมัติ / PENDING' },
-      accepted: { bg: 'rgba(34, 197, 94, 0.05)', color: '#22c55e', text: 'กำลังดำเนินการ / IN PROGRESS' },
-      completed: { bg: 'rgba(168, 85, 247, 0.05)', color: '#a855f7', text: 'เสร็จสิ้น / COMPLETED' },
-      cancelled: { bg: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', text: 'ยกเลิก / CANCELLED' }
+      pending: { bg: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', text: 'PENDING' },
+      accepted: { bg: 'rgba(34, 197, 94, 0.05)', color: '#22c55e', text: 'IN PROCESS' },
+      completed: { bg: 'rgba(168, 85, 247, 0.05)', color: '#a855f7', text: 'COMPLETED' },
+      cancelled: { bg: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', text: 'CANCELLED' }
     };
     const s = colors[status] || { bg: '#111', color: '#555', text: status?.replace(/_/g, ' ').toUpperCase() };
     return (
@@ -153,9 +153,9 @@ function ManageJobs() {
       <motion.div 
         animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
         transition={{ repeat: Infinity, duration: 2, ease: "linear" }} 
-        style={{ width: '60px', height: '60px', border: '3px solid var(--mj-accent)', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 30px', boxShadow: '0 0 30px var(--mj-accent-glow)' }} 
+        style={{ width: '60px', height: '60px', border: '3px solid var(--mj-accent)', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 30px', boxShadow: '0 0 30px var(--mj-accent-glow' }} 
       />
-      <p style={{ color: 'var(--mj-accent)', fontWeight: '900', letterSpacing: '8px', fontSize: '0.9rem', textTransform: 'uppercase' }}>Synchronizing Command Center...</p>
+      <p style={{ color: 'var(--mj-accent)', fontWeight: '900', letterSpacing: '8px', fontSize: '0.9rem', textTransform: 'uppercase' }}>Synchronizing Manage Jobs...</p>
     </div>
   );
 
@@ -174,7 +174,7 @@ function ManageJobs() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
             <FiZap color="var(--mj-accent)" size={20} className="glow-icon" />
-            <span style={{ color: 'var(--mj-accent)', fontSize: '0.9rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase' }}>Command Center</span>
+            <span style={{ color: 'var(--mj-accent)', fontSize: '0.9rem', fontWeight: '900', letterSpacing: '2px', textTransform: 'uppercase' }}>Manage Jobs</span>
           </div>
           <h2 className="mj-main-title">จัดการโปรเจกต์</h2>
           <p style={{ color: '#555', marginTop: '25px', fontWeight: '700', fontSize: '1.1rem', maxWidth: '600px', lineHeight: '1.6' }}>

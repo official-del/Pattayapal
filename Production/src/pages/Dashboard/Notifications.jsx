@@ -119,9 +119,9 @@ function Notifications() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px' }}>
             <FiZap color="var(--nt-accent)" size={18} />
-            <span style={{ color: 'var(--nt-accent)', fontSize: '0.8rem', fontWeight: '900', letterSpacing: '5px' }}>COMMAND CENTER</span>
+            <span style={{ color: 'var(--nt-accent)', fontSize: '1rem', fontWeight: '900', letterSpacing: '2px' }}>Notifications Center</span>
           </div>
-          <h2 className="nt-main-title">ศูนย์แจ้งเตือน</h2>
+          <h1 className="nt-main-title">ศูนย์แจ้งเตือน</h1>
           <p style={{ color: '#444', marginTop: '20px', fontWeight: '700', fontSize: '1rem' }}>
             {unreadCount > 0 ? `มี ${unreadCount} รายการใหม่ที่กำลังรอคุณอยู่` : 'คุณจัดการข้อมูลทั้งหมดเรียบร้อยแล้ว'}
           </p>
@@ -130,7 +130,7 @@ function Notifications() {
         <div className="nt-action-group">
           {unreadCount > 0 && (
             <motion.button whileHover={{ scale: 1.05 }} onClick={handleMarkAllRead} className="btn-header btn-read-all">
-              <FiCheckCircle /> Mark All Read
+              <FiCheckCircle /> Read All
             </motion.button>
           )}
           {notifications.length > 0 && (

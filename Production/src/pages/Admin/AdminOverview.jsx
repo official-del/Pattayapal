@@ -83,13 +83,13 @@ function AdminOverview() {
   );
 
   return (
-    <div style={{ padding: '40px 60px', color: COLORS.textMain, background: COLORS.bg, minHeight: '100vh', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ padding: 'clamp(16px, 5vw, 60px)', color: COLORS.textMain, background: COLORS.bg, minHeight: '100vh', fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── HEADER ── */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+      <header style={{ display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'clamp(20px, 5vw, 40px)' }} className="admin-header">
         <div>
-          <h1 style={{ margin: 0, fontSize: '2.5rem', fontWeight: '900', letterSpacing: '-1.5px' }}>Performance <span style={{ color: COLORS.primary }}>Analytics</span></h1>
-          <p style={{ margin: '5px 0 0 0', color: COLORS.textSub, fontWeight: '500', fontSize: '0.9rem' }}>TOP 10 PERFORMANCE LEADERS & INSIGHTS</p>
+          <h1 style={{ margin: 0, fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: '900', letterSpacing: '-1.5px' }}>Performance <span style={{ color: COLORS.primary }}>Analytics</span></h1>
+          <p style={{ margin: '5px 0 0 0', color: COLORS.textSub, fontWeight: '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)' }}>TOP 10 PERFORMANCE LEADERS & INSIGHTS</p>
         </div>
         <button onClick={() => navigate('/admin/dashboard')} className="btn-modern-back">
           ← BACK TO MANAGER
@@ -100,14 +100,14 @@ function AdminOverview() {
 
         {/* 🏆 1. TOP 10 CHART (FULL WIDTH TOP) */}
         <div style={{ ...glassCard, gridArea: 'chart' }}>
-          <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ marginBottom: '30px', display: 'flex', flexDirection: 'column', gap: '15px', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '900' }}><span style={{ color: COLORS.primary }}>🏆</span> Top 10 Performance Chart</h3>
-              <p style={{ color: COLORS.textSub, fontSize: '0.8rem' }}>RANKED BY VIEWS ENGAGEMENT</p>
+              <h3 style={{ margin: 0, fontSize: 'clamp(1rem, 3vw, 1.4rem)', fontWeight: '900' }}><span style={{ color: COLORS.primary }}>🏆</span> Top 10 Performance Chart</h3>
+              <p style={{ color: COLORS.textSub, fontSize: 'clamp(0.65rem, 2vw, 0.8rem)' }}>RANKED BY VIEWS ENGAGEMENT</p>
             </div>
             <div className="live-indicator">REAL-TIME DATA</div>
           </div>
-          <div style={{ width: '100%', height: 350 }}>
+          <div style={{ width: '100%', height: 'clamp(200px, 50vw, 350px)' }}>
             <ResponsiveContainer>
               <BarChart data={topViewedChart} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                 <defs>
@@ -133,27 +133,27 @@ function AdminOverview() {
 
         {/* 📊 2. STATS CARDS */}
         <div style={{ ...glassCard, gridArea: 'stat1' }}>
-          <p style={{ color: COLORS.textSub, fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px' }}>TOTAL ASSETS</p>
-          <div style={{ fontSize: '3rem', fontWeight: '900', margin: '10px 0' }}>{stats.total}</div>
-          <div style={{ fontSize: '0.85rem', color: COLORS.success }}>● {stats.published} Active</div>
+          <p style={{ color: COLORS.textSub, fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)', fontWeight: 'bold', letterSpacing: '1px' }}>TOTAL ASSETS</p>
+          <div style={{ fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: '900', margin: '10px 0' }}>{stats.total}</div>
+          <div style={{ fontSize: 'clamp(0.75rem, 2vw, 0.85rem)', color: COLORS.success }}>● {stats.published} Active</div>
         </div>
 
         <div style={{ ...glassCard, gridArea: 'stat2' }}>
-          <p style={{ color: COLORS.textSub, fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px' }}>LIFETIME VIEWS</p>
-          <div style={{ fontSize: '3rem', fontWeight: '900', color: COLORS.success, margin: '10px 0' }}>{stats.totalViews.toLocaleString()}</div>
+          <p style={{ color: COLORS.textSub, fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)', fontWeight: 'bold', letterSpacing: '1px' }}>LIFETIME VIEWS</p>
+          <div style={{ fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: '900', color: COLORS.success, margin: '10px 0' }}>{stats.totalViews.toLocaleString()}</div>
           <div className="stat-progress-bg"><div className="stat-progress-fill" style={{ width: '100%' }}></div></div>
         </div>
 
         <div style={{ ...glassCard, gridArea: 'stat3' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ color: COLORS.textSub, fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px' }}>MEDIA MIX</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '150px' }}>
+              <p style={{ color: COLORS.textSub, fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)', fontWeight: 'bold', letterSpacing: '1px' }}>MEDIA MIX</p>
               <div style={{ marginTop: '15px' }}>
-                <div style={{ fontSize: '1.2rem', fontWeight: '800' }}>🎬 {stats.videos} <span style={{ fontSize: '0.7rem', color: COLORS.info }}>VIDEOS</span></div>
-                <div style={{ fontSize: '1.2rem', fontWeight: '800', marginTop: '5px' }}>📷 {stats.images} <span style={{ fontSize: '0.7rem', color: COLORS.primary }}>IMAGES</span></div>
+                <div style={{ fontSize: 'clamp(0.9rem, 2.5vw, 1.2rem)', fontWeight: '800' }}>🎬 {stats.videos} <span style={{ fontSize: 'clamp(0.6rem, 1.5vw, 0.7rem)', color: COLORS.info }}>VIDEOS</span></div>
+                <div style={{ fontSize: 'clamp(0.9rem, 2.5vw, 1.2rem)', fontWeight: '800', marginTop: '5px' }}>📷 {stats.images} <span style={{ fontSize: 'clamp(0.6rem, 1.5vw, 0.7rem)', color: COLORS.primary }}>IMAGES</span></div>
               </div>
             </div>
-            <div style={{ width: '80px', height: '80px' }}>
+            <div style={{ width: 'clamp(60px, 15vw, 80px)', height: 'clamp(60px, 15vw, 80px)' }}>
               <ResponsiveContainer>
                 <PieChart>
                   <Pie data={[{ v: stats.videos }, { v: stats.images }]} innerRadius={28} outerRadius={38} dataKey="v" stroke="none">
@@ -166,46 +166,48 @@ function AdminOverview() {
         </div>
 
         {/* 🏆 3. TOP LEADERBOARD TABLE (เรียงตามวิวจากมากไปน้อย) */}
-        <div style={{ ...glassCard, gridArea: 'table' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '900' }}>Top 10 Performance Leaderboard</h3>
-            <div style={{ fontSize: '0.75rem', color: COLORS.textSub, letterSpacing: '1px', fontWeight: 'bold' }}>RANKED BY VIEWS</div>
+        <div style={{ ...glassCard, gridArea: 'table' }} className="table-container">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'clamp(15px, 3vw, 25px)' }}>
+            <h3 style={{ margin: 0, fontSize: 'clamp(1rem, 3vw, 1.3rem)', fontWeight: '900' }}>Top 10 Performance Leaderboard</h3>
+            <div style={{ fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)', color: COLORS.textSub, letterSpacing: '1px', fontWeight: 'bold' }}>RANKED BY VIEWS</div>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', color: COLORS.textSub, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                <th style={{ padding: '15px 10px', borderBottom: `1px solid ${COLORS.border}` }}>Rank & Project</th>
-                <th style={{ padding: '15px 10px', borderBottom: `1px solid ${COLORS.border}` }}>Category</th>
-                <th style={{ padding: '15px 10px', borderBottom: `1px solid ${COLORS.border}` }}>Status</th>
-                <th style={{ padding: '15px 10px', borderBottom: `1px solid ${COLORS.border}`, textAlign: 'right' }}>Engagement (Views)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topWorksData.map((work, index) => (
-                <tr key={work._id} className="table-row">
-                  <td style={{ padding: '18px 10px', fontWeight: '700', fontSize: '0.95rem' }}>
-                    <span style={{ color: index < 3 ? COLORS.primary : COLORS.textSub, marginRight: '15px' }}>{index + 1}</span>
-                    {work.title}
-                  </td>
-                  <td style={{ padding: '18px 10px' }}>
-                    <span className="cat-badge">{work.category?.name || 'GENERIC'}</span>
-                  </td>
-                  <td style={{ padding: '18px 10px' }}>
-                    <div className="status-indicator">
-                      <span className={`dot ${work.status}`}></span>
-                      <span className={`txt ${work.status}`}>{work.status}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '18px 10px', textAlign: 'right', fontWeight: '900', color: COLORS.primary, fontSize: '1.2rem' }}>
-                    {work.views?.toLocaleString() || 0}
-                  </td>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }} className="leaderboard-table">
+              <thead>
+                <tr style={{ textAlign: 'left', color: COLORS.textSub, fontSize: 'clamp(0.6rem, 1.2vw, 0.7rem)', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                  <th style={{ padding: 'clamp(10px, 2vw, 15px)', borderBottom: `1px solid ${COLORS.border}`, minWidth: '120px' }}>Rank & Project</th>
+                  <th style={{ padding: 'clamp(10px, 2vw, 15px)', borderBottom: `1px solid ${COLORS.border}`, minWidth: '100px' }} className="hide-mobile">Category</th>
+                  <th style={{ padding: 'clamp(10px, 2vw, 15px)', borderBottom: `1px solid ${COLORS.border}`, minWidth: '80px' }} className="hide-tablet">Status</th>
+                  <th style={{ padding: 'clamp(10px, 2vw, 15px)', borderBottom: `1px solid ${COLORS.border}`, textAlign: 'right', minWidth: '120px' }}>Engagement</th>
                 </tr>
-              ))}
-              {topWorksData.length === 0 && (
-                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '40px', color: COLORS.textSub }}>No project data available.</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {topWorksData.map((work, index) => (
+                  <tr key={work._id} className="table-row">
+                    <td style={{ padding: 'clamp(12px, 2vw, 18px)', fontWeight: '700', fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)' }}>
+                      <span style={{ color: index < 3 ? COLORS.primary : COLORS.textSub, marginRight: '10px' }}>{index + 1}</span>
+                      <span className="project-title">{work.title}</span>
+                    </td>
+                    <td style={{ padding: 'clamp(12px, 2vw, 18px)' }} className="hide-mobile">
+                      <span className="cat-badge">{work.category?.name || 'GENERIC'}</span>
+                    </td>
+                    <td style={{ padding: 'clamp(12px, 2vw, 18px)' }} className="hide-tablet">
+                      <div className="status-indicator">
+                        <span className={`dot ${work.status}`}></span>
+                        <span className={`txt ${work.status}`}>{work.status}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: 'clamp(12px, 2vw, 18px)', textAlign: 'right', fontWeight: '900', color: COLORS.primary, fontSize: 'clamp(0.85rem, 2vw, 1.2rem)' }}>
+                      {work.views?.toLocaleString() || 0}
+                    </td>
+                  </tr>
+                ))}
+                {topWorksData.length === 0 && (
+                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 'clamp(20px, 5vw, 40px)', color: COLORS.textSub }}>No project data available.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -217,7 +219,16 @@ function AdminOverview() {
             "stat1 stat2 stat3"
             "table table table";
           grid-template-columns: 1fr 1.2fr 1fr;
-          gap: 25px;
+          gap: clamp(15px, 3vw, 25px);
+        }
+
+        .admin-header {
+          flex-direction: row;
+          align-items: center;
+        }
+
+        .admin-header > button {
+          align-self: flex-end;
         }
 
         .live-indicator {
@@ -229,26 +240,33 @@ function AdminOverview() {
           font-weight: 800;
           border: 1px solid ${COLORS.success};
           animation: pulse 2s infinite;
+          white-space: nowrap;
         }
 
         .btn-modern-back {
-          background: #fff; color: #000; border: none; padding: 12px 25px; border-radius: 12px; 
-          font-weight: 900; font-size: 0.75rem; cursor: pointer; transition: 0.3s;
+          background: #fff; color: #000; border: none; padding: clamp(8px, 2vw, 12px) clamp(15px, 3vw, 25px); border-radius: 12px; 
+          font-weight: 900; font-size: clamp(0.65rem, 1.5vw, 0.75rem); cursor: pointer; transition: 0.3s;
         }
         .btn-modern-back:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255,255,255,0.2); }
 
-        .cat-badge { background: #151515; padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; color: #888; border: 1px solid #252525; }
+        .cat-badge { background: #151515; padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; color: #888; border: 1px solid #252525; white-space: nowrap; }
 
         .status-indicator { display: flex; align-items: center; gap: 8px; }
-        .dot { width: 6px; height: 6px; border-radius: 50%; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
         .dot.published { background: ${COLORS.success}; box-shadow: 0 0 10px ${COLORS.success}; }
         .dot.draft { background: ${COLORS.warning}; }
-        .txt { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .txt { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
         .txt.published { color: ${COLORS.success}; }
         .txt.draft { color: ${COLORS.warning}; }
 
         .table-row { border-bottom: 1px solid rgba(255,255,255,0.02); transition: 0.2s; }
         .table-row:hover { background: rgba(255, 255, 255, 0.015); }
+
+        .table-container { overflow: hidden; }
+        .leaderboard-table { min-width: 100%; }
+        .project-title { display: inline-block; max-width: 100%; }
+        .hide-mobile { display: table-cell; }
+        .hide-tablet { display: table-cell; }
 
         .stat-progress-bg { background: #222; height: 4px; border-radius: 10px; margin-top: 15px; }
         .stat-progress-fill { background: ${COLORS.success}; height: 100%; border-radius: 10px; }
@@ -266,8 +284,82 @@ function AdminOverview() {
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        /* ── TABLET & DESKTOP (1100px+) ── */
         @media (max-width: 1100px) {
-          .bento-grid { grid-template-areas: "chart chart" "stat1 stat2" "stat3 stat3" "table table"; grid-template-columns: 1fr 1fr; }
+          .bento-grid { 
+            grid-template-areas: 
+              "chart chart"
+              "stat1 stat2"
+              "stat3 stat3"
+              "table table"; 
+            grid-template-columns: 1fr 1fr; 
+          }
+        }
+
+        /* ── TABLET (768px - 1024px) ── */
+        @media (max-width: 1024px) {
+          .bento-grid {
+            grid-template-areas:
+              "chart"
+              "stat1"
+              "stat2"
+              "stat3"
+              "table";
+            grid-template-columns: 1fr;
+          }
+          .admin-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
+          }
+          .admin-header > button {
+            align-self: flex-start;
+            width: 100%;
+          }
+        }
+
+        /* ── SMALL TABLETS (600px - 768px) ── */
+        @media (max-width: 768px) {
+          .hide-tablet { display: none; }
+          .hide-mobile { display: none; }
+          .leaderboard-table thead tr {
+            display: none;
+          }
+          .leaderboard-table tbody tr {
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            background: rgba(255,255,255,0.01);
+          }
+          .leaderboard-table td {
+            display: block;
+            padding: 8px 0 !important;
+            border-bottom: none !important;
+            text-align: left !important;
+          }
+          .leaderboard-table td:before {
+            content: attr(data-label);
+            font-weight: 800;
+            color: ${COLORS.primary};
+            display: inline-block;
+            width: 100px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+          }
+        }
+
+        /* ── MOBILE (480px - 600px) ── */
+        @media (max-width: 600px) {
+          .live-indicator { font-size: 0.65rem; padding: 4px 12px; }
+          .project-title { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+        }
+
+        /* ── SMALL MOBILE (320px - 480px) ── */
+        @media (max-width: 480px) {
+          .live-indicator { font-size: 0.6rem; padding: 3px 10px; }
+          .project-title { max-width: 120px; }
         }
       `}</style>
     </div>

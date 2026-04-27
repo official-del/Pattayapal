@@ -52,7 +52,7 @@ function Home() {
               <FiZap color="var(--accent)" size={24} />
               <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.8rem' }}></span>
             </motion.div>
-            <motion.h2 variants={itemVariants} style={{ fontSize: 'clamp(3rem, 10vw, 6.5rem)', fontWeight: '700', margin: 0, letterSpacing: '-4px', lineHeight: 0.9 }}>
+            <motion.h2 variants={itemVariants} style={{ fontSize: 'clamp(2.5rem, 10vw, 6.5rem)', fontWeight: '700', margin: 0, letterSpacing: '4px', lineHeight: 0.9 }}>
               <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 20px var(--accent-glow))' }}>Power Your Ideas</span> <br />
               <span style={{ color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.1)' }}>with Modern Tech</span>
             </motion.h2>

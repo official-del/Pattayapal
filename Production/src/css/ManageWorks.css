@@ -36,19 +36,19 @@
 
 .mw-badge-text {
     color: var(--mw-accent);
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 5px;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 2px;
     text-transform: uppercase;
 }
 
 .mw-main-title {
-    font-size: 3.8rem;
-    font-weight: 800;
+    font-size: 2.8rem !important;
+    font-weight: 500;
     /* ลดลงจาก 900 เพื่อไม่ให้หนาเกินไป */
-    letter-spacing: -1px;
+    letter-spacing: 0px;
     /* ปรับให้ไม่บีบตัวอักษรมากเกินไป */
-    line-height: 1.1;
+    /* line-height: 1.1; */
     margin: 0;
     color: #fff;
 }

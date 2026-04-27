@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { worksAPI } from '../utils/api';
 import '../css/WorkSlider.css';
 import { FiArrowRight } from 'react-icons/fi';
+import HoverVideoPlayer from './HoverVideoPlayer';
 
 import { CONFIG } from '../utils/config';
 
@@ -68,14 +69,9 @@ function WorksSlider({ category }) {
 
     if (isVideo) {
       return (
-        <video
-          src={safeUrl}
-          muted
-          loop
-          playsInline
-          autoPlay
-          // 🚀 บังคับ absolute เต็มกรอบ 100% 
-          style={{ position: 'absolute', top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", backgroundColor: '#111', zIndex: 0 }}
+        <HoverVideoPlayer 
+          src={safeUrl} 
+          style={{ position: 'absolute', top: 0, left: 0, width: "100%", height: "100%", backgroundColor: '#111', zIndex: 0 }} 
         />
       );
     }
@@ -125,7 +121,7 @@ function WorksSlider({ category }) {
             <div className="ws-cat">{featured.category?.name || category.label}</div>
             <div className="ws-name">{featured.title}</div>
             {featured.description && <p className="ws-desc">{featured.description.substring(0, 100)}...</p>}
-            <div className="ws-explore">Click To See <div className="ws-arrow" />{FiArrowRight}</div>
+            <div className="ws-explore">Click To See <div className="ws-arrow" /><FiArrowRight /></div>
           </div>
         </Link>
 

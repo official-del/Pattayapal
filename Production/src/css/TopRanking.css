@@ -178,8 +178,7 @@
     .num-3d-bg { left: -40px; }
     .ranking-edge-header { padding: 0 30px; }
 }
- padding: 16px;
-    }
+
 
     .poster-work-title {
         font-size: 1rem;
@@ -193,8 +192,6 @@
         padding: 5px 12px;
         font-size: 9px;
     }
-}
-
 @media (max-width: 480px) {
     .ranking-full-width-section {
         padding: 40px 0;

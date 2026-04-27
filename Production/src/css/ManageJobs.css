@@ -1,10 +1,11 @@
-/* ── 💼 Manage Jobs: Ultra-Premium Redesign ── */
+/* ── 💼 Manage Jobs: Ultra-Premium Redesign (Contrast Fixed) ── */
 :root {
-    --mj-accent: #6366f1;
-    --mj-accent-glow: rgba(99, 102, 241, 0.4);
+    --mj-accent: #ff5733;
+    --mj-accent-glow: rgba(255, 87, 51, 0.4);
     --mj-bg-dark: #050505;
     --mj-card-bg: rgba(15, 15, 20, 0.7);
-    --mj-border: rgba(255, 255, 255, 0.06);
+    --mj-border: rgba(255, 255, 255, 0.1);
+    /* ปรับให้ขอบสว่างขึ้นเล็กน้อย */
     --mj-glass: rgba(255, 255, 255, 0.01);
 }
 
@@ -28,7 +29,8 @@
     font-size: 4.5rem;
     font-weight: 900;
     letter-spacing: -3px;
-    background: linear-gradient(to bottom, #fff 40%, #555);
+    background: linear-gradient(to bottom, #fff 40%, #888);
+    /* เปลี่ยนให้ Gradient สว่างขึ้น */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
@@ -36,11 +38,11 @@
 }
 
 .budget-display {
-    background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent);
     border: 1px solid var(--mj-border);
     padding: 25px 40px;
     border-radius: 35px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
 }
 
 /* 🧬 Neo Tabs */
@@ -56,13 +58,19 @@
     border: none;
     padding: 15px 0;
     cursor: pointer;
-    color: #333;
+    color: #888;
+    /* 🔴 แก้ไข: เปลี่ยนจาก #333 ให้สว่างขึ้นเพื่อให้มองเห็น */
     font-weight: 800;
     font-size: 1.1rem;
     letter-spacing: 2px;
     text-transform: uppercase;
     transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     position: relative;
+}
+
+/* เพิ่ม Hover State ให้เห็นชัดว่าปุ่มกดได้ */
+.mj-tab-btn:hover {
+    color: #ddd;
 }
 
 .mj-tab-btn.active {
@@ -98,9 +106,9 @@
 }
 
 .job-card:hover {
-    transform: translateY(-10px);
-    border-color: rgba(255,255,255,0.12);
-    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
 }
 
 .job-card::before {
@@ -111,7 +119,7 @@
     width: 300px;
     height: 300px;
     background: radial-gradient(circle at center, var(--mj-accent-glow), transparent 70%);
-    opacity: 0.1;
+    opacity: 0.15;
     pointer-events: none;
 }
 
@@ -125,7 +133,8 @@
 
 .job-id {
     font-family: 'JetBrains Mono', monospace;
-    color: #444;
+    color: #aaa;
+    /* 🔴 แก้ไข: เปลี่ยนจาก #444 เพื่อให้อ่านออก */
     font-weight: 600;
     letter-spacing: 2px;
     font-size: 0.8rem;
@@ -148,16 +157,19 @@
 }
 
 .info-tile {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.03);
+    /* ปรับให้พื้นหลังสว่างขึ้นนิดนึง */
+    border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 20px 30px;
     border-radius: 25px;
 }
 
 .tile-label {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
+    /* ปรับขนาดขึ้นเล็กน้อย */
     font-weight: 800;
-    color: #444;
+    color: #aaa;
+    /* 🔴 แก้ไข: เปลี่ยนจาก #444 */
     letter-spacing: 3px;
     margin-bottom: 10px;
     display: block;
@@ -166,7 +178,8 @@
 .tile-value {
     font-size: 1.1rem;
     font-weight: 800;
-    color: #ddd;
+    color: #fff;
+    /* ปรับเป็นสีขาวเพื่อให้ตัดกับ Label */
 }
 
 /* 📍 Modern Location */
@@ -174,16 +187,17 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    background: rgba(255,255,255,0.015);
+    background: rgba(255, 255, 255, 0.03);
     padding: 20px 30px;
     border-radius: 25px;
-    border: 1px solid rgba(255,255,255,0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     margin-bottom: 50px;
 }
 
 .location-text {
     font-size: 0.95rem;
-    color: #888;
+    color: #aaa;
+    /* 🔴 แก้ไข: เปลี่ยนจาก #888 ให้สว่างขึ้น */
     flex: 1;
 }
 
@@ -198,20 +212,21 @@
 
 .map-link:hover {
     text-shadow: 0 0 10px var(--mj-accent-glow);
+    color: #fff;
 }
 
 /* 🎖️ Tech Milestones */
 .milestones-card {
-    background: rgba(0,0,0,0.3);
+    background: rgba(0, 0, 0, 0.5);
     border-radius: 35px;
     padding: 40px;
-    border: 1px solid rgba(255,255,255,0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     margin-bottom: 50px;
 }
 
 /* 🔘 Side Action Panel */
 .action-panel {
-    border-left: 1px solid rgba(255,255,255,0.06);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
     padding-left: 60px;
     display: flex;
     flex-direction: column;
@@ -225,7 +240,8 @@
 .budget-label {
     font-size: 0.7rem;
     font-weight: 800;
-    color: #444;
+    color: #aaa;
+    /* 🔴 แก้ไข: เปลี่ยนจาก #444 */
     letter-spacing: 3px;
     margin-bottom: 15px;
     display: block;
@@ -241,7 +257,7 @@
     font-weight: 900;
     font-size: 1.1rem;
     cursor: pointer;
-    box-shadow: 0 20px 40px rgba(255,255,255,0.1);
+    box-shadow: 0 20px 40px rgba(255, 255, 255, 0.15);
     transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     display: flex;
     align-items: center;
@@ -257,26 +273,30 @@
 }
 
 .btn-secondary {
-    background: rgba(255,255,255,0.03);
+    background: rgba(255, 255, 255, 0.06);
+    /* ปรับให้ปุ่มรองมองเห็นชัดขึ้น */
     color: #fff;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     padding: 20px;
     border-radius: 25px;
     font-weight: 800;
     transition: 0.3s;
+    cursor: pointer;
 }
 
 .btn-secondary:hover {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .status-completed-pill {
-    background: rgba(168, 85, 247, 0.05);
-    color: #a855f7;
-    padding: 25px;
+    background: rgba(168, 85, 247, 0.15);
+    /* 🔴 แก้ไข: เพิ่มความสว่างให้พื้นหลังป้ายสถานะ */
+    color: #c084fc;
+    /* ทำให้สีม่วงสว่างขึ้น */
+    padding: 20px 25px;
     border-radius: 30px;
     font-weight: 900;
-    border: 1px solid rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -295,21 +315,82 @@
     height: 60px;
     border-radius: 20px;
     overflow: hidden;
-    border: 2px solid rgba(255,255,255,0.05);
+    border: 2px solid rgba(255, 255, 255, 0.15);
 }
 
 /* 📱 Mobile Optimized */
 @media (max-width: 1200px) {
-    .job-card { grid-template-columns: 1fr; padding: 40px; }
-    .action-panel { border-left: none; padding-left: 0; border-top: 1px dashed var(--mj-border); padding-top: 40px; }
-    .mj-main-title { font-size: 3.5rem; }
+    .job-card {
+        grid-template-columns: 1fr;
+        padding: 40px;
+    }
+
+    .action-panel {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px dashed rgba(255, 255, 255, 0.2);
+        padding-top: 40px;
+    }
+
+    .mj-main-title {
+        font-size: 3.5rem;
+    }
 }
 
 @media (max-width: 768px) {
-    .manage-jobs-container { padding: 30px 20px; }
-    .mj-header { flex-direction: column; align-items: flex-start; }
-    .mj-main-title { font-size: 3rem; }
-    .mj-title { font-size: 2.2rem; }
-    .job-card { padding: 30px; border-radius: 40px; }
-    .info-tile { padding: 20px; }
+    .manage-jobs-container {
+        padding: 30px 20px;
+    }
+
+    .mj-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mj-main-title {
+        font-size: 3rem;
+    }
+
+    .mj-title {
+        font-size: 2.2rem;
+    }
+
+    .job-card {
+        padding: 30px;
+        border-radius: 40px;
+    }
+
+    .info-tile {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .manage-jobs-container {
+        padding: 30px 20px;
+    }
+
+    .mj-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .mj-main-title {
+        font-size: 2.5rem !important;
+        margin-bottom: 10px;
+    }
+
+    .mj-title {
+        font-size: 1.5rem;
+    }
+
+    .job-card {
+        padding: 30px;
+        border-radius: 40px;
+    }
+
+    .info-tile {
+        padding: 20px;
+    }
 }

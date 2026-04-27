@@ -66,7 +66,7 @@ function PodiumCard({ user, rankNum, category }) {
         <div style={{ fontSize: isFirst ? '3rem' : '2rem', fontWeight: '700', color: '#fff', letterSpacing: '-2px', position: 'relative', zIndex: 1 }}>
           {category === 'earnings' ? <CoinBadge amount={user.totalEarnings || 0} size={isFirst ? "xl" : "lg"} /> : (user.points || 0).toLocaleString()}
         </div>
-        <span style={{ fontSize: '0.65rem', color: '#222', fontWeight: '700', letterSpacing: '2px', marginTop: '10px', position: 'relative', zIndex: 1 }}>{category === 'earnings' ? 'รายได้ทั้งหมด / TOTAL EARNINGS' : 'แต้มสะสม / EXPERIENCE XP'}</span>
+        <span style={{ fontSize: '0.65rem', color: '#222', fontWeight: '700', letterSpacing: '2px', marginTop: '10px', position: 'relative', zIndex: 1 }}>{category === 'earnings' ? 'TOTAL EARNINGS' : 'EXPERIENCE XP'}</span>
 
       </div>
     </div>
@@ -110,24 +110,23 @@ export default function RankingsHub() {
               <FiAward color="var(--accent)" size={20} />
               <span style={{ fontSize: '0.8rem', color: 'var(--accent)', fontWeight: '700' }}></span>
             </div>
-            <h1 style={{ fontSize: 'clamp(2rem, 8vw, 5rem)', fontWeight: '700', margin: 0, letterSpacing: '-5px', lineHeight: 0.8 }}>RANKINGS OF COMMUNITY</h1>
-            <p style={{ color: '#444', fontWeight: '700', letterSpacing: '1px', fontSize: '1.25rem', marginTop: '30px', maxWidth: '800px', margin: '30px auto 0' }}>ทำเนียบเกียรติยศสำหรับครีเอเตอร์ผู้สร้างสรรค์ผลงานที่โดดเด่นและทรงอิทธิพลในระบบนิเวศของเรา</p>
+            <h1 style={{ fontSize: 'clamp(2rem, 8vw, 4.5rem)', fontWeight: '700', margin: 0, letterSpacing: '1px', lineHeight: 1 }}>RANKINGS OF COMMUNITY</h1>
+            <p style={{ color: '#444', fontWeight: '700', letterSpacing: '1px', fontSize: '0.85rem', marginTop: '20px', maxWidth: '800px', margin: '20px auto 0', lineHeight: 1.5 }}>ทำเนียบเกียรติยศสำหรับครีเอเตอร์ผู้สร้างสรรค์ผลงานที่โดดเด่นและทรงอิทธิพลในระบบนิเวศของเรา</p>
 
           </motion.div>
 
-          <div style={{ display: 'inline-flex', gap: '10px', marginTop: '60px', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.03)' }}>
+          <div className="tab-switcher" style={{ display: 'inline-flex', gap: '10px', marginTop: '40px', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.03)', flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
-              { id: 'points', label: 'คะแนนสะสม / XP', icon: <FiAward /> },
-              { id: 'earnings', label: 'รายได้สูงสุด / COINS', icon: <FiDollarSign /> }
-
+              { id: 'points', label: 'XP', icon: <FiAward /> },
+              { id: 'earnings', label: 'COINS', icon: <FiDollarSign /> }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setCategory(tab.id)}
                 style={{
-                  padding: '14px 35px', borderRadius: '35px', border: 'none',
+                  padding: '10px 25px', borderRadius: '35px', border: 'none',
                   background: category === tab.id ? 'var(--accent)' : 'transparent', color: category === tab.id ? '#fff' : '#444',
-                  fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: '0.3s', display: 'flex', alignItems: 'center', gap: '10px',
+                  fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', transition: '0.3s', display: 'flex', alignItems: 'center', gap: '8px',
                   boxShadow: category === tab.id ? '0 10px 25px var(--accent-glow)' : 'none'
                 }}
               >
@@ -194,26 +193,27 @@ export default function RankingsHub() {
               <Link to={`/profile/${user._id}`} style={{ textDecoration: 'none' }}>
                 <motion.div
                   whileHover={{ x: 10, background: 'rgba(255,255,255,0.02)' }}
-                  className="glass"
-                  style={{ padding: '25px 40px', borderRadius: '35px', display: 'flex', alignItems: 'center', gap: '30px', border: '1px solid rgba(255,255,255,0.03)', transition: '0.3s' }}
+                  className="glass ranking-item-row"
+                  style={{ padding: '20px', borderRadius: '35px', display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid rgba(255,255,255,0.03)', transition: '0.3s' }}
                 >
-                  <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#111', minWidth: '60px' }}>#{idx + 4}</div>
-                  <PattyAvatar user={user} size={65} border="2px solid rgba(255,255,255,0.05)" />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                      <h5 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '700', color: '#fff', letterSpacing: '-0.5px' }}>{user.name}</h5>
+                  <div className="rank-number" style={{ fontSize: '1.5rem', fontWeight: '900', color: '#111', minWidth: '45px', textAlign: 'center' }}>#{idx + 4}</div>
+                  <div className="avatar-wrap">
+                    <PattyAvatar user={user} size={window.innerWidth < 480 ? 50 : 60} border="2px solid rgba(255,255,255,0.05)" />
+                  </div>
+                  <div className="user-info-wrap" style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <h5 className="user-name-text" style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#fff', letterSpacing: '-0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</h5>
                       <RankBadge rank={user.rank} size="xs" />
                     </div>
-                    <p style={{ margin: '5px 0 0', fontSize: '0.75rem', color: '#222', fontWeight: '700', letterSpacing: '1px' }}>{user.profession || 'CREATOR'}</p>
+                    <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#333', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase' }}>{user.profession || 'CREATOR'}</p>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '1.4rem', fontWeight: '700', color: category === 'earnings' ? '#f59e0b' : 'var(--accent)' }}>
+                  <div className="score-wrap" style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: '1.2rem', fontWeight: '700', color: category === 'earnings' ? '#f59e0b' : 'var(--accent)' }}>
                       {category === 'earnings' ? <CoinBadge amount={user.totalEarnings || 0} size="md" /> : user.points?.toLocaleString()}
                     </div>
-                    <div style={{ fontSize: '0.65rem', color: '#111', fontWeight: '700', letterSpacing: '1px', marginTop: '4px' }}>
-                      {category === 'earnings' ? 'รายได้ / EARNED' : 'แต้ม / XP'}
+                    <div style={{ fontSize: '0.6rem', color: '#222', fontWeight: '700', letterSpacing: '1px', marginTop: '2px' }}>
+                      {category === 'earnings' ? 'EARNED' : 'XP'}
                     </div>
-
                   </div>
                 </motion.div>
               </Link>
@@ -221,18 +221,16 @@ export default function RankingsHub() {
           ))}
         </div>
 
-        <div style={{ marginTop: '150px', textAlign: 'center' }}>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff', letterSpacing: '2px', marginBottom: '40px' }}></h3>
+        <div style={{ marginTop: '100px', textAlign: 'center' }}>
           <Link to="/rankings/roles" style={{ textDecoration: 'none' }}>
             <motion.div
               whileHover={{ scale: 1.02, boxShadow: '0 0 40px var(--accent-glow)' }}
-              className="glass"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '20px', padding: '30px 60px', borderRadius: '40px', border: '1px solid var(--accent)', background: 'rgba(255,87,51,0.05)' }}
+              className="glass profession-cta"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '15px', padding: '20px 40px', borderRadius: '40px', border: '1px solid var(--accent)', background: 'rgba(255,87,51,0.05)', maxWidth: '100%' }}
             >
-              <FiTarget size={30} color="var(--accent)" />
-              <span style={{ fontSize: '1.4rem', fontWeight: '700', color: '#fff' }}>ดูอันดับแยกตามสายงาน / BY PROFESSION</span>
-              <FiArrowRight size={24} color="#fff" />
-
+              <FiTarget size={24} color="var(--accent)" />
+              <span style={{ fontSize: '1.1rem', fontWeight: '700', color: '#fff' }}>BY PROFESSION</span>
+              <FiArrowRight size={20} color="#fff" />
             </motion.div>
           </Link>
         </div>
@@ -242,33 +240,43 @@ export default function RankingsHub() {
       <style>{`
         .rankings-list-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(650px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 600px), 1fr));
         }
         .podium-container {
           display: flex;
           align-items: flex-end;
           justify-content: center;
-          gap: 0;
-          flex-wrap: wrap;
+          gap: 20px;
+          padding: 40px 0;
         }
         .podium-card {
-          width: 260px;
+          width: 280px;
         }
         .podium-card.is-first {
-          width: 320px;
+          width: 340px;
+        }
+        @media (max-width: 1200px) {
+          .podium-container {
+            gap: 10px;
+          }
+          .podium-card {
+            width: 240px;
+          }
+          .podium-card.is-first {
+            width: 300px;
+          }
         }
         @media (max-width: 992px) {
           .podium-container {
             flex-direction: column;
             align-items: center;
-            gap: 80px;
+            gap: 60px;
             margin-top: 50px;
           }
           .podium-card {
             width: 100% !important;
-            max-width: 320px;
+            max-width: 340px;
           }
-          /* Reorder for mobile so it's 1, 2, 3 instead of 2, 1, 3 */
           .podium-card.rank-1 { order: 1; }
           .podium-card.rank-2 { order: 2; }
           .podium-card.rank-3 { order: 3; }
@@ -280,11 +288,37 @@ export default function RankingsHub() {
           .my-rank-banner {
             flex-direction: column;
             text-align: center;
-            padding: 30px !important;
+            padding: 25px !important;
             gap: 15px !important;
           }
           .my-rank-text, .my-rank-score {
             text-align: center !important;
+          }
+          .ranking-item-row {
+            padding: 15px !important;
+            gap: 15px !important;
+            border-radius: 25px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .ranking-item-row {
+            gap: 10px !important;
+          }
+          .rank-number {
+            min-width: 35px !important;
+            font-size: 1.2rem !important;
+          }
+          .user-name-text {
+            font-size: 1rem !important;
+          }
+          .score-wrap {
+            font-size: 0.9rem !important;
+          }
+          .profession-cta {
+             padding: 15px 30px !important;
+          }
+          .profession-cta span {
+             font-size: 0.9rem !important;
           }
         }
       `}</style>

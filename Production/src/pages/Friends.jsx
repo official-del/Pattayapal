@@ -126,10 +126,10 @@ function Friends() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
             <FiGlobe color="var(--accent)" size={18} />
-            <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '5px', fontSize: '0.8rem' }}>World Citizens</span>
+            <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '2px', fontSize: '1.2rem' }}>Friend Station</span>
           </div>
-          <h1 style={{ fontSize: '4.5rem', fontWeight: '700', margin: 0, letterSpacing: '-2px', lineHeight: 1, marginTop: '30px' }}>รายชื่อสมาชิก</h1>
-          <p style={{ color: '#444', marginTop: '15px', fontWeight: '700', fontSize: '1.1rem' }}>สร้างเครือข่ายและเชื่อมต่อกับครีเอเตอร์ทั่วประเทศ</p>
+          <h1 style={{ fontSize: '4.5rem', fontWeight: '700', margin: 0, letterSpacing: '0px', lineHeight: 1, marginTop: '10px' }}>รายชื่อสมาชิก</h1>
+          <p style={{ color: '#444', marginTop: '15px', fontWeight: '700', fontSize: '1rem' }}>สร้างเครือข่ายและเชื่อมต่อกับครีเอเตอร์ทั่วประเทศ</p>
         </motion.div>
       </section>
 

@@ -6,6 +6,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { FiArrowLeft, FiHeart, FiMessageSquare, FiClock, FiSend, FiTrash2, FiExternalLink, FiMaximize2, FiActivity, FiZap, FiTarget, FiBox, FiAlertTriangle } from 'react-icons/fi';
+import HoverVideoPlayer from '../components/HoverVideoPlayer';
 
 import { CONFIG } from '../utils/config';
 
@@ -381,13 +382,9 @@ function WorkDetail() {
                     {/* ส่วนนี้คือตำแหน่งที่แสดงสื่อ (Media) */}
                     <div style={{ aspectRatio: '16/10', borderRadius: '30px', overflow: 'hidden', background: '#0a0a0a', marginBottom: '25px' }}>
                       {workIsVideo(rec) ? (
-                        <video
+                        <HoverVideoPlayer
                           src={getMediaUrl(rec)}
-                          muted
-                          loop
-                          playsInline
-                          autoPlay
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          style={{ width: '100%', height: '100%' }}
                         />
                       ) : (
                         <img

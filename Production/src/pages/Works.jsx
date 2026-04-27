@@ -5,6 +5,7 @@ import { worksAPI } from '../utils/api';
 import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
 import { FiArrowUpRight, FiClock, FiUser, FiLoader, FiGrid, FiLayers, FiSearch, FiZap, FiLayout, FiActivity, FiAlertTriangle } from 'react-icons/fi';
 import Footer from '../components/Footer';
+import HoverVideoPlayer from '../components/HoverVideoPlayer';
 import { useSocket } from '../context/SocketContext';
 
 const FILTERS = ['All', 'Productions', 'Online Marketing', 'Graphic Design', 'Web Application', 'Motion Graphic', 'Photography'];
@@ -41,49 +42,49 @@ function Works() {
   useEffect(() => {
     if (!socket) return;
     const handleWorkUpdate = (data) => {
-        if (!data || !data.work) {
-            if (data?.action === 'delete' && data.workId) {
-                setWorks(prev => prev.filter(w => w._id !== data.workId));
-                setFiltered(prev => prev.filter(w => w._id !== data.workId));
-            }
-            return;
+      if (!data || !data.work) {
+        if (data?.action === 'delete' && data.workId) {
+          setWorks(prev => prev.filter(w => w._id !== data.workId));
+          setFiltered(prev => prev.filter(w => w._id !== data.workId));
         }
-        
-        const updatedWork = data.work;
-        if (data.action === 'create' && updatedWork.status === 'published') {
-            setWorks(prev => [updatedWork, ...prev]);
-            setFiltered(prev => (activeFilter === 'All' || activeFilter === updatedWork.category?.name) ? [updatedWork, ...prev] : prev);
-        } else if (data.action === 'update') {
-            if (updatedWork.status !== 'published') {
-                // If it was unpublished
-                setWorks(prev => prev.filter(w => w._id !== updatedWork._id));
-                setFiltered(prev => prev.filter(w => w._id !== updatedWork._id));
-            } else {
-                setWorks(prev => {
-                    const idx = prev.findIndex(w => w._id === updatedWork._id);
-                    if (idx > -1) {
-                        const newArr = [...prev];
-                        newArr[idx] = updatedWork;
-                        return newArr;
-                    }
-                    return [updatedWork, ...prev]; // if not found but is published now
-                });
-                setFiltered(prev => {
-                    if (activeFilter !== 'All' && activeFilter !== updatedWork.category?.name) {
-                        return prev.filter(w => w._id !== updatedWork._id);
-                    }
-                    const idx = prev.findIndex(w => w._id === updatedWork._id);
-                    if (idx > -1) {
-                        const newArr = [...prev];
-                        newArr[idx] = updatedWork;
-                        return newArr;
-                    }
-                    return [updatedWork, ...prev];
-                });
+        return;
+      }
+
+      const updatedWork = data.work;
+      if (data.action === 'create' && updatedWork.status === 'published') {
+        setWorks(prev => [updatedWork, ...prev]);
+        setFiltered(prev => (activeFilter === 'All' || activeFilter === updatedWork.category?.name) ? [updatedWork, ...prev] : prev);
+      } else if (data.action === 'update') {
+        if (updatedWork.status !== 'published') {
+          // If it was unpublished
+          setWorks(prev => prev.filter(w => w._id !== updatedWork._id));
+          setFiltered(prev => prev.filter(w => w._id !== updatedWork._id));
+        } else {
+          setWorks(prev => {
+            const idx = prev.findIndex(w => w._id === updatedWork._id);
+            if (idx > -1) {
+              const newArr = [...prev];
+              newArr[idx] = updatedWork;
+              return newArr;
             }
+            return [updatedWork, ...prev]; // if not found but is published now
+          });
+          setFiltered(prev => {
+            if (activeFilter !== 'All' && activeFilter !== updatedWork.category?.name) {
+              return prev.filter(w => w._id !== updatedWork._id);
+            }
+            const idx = prev.findIndex(w => w._id === updatedWork._id);
+            if (idx > -1) {
+              const newArr = [...prev];
+              newArr[idx] = updatedWork;
+              return newArr;
+            }
+            return [updatedWork, ...prev];
+          });
         }
+      }
     };
-    
+
     socket.on('work_updated', handleWorkUpdate);
     return () => socket.off('work_updated', handleWorkUpdate);
   }, [socket, activeFilter]);
@@ -114,9 +115,11 @@ function Works() {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                 <FiZap color="var(--accent)" size={16} />
-                <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.7rem', letterSpacing: '3px' }}>CURATED WORK</span>
+                <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.7rem', letterSpacing: '3px' }}>WORK STATION</span>
               </div>
-              <h1 style={{ fontSize: 'clamp(3rem, 8vw, 6rem)', fontWeight: '700', margin: 0, letterSpacing: '-3px', lineHeight: 0.9 }}>USER<br /><span style={{ color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.2)' }}>CREATIONS</span></h1>
+              <div className="main-text">
+                <h1 style={{ fontSize: 'clamp(6rem, 10vw, 6rem)', fontWeight: '700', margin: 0, letterSpacing: '2px', lineHeight: 0.9 }}>USER<br /><span style={{ color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.2)', fontSize: 'clamp(2rem, 4vw, 3rem)' }}>CREATIONS</span></h1>
+              </div>
             </div>
             <div style={{ maxWidth: '400px', paddingBottom: '10px' }}>
               <p style={{ color: '#888', lineHeight: 1.7, fontSize: '1.1rem', marginBottom: '25px', fontWeight: '400' }}>
@@ -154,9 +157,9 @@ function Works() {
                 border: activeFilter === f ? 'none' : '1px solid rgba(255,255,255,0.05)',
                 fontSize: '0.85rem', fontWeight: '700', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', letterSpacing: '0.5px'
               }}
-              whileHover={{ 
-                scale: 1.02, 
-                ...(activeFilter !== f ? { background: 'rgba(255,255,255,0.08)', color: '#fff' } : {}) 
+              whileHover={{
+                scale: 1.02,
+                ...(activeFilter !== f ? { background: 'rgba(255,255,255,0.08)', color: '#fff' } : {})
               }}
             >
               {f}
@@ -228,7 +231,7 @@ function Works() {
                             style={{ width: '100%', height: '100%' }}
                           >
                             {isVideo ? (
-                              <video src={mediaUrl} muted loop playsInline autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <HoverVideoPlayer src={mediaUrl} style={{ width: '100%', height: '100%' }} />
                             ) : (
                               <img src={mediaUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={work.title} />
                             )}

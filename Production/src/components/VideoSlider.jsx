@@ -86,7 +86,7 @@ function VideoSlider() {
                             ref={(el) => (videoRefs.current[i] = el)}
                             src={getMediaUrl(slide)}
                             style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.6)' }}
-                            loop muted playsInline preload="auto"
+                            loop muted playsInline preload={i === current ? "auto" : "none"}
                         />
 
                         {/* 🌌 Cinematic Overlays */}
@@ -95,8 +95,8 @@ function VideoSlider() {
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 8%' }}>
                             <div style={{ maxWidth: '900px' }}>
                                 <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-                                    <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '6px', fontSize: '0.9rem', display: 'block', marginBottom: '20px' }}>POPULAR PROJECT</span>
-                                    <h2 className="vslider__title">{slide.title}</h2>
+                                    {/* <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '6px', fontSize: '0.8rem', display: 'block', marginBottom: '20px' }}>POPULAR PROJECT</span> */}
+                                    <h1 className="vslider__title">{slide.title}</h1>
                                     <p className="vslider__subtitle" style={{ marginTop: '20px' }}>{slide.description}</p>
 
                                     <div className="vslider__actions">
