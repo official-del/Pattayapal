@@ -12,24 +12,30 @@ const keyExists = fs.existsSync(keyPath);
 
 // 🛡️ [NEW] Support for Environment Variable Credentials (for Hostinger/Heroku)
 let credentials;
-if (process.env.GCP_KEY_JSON) {
+
+// 🛡️ [NEW] Support for Individual Fields (Robust for Hostinger/Heroku)
+if (process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY) {
+    credentials = {
+        client_email: process.env.GCP_CLIENT_EMAIL.trim(),
+        private_key: process.env.GCP_PRIVATE_KEY.replace(/\\n/g, '\n').trim(),
+    };
+    console.log("🚀 [GCS] Using Individual Credentials (Email/Key)");
+} 
+// Fallback to full JSON
+else if (process.env.GCP_KEY_JSON) {
     let keyContent = process.env.GCP_KEY_JSON.trim();
-    
-    // 🛡️ [NEW] Strip surrounding quotes if added by the host
     keyContent = keyContent.replace(/^["']|["']$/g, '');
     
-    // Try parsing as raw JSON first
     try {
         credentials = JSON.parse(keyContent);
         console.log("🚀 [GCS] Using raw JSON from Environment Variable");
     } catch (e) {
-        // If raw JSON fails, try Base64 decoding (more robust for some hosts)
         try {
             const decoded = Buffer.from(keyContent, 'base64').toString();
             credentials = JSON.parse(decoded);
-            console.log("🚀 [GCS] Using Base64 encoded JSON from Environment Variable");
+            console.log("🚀 [GCS] Using Base64 encoded JSON");
         } catch (b64Error) {
-            console.error("❌ [GCS] Error parsing GCP_KEY_JSON (tried JSON and Base64):", e.message);
+            console.error("❌ [GCS] JSON Parse Error:", e.message, "| Base64 Error:", b64Error.message);
         }
     }
 }
