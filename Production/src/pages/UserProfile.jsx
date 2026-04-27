@@ -956,7 +956,7 @@ function UserProfile() {
                                  <div>
                                     <h6 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#fff' }}>{pkg.title}</h6>
                                     <div style={{ fontSize: '0.8rem', color: '#666', fontWeight: '700', marginTop: '4px' }}>
-                                       ฿{Number(pkg.price).toLocaleString()} • {pkg.deliveryTime} Days
+                                       <CoinIcon size={14} /> {Number(pkg.price).toLocaleString()} • {pkg.deliveryTime} Days
                                     </div>
                                  </div>
                                  <div style={{ display: 'flex', gap: '10px' }}>
