@@ -10,7 +10,7 @@
 }
 
 .manage-jobs-container {
-    padding: 60px 40px;
+    padding: 100px 40px 60px;
     max-width: 1400px;
     margin: 0 auto;
     color: #fff;
@@ -18,10 +18,10 @@
 
 /* 🚀 Hyper Header */
 .mj-header {
-    margin-bottom: 80px;
+    margin-bottom: 60px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     gap: 40px;
 }
 
@@ -40,17 +40,18 @@
 .budget-display {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent);
     border: 1px solid var(--mj-border);
-    padding: 25px 40px;
-    border-radius: 35px;
+    padding: 20px 35px;
+    border-radius: 30px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    flex-shrink: 0;
 }
 
 /* 🧬 Neo Tabs */
 .mj-tabs {
     display: flex;
-    gap: 50px;
-    margin-bottom: 60px;
-    padding-left: 10px;
+    gap: 40px;
+    margin-bottom: 50px;
+    padding-left: 0;
 }
 
 .mj-tab-btn {
@@ -322,14 +323,22 @@
 @media (max-width: 1200px) {
     .job-card {
         grid-template-columns: 1fr;
-        padding: 40px;
+        padding: 45px;
     }
 
     .action-panel {
         border-left: none;
         padding-left: 0;
-        border-top: 1px dashed rgba(255, 255, 255, 0.2);
+        border-top: 1px dashed rgba(255, 255, 255, 0.1);
         padding-top: 40px;
+        flex-direction: row;
+        align-items: center;
+        gap: 30px;
+    }
+
+    .budget-section {
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        padding-right: 30px;
     }
 
     .mj-main-title {
@@ -339,12 +348,26 @@
 
 @media (max-width: 768px) {
     .manage-jobs-container {
-        padding: 30px 20px;
+        padding: 80px 20px 40px;
     }
 
     .mj-header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+        margin-bottom: 40px;
+    }
+
+    .budget-display {
+        text-align: center;
+    }
+
+    .mj-tabs {
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .mj-tab-btn {
+        font-size: 0.9rem;
     }
 
     .mj-main-title {
@@ -357,40 +380,69 @@
 
     .job-card {
         padding: 30px;
-        border-radius: 40px;
+        border-radius: 35px;
+        gap: 30px;
     }
 
-    .info-tile {
-        padding: 20px;
+    .action-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .budget-section {
+        border-right: none;
+        padding-right: 0;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        text-align: center;
+    }
+
+    .mj-info-grid {
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 480px) {
-    .manage-jobs-container {
-        padding: 30px 20px;
-    }
-
-    .mj-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
-    }
-
     .mj-main-title {
         font-size: 2.5rem !important;
-        margin-bottom: 10px;
     }
 
     .mj-title {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+    }
+
+    .mj-tabs {
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .mj-tab-btn {
+        font-size: 0.8rem;
+        padding: 10px 0;
     }
 
     .job-card {
-        padding: 30px;
-        border-radius: 40px;
+        padding: 25px;
+    }
+
+    .milestones-card {
+        padding: 25px 20px;
     }
 
     .info-tile {
-        padding: 20px;
+        padding: 15px 20px;
+    }
+
+    .tile-value {
+        font-size: 1rem;
+    }
+
+    .user-info-row {
+        gap: 12px;
+    }
+
+    .user-avatar {
+        width: 50px;
+        height: 50px;
     }
 }

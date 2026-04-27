@@ -21,7 +21,7 @@ const ProgressChecklist = ({ currentStage, onUpdate, isInteractive }) => {
 
   return (
     <div className="milestones-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+      <div className="milestones-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <FiActivity color="var(--mj-accent)" size={14} />
           <span style={{ color: 'var(--mj-accent)', fontWeight: '800', letterSpacing: '4px', fontSize: '0.65rem' }}>ไทม์ไลน์ / MILESTONES</span>
@@ -31,39 +31,41 @@ const ProgressChecklist = ({ currentStage, onUpdate, isInteractive }) => {
         </span>
       </div>
 
-      <div className="job-progress-container" style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', padding: '0 10px' }}>
-        <div style={{ position: 'absolute', top: '15px', left: '40px', right: '40px', height: '2px', background: 'rgba(255,255,255,0.03)' }}>
-          <motion.div initial={{ width: 0 }} animate={{ width: `${(currentIndex / 4) * 100}%` }} transition={{ duration: 1 }} style={{ height: '100%', background: 'var(--mj-accent)', boxShadow: '0 0 10px var(--mj-accent)' }}></motion.div>
-        </div>
+      <div className="job-progress-wrapper" style={{ overflowX: 'auto', paddingBottom: '10px' }}>
+        <div className="job-progress-container" style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', padding: '0 10px', minWidth: '450px' }}>
+          <div className="progress-line" style={{ position: 'absolute', top: '15px', left: '40px', right: '40px', height: '2px', background: 'rgba(255,255,255,0.03)' }}>
+            <motion.div initial={{ width: 0 }} animate={{ width: `${(currentIndex / 4) * 100}%` }} transition={{ duration: 1 }} style={{ height: '100%', background: 'var(--mj-accent)', boxShadow: '0 0 10px var(--mj-accent)' }}></motion.div>
+          </div>
 
-        {PROGRESS_STAGES.map((stage, idx) => {
-          const isCompleted = idx < currentIndex;
-          const isActive = idx === currentIndex;
+          {PROGRESS_STAGES.map((stage, idx) => {
+            const isCompleted = idx < currentIndex;
+            const isActive = idx === currentIndex;
 
-          return (
-            <div
-              key={stage}
-              onClick={() => isInteractive && onUpdate(stage)}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: isInteractive ? 'pointer' : 'default', zIndex: 2, width: '70px' }}
-            >
-              <motion.div
-                whileHover={isInteractive ? { scale: 1.1 } : {}}
-                style={{
-                  width: '32px', height: '32px', borderRadius: '50%',
-                  background: isCompleted ? 'var(--mj-accent)' : '#000',
-                  border: `2px solid ${isActive || isCompleted ? 'var(--mj-accent)' : 'rgba(255,255,255,0.05)'}`,
-                  color: isCompleted ? '#fff' : (isActive ? 'var(--mj-accent)' : '#222'),
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.3s'
-                }}
+            return (
+              <div
+                key={stage}
+                onClick={() => isInteractive && onUpdate(stage)}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: isInteractive ? 'pointer' : 'default', zIndex: 2, width: '70px' }}
               >
-                {isCompleted ? <FiCheckCircle size={16} /> : (isActive ? <div style={{ width: '8px', height: '8px', background: 'var(--mj-accent)', borderRadius: '50%' }}></div> : <div style={{ width: '6px', height: '6px', background: '#222', borderRadius: '50%' }}></div>)}
-              </motion.div>
-              <span style={{ color: isActive ? '#fff' : (isCompleted ? '#666' : '#222'), fontWeight: isActive ? '800' : '500', fontSize: '0.6rem', textAlign: 'center', lineHeight: '1.4' }}>
-                {STAGE_LABELS[stage] || stage}
-              </span>
-            </div>
-          );
-        })}
+                <motion.div
+                  whileHover={isInteractive ? { scale: 1.1 } : {}}
+                  style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    background: isCompleted ? 'var(--mj-accent)' : '#000',
+                    border: `2px solid ${isActive || isCompleted ? 'var(--mj-accent)' : 'rgba(255,255,255,0.05)'}`,
+                    color: isCompleted ? '#fff' : (isActive ? 'var(--mj-accent)' : '#222'),
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.3s'
+                  }}
+                >
+                  {isCompleted ? <FiCheckCircle size={16} /> : (isActive ? <div style={{ width: '8px', height: '8px', background: 'var(--mj-accent)', borderRadius: '50%' }}></div> : <div style={{ width: '6px', height: '6px', background: '#222', borderRadius: '50%' }}></div>)}
+                </motion.div>
+                <span style={{ color: isActive ? '#fff' : (isCompleted ? '#666' : '#222'), fontWeight: isActive ? '800' : '500', fontSize: '0.6rem', textAlign: 'center', lineHeight: '1.4' }}>
+                  {STAGE_LABELS[stage] || stage}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -245,10 +247,10 @@ function ManageJobs() {
                   className="job-card"
                 >
                   <div className="job-main-info">
-                    <div className="mj-meta-row">
+                    <div className="mj-meta-row" style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', marginBottom: '20px' }}>
                       <StatusBadge status={job.status} />
                       <span className="job-id">#{job._id.slice(-8).toUpperCase()}</span>
-                      <span className="job-date" style={{ color: '#444', fontSize: '0.8rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}><FiCalendar /> {new Date(job.createdAt).toLocaleDateString()}</span>
+                      <span className="job-date" style={{ color: '#444', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}><FiCalendar /> {new Date(job.createdAt).toLocaleDateString()}</span>
                     </div>
 
                     <h3 className="mj-title">{job.title}</h3>
