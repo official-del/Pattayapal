@@ -27,69 +27,100 @@ export const topupWallet = async (req, res) => {
       });
     }
 
-    // 🛡️ [FIX] Read buffer BEFORE uploading to GCS (because uploadToGCS deletes the file)
-    const fileBuffer = req.file.buffer || (req.file.path ? fs.readFileSync(req.file.path) : null);
-    if (!fileBuffer) throw new Error("ไม่สามารถอ่านข้อมูลไฟล์สลิปได้");
-
-    // ── อัปโหลดสลิปขึ้น GCS เพื่อเก็บเป็นหลักฐานถาวร ──
-    const slipUrl = await uploadToGCS(req.file);
+    // ── STEP 1: Get buffer from memory storage ──
+    // MemoryStorage gives req.file.buffer directly - no disk needed!
+    const fileBuffer = req.file.buffer;
+    if (!fileBuffer || fileBuffer.length === 0) {
+      throw new Error("ไม่สามารถอ่านข้อมูลไฟล์สลิปได้ (ไฟล์ว่างเปล่า)");
+    }
+    console.log(`📎 Buffer size: ${fileBuffer.length} bytes, type: ${req.file.mimetype}`);
 
     const apiKey = EASYSLIP_API_KEY();
     if (!apiKey) {
       return res.status(500).json({ message: 'ระบบยังไม่ได้ตั้งค่า EasySlip API Key' });
     }
 
-    // 🛡️ [DIAGNOSTIC] Check if GCS is working (Required for Hosted environments)
-    const isGcsUrl = slipUrl && (slipUrl.startsWith('http://') || slipUrl.startsWith('https://'));
-    if (!isGcsUrl) {
-       console.error('❌ GCS Failure: slipUrl is local or empty:', slipUrl);
-       return res.status(400).json({
-          status: 'ANOMALY',
-          code: 'STORAGE_ERROR',
-          message: 'ระบบเก็บไฟล์สลิป (GCS) ไม่ทำงาน กรุณาตรวจสอบการตั้งค่า GCP_KEY_JSON และ BUCKET_NAME บน Hostinger'
-       });
-    }
-
-    // ── STEP 2: Call EasySlip API using URL ──
+    // ── STEP 2: Send buffer DIRECTLY to EasySlip (No GCS needed!) ──
     let slipData = null;
     let lastErrorMsg = '';
 
-    console.log('🚀 Calling EasySlip v2 via URL:', slipUrl);
+    // Method A: Scan QR Code from buffer, send payload (fastest)
     try {
-      const response = await axios.post(
-        'https://developer.easyslip.com/api/v2/verify',
-        { url: slipUrl },
-        {
-          headers: {
-            Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 15000 // ⏱️ Increase timeout
-        }
-      );
-      slipData = response.data;
-    } catch (urlErr) {
-      lastErrorMsg = urlErr.response?.data?.message || urlErr.message;
-      console.warn('⚠️ EasySlip URL verification failed:', lastErrorMsg);
-      
-      // FINAL FALLBACK: Local Buffer Scan
+      const qrPayload = await scanQRFromBuffer(fileBuffer);
+      if (qrPayload) {
+        console.log('🚀 [Method A] Sending QR payload to EasySlip v2...');
+        const resp = await axios.post(
+          'https://developer.easyslip.com/api/v2/verify',
+          { payload: qrPayload },
+          {
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: 15000
+          }
+        );
+        slipData = resp.data;
+        console.log('✅ [Method A] Success');
+      }
+    } catch (qrErr) {
+      lastErrorMsg = qrErr.response?.data?.message || qrErr.message;
+      console.warn('⚠️ [Method A] Failed:', lastErrorMsg);
+    }
+
+    // Method B: Send buffer as multipart to EasySlip v2
+    if (!slipData) {
       try {
-        const qrPayload = await scanQRFromBuffer(fileBuffer);
-        if (qrPayload) {
-          const response = await axios.post(
-            'https://developer.easyslip.com/api/v2/verify',
-            { payload: qrPayload },
-            {
-              headers: {
-                Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-              },
-            }
-          );
-          slipData = response.data;
-        }
-      } catch (qrErr) {
-        lastErrorMsg = `URL_ERR: ${lastErrorMsg} | QR_ERR: ${qrErr.message}`;
+        console.log('🚀 [Method B] Sending image buffer to EasySlip v2...');
+        const formData = new FormData();
+        formData.append('file', fileBuffer, {
+          filename: req.file.originalname || 'slip.jpg',
+          contentType: req.file.mimetype || 'image/jpeg',
+        });
+        const resp = await axios.post(
+          'https://developer.easyslip.com/api/v2/verify',
+          formData,
+          {
+            headers: {
+              ...formData.getHeaders(),
+              Authorization: `Bearer ${apiKey}`,
+            },
+            timeout: 20000
+          }
+        );
+        slipData = resp.data;
+        console.log('✅ [Method B] Success');
+      } catch (v2Err) {
+        lastErrorMsg = v2Err.response?.data?.message || v2Err.message;
+        console.warn('⚠️ [Method B] Failed:', lastErrorMsg);
+      }
+    }
+
+    // Method C: Send buffer as multipart to EasySlip v1 (fallback)
+    if (!slipData) {
+      try {
+        console.log('🚀 [Method C] Sending image buffer to EasySlip v1...');
+        const formData = new FormData();
+        formData.append('file', fileBuffer, {
+          filename: req.file.originalname || 'slip.jpg',
+          contentType: req.file.mimetype || 'image/jpeg',
+        });
+        const resp = await axios.post(
+          'https://developer.easyslip.com/api/v1/verify',
+          formData,
+          {
+            headers: {
+              ...formData.getHeaders(),
+              Authorization: `Bearer ${apiKey}`,
+            },
+            timeout: 20000
+          }
+        );
+        slipData = resp.data;
+        console.log('✅ [Method C] Success');
+      } catch (v1Err) {
+        lastErrorMsg = v1Err.response?.data?.message || v1Err.message;
+        console.warn('⚠️ [Method C] Failed:', lastErrorMsg);
       }
     }
 
@@ -98,8 +129,21 @@ export const topupWallet = async (req, res) => {
           status: 'ANOMALY',
           code: 'VERIFICATION_FAILED',
           message: `ไม่สามารถตรวจสอบสลิปได้: ${lastErrorMsg}`,
-          debug: { url: slipUrl }
        });
+    }
+
+    // ── [Background] Upload slip to GCS for record-keeping (non-blocking) ──
+    let slipUrl = 'local-buffer';
+    try {
+      // Convert buffer back to a file-like object for GCS
+      const tempPath = path.join(process.cwd(), 'uploads/temp', `slip-${Date.now()}.jpg`);
+      const tempDir = path.dirname(tempPath);
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+      fs.writeFileSync(tempPath, fileBuffer);
+      const tempFileObj = { path: tempPath, originalname: req.file.originalname, mimetype: req.file.mimetype };
+      slipUrl = await uploadToGCS(tempFileObj);
+    } catch (gcsErr) {
+      console.warn('⚠️ GCS record-keeping failed (non-critical):', gcsErr.message);
     }
 
     // ── STEP 3: Validate response ──
