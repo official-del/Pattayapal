@@ -45,6 +45,7 @@ export const topupWallet = async (req, res) => {
     // ── STEP 2: Call EasySlip API ──
     let slipData;
 
+    let lastErrorMsg = '';
     if (qrPayload) {
       // Method A: Send QR payload as JSON (most reliable)
       console.log('🚀 Calling EasySlip v2 with QR payload...');
@@ -60,9 +61,9 @@ export const topupWallet = async (req, res) => {
           }
         );
         slipData = response.data;
-        console.log('📋 EasySlip (QR) response:', JSON.stringify(slipData, null, 2));
       } catch (e) {
-        console.warn('⚠️  QR payload method failed, trying image fallback...', e.response?.data || e.message);
+        lastErrorMsg = e.response?.data?.message || e.message;
+        console.warn('⚠️ QR payload method failed:', lastErrorMsg);
         slipData = null;
       }
     }
@@ -88,9 +89,9 @@ export const topupWallet = async (req, res) => {
           }
         );
         slipData = response.data;
-        console.log('📋 EasySlip (v2-image) response:', JSON.stringify(slipData, null, 2));
       } catch (v2Err) {
-        console.warn('⚠️ EasySlip v2 image failed, trying v1 fallback...', v2Err.response?.data || v2Err.message);
+        lastErrorMsg = v2Err.response?.data?.message || v2Err.message;
+        console.warn('⚠️ EasySlip v2 image failed, trying v1 fallback...', lastErrorMsg);
         slipData = null;
       }
     }
@@ -116,9 +117,9 @@ export const topupWallet = async (req, res) => {
           }
         );
         slipData = response.data;
-        console.log('📋 EasySlip (v1-image) response:', JSON.stringify(slipData, null, 2));
       } catch (v1Err) {
-        console.error('❌ All EasySlip methods failed:', v1Err.response?.data || v1Err.message);
+        lastErrorMsg = v1Err.response?.data?.message || v1Err.message;
+        console.error('❌ All EasySlip methods failed:', lastErrorMsg);
         slipData = null; 
       }
     }
@@ -127,7 +128,7 @@ export const topupWallet = async (req, res) => {
        return res.status(400).json({
           status: 'ANOMALY',
           code: 'VERIFICATION_FAILED',
-          message: 'ไม่สามารถตรวจสอบสลิปได้: ระบบอ่านข้อมูลในรูปภาพไม่สำเร็จ หรือ API ตรวจสอบสลิปขัดข้อง (กรุณาใช้สลิปที่มี QR Code ที่ชัดเจน)',
+          message: `ไม่สามารถตรวจสอบสลิปได้: ${lastErrorMsg} (กรุณาใช้สลิปที่มี QR Code ที่ชัดเจน)`,
           debug: {
             qrDetected: !!qrPayload,
             timestamp: new Date().toISOString()
