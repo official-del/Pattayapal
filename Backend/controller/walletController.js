@@ -27,13 +27,12 @@ export const topupWallet = async (req, res) => {
       });
     }
 
+    // 🛡️ [FIX] Read buffer BEFORE uploading to GCS (because uploadToGCS deletes the file)
+    const fileBuffer = req.file.buffer || (req.file.path ? fs.readFileSync(req.file.path) : null);
+    if (!fileBuffer) throw new Error("ไม่สามารถอ่านข้อมูลไฟล์สลิปได้");
+
     // ── อัปโหลดสลิปขึ้น GCS เพื่อเก็บเป็นหลักฐานถาวร ──
     const slipUrl = await uploadToGCS(req.file);
-    
-    // 🛡️ [FIX] Multer DiskStorage doesn't provide buffer. We must read it from path.
-    const fileBuffer = req.file.buffer || (req.file.path ? fs.readFileSync(req.file.path) : null);
-    
-    if (!fileBuffer) throw new Error("ไม่สามารถอ่านข้อมูลไฟล์สลิปได้");
 
     const apiKey = EASYSLIP_API_KEY();
     if (!apiKey) {
