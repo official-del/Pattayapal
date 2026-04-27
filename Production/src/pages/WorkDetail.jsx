@@ -5,7 +5,7 @@ import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { FiArrowLeft, FiHeart, FiMessageSquare, FiClock, FiSend, FiTrash2, FiExternalLink, FiMaximize2, FiActivity, FiZap, FiTarget, FiBox, FiAlertTriangle } from 'react-icons/fi';
+import { FiArrowLeft, FiHeart, FiMessageSquare, FiClock, FiSend, FiTrash2, FiExternalLink, FiMaximize2, FiActivity, FiZap, FiTarget, FiBox, FiAlertTriangle, FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi';
 import HoverVideoPlayer from '../components/HoverVideoPlayer';
 
 import { CONFIG } from '../utils/config';
@@ -136,6 +136,27 @@ function WorkDetail() {
     </div>
   );
 
+  const albumMedia = work ? [
+    work.mainImage?.url || work.videoUrl || work.mediaUrl,
+    ...(work.album?.map(item => item.url) || [])
+  ].filter(Boolean) : [];
+
+  const handlePrevMedia = (e) => {
+    e.stopPropagation();
+    const currentIndex = albumMedia.indexOf(selectedMedia);
+    if (currentIndex === -1) return;
+    const newIndex = (currentIndex - 1 + albumMedia.length) % albumMedia.length;
+    setSelectedMedia(albumMedia[newIndex]);
+  };
+
+  const handleNextMedia = (e) => {
+    e.stopPropagation();
+    const currentIndex = albumMedia.indexOf(selectedMedia);
+    if (currentIndex === -1) return;
+    const newIndex = (currentIndex + 1) % albumMedia.length;
+    setSelectedMedia(albumMedia[newIndex]);
+  };
+
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } };
 
@@ -152,29 +173,50 @@ function WorkDetail() {
         <meta property="og:type" content="article" />
       </Helmet>
 
-      {/* 🖼️ Full-Res Immersive Overlay */}
       <AnimatePresence>
         {selectedMedia && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setSelectedMedia(null)}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.98)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", cursor: 'zoom-out', backdropFilter: 'blur(20px)' }}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: 'blur(15px)' }}
           >
-            {selectedMedia.match(/\.(mp4|webm|mov)$/i) ? (
-              <motion.video 
-                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
-                src={getFullUrl(selectedMedia)} 
-                controls autoPlay 
-                style={{ maxHeight: "90vh", maxWidth: "95vw", borderRadius: "10px", boxShadow: '0 0 100px rgba(0,0,0,1)' }} 
-                onClick={(e) => e.stopPropagation()} 
-              />
-            ) : (
-              <motion.img 
-                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
-                src={getFullUrl(selectedMedia)} 
-                style={{ maxHeight: "90vh", maxWidth: "95vw", borderRadius: "10px", boxShadow: '0 0 100px rgba(0,0,0,1)' }} 
-                onClick={(e) => e.stopPropagation()} 
-              />
+            {/* ❌ Close Button */}
+            <button onClick={() => setSelectedMedia(null)} style={{ position: 'absolute', top: '30px', right: '30px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '50px', height: '50px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', zIndex: 10001 }}><FiX /></button>
+
+            {/* ⬅️ Prev Button */}
+            {albumMedia.length > 1 && (
+              <button onClick={handlePrevMedia} style={{ position: 'absolute', left: '30px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '60px', height: '60px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', zIndex: 10001, transition: '0.3s' }} className="nav-btn-hover"><FiChevronLeft /></button>
+            )}
+
+            <div style={{ position: 'relative', maxWidth: "90vw", maxHeight: "85vh", display: 'flex', justifyContent: 'center' }}>
+              {selectedMedia.match(/\.(mp4|webm|mov)$/i) ? (
+                <motion.video 
+                  key={selectedMedia}
+                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
+                  src={getFullUrl(selectedMedia)} 
+                  controls autoPlay 
+                  style={{ maxHeight: "85vh", maxWidth: "90vw", borderRadius: "20px", boxShadow: '0 30px 100px rgba(0,0,0,1)' }} 
+                  onClick={(e) => e.stopPropagation()} 
+                />
+              ) : (
+                <motion.img 
+                  key={selectedMedia}
+                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
+                  src={getFullUrl(selectedMedia)} 
+                  style={{ maxHeight: "85vh", maxWidth: "90vw", borderRadius: "20px", boxShadow: '0 30px 100px rgba(0,0,0,1)' }} 
+                  onClick={(e) => e.stopPropagation()} 
+                />
+              )}
+              
+              {/* Media Index Indicator */}
+              <div style={{ position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', fontWeight: '700', letterSpacing: '2px' }}>
+                {albumMedia.indexOf(selectedMedia) + 1} / {albumMedia.length}
+              </div>
+            </div>
+
+            {/* ➡️ Next Button */}
+            {albumMedia.length > 1 && (
+              <button onClick={handleNextMedia} style={{ position: 'absolute', right: '30px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '60px', height: '60px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', zIndex: 10001, transition: '0.3s' }} className="nav-btn-hover"><FiChevronRight /></button>
             )}
           </motion.div>
         )}
@@ -195,7 +237,7 @@ function WorkDetail() {
               {workIsVideo(work) ? (
                 <video src={getMediaUrl(work)} controls autoPlay muted loop style={{ width: '100%', display: 'block' }} />
               ) : (
-                <img src={getMediaUrl(work)} style={{ width: '100%', display: 'block', cursor: 'zoom-in' }} onClick={() => setSelectedMedia(getMediaUrl(work))} />
+                <img src={getMediaUrl(work)} style={{ width: '100%', display: 'block', cursor: 'zoom-in' }} onClick={() => setSelectedMedia(work.mainImage?.url || work.videoUrl || work.mediaUrl)} />
               )}
             </div>
 
@@ -436,6 +478,22 @@ function WorkDetail() {
         }
         @media (max-width: 1024px) {
           .work-detail-grid aside { position: static !important; }
+        }
+        .nav-btn-hover:hover {
+          background: rgba(255, 255, 255, 0.15) !important;
+          border-color: rgba(255, 255, 255, 0.3) !important;
+          transform: translateY(-50%) scale(1.1) !important;
+        }
+        @media (max-width: 768px) {
+          .nav-btn-hover {
+            width: 45px !important;
+            height: 45px !important;
+            font-size: 1.2rem !important;
+            left: 10px !important;
+          }
+          .nav-btn-hover:last-of-type {
+            right: 10px !important;
+          }
         }
       `}</style>
     </motion.div>
