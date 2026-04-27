@@ -20,151 +20,110 @@ export const topupWallet = async (req, res) => {
       return res.status(400).json({ message: 'กรุณาระบุจำนวนเงินที่ถูกต้อง' });
     }
     if (!req.file) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         status: 'ANOMALY',
         code: 'MISSING_FILE',
-        message: 'กรุณาแนบสลิปโอนเงินเพื่อดำเนินการต่อ' 
+        message: 'กรุณาแนบสลิปโอนเงินเพื่อดำเนินการต่อ'
       });
     }
 
-    // ── STEP 1: Get buffer from memory storage ──
-    // MemoryStorage gives req.file.buffer directly - no disk needed!
-    const fileBuffer = req.file.buffer;
-    if (!fileBuffer || fileBuffer.length === 0) {
-      throw new Error("ไม่สามารถอ่านข้อมูลไฟล์สลิปได้ (ไฟล์ว่างเปล่า)");
-    }
-    console.log(`📎 Buffer size: ${fileBuffer.length} bytes, type: ${req.file.mimetype}`);
+    // ── อัปโหลดสลิปขึ้น GCS เพื่อเก็บเป็นหลักฐานถาวร ──
+    const slipUrl = await uploadToGCS(req.file);
+
+    // 🛡️ [FIX] Multer DiskStorage doesn't provide buffer. We must read it from path.
+    const fileBuffer = req.file.buffer || (req.file.path ? fs.readFileSync(req.file.path) : null);
+
+    if (!fileBuffer) throw new Error("ไม่สามารถอ่านข้อมูลไฟล์สลิปได้");
 
     const apiKey = EASYSLIP_API_KEY();
     if (!apiKey) {
       return res.status(500).json({ message: 'ระบบยังไม่ได้ตั้งค่า EasySlip API Key' });
     }
 
-    // ── STEP 2: Send buffer DIRECTLY to EasySlip (No GCS needed!) ──
-    let slipData = null;
-    let lastErrorMsg = '';
+    // ── STEP 1: Try to scan QR Code locally ──
+    const qrPayload = await scanQRFromBuffer(fileBuffer);
 
-    // Method A: Scan QR Code from buffer, send payload (fastest)
-    try {
-      const qrPayload = await scanQRFromBuffer(fileBuffer);
-      if (qrPayload) {
-        console.log('🚀 [Method A] Sending QR payload to EasySlip v2...');
-        const resp = await axios.post(
+    // ── STEP 2: Call EasySlip API ──
+    let slipData;
+
+    if (qrPayload) {
+      // Method A: Send QR payload as JSON (most reliable)
+      console.log('🚀 Calling EasySlip v2 with QR payload...');
+      try {
+        const response = await axios.post(
           'https://developer.easyslip.com/api/v2/verify',
           { payload: qrPayload },
           {
             headers: {
-              Authorization: `Bearer ${apiKey}`,
+              Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
               'Content-Type': 'application/json',
             },
-            timeout: 15000
           }
         );
-        slipData = resp.data;
-        console.log('✅ [Method A] Success');
-      }
-    } catch (qrErr) {
-      lastErrorMsg = qrErr.response?.data?.message || qrErr.message;
-      console.warn('⚠️ [Method A] Failed:', lastErrorMsg);
-    }
-
-    // Method B: Send buffer as multipart to EasySlip v2
-    if (!slipData) {
-      try {
-        console.log('🚀 [Method B] Sending image buffer to EasySlip v2...');
-        const formData = new FormData();
-        formData.append('file', fileBuffer, {
-          filename: req.file.originalname || 'slip.jpg',
-          contentType: req.file.mimetype || 'image/jpeg',
-        });
-        const resp = await axios.post(
-          'https://developer.easyslip.com/api/v2/verify',
-          formData,
-          {
-            headers: {
-              ...formData.getHeaders(),
-              Authorization: `Bearer ${apiKey}`,
-            },
-            timeout: 20000
-          }
-        );
-        slipData = resp.data;
-        console.log('✅ [Method B] Success');
-      } catch (v2Err) {
-        lastErrorMsg = v2Err.response?.data?.message || v2Err.message;
-        console.warn('⚠️ [Method B] Failed:', lastErrorMsg);
+        slipData = response.data;
+        console.log('📋 EasySlip (QR) response:', JSON.stringify(slipData, null, 2));
+      } catch (e) {
+        console.warn('⚠️  QR payload method failed, trying image fallback...', e.response?.data || e.message);
+        slipData = null;
       }
     }
 
-    // Method C: Send buffer as multipart to EasySlip v1 (fallback)
     if (!slipData) {
+      // Method B: Multipart image upload (fallback)
+      console.log('🚀 Calling EasySlip v1 with image upload...');
       try {
-        console.log('🚀 [Method C] Sending image buffer to EasySlip v1...');
-        const formData = new FormData();
-        formData.append('file', fileBuffer, {
+        const formDataV1 = new FormData();
+        formDataV1.append('file', fileBuffer, {
           filename: req.file.originalname || 'slip.jpg',
           contentType: req.file.mimetype || 'image/jpeg',
         });
-        const resp = await axios.post(
+
+        const response = await axios.post(
           'https://developer.easyslip.com/api/v1/verify',
-          formData,
+          formDataV1,
           {
             headers: {
-              ...formData.getHeaders(),
-              Authorization: `Bearer ${apiKey}`,
+              ...formDataV1.getHeaders(),
+              Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
             },
-            timeout: 20000
           }
         );
-        slipData = resp.data;
-        console.log('✅ [Method C] Success');
+        slipData = response.data;
+        console.log('📋 EasySlip (v1-image) response:', JSON.stringify(slipData, null, 2));
       } catch (v1Err) {
-        lastErrorMsg = v1Err.response?.data?.message || v1Err.message;
-        console.warn('⚠️ [Method C] Failed:', lastErrorMsg);
+        console.error('❌ EasySlip v1 failed:', v1Err.response?.data || v1Err.message);
+        // If both failed, we let the validation below handle the null slipData
+        slipData = null;
       }
     }
 
     if (!slipData) {
-       return res.status(400).json({
-          status: 'ANOMALY',
-          code: 'VERIFICATION_FAILED',
-          message: `ไม่สามารถตรวจสอบสลิปได้: ${lastErrorMsg}`,
-       });
-    }
-
-    // ── [Background] Upload slip to GCS for record-keeping (non-blocking) ──
-    let slipUrl = 'local-buffer';
-    try {
-      // Convert buffer back to a file-like object for GCS
-      const tempPath = path.join(process.cwd(), 'uploads/temp', `slip-${Date.now()}.jpg`);
-      const tempDir = path.dirname(tempPath);
-      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-      fs.writeFileSync(tempPath, fileBuffer);
-      const tempFileObj = { path: tempPath, originalname: req.file.originalname, mimetype: req.file.mimetype };
-      slipUrl = await uploadToGCS(tempFileObj);
-    } catch (gcsErr) {
-      console.warn('⚠️ GCS record-keeping failed (non-critical):', gcsErr.message);
+      return res.status(400).json({
+        status: 'ANOMALY',
+        code: 'VERIFICATION_FAILED',
+        message: 'ไม่สามารถตรวจสอบสลิปได้: ระบบอ่านข้อมูลในรูปภาพไม่สำเร็จ หรือ API ตรวจสอบสลิปขัดข้อง'
+      });
     }
 
     // ── STEP 3: Validate response ──
     const isSuccess = slipData?.status === 200 || slipData?.success === true;
     if (!isSuccess) {
       const errCode = slipData?.message || 'unknown_error';
-      return res.status(400).json({ 
-        status: 'ANOMALY', 
+      return res.status(400).json({
+        status: 'ANOMALY',
         code: 'VALIDATION_FAILED',
-        message: easyslipErrorMsg(errCode) 
+        message: easyslipErrorMsg(errCode)
       });
     }
 
     const { amount: actualAmount, transRef } = parseSlipData(slipData);
-    const receiverName = 
-      slipData?.data?.receiver?.displayName || 
-      slipData?.data?.receiver?.name || 
-      slipData?.data?.receiver?.account?.name?.th || 
-      slipData?.data?.receiver?.account?.name?.en || 
+    const receiverName =
+      slipData?.data?.receiver?.displayName ||
+      slipData?.data?.receiver?.name ||
+      slipData?.data?.receiver?.account?.name?.th ||
+      slipData?.data?.receiver?.account?.name?.en ||
       '';
-    
+
     console.log(`💰 Amount from slip: ${actualAmount}, Requested: ${numAmount}`);
     console.log(`🔑 TransRef: ${transRef}`);
     console.log(`🏦 Receiver: ${receiverName}`);
@@ -173,31 +132,33 @@ export const topupWallet = async (req, res) => {
       return res.status(400).json({ status: 'ANOMALY', code: 'READ_ERROR', message: 'ไม่สามารถอ่านยอดเงินจากสลิปนี้ได้' });
     }
 
-    // 🔒 [SECURITY] Check Receiver Name if configured (Lenient matching)
+    // 🔒 [SECURITY] Check Receiver Name if configured
     const EXPECTED_RECEIVER = process.env.PAYMENT_RECEIVER_NAME;
     if (EXPECTED_RECEIVER && receiverName) {
-      const cleanReceiver = receiverName.replace(/\s+/g, '').toLowerCase();
-      const cleanExpected = EXPECTED_RECEIVER.replace(/\s+/g, '').toLowerCase();
-      
-      const isMatch = cleanReceiver.includes(cleanExpected) || cleanExpected.includes(cleanReceiver);
-      
+      const isMatch = receiverName.toLowerCase().includes(EXPECTED_RECEIVER.toLowerCase());
       if (!isMatch) {
-         console.warn(`🚨 SECURITY ALERT: Receiver mismatch! Expected: ${EXPECTED_RECEIVER}, Got: ${receiverName}`);
-         
-         await AuditLog.create({
-           userId: req.user._id || req.user.id,
-           action: 'FRAUD_ATTEMPT',
-           severity: 'high',
-           details: { type: 'RECEIVER_MISMATCH', expected: EXPECTED_RECEIVER, got: receiverName, slipData },
-           ip: req.ip,
-           userAgent: req.headers['user-agent']
-         });
+        console.warn(`🚨 SECURITY ALERT: Receiver mismatch! Expected: ${EXPECTED_RECEIVER}, Got: ${receiverName}`);
 
-         return res.status(400).json({ 
-            status: 'ANOMALY', 
-            code: 'RECEIVER_MISMATCH',
-            message: `❌ ชื่อผู้รับในสลิป (${receiverName}) ไม่ตรงกับชื่อบริษัทในระบบ (${EXPECTED_RECEIVER}) กรุณาโอนเงินเข้าบัญชีที่ถูกต้อง` 
-         });
+        // 🛡️ Record Audit Log for Anomaly
+        await AuditLog.create({
+          userId: req.user._id || req.user.id,
+          action: 'FRAUD_ATTEMPT',
+          severity: 'high',
+          details: {
+            type: 'RECEIVER_MISMATCH',
+            expected: EXPECTED_RECEIVER,
+            got: receiverName,
+            slipData
+          },
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        });
+
+        return res.status(400).json({
+          status: 'ANOMALY',
+          code: 'RECEIVER_MISMATCH',
+          message: `❌ ชื่อผู้รับในสลิป (${receiverName}) ไม่ตรงกับบัญชีของระบบ กรุณาโอนเงินเข้าบัญชีที่กำหนดเท่านั้น`
+        });
       }
     }
 
@@ -229,16 +190,16 @@ export const topupWallet = async (req, res) => {
         userAgent: req.headers['user-agent']
       });
 
-      return res.status(400).json({ 
+      return res.status(400).json({
         status: 'ANOMALY',
         code: 'DUPLICATE_SLIP',
-        message: 'สลิปนี้ถูกใช้งานไปแล้วในระบบ ไม่สามารถเติมซ้ำได้' 
+        message: 'สลิปนี้ถูกใช้งานไปแล้วในระบบ ไม่สามารถเติมซ้ำได้'
       });
     }
 
     // ── STEP 4: Save & update balance (Atomic Transaction) ──
-    const coinsToAdd = numAmount / 10; 
-    
+    const coinsToAdd = numAmount / 10;
+
     // Start Session for Atomicity
     const mongoose = (await import('mongoose')).default;
     let session = null;
@@ -247,18 +208,18 @@ export const topupWallet = async (req, res) => {
       session.startTransaction();
     } catch (sErr) {
       console.warn('⚠️ MongoDB Sessions not supported (Local/Standalone). Proceeding without transaction.');
-      session = null; 
+      session = null;
     }
 
     try {
       const txData = {
-        user:      req.user._id || req.user.id,
-        type:      'TOPUP',
-        amount:    coinsToAdd,
-        status:    'completed',
-        slipUrl:   slipUrl,
+        user: req.user._id || req.user.id,
+        type: 'TOPUP',
+        amount: coinsToAdd,
+        status: 'completed',
+        slipUrl: slipUrl,
         reference: `EASYSLIP_${transRef}`,
-        transRef:  transRef,
+        transRef: transRef,
       };
 
       const tx = new Transaction(txData);
@@ -287,7 +248,7 @@ export const topupWallet = async (req, res) => {
       }
 
       return res.status(200).json({
-        message:     `เติมเงินสำเร็จ! คุณได้รับ ${coinsToAdd} Coins (จากการโอน ฿${numAmount})`,
+        message: `เติมเงินสำเร็จ! คุณได้รับ ${coinsToAdd} Coins (จากการโอน ฿${numAmount})`,
         coinBalance: updatedUser.coinBalance,
         transaction: tx,
       });
@@ -303,7 +264,7 @@ export const topupWallet = async (req, res) => {
   } catch (err) {
     const errDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
     console.error('❌ Wallet topup error:', errDetail);
-    
+
     // 🔥 [CRITICAL FIX] Ensure even system errors trigger the Anomaly Modal
     return res.status(400).json({
       status: 'ANOMALY',
@@ -336,17 +297,17 @@ export const requestWithdrawal = async (req, res) => {
     const numAmount = Number(amount);
 
     if (!numAmount || numAmount <= 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         status: 'ANOMALY',
         code: 'INVALID_AMOUNT',
-        message: 'กรุณาระบุจำนวนเหรียญที่ต้องการถอนที่ถูกต้อง' 
+        message: 'กรุณาระบุจำนวนเหรียญที่ต้องการถอนที่ถูกต้อง'
       });
     }
     if (!bankName || !accountName || !accountNumber) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         status: 'ANOMALY',
         code: 'MISSING_BANK_INFO',
-        message: 'กรุณากรอกข้อมูลบัญชีธนาคารสำหรับการถอนเงินให้ครบถ้วน' 
+        message: 'กรุณากรอกข้อมูลบัญชีธนาคารสำหรับการถอนเงินให้ครบถ้วน'
       });
     }
 
@@ -356,18 +317,18 @@ export const requestWithdrawal = async (req, res) => {
     // 🔒 [SECURITY] Check for existing pending withdrawal to prevent spamming
     const existingPending = await Transaction.findOne({ user: userId, type: 'WITHDRAW', status: 'pending' });
     if (existingPending) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         status: 'ANOMALY',
         code: 'PENDING_EXISTS',
-        message: 'คุณมีคำขอถอนเงินที่รอการอนุมัติอยู่แล้ว 1 รายการ กรุณารอให้รายการเดิมสำเร็จก่อนแจ้งถอนใหม่' 
+        message: 'คุณมีคำขอถอนเงินที่รอการอนุมัติอยู่แล้ว 1 รายการ กรุณารอให้รายการเดิมสำเร็จก่อนแจ้งถอนใหม่'
       });
     }
 
     if ((user.coinBalance || 0) < numAmount) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         status: 'ANOMALY',
         code: 'INSUFFICIENT_BALANCE',
-        message: `ยอด Coin ของคุณไม่เพียงพอสำหรับการถอน (มี ${user.coinBalance} Coins)` 
+        message: `ยอด Coin ของคุณไม่เพียงพอสำหรับการถอน (มี ${user.coinBalance} Coins)`
       });
     }
 
@@ -467,11 +428,9 @@ export const updateWithdrawalStatus = async (req, res) => {
         session.endSession();
       }
 
-      // ⚡ Emit Real-time Update to User
       const io = req.app.get('io');
       if (io && tx.user) {
         const uId = tx.user._id.toString();
-        // Fetch current user for accurate balance in socket
         const updatedUserObj = await User.findById(uId);
         if (updatedUserObj) {
           io.to(uId).emit('balance_update', {
@@ -481,7 +440,6 @@ export const updateWithdrawalStatus = async (req, res) => {
         }
       }
 
-      // 🛡️ Record Audit Log
       await AuditLog.create({
         action: 'WITHDRAWAL_APPROVAL',
         severity: 'low',
@@ -500,10 +458,10 @@ export const updateWithdrawalStatus = async (req, res) => {
         await session.abortTransaction();
         session.endSession();
       }
-      return res.status(400).json({ 
-        message: dbErr.message === 'INSUFFICIENT_BALANCE_DURING_APPROVAL' 
-          ? 'ยอด Coin ของผู้ใช้ไม่เพียงพอแล้ว (อาจถูกใช้งานไปก่อนหน้า)' 
-          : 'เกิดข้อผิดพลาดในการปรับสถานะรายการ' 
+      return res.status(400).json({
+        message: dbErr.message === 'INSUFFICIENT_BALANCE_DURING_APPROVAL'
+          ? 'ยอด Coin ของผู้ใช้ไม่เพียงพอแล้ว (อาจถูกใช้งานไปก่อนหน้า)'
+          : 'เกิดข้อผิดพลาดในการปรับสถานะรายการ'
       });
     }
 
@@ -513,9 +471,6 @@ export const updateWithdrawalStatus = async (req, res) => {
   }
 };
 
-// ──────────────────────────────────────────────
-// GET /api/wallet/admin/audit-logs (Admin)
-// ──────────────────────────────────────────────
 export const getAuditLogs = async (req, res) => {
   try {
     const logs = await AuditLog.find()
@@ -528,13 +483,7 @@ export const getAuditLogs = async (req, res) => {
   }
 };
 
-// ──────────────────────────────────────────────
-// HELPERS
-// ──────────────────────────────────────────────
 
-/**
- * แปลง Error Code จาก EasySlip เป็นข้อความภาษาไทยที่เข้าใจง่าย
- */
 function easyslipErrorMsg(code) {
   const msgs = {
     '101': 'API Key ไม่ถูกต้อง',
@@ -551,9 +500,6 @@ function easyslipErrorMsg(code) {
   return msgs[code] || `เกิดข้อผิดพลาด: ${code} (สลิปอาจไม่ถูกต้อง)`;
 }
 
-/**
- * สแกนหา QR Code จากรูปภาพ Buffer
- */
 async function scanQRFromBuffer(buffer) {
   try {
     const { default: sharp } = await import('sharp');
@@ -573,11 +519,7 @@ async function scanQRFromBuffer(buffer) {
   }
 }
 
-/**
- * แกะข้อมูลสำคัญ (ยอดเงิน, รหัสอ้างอิง) จาก API Response ของ EasySlip
- */
 function parseSlipData(slipData) {
-  // รองรับรูปแบบ payload ที่ต่างกันของ v1 และ v2
   const d = slipData.data || slipData;
   return {
     amount: d.amount?.amount || d.amount || 0,
