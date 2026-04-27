@@ -120,24 +120,22 @@ export const topupWallet = async (req, res) => {
       return res.status(400).json({ status: 'ANOMALY', code: 'READ_ERROR', message: 'ไม่สามารถอ่านยอดเงินจากสลิปนี้ได้' });
     }
 
-    // 🔒 [SECURITY] Check Receiver Name if configured
+    // 🔒 [SECURITY] Check Receiver Name if configured (Lenient matching)
     const EXPECTED_RECEIVER = process.env.PAYMENT_RECEIVER_NAME;
     if (EXPECTED_RECEIVER && receiverName) {
-      const isMatch = receiverName.toLowerCase().includes(EXPECTED_RECEIVER.toLowerCase());
+      const cleanReceiver = receiverName.replace(/\s+/g, '').toLowerCase();
+      const cleanExpected = EXPECTED_RECEIVER.replace(/\s+/g, '').toLowerCase();
+      
+      const isMatch = cleanReceiver.includes(cleanExpected) || cleanExpected.includes(cleanReceiver);
+      
       if (!isMatch) {
          console.warn(`🚨 SECURITY ALERT: Receiver mismatch! Expected: ${EXPECTED_RECEIVER}, Got: ${receiverName}`);
          
-         // 🛡️ Record Audit Log for Anomaly
          await AuditLog.create({
            userId: req.user._id || req.user.id,
            action: 'FRAUD_ATTEMPT',
            severity: 'high',
-           details: {
-             type: 'RECEIVER_MISMATCH',
-             expected: EXPECTED_RECEIVER,
-             got: receiverName,
-             slipData
-           },
+           details: { type: 'RECEIVER_MISMATCH', expected: EXPECTED_RECEIVER, got: receiverName, slipData },
            ip: req.ip,
            userAgent: req.headers['user-agent']
          });
@@ -145,7 +143,7 @@ export const topupWallet = async (req, res) => {
          return res.status(400).json({ 
             status: 'ANOMALY', 
             code: 'RECEIVER_MISMATCH',
-            message: `❌ ชื่อผู้รับในสลิป (${receiverName}) ไม่ตรงกับบัญชีของระบบ กรุณาโอนเงินเข้าบัญชีที่กำหนดเท่านั้น` 
+            message: `❌ ชื่อผู้รับในสลิป (${receiverName}) ไม่ตรงกับชื่อบริษัทในระบบ (${EXPECTED_RECEIVER}) กรุณาโอนเงินเข้าบัญชีที่ถูกต้อง` 
          });
       }
     }
