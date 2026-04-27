@@ -253,9 +253,13 @@ function Navbar() {
                       className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
                       onClick={() => setIsOpen(false)}
                     >
-                      <div className="p-item-icon">{link.icon}</div>
+                      <div className="p-item-icon">
+                        {link.icon}
+                        {link.name.includes('Notifications') && unreadCount > 0 && (
+                          <span className="p-nav-badge">{unreadCount}</span>
+                        )}
+                      </div>
                       <span className="p-item-label">{link.name}</span>
-                      {link.name === 'Notifications' && unreadCount > 0 && <span className="p-notif-count">{unreadCount}</span>}
                     </Link>
                   ))}
                 </div>
