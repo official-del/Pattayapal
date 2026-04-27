@@ -64,13 +64,14 @@ export const uploadToGCS = async (file) => {
             await bucket.upload(file.path, {
                 destination: gcsFileName,
                 gzip: true,
+                predefinedAcl: 'publicRead', // 🔓 [FIX] Allow EasySlip to access the image via URL
                 metadata: {
                     contentType: file.mimetype,
                 },
             });
             
             const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
-            console.log("✅ [GCS] Uploaded successfully:", publicUrl);
+            console.log("✅ [GCS] Uploaded & Made Public:", publicUrl);
             
             // ลบไฟล์ชั่วคราว
             if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
