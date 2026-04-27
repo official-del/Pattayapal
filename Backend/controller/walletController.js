@@ -39,88 +39,45 @@ export const topupWallet = async (req, res) => {
       return res.status(500).json({ message: 'ระบบยังไม่ได้ตั้งค่า EasySlip API Key' });
     }
 
-    // ── STEP 1: Try to scan QR Code locally ──
-    const qrPayload = await scanQRFromBuffer(fileBuffer);
-
-    // ── STEP 2: Call EasySlip API ──
-    let slipData;
-
+    // ── STEP 2: Call EasySlip API using URL (Most robust for Hosted Environments) ──
+    let slipData = null;
     let lastErrorMsg = '';
-    if (qrPayload) {
-      // Method A: Send QR payload as JSON (most reliable)
-      console.log('🚀 Calling EasySlip v2 with QR payload...');
-      try {
-        const response = await axios.post(
-          'https://developer.easyslip.com/api/v2/verify',
-          { payload: qrPayload },
-          {
-            headers: {
-              Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`, 
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        slipData = response.data;
-      } catch (e) {
-        lastErrorMsg = e.response?.data?.message || e.message;
-        console.warn('⚠️ QR payload method failed:', lastErrorMsg);
-        slipData = null;
-      }
-    }
 
-    if (!slipData) {
-      // Method B: EasySlip v2 Multipart image upload (Better than v1)
-      console.log('🚀 Calling EasySlip v2 with image upload...');
-      try {
-        const formDataV2 = new FormData();
-        formDataV2.append('file', fileBuffer, {
-          filename: req.file.originalname || 'slip.jpg',
-          contentType: req.file.mimetype || 'image/jpeg',
-        });
-
-        const response = await axios.post(
-          'https://developer.easyslip.com/api/v2/verify',
-          formDataV2,
-          {
-            headers: {
-              ...formDataV2.getHeaders(),
-              Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
-            },
-          }
-        );
-        slipData = response.data;
-      } catch (v2Err) {
-        lastErrorMsg = v2Err.response?.data?.message || v2Err.message;
-        console.warn('⚠️ EasySlip v2 image failed, trying v1 fallback...', lastErrorMsg);
-        slipData = null;
-      }
-    }
-
-    if (!slipData) {
-      // Method C: Multipart image upload (v1 fallback)
-      console.log('🚀 Calling EasySlip v1 with image upload...');
-      try {
-        const formDataV1 = new FormData();
-        formDataV1.append('file', fileBuffer, {
-          filename: req.file.originalname || 'slip.jpg',
-          contentType: req.file.mimetype || 'image/jpeg',
-        });
-
-        const response = await axios.post(
-          'https://developer.easyslip.com/api/v1/verify',
-          formDataV1,
-          {
-            headers: {
-              ...formDataV1.getHeaders(),
-              Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
-            },
-          }
-        );
-        slipData = response.data;
-      } catch (v1Err) {
-        lastErrorMsg = v1Err.response?.data?.message || v1Err.message;
-        console.error('❌ All EasySlip methods failed:', lastErrorMsg);
-        slipData = null; 
+    console.log('🚀 Calling EasySlip v2 via GCS URL:', slipUrl);
+    try {
+      const response = await axios.post(
+        'https://developer.easyslip.com/api/v2/verify',
+        { url: slipUrl },
+        {
+          headers: {
+            Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      slipData = response.data;
+    } catch (urlErr) {
+      lastErrorMsg = urlErr.response?.data?.message || urlErr.message;
+      console.warn('⚠️ EasySlip URL verification failed, trying fallback scan...', lastErrorMsg);
+      
+      // FALLBACK: If URL fails, try Method A: QR Payload
+      const qrPayload = await scanQRFromBuffer(fileBuffer);
+      if (qrPayload) {
+        try {
+          const response = await axios.post(
+            'https://developer.easyslip.com/api/v2/verify',
+            { payload: qrPayload },
+            {
+              headers: {
+                Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          slipData = response.data;
+        } catch (qrErr) {
+          lastErrorMsg = qrErr.response?.data?.message || qrErr.message;
+        }
       }
     }
 
@@ -130,7 +87,7 @@ export const topupWallet = async (req, res) => {
           code: 'VERIFICATION_FAILED',
           message: `ไม่สามารถตรวจสอบสลิปได้: ${lastErrorMsg} (กรุณาใช้สลิปที่มี QR Code ที่ชัดเจน)`,
           debug: {
-            qrDetected: !!qrPayload,
+            urlUsed: !!slipUrl,
             timestamp: new Date().toISOString()
           }
        });
