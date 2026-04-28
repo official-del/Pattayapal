@@ -8,26 +8,25 @@ import { useRef, useState, useEffect } from 'react';
 const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (!videoRef.current) return;
 
     if (isHovered) {
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          // Auto-play was prevented
-          console.log("Playback prevented:", error);
-        });
-      }
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(err => console.log("Play error:", err));
     } else {
       videoRef.current.pause();
-      // Reset to start or keep at current frame? 
-      // Resetting to 0 makes it feel more like a "preview"
-      videoRef.current.currentTime = 0;
+      videoRef.current.currentTime = 0.1;
     }
   }, [isHovered]);
+
+  const handleTimeUpdate = (e) => {
+    if (isHovered && e.target.currentTime >= 5) {
+      e.target.currentTime = 0;
+      e.target.play().catch(err => {});
+    }
+  };
 
   return (
     <div
@@ -38,6 +37,7 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
         height: '100%',
         overflow: 'hidden',
         cursor: 'pointer',
+        background: '#000',
         ...style
       }}
       onMouseEnter={() => setIsHovered(true)}
@@ -49,21 +49,21 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
         src={src}
         poster={poster}
         muted
-        loop
         playsInline
         preload="metadata"
-        onLoadedData={() => setIsLoaded(true)}
+        onTimeUpdate={handleTimeUpdate}
         style={{
           width: '100%',
           height: '100%',
           objectFit: 'cover',
           display: 'block',
-          transition: 'opacity 0.3s ease',
-          opacity: isLoaded ? 1 : 0
+          position: 'absolute',
+          inset: 0,
+          transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       />
 
-      {/* Optional: Play icon overlay when not hovered */}
+      {/* Play Icon Indicator */}
       {!isHovered && (
         <div style={{
           position: 'absolute',
@@ -73,20 +73,15 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
           justifyContent: 'center',
           background: 'rgba(0,0,0,0.1)',
           pointerEvents: 'none',
-          transition: 'opacity 0.3s ease'
+          zIndex: 3
         }}>
           <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.2)',
-            backdropFilter: 'blur(5px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid rgba(255,255,255,0.3)'
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '1px solid rgba(255,255,255,0.1)'
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
               <path d="M8 5v14l11-7z" />
             </svg>
           </div>

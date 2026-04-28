@@ -131,7 +131,7 @@ function WorkDetail() {
     <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', gap: '25px', textAlign: 'center' }}>
       <FiAlertTriangle size={50} color="var(--accent)" />
       <span style={{ fontWeight: '700', letterSpacing: '2px', fontSize: '1rem', color: '#fff' }}>PROJECT DATA UNREACHABLE</span>
-      <p style={{ color: '#444', maxWidth: '400px' }}>The creative parameters for this project could not be synced. Please check your uplink.</p>
+      <p style={{ color: '#444', maxWidth: '400px' }}>No Detail</p>
       <button onClick={() => window.location.reload()} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '15px', fontWeight: '700', cursor: 'pointer', marginTop: '10px' }}>RETRY SYNC</button>
     </div>
   );
@@ -165,7 +165,7 @@ function WorkDetail() {
       <Helmet>
         <title>{work?.title} | {work?.category?.name || 'Project'} | Pattayapal Portfolio</title>
         <meta name="description" content={work?.description?.substring(0, 160) || `ชมรายละเอียดโปรเจกต์ ${work?.title} บน Pattayapal`} />
-        
+
         {/* OpenGraph */}
         <meta property="og:title" content={`${work?.title} | Pattayapal Portfolio`} />
         <meta property="og:description" content={work?.description?.substring(0, 160)} />
@@ -178,7 +178,7 @@ function WorkDetail() {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setSelectedMedia(null)}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: 'blur(15px)' }}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: 'blur(10px)' }}
           >
             {/* ❌ Close Button */}
             <button onClick={() => setSelectedMedia(null)} style={{ position: 'absolute', top: '30px', right: '30px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '50px', height: '50px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', zIndex: 10001 }}><FiX /></button>
@@ -190,24 +190,24 @@ function WorkDetail() {
 
             <div style={{ position: 'relative', maxWidth: "90vw", maxHeight: "85vh", display: 'flex', justifyContent: 'center' }}>
               {selectedMedia.match(/\.(mp4|webm|mov)$/i) ? (
-                <motion.video 
+                <motion.video
                   key={selectedMedia}
-                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
-                  src={getFullUrl(selectedMedia)} 
-                  controls autoPlay 
-                  style={{ maxHeight: "85vh", maxWidth: "90vw", borderRadius: "20px", boxShadow: '0 30px 100px rgba(0,0,0,1)' }} 
-                  onClick={(e) => e.stopPropagation()} 
+                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                  src={getFullUrl(selectedMedia)}
+                  controls autoPlay
+                  style={{ maxHeight: "85vh", maxWidth: "90vw", borderRadius: "20px", boxShadow: '0 30px 100px rgba(0,0,0,1)' }}
+                  onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <motion.img 
+                <motion.img
                   key={selectedMedia}
-                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
-                  src={getFullUrl(selectedMedia)} 
-                  style={{ maxHeight: "85vh", maxWidth: "90vw", borderRadius: "20px", boxShadow: '0 30px 100px rgba(0,0,0,1)' }} 
-                  onClick={(e) => e.stopPropagation()} 
+                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                  src={getFullUrl(selectedMedia)}
+                  style={{ maxHeight: "85vh", maxWidth: "90vw", borderRadius: "20px", boxShadow: '0 30px 100px rgba(0,0,0,1)' }}
+                  onClick={(e) => e.stopPropagation()}
                 />
               )}
-              
+
               {/* Media Index Indicator */}
               <div style={{ position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', fontWeight: '700', letterSpacing: '2px' }}>
                 {albumMedia.indexOf(selectedMedia) + 1} / {albumMedia.length}
@@ -247,7 +247,7 @@ function WorkDetail() {
                 <FiZap color="var(--accent)" size={18} />
                 <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '1.3rem', letterSpacing: '5px' }}>Project Detail</span>
               </div>
-              <h3 className="work-title" style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', fontWeight: '700', margin: '0 0 35px', letterSpacing: '-3px', lineHeight: 0.9 }}>{work.title}</h3>
+              <h3 className="work-title" style={{ fontSize: 'clamp(2rem, 7vw, 4rem)', fontWeight: '500', margin: '0 0 35px', letterSpacing: '0px', lineHeight: 0.9 }}>{work.title}</h3>
               <div style={{ width: '60px', height: '4px', background: 'var(--accent)', marginBottom: '50px', borderRadius: '2px', boxShadow: '0 0 15px var(--accent-glow)' }}></div>
             </div>
 
@@ -270,7 +270,11 @@ function WorkDetail() {
                         {isVid ? (
                           <video src={getFullUrl(item.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <img src={getFullUrl(item.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img 
+                            src={getFullUrl(item.url)} 
+                            loading="lazy"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          />
                         )}
                         {isVid && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}><FiMaximize2 size={30} color="#fff" /></div>}
                       </motion.div>
@@ -290,8 +294,8 @@ function WorkDetail() {
                   <img src={work.createdBy?.profileImage?.url ? getFullUrl(work.createdBy.profileImage.url) : 'https://via.placeholder.com/65'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '2px' }}>Creator</span>
-                  <Link to={`/profile/${work.createdBy?._id || work.createdBy?.id}`} style={{ display: 'block', color: '#fff', fontSize: '1.5rem', fontWeight: '700', textDecoration: 'none', letterSpacing: '-0.5px', marginTop: '4px' }}>{work.createdBy?.name || 'Unknown'}</Link>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '1px' }}>Creator</span>
+                  <Link to={`/profile/${work.createdBy?._id || work.createdBy?.id}`} style={{ display: 'block', color: '#fff', fontSize: '1.5rem', fontWeight: '700', textDecoration: 'none', marginTop: '4px' }}>{work.createdBy?.name || 'Unknown'}</Link>
                 </div>
               </div>
 
@@ -301,7 +305,7 @@ function WorkDetail() {
                   <div className="glass" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: '15px', color: 'var(--accent)', fontWeight: '700', fontSize: '0.85rem', border: '1px solid rgba(255,87,51,0.1)' }}>{work.category?.name?.toUpperCase() || 'GENERAL'}</div>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#222', letterSpacing: '2px', display: 'block', marginBottom: '10px' }}>Description</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#222', letterSpacing: '1px', display: 'block', marginBottom: '10px' }}>Description</span>
                   <span style={{ color: '#fff', fontWeight: '700', fontSize: '1.2rem' }}>
                     <p style={{ fontSize: '1.25rem', lineHeight: 1.8, color: '#666', fontWeight: '500', maxWidth: '950px', whiteSpace: 'pre-wrap' }}>{work.description || "Project parameters not specified by the operative."}</p>
                   </span>
@@ -327,7 +331,7 @@ function WorkDetail() {
             <div style={{ marginTop: '60px', padding: '0 10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
                 <FiMessageSquare color="#222" size={16} />
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#222', letterSpacing: '4px' }}>Conversation</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#222', letterSpacing: '1px' }}>Conversation</span>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
@@ -412,8 +416,8 @@ function WorkDetail() {
         <div style={{ marginTop: '180px' }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <FiTarget color="var(--accent)" size={30} style={{ marginBottom: '20px' }} />
-            <h3 style={{ fontSize: '2.5rem', fontWeight: '700', color: '#fff', letterSpacing: '-1px' }}>You Might Like</h3>
-            <p style={{ color: '#222', fontWeight: '700', letterSpacing: '4px', fontSize: '1.2rem', marginTop: '10px' }}>More Like This</p>
+            <h3 style={{ fontSize: '2.5rem', fontWeight: '700', color: '#fff', letterSpacing: '1px' }}>You Might Like</h3>
+            <p style={{ color: '#222', fontWeight: '700', letterSpacing: '1px', fontSize: '1.2rem', marginTop: '10px' }}>More Like This</p>
           </div>
           <div className="recommendation-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '40px' }}>
             {recommendedWorks.map(rec => ( // <--- ตัวแปร rec จะถูกนิยามตรงนี้
@@ -423,22 +427,23 @@ function WorkDetail() {
 
                     {/* ส่วนนี้คือตำแหน่งที่แสดงสื่อ (Media) */}
                     <div style={{ aspectRatio: '16/10', borderRadius: '30px', overflow: 'hidden', background: '#0a0a0a', marginBottom: '25px' }}>
-                      {workIsVideo(rec) ? (
-                        <HoverVideoPlayer
-                          src={getMediaUrl(rec)}
-                          style={{ width: '100%', height: '100%' }}
-                        />
-                      ) : (
-                        <img
-                          src={getMediaUrl(rec)}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      )}
+                          {workIsVideo(rec) ? (
+                            <HoverVideoPlayer
+                              src={getMediaUrl(rec)}
+                              style={{ width: '100%', height: '100%' }}
+                            />
+                          ) : (
+                            <img
+                              src={getMediaUrl(rec)}
+                              loading="lazy"
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          )}
                     </div>
 
                     <div style={{ padding: '0 15px 15px' }}>
                       <span style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '2px' }}>{rec.category?.name?.toUpperCase()}</span>
-                      <h4 style={{ color: '#fff', margin: '8px 0 0', fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.5px' }}>{rec.title}</h4>
+                      <h4 style={{ color: '#fff', margin: '8px 0 0', fontSize: '1.5rem', fontWeight: '500', letterSpacing: '1px' }}>{rec.title}</h4>
                     </div>
                   </div>
                 </Link>

@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 
 // ✅ นำเข้าฟังก์ชันสุดเทพจาก Controller ที่เราเพิ่งแก้ไป
-import { register, login, getProfile } from '../controller/authController.js';
+import { register, login, getProfile, verifyEmail } from '../controller/authController.js';
 import { protect } from '../middleware/auth.js';
 import { uploadToGCS } from '../utils/gcs.js';
 import User from '../models/User.js';
@@ -23,6 +23,7 @@ const upload = multer({ dest: tempDir });
 router.post('/register', register);
 router.post('/login', login);
 router.get('/profile', protect, getProfile); // 👈 ตัวนี้แหละที่ Navbar จะวิ่งมาขอข้อมูลล่าสุด!
+router.get('/verify-email/:token', verifyEmail);
 
 
 // ==========================================

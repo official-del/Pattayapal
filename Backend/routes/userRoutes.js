@@ -4,7 +4,7 @@ import { uploadToGCS, deleteFromGCS } from '../utils/gcs.js';
 import fs from 'fs';
 import path from 'path';
 
-import { register, login, getProfile } from '../controller/authController.js';
+import { register, login, getProfile, verifyEmail } from '../controller/authController.js';
 import { protect, admin } from '../middleware/auth.js';
 import User from '../models/User.js';
 import {
@@ -35,6 +35,7 @@ const upload = multer({ dest: tempDir });
 router.post('/register', register);
 router.post('/login', login);
 router.get('/profile', protect, getProfile);
+router.get('/verify-email/:token', verifyEmail);
 
 // ==========================================
 // 📸 PROFILE IMAGE UPLOAD ROUTE

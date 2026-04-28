@@ -219,7 +219,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ==========================================
 // 2. ROUTES API (หลังจากผ่าน Middleware ด้านบนแล้ว)
 // ==========================================
-app.use('/api/users', userAuthRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/works', workRoutes);

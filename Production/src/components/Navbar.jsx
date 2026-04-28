@@ -9,9 +9,10 @@ import { notificationsAPI } from '../utils/api';
 import {
   FiMenu, FiX, FiBell, FiUser, FiMessageCircle, FiTrendingUp, FiLogOut, FiHome,
   FiBriefcase, FiZap, FiBox, FiUsers, FiLayers, FiMail, FiBookOpen, FiSettings, FiCamera, FiDollarSign, FiGlobe,
-  FiActivity, FiGrid, FiSearch
+  FiActivity, FiGrid, FiSearch, FiStar
 } from 'react-icons/fi';
 import { CoinIcon, CoinBadge } from './CoinIcon';
+import RankBadge from './RankBadge';
 import '../css/Navbar.css';
 import logo from '../assets/LOGO1.png';
 import { CONFIG } from '../utils/config';
@@ -141,7 +142,6 @@ function Navbar() {
 
   const otherLinks = [
     { name: 'Find Freelancers', href: '/freelancers', icon: <FiSearch /> },
-    { name: 'User Creations', href: '/works', icon: <FiLayers /> },
     { name: 'Messenger', href: '/messenger', icon: <FiMessageCircle /> },
     { name: 'Friends', href: '/friends', icon: <FiUsers /> },
   ];
@@ -187,9 +187,9 @@ function Navbar() {
 
       {/* 🛸 Neo-Cyber Premium Sidebar */}
       <AnimatePresence>
-        {(isOpen || window.innerWidth > 992) && (
+        {(isOpen || window.innerWidth > 1100) && (
           <>
-            {isOpen && window.innerWidth <= 992 && (
+            {isOpen && window.innerWidth <= 1100 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -200,9 +200,9 @@ function Navbar() {
             )}
 
             <motion.aside
-              initial={window.innerWidth <= 992 ? { x: '-100%' } : { x: 0 }}
+              initial={window.innerWidth <= 1100 ? { x: '-100%' } : { x: 0 }}
               animate={{ x: 0 }}
-              exit={window.innerWidth <= 992 ? { x: '-100%' } : { x: 0 }}
+              exit={window.innerWidth <= 1100 ? { x: '-100%' } : { x: 0 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className={`premium-sidebar-container ${isOpen ? 'm-open' : ''}`}
             >
@@ -217,64 +217,115 @@ function Navbar() {
               </div>
 
               {/* User Identity Section */}
-              {currentToken && (
-                <div className="p-user-section">
-                  <Link
-                    to={`/profile/${userId}`}
-                    className="p-identity-card"
-                    onClick={() => setIsOpen(false)}
-                    style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}
-                  >
-                    <div className="p-avatar-wrapper">
-                      {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
-                        <img
-                          src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage) + `?t=${profileUpdateTag}`}
-                          alt=""
-                        />
-                      ) : <FiUser />}
-                      <div className="p-status-dot"></div>
-                    </div>
-                    <div className="p-user-info">
-                      <span className="p-name">{userInfo.name}</span>
-                      <span className="p-role">{userInfo.role || 'Member'}</span>
-                    </div>
-                  </Link>
-                </div>
-              )}
+              {currentToken && userInfo && (() => {
+                const points = userInfo.points || 0;
+                const rankName = userInfo.rank || 'Bronze';
+
+                const thresholds = {
+                  Bronze: { min: 0, max: 1000 },
+                  Silver: { min: 1001, max: 5000 },
+                  Gold: { min: 5001, max: 20000 },
+                  Platinum: { min: 20001, max: 100000 },
+                  Diamond: { min: 100001, max: 500000 },
+                  Conqueror: { min: 500001, max: 1000000 },
+                };
+
+                const rankLevels = {
+                  Bronze: 1, Silver: 2, Gold: 3, Platinum: 4, Diamond: 5, Conqueror: 6
+                };
+
+                const thresh = thresholds[rankName] || thresholds.Bronze;
+                const progress = Math.min(100, Math.max(0, ((points - thresh.min) / (thresh.max - thresh.min)) * 100));
+                const level = rankLevels[rankName] || 1;
+
+                return (
+                  <div className="p-user-section">
+                    <Link
+                      to={`/profile/${userId}`}
+                      onClick={() => setIsOpen(false)}
+                      className="p-identity-link"
+                    >
+                      {/* Medium Avatar with Progress Ring */}
+                      <div className="p-avatar-ring-wrapper">
+                        {/* Progress Ring */}
+                        <div style={{
+                          position: 'absolute', inset: 0,
+                          borderRadius: '50%',
+                          background: `conic-gradient(var(--accent) ${progress}%, rgba(255,255,255,0.1) 0)`
+                        }} />
+                        <div style={{
+                          position: 'absolute', inset: '3px',
+                          borderRadius: '50%', background: '#000'
+                        }} />
+                        {/* Avatar Image */}
+                        <div className="p-avatar-image-inner">
+                          {userInfo?.profileImage?.url || (typeof userInfo?.profileImage === 'string' && userInfo?.profileImage) ? (
+                            <img
+                              src={getFullUrl(userInfo.profileImage.url || userInfo.profileImage) + `?t=${profileUpdateTag}`}
+                              alt={userInfo.name}
+                            />
+                          ) : (
+                            <div className="p-avatar-placeholder">
+                              <FiUser size={20} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Rank Badge (Top Right) */}
+                        <div className="p-rank-badge-navbar">
+                          <RankBadge rank={rankName} showName={false} size="sm" />
+                        </div>
+                      </div>
+
+                      {/* Right: Text Info */}
+                      <div className="p-user-info">
+                        <div className="p-name">
+                          {userInfo.name || 'ANOTHERWAY'}
+                        </div>
+                        <div className="p-role">
+                          RANK: {rankName.toUpperCase()}
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })()}
 
               {/* Navigation Engine */}
               <div className="p-nav-engine">
                 <div className="p-nav-group">
-                  <span className="p-group-label">OPERATIONS</span>
+                  {/* <span className="p-group-label">OPERATIONS</span> */}
                   {navLinks.map((link, idx) => (
                     <Link
                       key={idx}
                       to={link.href}
                       className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
                       onClick={() => setIsOpen(false)}
+                      style={{ padding: '12px 20px', gap: '15px' }}
                     >
-                      <div className="p-item-icon">
+                      <div className="p-item-icon" style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
                         {link.icon}
                         {link.name.includes('Notifications') && unreadCount > 0 && (
-                          <span className="p-nav-badge">{unreadCount}</span>
+                          <span className="p-nav-badge" style={{ position: 'absolute', top: '-5px', right: '-5px' }}>{unreadCount}</span>
                         )}
                       </div>
-                      <span className="p-item-label">{link.name}</span>
+                      <span className="p-item-label" style={{ fontSize: '0.9rem', fontWeight: '500' }}>{link.name}</span>
                     </Link>
                   ))}
                 </div>
 
-                <div className="p-nav-group">
-                  <span className="p-group-label">DISCOVERY</span>
+                <div className="p-nav-group" style={{ marginTop: '10px' }}>
+                  {/* <span className="p-group-label">DISCOVERY</span> */}
                   {otherLinks.map((link, idx) => (
                     <Link
                       key={idx}
                       to={link.href}
                       className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
                       onClick={() => setIsOpen(false)}
+                      style={{ padding: '12px 20px', gap: '15px' }}
                     >
-                      <div className="p-item-icon">{link.icon}</div>
-                      <span className="p-item-label">{link.name}</span>
+                      <div className="p-item-icon" style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>{link.icon}</div>
+                      <span className="p-item-label" style={{ fontSize: '0.9rem', fontWeight: '500' }}>{link.name}</span>
                     </Link>
                   ))}
                 </div>

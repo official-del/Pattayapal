@@ -7,6 +7,12 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['user', 'client', 'freelancer', 'admin'], default: 'user' },
+  
+  // ✉️ [NEW] Email Verification
+  isEmailVerified: { type: Boolean, default: false },
+  verificationToken: { type: String },
+  verificationTokenExpires: { type: Date },
+
   // ✅ ระบบ Role & Community
   profession: { 
     type: String, 

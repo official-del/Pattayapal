@@ -1,22 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { worksAPI } from '../utils/api';
 import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
-import { FiArrowUpRight, FiClock, FiUser, FiLoader, FiGrid, FiLayers, FiSearch, FiZap, FiLayout, FiActivity, FiAlertTriangle } from 'react-icons/fi';
+import { FiLoader, FiAlertTriangle, FiArrowRight } from 'react-icons/fi';
 import Footer from '../components/Footer';
 import HoverVideoPlayer from '../components/HoverVideoPlayer';
 import { useSocket } from '../context/SocketContext';
 
-const FILTERS = ['All', 'Productions', 'Online Marketing', 'Graphic Design', 'Web Application', 'Motion Graphic', 'Photography'];
+const FILTERS = [
+  'All', 'Productions', 'Online Marketing', 'Graphic Design',
+  'Web Application', 'Motion Graphic', 'Photography',
+  'Videography', 'Content Creator', 'Editing', 'Production',
+  'VFX & Animation', 'Digital Art'
+];
 
 function Works() {
+  const [searchParams] = useSearchParams();
   const [works, setWorks] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [activeFilter, setActive] = useState('All');
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
-  const [visible, setVisible] = useState(8);
   const { socket } = useSocket();
 
   useEffect(() => {
@@ -24,9 +29,19 @@ function Works() {
       try {
         setLoading(true);
         const res = await worksAPI.getAll();
-        const published = (res.works || []).filter(w => w.status === 'published');
+        const data = res.works || res || [];
+        const published = Array.isArray(data) ? data.filter(w => w.status === 'published') : [];
         setWorks(published);
-        setFiltered(published);
+
+        const catParam = searchParams.get('category');
+        if (catParam) {
+          setActive(catParam);
+          setFiltered(published.filter(w => w.category?.name === catParam));
+        } else {
+          setActive('All');
+          setFiltered(published);
+        }
+
         setFetchError(false);
       } catch (err) {
         console.error('Failed to fetch works:', err);
@@ -37,266 +52,372 @@ function Works() {
     };
     fetchWorks();
     window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-    if (!socket) return;
-    const handleWorkUpdate = (data) => {
-      if (!data || !data.work) {
-        if (data?.action === 'delete' && data.workId) {
-          setWorks(prev => prev.filter(w => w._id !== data.workId));
-          setFiltered(prev => prev.filter(w => w._id !== data.workId));
-        }
-        return;
-      }
-
-      const updatedWork = data.work;
-      if (data.action === 'create' && updatedWork.status === 'published') {
-        setWorks(prev => [updatedWork, ...prev]);
-        setFiltered(prev => (activeFilter === 'All' || activeFilter === updatedWork.category?.name) ? [updatedWork, ...prev] : prev);
-      } else if (data.action === 'update') {
-        if (updatedWork.status !== 'published') {
-          // If it was unpublished
-          setWorks(prev => prev.filter(w => w._id !== updatedWork._id));
-          setFiltered(prev => prev.filter(w => w._id !== updatedWork._id));
-        } else {
-          setWorks(prev => {
-            const idx = prev.findIndex(w => w._id === updatedWork._id);
-            if (idx > -1) {
-              const newArr = [...prev];
-              newArr[idx] = updatedWork;
-              return newArr;
-            }
-            return [updatedWork, ...prev]; // if not found but is published now
-          });
-          setFiltered(prev => {
-            if (activeFilter !== 'All' && activeFilter !== updatedWork.category?.name) {
-              return prev.filter(w => w._id !== updatedWork._id);
-            }
-            const idx = prev.findIndex(w => w._id === updatedWork._id);
-            if (idx > -1) {
-              const newArr = [...prev];
-              newArr[idx] = updatedWork;
-              return newArr;
-            }
-            return [updatedWork, ...prev];
-          });
-        }
-      }
-    };
-
-    socket.on('work_updated', handleWorkUpdate);
-    return () => socket.off('work_updated', handleWorkUpdate);
-  }, [socket, activeFilter]);
+  }, [searchParams]);
 
   const handleFilter = (cat) => {
     setActive(cat);
-    setVisible(8);
     setFiltered(cat === 'All' ? works : works.filter(w => w.category?.name === cat));
   };
 
-  const totalVisible = filtered.slice(0, visible);
-  const hasMore = visible < filtered.length;
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
 
-  const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const itemVariants = { hidden: { opacity: 0, scale: 0.9, y: 30 }, show: { opacity: 1, scale: 1, y: 0 } };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] } }
+  };
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', color: '#fff' }}>
-      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 5%' }}>
+    <div className="works-main-container">
+      <div className="works-content-wrapper">
 
-        {/* 🚀 Cinematic Hero Section */}
-        <motion.header
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ padding: '100px 0 60px' }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '40px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <FiZap color="var(--accent)" size={16} />
-                <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.7rem', letterSpacing: '3px' }}>WORK STATION</span>
-              </div>
-              <div className="main-text">
-                <h1 style={{ fontSize: 'clamp(6rem, 10vw, 6rem)', fontWeight: '700', margin: 0, letterSpacing: '2px', lineHeight: 0.9 }}>USER<br /><span style={{ color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.2)', fontSize: 'clamp(2rem, 4vw, 3rem)' }}>CREATIONS</span></h1>
-              </div>
-            </div>
-            <div style={{ maxWidth: '400px', paddingBottom: '10px' }}>
-              <p style={{ color: '#888', lineHeight: 1.7, fontSize: '1.1rem', marginBottom: '25px', fontWeight: '400' }}>
-                Exploring the intersection of digital craft and cinematic storytelling. A selection of projects that push the boundaries of modern production.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div className="glass" style={{ padding: '12px 24px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#fff', lineHeight: 1 }}>{works.length}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '700', letterSpacing: '2px', lineHeight: 1.2 }}>TOTAL<br />PROJECTS</div>
-                </div>
+        {/* 🏆 Showcase Header */}
+        <header className="works-header">
+          <div className="header-badge">
+            <div className="badge-line" />
+            <span className="badge-text">SHOWCASE</span>
+          </div>
+          <div className="header-main">
+            <h1 className="header-title">
+              {activeFilter === 'All' ? 'ALL PROJECTS' : activeFilter}
+            </h1>
+            <div className="header-action hide-mobile">
+              <span className="action-text">VIEW ALL PROJECTS</span>
+              <div className="action-circle">
+                <FiArrowRight size={18} />
               </div>
             </div>
           </div>
-        </motion.header>
+        </header>
 
-        {/* 🧬 Holographic Filtering Console */}
-        <motion.nav
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          style={{
-            display: 'flex', gap: '8px', padding: '10px 0',
-            marginBottom: '60px', overflowX: 'auto', whiteSpace: 'nowrap',
-            scrollbarWidth: 'none', msOverflowStyle: 'none'
-          }}
-        >
+        {/* 🧬 Filter Navigation */}
+        <nav className="filter-nav">
           {FILTERS.map(f => (
-            <motion.button
+            <button
               key={f}
-              whileTap={{ scale: 0.98 }}
               onClick={() => handleFilter(f)}
-              style={{
-                background: activeFilter === f ? 'var(--accent)' : 'rgba(255,255,255,0.03)',
-                color: activeFilter === f ? '#fff' : '#888',
-                padding: '12px 24px', borderRadius: '15px', cursor: 'pointer',
-                border: activeFilter === f ? 'none' : '1px solid rgba(255,255,255,0.05)',
-                fontSize: '0.85rem', fontWeight: '700', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', letterSpacing: '0.5px'
-              }}
-              whileHover={{
-                scale: 1.02,
-                ...(activeFilter !== f ? { background: 'rgba(255,255,255,0.08)', color: '#fff' } : {})
-              }}
+              className={`filter-btn ${activeFilter === f ? 'active' : ''}`}
             >
               {f}
-            </motion.button>
+            </button>
           ))}
-        </motion.nav>
+        </nav>
 
-        {/* 🎬 Cinematic Project Grid */}
+        {/* 🎬 Showcase Grid (Bento Style 4 Columns) */}
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '150px', gap: '20px' }}>
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '40px', height: '40px', border: '3px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }} />
-            <span style={{ fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem', color: '#666' }}>SYNCING ARCHIVE...</span>
+          <div className="works-loader">
+            <FiLoader className="spin" size={50} color="var(--accent)" />
           </div>
-        ) : fetchError ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '150px', gap: '20px', textAlign: 'center' }}>
-            <FiAlertTriangle size={50} color="var(--accent)" />
-            <span style={{ fontWeight: '700', letterSpacing: '2px', fontSize: '1rem', color: '#fff' }}>CONNECTION INTERRUPTED</span>
-            <p style={{ color: '#444', maxWidth: '400px' }}>The creative uplink was refused. Please check your network or reboot the service.</p>
-            <button onClick={() => window.location.reload()} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '15px', fontWeight: '700', cursor: 'pointer', marginTop: '10px' }}>RETRY CONNECTION</button>
-          </div>
-        ) : (
+        ) : filtered.length > 0 ? (
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))',
-              gap: '40px 30px', paddingBottom: '100px'
-            }}
+            className="works-grid"
           >
-            <AnimatePresence mode="popLayout">
-              {totalVisible.map((work) => {
-                const mediaUrl = getMediaUrl(work);
-                const isVideo = workIsVideo(work);
+            {filtered.map((work, index) => {
+              const mediaUrl = getMediaUrl(work);
+              const isVideo = workIsVideo(work);
+              // Layout Logic: โปรเจกต์แรกของทุกๆ 5 อันจะใหญ่ (Span 2x2)
+              const isLarge = index % 5 === 0;
 
-                return (
-                  <motion.div
-                    layout
-                    key={work._id}
-                    variants={itemVariants}
-                    style={{ position: 'relative' }}
-                  >
-                    <Link to={`/works/${work._id}`} style={{ textDecoration: 'none' }}>
-                      <motion.div
-                        whileHover={{ y: -10 }}
-                        className="glass-card"
-                        style={{
-                          padding: '15px', borderRadius: '28px', overflow: 'hidden',
-                          height: '100%', display: 'flex', flexDirection: 'column'
-                        }}
-                      >
+              return (
+                <motion.div
+                  key={work._id}
+                  variants={itemVariants}
+                  className={`showcase-card ${isLarge ? 'card-large' : ''}`}
+                >
+                  <Link to={`/works/${work._id}`}>
+                    <div className="card-inner">
+                      {isVideo ? (
+                        <HoverVideoPlayer
+                          src={mediaUrl}
+                          poster={typeof work.mainImage === 'string' ? getFullUrl(work.mainImage) : (work.mainImage?.url ? getFullUrl(work.mainImage.url) : '')}
+                          className="card-media"
+                        />
+                      ) : (
+                        <img
+                          src={mediaUrl}
+                          loading="lazy"
+                          className="card-media showcase-img"
+                          alt={work.title}
+                        />
+                      )}
 
-                        {/* 🖼️ Immersive Media Display */}
-                        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', borderRadius: '20px', overflow: 'hidden', background: '#080808' }}>
-                          <div style={{ position: 'absolute', top: '15px', left: '15px', zIndex: 10 }}>
-                            <div style={{
-                              padding: '6px 12px', borderRadius: '10px', background: 'rgba(0,0,0,0.5)',
-                              backdropFilter: 'blur(10px)', color: '#fff', fontSize: '0.6rem',
-                              fontWeight: '700', letterSpacing: '1.5px', border: '1px solid rgba(255,255,255,0.1)'
-                            }}>
-                              {work.category?.name?.toUpperCase() || 'GENERAL'}
-                            </div>
+                      <div className="showcase-overlay">
+                        <div className="overlay-content">
+                          <div className="overlay-cat">
+                            {work.category?.name?.toUpperCase() || 'GRAPHIC DESIGN'}
                           </div>
-
-                          <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                            style={{ width: '100%', height: '100%' }}
-                          >
-                            {isVideo ? (
-                              <HoverVideoPlayer src={mediaUrl} style={{ width: '100%', height: '100%' }} />
-                            ) : (
-                              <img src={mediaUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={work.title} />
-                            )}
-                          </motion.div>
-
-                          <motion.div
-                            initial={{ opacity: 0 }} whileHover={{ opacity: 1 }}
-                            style={{
-                              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)',
-                              backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center',
-                              justifyContent: 'center', transition: '0.3s'
-                            }}
-                          >
-                            <div className="glass" style={{ width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                              <FiArrowUpRight size={20} />
-                            </div>
-                          </motion.div>
-                        </div>
-
-                        {/* 📝 Tactical Intelligence Panel */}
-                        <div style={{ padding: '20px 10px 10px' }}>
-                          <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#fff', margin: '0 0 12px', letterSpacing: '-0.5px', lineHeight: 1.2 }}>{work.title}</h3>
-
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#111', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-                                {work.createdBy?.profileImage?.url ?
-                                  <img src={getFullUrl(work.createdBy.profileImage.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> :
-                                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: '#333', fontSize: '0.7rem' }}><FiUser /></div>
-                                }
-                              </div>
-                              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#888' }}>{work.createdBy?.name || 'Anonymous'}</span>
-                            </div>
-                            <div style={{ color: '#222', fontSize: '0.8rem' }}>
-                              <FiActivity />
-                            </div>
+                          <h6 className="overlay-title">
+                            {work.title}
+                          </h6>
+                          <div className="overlay-action">
+                            <span className="action-label">
+                              EXPLORE PROJECT <FiArrowRight size={14} style={{ marginLeft: '4px' }} />
+                            </span>
                           </div>
                         </div>
-                      </motion.div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+                      </div>
+
+                      {/* NEW Badge */}
+                      {new Date(work.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
+                        <div className="new-badge">NEW</div>
+                      )}
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </motion.div>
-        )}
-
-        {/* 📡 Grid Expansion (Load More) */}
-        {hasMore && !loading && (
-          <div style={{ paddingBottom: '150px', display: 'flex', justifyContent: 'center' }}>
-            <motion.button
-              whileHover={{ scale: 1.02, background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff' }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setVisible(v => v + 6)}
-              style={{
-                padding: '18px 50px', borderRadius: '15px', color: '#888',
-                fontWeight: '700', letterSpacing: '2px', fontSize: '0.85rem', cursor: 'pointer',
-                border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', transition: '0.3s'
-              }}
-            >
-              LOAD MORE ARCHIVES
-            </motion.button>
+        ) : (
+          <div className="works-empty">
+            <FiAlertTriangle size={50} color="#333" style={{ marginBottom: '20px' }} />
+            <h2 className="empty-text">NO PROJECTS IN THIS CATEGORY</h2>
           </div>
         )}
       </div>
+
+      {/* CSS Styles */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800;900&display=swap');
+
+        :root {
+          --accent: #ff6b35; /* Primary Orange */
+          --bg-color: #050505;
+        }
+
+        .works-main-container {
+          background: var(--bg-color);
+          min-height: 100vh;
+          color: #fff;
+          padding: clamp(80px, 8vh, 100px) clamp(20px, 5vw, 60px) 40px;
+          font-family: 'Inter', sans-serif;
+        }
+
+        @media (min-width: 1501px) {
+          .works-main-container { padding-left: 110px !important; }
+        }
+
+        .works-content-wrapper { 
+          maxWidth: 1600px; 
+          margin: 0 auto; 
+          padding: 0 4%; 
+        }
+        
+        /* ── HEADER ── */
+        .works-header { 
+          padding: 60px 0 30px; 
+          border-bottom: 1px solid rgba(255,255,255,0.1); 
+          margin-bottom: 50px; 
+        }
+        .header-badge { 
+          display: flex; 
+          align-items: center; 
+          gap: 12px; 
+          margin-bottom: 15px; 
+        }
+        .badge-line { 
+          width: 3px; 
+          height: 16px; 
+          background: var(--accent); 
+        }
+        .badge-text { 
+          font-size: 0.85rem; 
+          font-weight: 900; 
+          letter-spacing: 4px; 
+          color: #fff; 
+        }
+        .header-main { 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: flex-end; 
+          gap: 30px; 
+        }
+        .header-title { 
+          font-family: 'Inter', sans-serif;
+          font-size: clamp(3rem, 8vw, 7.5rem); 
+          font-weight: 900; 
+          margin: 0; 
+          letter-spacing: -2px; 
+          text-transform: uppercase; 
+          line-height: 0.9; 
+          color: #fff; 
+        }
+        .header-action { 
+          display: flex; 
+          align-items: center; 
+          gap: 15px; 
+          padding-bottom: 15px; 
+          cursor: pointer;
+        }
+        .action-text { 
+          font-size: 0.75rem; 
+          color: rgba(255,255,255,0.5); 
+          font-weight: 800; 
+          letter-spacing: 1px; 
+        }
+        .action-circle { 
+          width: 40px; 
+          height: 40px; 
+          border-radius: 50%; 
+          border: 1px solid rgba(255,255,255,0.2); 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          color: rgba(255,255,255,0.5); 
+          transition: 0.3s;
+        }
+        .header-action:hover .action-circle {
+          border-color: #fff;
+          color: #fff;
+        }
+
+        /* ── FILTER NAV ── */
+        .filter-nav { 
+          display: flex; 
+          gap: 10px; 
+          margin-bottom: 60px; 
+          overflow-x: auto; 
+          padding-bottom: 10px; 
+          scrollbar-width: none; 
+        }
+        .filter-nav::-webkit-scrollbar { display: none; }
+        .filter-btn { 
+          background: #151515; 
+          color: rgba(255,255,255,0.4); 
+          border: none; 
+          padding: 12px 24px; 
+          border-radius: 100px; 
+          font-weight: 700; 
+          font-size: 0.8rem; 
+          cursor: pointer; 
+          transition: 0.3s; 
+          white-space: nowrap; 
+        }
+        .filter-btn:hover { background: #252525; color: #fff; }
+        .filter-btn.active { background: var(--accent); color: #fff; }
+
+        /* ── BENTO GRID LAYOUT ── */
+        .works-grid { 
+          display: grid; 
+          grid-template-columns: repeat(4, 1fr); 
+          grid-auto-rows: 350px; /* Fixed height for small cards */
+          gap: 20px; 
+          padding-bottom: 100px; 
+        }
+        .showcase-card { 
+          position: relative; 
+          overflow: hidden; 
+          cursor: pointer; 
+          background: #0a0a0a; 
+          border-radius: 4px; /* Slight rounding for polish */
+        }
+        .card-large { 
+          grid-column: span 2; 
+          grid-row: span 2; 
+        } 
+        
+        .card-inner { 
+          width: 100%; 
+          height: 100%; 
+          position: relative; 
+        }
+        .card-media { 
+          width: 100%; 
+          height: 100%; 
+          object-fit: cover; 
+          transition: transform 1.2s cubic-bezier(0.2, 1, 0.2, 1); 
+        }
+        .showcase-card:hover .card-media { transform: scale(1.05); }
+
+        /* ── OVERLAY & TYPOGRAPHY ── */
+        .showcase-overlay { 
+          position: absolute; 
+          inset: 0; 
+          background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+          display: flex; 
+          flex-direction: column; 
+          justify-content: flex-end;
+          padding: 30px; 
+          opacity: 1; /* Always visible to match screenshot */
+          transition: all 0.4s ease;
+        }
+        
+        .overlay-cat { 
+          color: var(--accent); 
+          font-size: 0.75rem; 
+          font-weight: 900; 
+          letter-spacing: 1px; 
+          margin-bottom: 6px; 
+        }
+        .overlay-title { 
+          color: #fff; 
+          font-size: 1.5rem; 
+          font-weight: 900; 
+          margin: 0 0 10px 0; 
+          line-height: 1.1; 
+          text-transform: uppercase; 
+        }
+        .card-large .overlay-title {
+          font-size: 2.8rem;
+          margin-bottom: 15px;
+        }
+        .action-label { 
+          color: #fff; 
+          font-size: 0.75rem; 
+          font-weight: 800; 
+          display: flex; 
+          align-items: center; 
+          opacity: 0.8; 
+          transition: 0.3s;
+        }
+        .showcase-card:hover .action-label { opacity: 1; color: var(--accent); }
+
+        /* ── BADGE ── */
+        .new-badge { 
+          position: absolute; 
+          top: 20px; 
+          right: 20px; 
+          background: var(--accent); 
+          color: #fff; 
+          padding: 4px 10px; 
+          font-size: 0.7rem; 
+          font-weight: 900; 
+          border-radius: 2px; 
+          z-index: 10; 
+          letter-spacing: 1px;
+        }
+
+        /* ── UTILS ── */
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .works-loader, .works-empty { padding: 150px 0; text-align: center; }
+        .empty-text { font-weight: 800; color: #555; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1200px) {
+          .works-grid { grid-auto-rows: 300px; gap: 15px; }
+          .header-title { font-size: 5rem; }
+          .card-large .overlay-title { font-size: 2.2rem; }
+        }
+        @media (max-width: 992px) {
+          .works-grid { grid-template-columns: repeat(2, 1fr); }
+          /* Large card takes up full width on tablet */
+          .card-large { grid-column: span 2; grid-row: span 2; } 
+          .header-title { font-size: 4rem; }
+        }
+        @media (max-width: 767px) {
+          .works-grid { grid-template-columns: 1fr; grid-auto-rows: 350px; }
+          .card-large { grid-column: span 1; grid-row: span 1; }
+          .header-title { font-size: 3rem; }
+          .hide-mobile { display: none; }
+          .showcase-overlay { padding: 20px; }
+        }
+      `}</style>
+
       <Footer />
     </div>
   );

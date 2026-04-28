@@ -124,7 +124,8 @@ function Feed() {
                   layout
                   key={post._id}
                   variants={itemVariants}
-                  transition={{ duration: 0.4, ease: 'circOut' }}
+                  transition={{ duration: 0.3 }}
+                  style={{ willChange: 'transform, opacity' }}
                 >
                   <FeedPost post={post} onPostDeleted={handlePostDeleted} />
                 </motion.div>

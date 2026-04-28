@@ -70,7 +70,6 @@ export const uploadToGCS = async (file) => {
             await bucket.upload(file.path, {
                 destination: gcsFileName,
                 gzip: true,
-                predefinedAcl: 'publicRead', // 🔓 [FIX] Allow EasySlip to access the image via URL
                 metadata: {
                     contentType: file.mimetype,
                 },

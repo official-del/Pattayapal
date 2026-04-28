@@ -15,7 +15,15 @@ export const getFullUrl = (path, bustCache = false) => {
   let finalUrl = path;
   if (!path.startsWith("http://") && !path.startsWith("https://")) {
     const cleanPath = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
-    finalUrl = `${API_URL}/uploads/${cleanPath}`;
+    
+    // 💡 ระบบตรวจสอบอัตโนมัติ
+    if (import.meta.env.PROD) {
+      // บน Host จริง: ดึงจาก Google Cloud Storage
+      finalUrl = `https://storage.googleapis.com/pattayapal-assets/${cleanPath}`;
+    } else {
+      // ในเครื่องเรา: ดึงจาก localhost:5000/uploads
+      finalUrl = `${API_URL}/uploads/${cleanPath}`;
+    }
   }
 
   if (bustCache) {
@@ -32,12 +40,22 @@ export const isVideoUrl = (url = "") => {
   return VIDEO_EXTS.some(ext => lower.endsWith(ext));
 };
 
-// ดึง URL สื่อหลัก (Cloudinary เก็บทั้ง video & image ใน mainImage.url)
+// ดึง URL สื่อหลัก
 export const getMediaUrl = (work) => {
   if (!work) return "";
-  if (work.mainImage?.url?.trim()) return getFullUrl(work.mainImage.url);
-  if (work.videoUrl?.trim()) return getFullUrl(work.videoUrl);       // ฟิลด์ใหม่
-  if (work.mediaUrl?.trim()) return getFullUrl(work.mediaUrl);       // ฟิลด์เก่า
+  
+  // 1. ลองเช็คจาก mainImage
+  if (work.mainImage) {
+    if (typeof work.mainImage === 'string' && work.mainImage.trim()) return getFullUrl(work.mainImage);
+    if (work.mainImage.url?.trim()) return getFullUrl(work.mainImage.url);
+  }
+
+  // 2. ลองเช็คจากฟิลด์อื่นๆ
+  if (work.videoUrl?.trim()) return getFullUrl(work.videoUrl);
+  if (work.mediaUrl?.trim()) return getFullUrl(work.mediaUrl);
+  if (work.coverImage?.url?.trim()) return getFullUrl(work.coverImage.url);
+  if (typeof work.coverImage === 'string' && work.coverImage.trim()) return getFullUrl(work.coverImage);
+
   return "";
 };
 

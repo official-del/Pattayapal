@@ -94,7 +94,7 @@
 }
 
 .project-stat .label {
-  color: rgba(255,255,255,0.2);
+  color: rgba(255, 255, 255, 0.2);
   font-size: 0.8rem;
   letter-spacing: 3px;
 }
@@ -141,7 +141,10 @@
   padding-bottom: 100px;
 }
 
-.grid-item.card-featured, .grid-item.card-standard { grid-column: span 1; }
+.grid-item.card-featured,
+.grid-item.card-standard {
+  grid-column: span 1;
+}
 
 @media (max-width: 768px) {
   .works-editorial-grid {
@@ -163,10 +166,13 @@
   overflow: hidden;
   background: #0d0d0d;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.card-featured .media-box, .card-standard .media-box { aspect-ratio: 16/10; }
+.card-featured .media-box,
+.card-standard .media-box {
+  aspect-ratio: 16/10;
+}
 
 .media-box img {
   width: 100%;
@@ -225,7 +231,7 @@
   position: absolute;
   top: 20px;
   right: 20px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   padding: 6px 14px;
   border-radius: 100px;
@@ -250,7 +256,7 @@
   padding: 6px 14px 6px 6px;
   border-radius: 40px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   z-index: 10;
   transition: 0.3s;
   text-decoration: none;
@@ -266,7 +272,7 @@
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .pro-author-placeholder {
@@ -314,7 +320,7 @@
 
 .work-idx {
   font-family: var(--font-heading);
-  color: rgba(255,255,255,0.1);
+  color: rgba(255, 255, 255, 0.1);
   font-size: 1.2rem;
 }
 
@@ -353,8 +359,35 @@
 
 /* ── RESPONSIVE FIX ── */
 @media (max-width: 768px) {
-  .hero-content-wrap { flex-direction: column; align-items: flex-start; }
-  .main-title { font-size: 4.5rem; }
-  .hero-right { text-align: left; max-width: 100%; }
-  .project-stat { justify-content: flex-start; }
+  .hero-content-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .main-title {
+    font-size: 4.5rem;
+  }
+
+  .hero-right {
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .project-stat {
+    justify-content: flex-start;
+  }
+}
+
+.showcase-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 30px;
+  opacity: 1;
+  transition: all 0.4s ease;
+  pointer-events: none;
+  /* เพิ่มบรรทัดนี้ครับ! */
 }

@@ -349,8 +349,8 @@ function UserProfile() {
       </div>
    );
 
-   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-   const itemVariants = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } };
+   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
+   const itemVariants = { hidden: { y: 15, opacity: 0 }, show: { y: 0, opacity: 1 } };
 
    return (
       <motion.div variants={containerVariants} initial="hidden" animate="show" style={{ minHeight: '100vh', background: '#050505', color: '#fff', position: 'relative', overflowX: 'hidden' }}>
@@ -372,68 +372,100 @@ function UserProfile() {
          <div style={{ width: '100%', height: '400px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', inset: 0, background: profile.coverImage?.url ? `url(${getFullUrl(profile.coverImage.url) + (isMyProfile ? `?t=${profileUpdateTag}` : '')}) center/cover` : 'linear-gradient(45deg, #111, #222)', filter: 'brightness(0.7)' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, #050505 100%)' }} />
-
-
          </div>
 
          {/* ── MAIN CONTAINER ── */}
          <div className="profile-main-container" style={{ position: 'relative', zIndex: 2 }}>
+            <style>{`
+               @media (max-width: 768px) {
+                  .profile-main-flex {
+                     flex-direction: column !important;
+                     align-items: center !important;
+                     text-align: center !important;
+                     gap: 20px !important;
+                  }
+                  .profile-left-group {
+                     flex-direction: column !important;
+                     align-items: center !important;
+                  }
+                  .profile-info-text {
+                     align-items: center !important;
+                     text-align: center !important;
+                     padding-bottom: 0 !important;
+                  }
+                  .profile-right-group {
+                     width: 100%;
+                     justify-content: center !important;
+                     padding-bottom: 0 !important;
+                     margin-top: 10px;
+                  }
+               }
+            `}</style>
 
-            {/* IDENTITY HEADER BLOCK */}
-            <div className="profile-header-grid" style={{ gap: '30px', alignItems: 'flex-end', marginBottom: '50px' }}>
-               <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-end' }}>
-                  <div style={{ position: 'relative' }}>
-                     <div style={{ width: '220px', height: '220px', borderRadius: '30px', border: '5px solid #050505', overflow: 'hidden', background: '#222', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {profile.profileImage?.url || (typeof profile.profileImage === 'string' && profile.profileImage) ? (
-                           <img
-                              src={getFullUrl(profile.profileImage.url || profile.profileImage) + (isMyProfile ? `?t=${profileUpdateTag}` : '')}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                           />
-                        ) : null}
-                        <div style={{ display: (profile.profileImage?.url || typeof profile.profileImage === 'string') ? 'none' : 'flex', fontSize: '5rem', fontWeight: '700', color: '#444' }}>
-                           {(profile.name || 'U')[0]}
-                        </div>
+            <div className="profile-header-wrap" style={{ marginBottom: '50px' }}>
+               <div className="profile-main-flex" style={{ display: 'flex', gap: '30px', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap' }}>
 
-                        {isMyProfile && (
-                           <div onClick={() => fileInputRef.current.click()} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', opacity: 0, cursor: 'pointer', transition: '0.3s', zIndex: 10 }} className="av-up">
-                              <FiCamera size={40} />
+                  {/* LEFT GROUP: AVATAR + NAME */}
+                  <div className="profile-left-group" style={{ display: 'flex', gap: '30px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                     <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <ProfileFrame
+                           rank={profile.rank}
+                           points={profile.points || 0}
+                           size="clamp(130px, 25vw, 220px)"
+                           isOnline={profile.isOnline}
+                        >
+                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#222' }}>
+                              {profile.profileImage?.url || (typeof profile.profileImage === 'string' && profile.profileImage) ? (
+                                 <img
+                                    src={getFullUrl(profile.profileImage.url || profile.profileImage) + (isMyProfile ? `?t=${profileUpdateTag}` : '')}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                 />
+                              ) : null}
+                              <div style={{ display: (profile.profileImage?.url || typeof profile.profileImage === 'string') ? 'none' : 'flex', fontSize: '5rem', fontWeight: '700', color: '#444' }}>
+                                 {(profile.name || 'U')[0]}
+                              </div>
+
+                              {isMyProfile && (
+                                 <div onClick={() => fileInputRef.current.click()} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', opacity: 0, cursor: 'pointer', transition: '0.3s', zIndex: 10 }} className="av-up">
+                                    <FiCamera size={40} />
+                                 </div>
+                              )}
                            </div>
-                        )}
-                        <style>{`.av-up:hover { opacity: 1 !important; }`}</style>
+                        </ProfileFrame>
                      </div>
-                     {profile.isOnline && <div style={{ position: 'absolute', bottom: '15px', right: '15px', width: '25px', height: '25px', background: '#10b981', borderRadius: '50%', border: '4px solid #050505', boxShadow: '0 0 20px #10b981' }} />}
+
+                     <div className="profile-info-text" style={{ paddingBottom: '20px' }}>
+                        <h1 style={{ fontSize: 'clamp(2rem, 5vw, 4rem)', fontWeight: '900', margin: 0, color: '#fff', letterSpacing: '2px', textTransform: 'uppercase', lineHeight: 1 }}>{profile.name}</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
+                           <span style={{ color: '#555', fontWeight: '700', fontSize: '1.1rem' }}>@{profile.username}</span>
+                           <div style={{ background: 'rgba(255,87,51,0.1)', padding: '6px 15px', borderRadius: '12px', border: '1px solid rgba(255,87,51,0.1)' }}>
+                              <span style={{ color: 'var(--p-accent)', fontWeight: '800', fontSize: '0.8rem', letterSpacing: '1px' }}>{profile.profession || 'GENERAL'}</span>
+                           </div>
+                        </div>
+                     </div>
                   </div>
 
-                  <div style={{ paddingBottom: '20px' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <h1 style={{ fontSize: '3.5rem', fontWeight: '700', margin: 0, letterSpacing: '-2px' }}>{profile.name}</h1>
-                     </div>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '10px' }}>
-                        <span style={{ fontSize: '1.2rem', color: '#666', fontWeight: '500' }}>@{profile.username || 'identity_pending'}</span>
-                        <span style={{ fontSize: '1rem', color: 'var(--accent)', fontWeight: '700', background: 'rgba(255,87,51,0.1)', padding: '5px 15px', borderRadius: '10px' }}>{profile.profession || 'GEN-CIVILIAN'}</span>
-                     </div>
+                  {/* RIGHT GROUP: ACTIONS */}
+                  <div className="profile-right-group" style={{ display: 'flex', gap: '15px', paddingBottom: '20px', flexWrap: 'wrap' }}>
+                     {!isMyProfile ? (
+                        <>
+                           <button onClick={handleStartChat} className="glass" style={{ background: '#fff', color: '#000', border: 'none', padding: '14px 25px', borderRadius: '15px', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer' }}>SEND MESSAGE</button>
+                           <button onClick={handleFriendAction} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 25px', borderRadius: '15px', color: '#fff', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+                              {friendStatus === 'friends' ? <FiUserCheck /> : (friendStatus === 'pending_sent' ? <FiClock /> : <FiUserPlus />)} {friendStatus === 'friends' ? 'CONNECTED' : (friendStatus === 'pending_sent' ? 'PENDING' : 'CONNECT')}
+                           </button>
+                        </>
+                     ) : (
+                        <>
+                           <button onClick={() => coverInputRef.current.click()} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 25px', borderRadius: '15px', color: '#fff', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+                              <FiCamera style={{ marginRight: '8px' }} /> BACKGROUND
+                           </button>
+                           <button onClick={() => setEditingProfile(true)} className="glass" style={{ padding: '14px 30px', borderRadius: '15px', color: '#fff', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: '0.9rem' }}>
+                              EDIT IDENTITY
+                           </button>
+                        </>
+                     )}
                   </div>
-               </div>
-
-               <div style={{ display: 'flex', gap: '15px', paddingBottom: '20px' }}>
-                  {!isMyProfile ? (
-                     <>
-                        <button onClick={handleStartChat} style={{ background: '#fff', color: '#000', border: 'none', padding: '18px 30px', borderRadius: '20px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}>SEND MESSAGE</button>
-                        <button onClick={handleFriendAction} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '18px 30px', borderRadius: '20px', color: '#fff', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
-                           {friendStatus === 'friends' ? <FiUserCheck /> : (friendStatus === 'pending_sent' ? <FiClock /> : <FiUserPlus />)} {friendStatus === 'friends' ? 'CONNECTED' : (friendStatus === 'pending_sent' ? 'PENDING' : 'CONNECT')}
-                        </button>
-                     </>
-                  ) : (
-                     <>
-                        <button onClick={() => coverInputRef.current.click()} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '18px 30px', borderRadius: '20px', color: '#fff', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
-                           <FiCamera style={{ marginRight: '10px' }} /> BACKGROUND
-                        </button>
-                        <button onClick={() => setEditingProfile(true)} className="glass" style={{ padding: '18px 40px', borderRadius: '20px', color: '#fff', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}>
-                           EDIT IDENTITY
-                        </button>
-                     </>
-                  )}
                </div>
             </div>
 
@@ -549,14 +581,23 @@ function UserProfile() {
                         <motion.div key={activeTab} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} style={{ padding: '40px' }}>
 
                            {activeTab === 'portfolio' && (
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '30px' }}>
+                              <div style={{ 
+                                 display: 'grid', 
+                                 gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', 
+                                 gap: '30px',
+                                 contentVisibility: 'auto'
+                              }}>
                                  {works.length > 0 ? works.map(w => (
                                     <motion.div whileHover={{ y: -10 }} key={w._id} onClick={() => navigate(`/works/${w._id}`)} style={{ cursor: 'pointer', borderRadius: '30px', overflow: 'hidden', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)' }}>
                                        <div style={{ height: '240px', overflow: 'hidden', position: 'relative', background: '#111' }}>
                                           {w.type === 'video' ? (
                                              <>
                                                 {w.mainImage?.url && !isVideoUrl(w.mainImage.url) ? (
-                                                   <img src={getFullUrl(w.mainImage.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                   <img 
+                                                      src={getFullUrl(w.mainImage.url)} 
+                                                      loading="lazy"
+                                                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                                   />
                                                 ) : (w.mainImage?.url || w.mediaUrl) ? (
                                                    <video src={getFullUrl(w.mainImage?.url || w.mediaUrl)} muted preload="metadata" autoPlay loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 ) : (
@@ -569,7 +610,11 @@ function UserProfile() {
                                                 </div>
                                              </>
                                           ) : w.mainImage?.url ? (
-                                             <img src={getFullUrl(w.mainImage.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                             <img 
+                                                src={getFullUrl(w.mainImage.url)} 
+                                                loading="lazy"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                             />
                                           ) : (
                                              <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#222', fontSize: '0.65rem', letterSpacing: '3px' }}>NO PREVIEW</div>
                                           )}

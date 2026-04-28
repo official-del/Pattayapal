@@ -12,6 +12,7 @@ export default function UserAuth() {
   const [isLogin, setIsLogin] = useState(location.state?.isRegister ? false : true);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -43,6 +44,7 @@ export default function UserAuth() {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
+    setSuccessMsg('');
 
     try {
       if (!isLogin && !formData.acceptedTerms) {
@@ -89,8 +91,9 @@ export default function UserAuth() {
           navigate(`/profile/${userDataToSave._id || userDataToSave.id}`);
         }
       } else {
-        await axios.post(`${CONFIG.API_BASE_URL}/api/users/register`, formData);
+        const res = await axios.post(`${CONFIG.API_BASE_URL}/api/users/register`, formData);
         setIsLogin(true);
+        setSuccessMsg(res.data.message || 'Registration successful! Please check your email to verify your account.');
         setFormData({ name: '', email: '', password: '', profession: 'General' });
       }
     } catch (error) {
@@ -131,19 +134,25 @@ export default function UserAuth() {
           </motion.div>
         )}
 
+        {successMsg && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(34, 197, 94, 0.05)', color: '#22c55e', padding: '15px 25px', borderRadius: '20px', border: '1px solid rgba(34,197,94,0.1)', marginBottom: '35px', fontSize: '0.85rem', fontWeight: '700', textAlign: 'center' }}>
+            {successMsg}
+          </motion.div>
+        )}
+
         <form onSubmit={handleSubmit}>
           {!isLogin && (
             <AnimatePresence>
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ overflow: 'hidden' }}>
                 <div style={{ marginBottom: '25px' }}>
-                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>ชื่อ - นามสกุล / FULL NAME</label>
+                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>FULL NAME</label>
                   <div style={{ position: 'relative' }}>
                     <FiUser size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
                     <input type="text" name="name" required onChange={handleChange} value={formData.name} placeholder="กรอกชื่อและนามสกุล..." style={{ width: '100%', padding: '22px 22px 22px 65px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', color: '#fff', outline: 'none', fontWeight: '700' }} />
                   </div>
                 </div>
                 <div style={{ marginBottom: '25px' }}>
-                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>สายงานที่เชี่ยวชาญ / SPECIALIZATION</label>
+                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>SPECIALIZATION</label>
 
                   <div style={{ position: 'relative' }}>
                     <FiBriefcase size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
@@ -168,7 +177,7 @@ export default function UserAuth() {
           )}
 
           <div style={{ marginBottom: '25px' }}>
-            <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>อีเมล / EMAIL ADDRESS</label>
+            <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>EMAIL ADDRESS</label>
             <div style={{ position: 'relative' }}>
               <FiMail size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
               <input type="email" name="email" required onChange={handleChange} value={formData.email} placeholder="ระบุอีเมลของคุณ / contact@example.com" style={{ width: '100%', padding: '22px 22px 22px 65px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', color: '#fff', outline: 'none', fontWeight: '700' }} />
@@ -193,7 +202,7 @@ export default function UserAuth() {
 
 
           <div style={{ marginBottom: '40px' }}>
-            <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>รหัสผ่าน / ACCESS PASSWORD</label>
+            <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>ACCESS PASSWORD</label>
             <div style={{ position: 'relative' }}>
               <FiLock size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
               <input type="password" name="password" required onChange={handleChange} value={formData.password} placeholder="••••••••" minLength="6" style={{ width: '100%', padding: '22px 22px 22px 65px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', color: '#fff', outline: 'none', fontWeight: '700' }} />
@@ -207,19 +216,19 @@ export default function UserAuth() {
             whileTap={{ scale: 0.98 }}
             style={{ width: '100%', background: 'var(--accent)', color: '#fff', border: 'none', padding: '24px', borderRadius: '25px', fontWeight: '700', fontSize: '1.1rem', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}
           >
-            {loading ? <FiCpu className="spin" /> : (isLogin ? 'เข้าสู่ระบบ / LOGIN' : 'สร้างบัญชี / CREATE ACCOUNT')}
+            {loading ? <FiCpu className="spin" /> : (isLogin ? 'LOGIN' : 'CREATE ACCOUNT')}
             <FiArrowRight />
           </motion.button>
         </form>
 
         <div style={{ marginTop: '40px', textAlign: 'center' }}>
           <p style={{ color: '#333', fontSize: '0.85rem', fontWeight: '700' }}>
-            {isLogin ? "ยังไม่มีบัญชีใช่ไหม? / No account?" : "มีบัญชีอยู่แล้ว? / Have an account?"}
+            {isLogin ? "Don't have an account?" : "Do you have an account?"}
             <span
               onClick={() => { setIsLogin(!isLogin); setErrorMsg(''); }}
               style={{ color: 'var(--accent)', cursor: 'pointer', marginLeft: '10px', textDecoration: 'underline' }}
             >
-              {isLogin ? 'สมัครสมาชิกที่นี่ / REGISTER' : 'เข้าสู่ระบบที่นี่ / LOGIN'}
+              {isLogin ? 'REGISTER' : 'LOGIN'}
             </span>
           </p>
 

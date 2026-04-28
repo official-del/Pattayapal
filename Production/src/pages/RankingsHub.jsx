@@ -41,7 +41,7 @@ function PodiumCard({ user, rankNum, category }) {
           />
         )}
         <Link to={`/profile/${user._id}`}>
-          <ProfileFrame rank={user.rank} size={`${avatarSize}px`}>
+          <ProfileFrame rank={user.rank} points={user.points || 0} size={`${avatarSize}px`}>
             <PattyAvatar user={user} size={avatarSize - 15} />
           </ProfileFrame>
         </Link>
@@ -198,7 +198,9 @@ export default function RankingsHub() {
                 >
                   <div className="rank-number" style={{ fontSize: '1.5rem', fontWeight: '900', color: '#111', minWidth: '45px', textAlign: 'center' }}>#{idx + 4}</div>
                   <div className="avatar-wrap">
-                    <PattyAvatar user={user} size={window.innerWidth < 480 ? 50 : 60} border="2px solid rgba(255,255,255,0.05)" />
+                    <ProfileFrame rank={user.rank} points={user.points || 0} size={window.innerWidth < 480 ? "50px" : "60px"} showBadge={false}>
+                      <PattyAvatar user={user} size={window.innerWidth < 480 ? 40 : 50} />
+                    </ProfileFrame>
                   </div>
                   <div className="user-info-wrap" style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>

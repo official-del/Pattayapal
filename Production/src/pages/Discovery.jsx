@@ -125,7 +125,14 @@ function Discovery() {
   };
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingBottom: '150px' }}>
+    <div className="discovery-main-container" style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingBottom: '150px' }}>
+      <style>{`
+        @media (min-width: 1101px) {
+          .discovery-main-container {
+            padding-left: 110px !important;
+          }
+        }
+      `}</style>
 
       {/* 🚀 Immersive Hero Section */}
       <section style={{
@@ -251,7 +258,12 @@ function Discovery() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '30px' }}
+            style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', 
+              gap: '30px',
+              contentVisibility: 'auto'
+            }}
           >
             {filteredFreelancers.map((freelancer) => (
               <motion.div
@@ -262,7 +274,7 @@ function Discovery() {
               >
                 <div style={{ padding: '35px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
-                    <ProfileFrame rank={freelancer.rank} size="90px">
+                    <ProfileFrame rank={freelancer.rank} points={freelancer.points || 0} size="90px">
                       <div style={{ width: '100%', height: '100%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {freelancer.profileImage?.url || (typeof freelancer.profileImage === 'string' && freelancer.profileImage) ? (
                           <img

@@ -151,7 +151,7 @@ const RoleRankings = () => {
                              #{idx + 1}
                            </div>
                            <div className="avatar-role-wrap">
-                             <ProfileFrame rank={user.rank} size="45px">
+                             <ProfileFrame rank={user.rank} points={user.points || 0} size="45px" showBadge={false}>
                                <img 
                                  src={user.profileImage?.url ? (getFullUrl(user.profileImage.url) + (user._id === (currentUser?._id || currentUser?.id) ? `?t=${profileUpdateTag}` : '')) : 'https://via.placeholder.com/55'} 
                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 

@@ -198,7 +198,7 @@ function Friends() {
                       const isSent = sentRequests.has(user._id);
                       return (
                         <motion.div variants={itemVariants} key={user._id} className="glass friends-row-card">
-                          <ProfileFrame rank={user.rank} size="70px">
+                          <ProfileFrame rank={user.rank} points={user.points || 0} size="70px" showBadge={false}>
                             <img src={user.profileImage?.url ? getFullUrl(user.profileImage.url) : 'https://via.placeholder.com/70'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </ProfileFrame>
                           <div style={{ flex: 1 }}>
@@ -256,7 +256,7 @@ function Friends() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     {friendRequests.map(req => (
                       <motion.div variants={itemVariants} key={req._id} className="glass" style={{ padding: '30px', borderRadius: '35px', display: 'flex', alignItems: 'center', gap: '25px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                        <ProfileFrame rank={req.from.rank} size="60px">
+                        <ProfileFrame rank={req.from.rank} points={req.from.points || 0} size="60px" showBadge={false}>
                           <img src={req.from.profileImage?.url ? getFullUrl(req.from.profileImage.url) : 'https://via.placeholder.com/60'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </ProfileFrame>
                         <div style={{ flex: 1 }}>
@@ -290,7 +290,7 @@ function Friends() {
                         <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
                           <FiActivity color="#222" size={14} />
                         </div>
-                        <ProfileFrame rank={friend.rank} size="100px">
+                        <ProfileFrame rank={friend.rank} points={friend.points || 0} size="100px" showBadge={false}>
                           <img src={friend.profileImage?.url ? getFullUrl(friend.profileImage.url) : 'https://via.placeholder.com/100'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </ProfileFrame>
                         <h4 style={{ margin: '25px 0 5px', fontSize: '1.4rem', fontWeight: '700', letterSpacing: '-0.5px' }}>{friend.name}</h4>

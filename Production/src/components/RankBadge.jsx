@@ -76,7 +76,6 @@ const RankBadge = ({ rank, showName = true, size = 'md' }) => {
         }
 
         .rank-img-spin {
-          animation: rankSpin3D 4s ease-in-out infinite;
           transform-style: preserve-3d;
         }
 

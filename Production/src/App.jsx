@@ -40,6 +40,7 @@ import Notifications from './pages/Dashboard/Notifications';
 
 // ── Auth Pages ──
 import UserAuth from './pages/UserAuth';
+import VerifyEmail from './pages/VerifyEmail';
 
 // ── Legal Pages ──
 import Terms from './pages/Legal/Terms';
@@ -168,6 +169,8 @@ function App() {
 
         {/* ── Login / Register ── */}
         <Route path="/login"      element={<UserAuth />} />
+        <Route path="/auth"       element={<Navigate to="/login" replace />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
         {/* ── Admin Routes ── */}
         <Route path="/admin/login"       element={<AdminLogin />} />
