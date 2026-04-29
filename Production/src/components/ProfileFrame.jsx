@@ -203,7 +203,7 @@ const ProfileFrame = ({
       {displayRing && sizeNum >= 55 && (
         <div style={{
           position: 'absolute',
-          bottom: '-20px',
+          bottom: '-21px', // Cache buster
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 10,
