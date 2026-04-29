@@ -17,6 +17,7 @@ export const getFullUrl = (path, bustCache = false) => {
   }
   
   const cleanPath = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
+  let finalUrl = "";
     
   // 💡 ระบบตรวจสอบอัตโนมัติ
   // ถ้า path มีคำว่า uploads/ หรือเราไม่ได้อยู่ในโหมด PROD ให้ดึงจาก Server โดยตรง
