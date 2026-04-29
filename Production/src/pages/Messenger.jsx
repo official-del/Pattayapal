@@ -363,8 +363,6 @@ function Messenger() {
     };
     setMessages(prev => [...prev, optimisticMsg]);
     setNewMessage('');
-    selectedFiles.forEach(f => { if (f.preview) URL.revokeObjectURL(f.preview); });
-    setSelectedFiles([]);
 
     try {
       const res = await chatAPI.sendMessage(formData, currentToken);
@@ -378,6 +376,9 @@ function Messenger() {
       console.error("Send message error:", err);
     } finally {
       setIsUploading(false);
+      // Clean up previews ONLY after attempt finishes
+      selectedFiles.forEach(f => { if (f.preview) URL.revokeObjectURL(f.preview); });
+      setSelectedFiles([]);
     }
   };
 
