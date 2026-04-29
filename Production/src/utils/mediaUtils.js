@@ -17,15 +17,14 @@ export const getFullUrl = (path, bustCache = false) => {
   }
   
   const cleanPath = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
-  let finalUrl = "";
     
   // 💡 ระบบตรวจสอบอัตโนมัติ
-  if (import.meta.env.PROD) {
-    // บน Host จริง: ดึงจาก Google Cloud Storage
-    finalUrl = `https://storage.googleapis.com/pattayapal-assets/${cleanPath}`;
-  } else {
-    // ในเครื่องเรา: ดึงจาก localhost:5000/uploads
+  // ถ้า path มีคำว่า uploads/ หรือเราไม่ได้อยู่ในโหมด PROD ให้ดึงจาก Server โดยตรง
+  if (path.includes('uploads/') || !import.meta.env.PROD) {
     finalUrl = `${API_URL}/uploads/${cleanPath}`;
+  } else {
+    // บน Host จริง และเป็นไฟล์ที่ไม่มี 'uploads/' นำหน้า: ดึงจาก Google Cloud Storage
+    finalUrl = `https://storage.googleapis.com/pattayapal-assets/${cleanPath}`;
   }
 
   if (bustCache) {
