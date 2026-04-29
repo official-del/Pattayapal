@@ -353,7 +353,12 @@ function Messenger() {
       text: newMessage,
       createdAt: new Date().toISOString(),
       isRead: false,
-      attachments: [],
+      attachments: selectedFiles.map(f => ({
+        url: f.preview || '',
+        fileType: f.file.type || 'image/jpeg',
+        fileName: f.file.name || 'uploading...',
+        fileSize: f.file.size || 0
+      })),
       _optimistic: true,
     };
     setMessages(prev => [...prev, optimisticMsg]);

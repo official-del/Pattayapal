@@ -157,6 +157,26 @@ function WorkDetail() {
     setSelectedMedia(albumMedia[newIndex]);
   };
 
+  const handleShare = async () => {
+    if (!work) return;
+    const shareData = {
+      title: `${work.title} | Pattayapal`,
+      text: work.description?.substring(0, 100) || 'Check out this project on Pattayapal!',
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert("🔗 Link copied to clipboard!");
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
+  };
+
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } };
 
@@ -320,7 +340,12 @@ function WorkDetail() {
                   >
                     <FiHeart fill={isLiked ? 'var(--accent)' : 'none'} size={20} /> {likesCount}
                   </motion.button>
-                  <motion.button whileHover={{ scale: 1.05 }} className="glass" style={{ flex: 1, padding: '20px', borderRadius: '30px', color: '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer' }}>
+                  <motion.button 
+                    onClick={handleShare}
+                    whileHover={{ scale: 1.05 }} 
+                    className="glass" 
+                    style={{ flex: 1, padding: '20px', borderRadius: '30px', color: '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer' }}
+                  >
                     <FiExternalLink size={20} /> Share
                   </motion.button>
                 </div>
