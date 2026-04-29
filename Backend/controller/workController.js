@@ -177,29 +177,25 @@ export const getWorkById = async (req, res) => {
       .populate('category')
       .populate('createdBy', 'name profileImage');
     
-    if (work) { 
-      const userId = req.user?.id;
-      const isCreator = userId && work.createdBy._id.toString() === userId;
-      
-      // 1. [TOTAL VIEW COUNT]
-      // เพิ่มยอดวิวให้ทุกคนที่เข้ามาดู (รวมถึง Guest) เพื่อให้ยอดดูสมจริง
-      work.views = (work.views || 0) + 1;
-      
-      // 2. [UNIQUE XP LOGIC]
-      // จะให้แต้ม XP และบันทึกประวัติการดูเฉพาะ:
-      // - ยูสเซอร์ที่ล็อกอินแล้ว
-      // - ไม่ใช่เจ้าของงานเอง
-      // - ยังไม่เคยดูงานนี้มาก่อน (นับ XP ให้แค่ครั้งเดียวต่อคน)
-      if (userId && !isCreator && !work.viewedBy.includes(userId)) {
-        work.viewedBy.push(userId);
-        
-        // 🏆 Reward Creator for the unique quality view
-        const io = req.app.get('io');
-        updateUserStats(work.createdBy._id, 'VIEW', {}, io).catch(err => console.error('XP Error:', err));
-      }
+    if (!work) return res.status(404).json({ message: 'ไม่พบผลงานนี้' });
 
+    const userId = req.user?.id;
+    const isCreator = userId && work.createdBy._id.toString() === userId;
+    const io = req.app.get('io');
+
+    // ✅ [UNIQUE VIEW LOGIC]
+    // นับวิวเฉพาะ User ที่ล็อกอิน + ไม่ใช่เจ้าของงาน + ยังไม่เคยดูงานนี้มาก่อน
+    // Guest จะไม่นับเพราะไม่มีทางติดตามได้โดยไม่มี Session
+    if (userId && !isCreator && !work.viewedBy.map(v => v.toString()).includes(userId)) {
+      work.views = (work.views || 0) + 1;
+      work.viewedBy.push(userId);
+      
+      // 🏆 ให้แต้ม XP แก่เจ้าของงาน
+      updateUserStats(work.createdBy._id, 'VIEW', {}, io).catch(err => console.error('XP Error:', err));
+      
       await work.save();
     }
+
     res.status(200).json(work);
   } catch (error) { res.status(500).json({ message: error.message }); }
 };

@@ -3,7 +3,7 @@
 
 import { CONFIG } from './config';
 
-const API_URL = CONFIG.API_BASE_URL;
+const API_BASE_URL = CONFIG.API_BASE_URL;  // e.g. http://localhost:5000 or https://pattayapal.com
 
 const VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
 
@@ -20,9 +20,11 @@ export const getFullUrl = (path, bustCache = false) => {
   let finalUrl = "";
     
   // 💡 ระบบตรวจสอบอัตโนมัติ
-  // ถ้า path มีคำว่า uploads/ หรือเราไม่ได้อยู่ในโหมด PROD ให้ดึงจาก Server โดยตรง
+  // - ถ้าเป็น path ที่มีคำว่า uploads/ (ไฟล์ local): ดึงจาก Server โดยตรง
+  // - ถ้าเป็นไฟล์อื่นในโหมด PROD: ดึงจาก Google Cloud Storage
   if (path.includes('uploads/') || !import.meta.env.PROD) {
-    finalUrl = `${API_URL}/uploads/${cleanPath}`;
+    // ✅ ใช้ API_BASE_URL (ไม่มี /api) เพื่อสร้าง /uploads/ URL ที่ถูกต้อง
+    finalUrl = `${API_BASE_URL}/uploads/${cleanPath}`;
   } else {
     // บน Host จริง และเป็นไฟล์ที่ไม่มี 'uploads/' นำหน้า: ดึงจาก Google Cloud Storage
     finalUrl = `https://storage.googleapis.com/pattayapal-assets/${cleanPath}`;

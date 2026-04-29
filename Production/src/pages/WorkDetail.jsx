@@ -5,7 +5,7 @@ import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { FiArrowLeft, FiHeart, FiMessageSquare, FiClock, FiSend, FiTrash2, FiExternalLink, FiMaximize2, FiActivity, FiZap, FiTarget, FiBox, FiAlertTriangle, FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiHeart, FiMessageSquare, FiClock, FiSend, FiTrash2, FiExternalLink, FiMaximize2, FiActivity, FiZap, FiTarget, FiBox, FiAlertTriangle, FiChevronLeft, FiChevronRight, FiX, FiEye } from 'react-icons/fi';
 import HoverVideoPlayer from '../components/HoverVideoPlayer';
 
 import { CONFIG } from '../utils/config';

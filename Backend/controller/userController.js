@@ -13,9 +13,13 @@ const getPublicProfile = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
 
-    // ✅ [NEW] Increment Profile Views
-    user.totalViews = (user.totalViews || 0) + 1;
-    await user.save();
+    // ✅ Increment Profile Views (skip if owner is viewing their own profile)
+    const viewerId = req.user?.id || req.user?._id;
+    const isOwner = viewerId && viewerId.toString() === user._id.toString();
+    if (!isOwner) {
+      user.totalViews = (user.totalViews || 0) + 1;
+      await user.save();
+    }
 
     const worksWithComments = await Work.find({ 'comments.userId': user._id })
       .select('title _id mainImage type videoUrl comments')
@@ -56,9 +60,13 @@ const getPublicProfileByUsername = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
     
-    // ✅ [NEW] Increment Profile Views
-    user.totalViews = (user.totalViews || 0) + 1;
-    await user.save();
+    // ✅ Increment Profile Views (skip if owner is viewing their own profile)
+    const viewerId = req.user?.id || req.user?._id;
+    const isOwner = viewerId && viewerId.toString() === user._id.toString();
+    if (!isOwner) {
+      user.totalViews = (user.totalViews || 0) + 1;
+      await user.save();
+    }
 
     const worksWithComments = await Work.find({ 'comments.userId': user._id })
       .select('title _id mainImage type videoUrl comments')

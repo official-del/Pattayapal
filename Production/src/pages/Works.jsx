@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { worksAPI } from '../utils/api';
 import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
-import { FiLoader, FiAlertTriangle, FiArrowRight } from 'react-icons/fi';
+import { FiLoader, FiAlertTriangle, FiArrowRight, FiEye } from 'react-icons/fi';
 import Footer from '../components/Footer';
 import HoverVideoPlayer from '../components/HoverVideoPlayer';
 import { useSocket } from '../context/SocketContext';

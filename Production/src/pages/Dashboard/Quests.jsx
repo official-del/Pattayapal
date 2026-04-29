@@ -41,17 +41,17 @@ function computeCompletion(taskType, liveData, questId) {
         ],
         isCompleted: !!(liveData.bio && liveData.profileImageUrl && liveData.coverImageUrl),
       };
-    case 'POST WORK':
+    case 'POST_WORK':
       return {
         checklist: [{ label: `อัปโหลดผลงานอย่างน้อย 1 ชิ้น (มีอยู่ ${liveData.worksCount} ชิ้น)`, done: liveData.worksCount > 0 }],
         isCompleted: liveData.worksCount > 0,
       };
-    case 'DAILY LOGIN':
+    case 'DAILY_LOGIN':
       return {
         checklist: [{ label: 'ล็อกอินเข้าสู่ระบบวันนี้', done: true }],
         isCompleted: true,
       };
-    case 'PROOF SUBMISSION':
+    case 'PROOF_SUBMISSION': {
       const sub = liveData.submissions?.find(s => s.questId === questId);
       return {
         checklist: [{
@@ -61,6 +61,7 @@ function computeCompletion(taskType, liveData, questId) {
         isCompleted: sub?.status === 'APPROVED',
         submissionStatus: sub?.status || null
       };
+    }
     default: // MANUAL
       return { checklist: [], isCompleted: true };
   }

@@ -100,11 +100,14 @@ export const uploadToGCS = async (file) => {
 
             await bucket.upload(processedPath, {
                 destination: gcsFileName,
-                gzip: true,
                 metadata: {
                     contentType: contentType,
+                    cacheControl: 'public, max-age=31536000',
                 },
             });
+            
+            // Make the file publicly readable
+            await bucket.file(gcsFileName).makePublic();
             
             const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
             console.log("✅ [GCS] Uploaded & Made Public:", publicUrl);

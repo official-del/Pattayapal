@@ -147,14 +147,8 @@ export const chatAPI = {
   getMessages: (conversationId) =>
     API.get(`/chat/${conversationId}/messages`).then(res => res.data),
 
-  sendMessage: (data) => {
-    const isFormData = data instanceof FormData;
-    return API.post('/chat/message', data, {
-      headers: { 
-        ...(isFormData ? { 'Content-Type': 'multipart/form-data' } : {})
-      }
-    }).then(res => res.data);
-  },
+  sendMessage: (data) =>
+    API.post('/chat/message', data).then(res => res.data),
 
   markAsRead: (conversationId) =>
     API.patch(`/chat/${conversationId}/read`, {}).then(res => res.data),
