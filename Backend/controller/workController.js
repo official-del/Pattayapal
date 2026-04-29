@@ -179,22 +179,26 @@ export const getWorkById = async (req, res) => {
     
     if (work) { 
       const userId = req.user?.id;
-      const isCreator = work.createdBy._id.toString() === userId;
+      const isCreator = userId && work.createdBy._id.toString() === userId;
       
-      // ✅ [UNIQUE VIEW LOGIC] 
-      // Only count views and award XP if:
-      // 1. User is logged in
-      // 2. User is NOT the creator
-      // 3. User hasn't viewed this work before
+      // 1. [TOTAL VIEW COUNT]
+      // เพิ่มยอดวิวให้ทุกคนที่เข้ามาดู (รวมถึง Guest) เพื่อให้ยอดดูสมจริง
+      work.views = (work.views || 0) + 1;
+      
+      // 2. [UNIQUE XP LOGIC]
+      // จะให้แต้ม XP และบันทึกประวัติการดูเฉพาะ:
+      // - ยูสเซอร์ที่ล็อกอินแล้ว
+      // - ไม่ใช่เจ้าของงานเอง
+      // - ยังไม่เคยดูงานนี้มาก่อน (นับ XP ให้แค่ครั้งเดียวต่อคน)
       if (userId && !isCreator && !work.viewedBy.includes(userId)) {
-        work.views += 1; 
         work.viewedBy.push(userId);
-        await work.save();
         
-        // 🏆 Reward Creator for the unique view
+        // 🏆 Reward Creator for the unique quality view
         const io = req.app.get('io');
         updateUserStats(work.createdBy._id, 'VIEW', {}, io).catch(err => console.error('XP Error:', err));
       }
+
+      await work.save();
     }
     res.status(200).json(work);
   } catch (error) { res.status(500).json({ message: error.message }); }

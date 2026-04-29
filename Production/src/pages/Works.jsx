@@ -146,10 +146,15 @@ function Works() {
                         />
                       )}
 
-                      <div className="showcase-overlay">
+                        <div className="showcase-overlay">
                         <div className="overlay-content">
-                          <div className="overlay-cat">
-                            {work.category?.name?.toUpperCase() || 'GRAPHIC DESIGN'}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div className="overlay-cat">
+                              {work.category?.name?.toUpperCase() || 'GRAPHIC DESIGN'}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', fontWeight: '800' }}>
+                              <FiEye size={12} /> {Number(work.views || 0).toLocaleString()}
+                            </div>
                           </div>
                           <h6 className="overlay-title">
                             {work.title}

@@ -340,6 +340,12 @@ function WorkDetail() {
                   >
                     <FiHeart fill={isLiked ? 'var(--accent)' : 'none'} size={20} /> {likesCount}
                   </motion.button>
+                  <div 
+                    className="glass" 
+                    style={{ flex: 1, padding: '20px', borderRadius: '30px', color: '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.03)' }}
+                  >
+                    <FiEye size={20} /> {Number(work.views || 0).toLocaleString()}
+                  </div>
                   <motion.button 
                     onClick={handleShare}
                     whileHover={{ scale: 1.05 }} 

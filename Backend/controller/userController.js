@@ -13,6 +13,10 @@ const getPublicProfile = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
 
+    // ✅ [NEW] Increment Profile Views
+    user.totalViews = (user.totalViews || 0) + 1;
+    await user.save();
+
     const worksWithComments = await Work.find({ 'comments.userId': user._id })
       .select('title _id mainImage type videoUrl comments')
       .limit(20);
@@ -51,6 +55,10 @@ const getPublicProfileByUsername = async (req, res) => {
       .populate('friends', 'name username profileImage _id rank points profession');
 
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
+    
+    // ✅ [NEW] Increment Profile Views
+    user.totalViews = (user.totalViews || 0) + 1;
+    await user.save();
 
     const worksWithComments = await Work.find({ 'comments.userId': user._id })
       .select('title _id mainImage type videoUrl comments')

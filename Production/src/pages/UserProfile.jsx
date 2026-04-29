@@ -598,6 +598,10 @@ function UserProfile() {
                         <div style={{ fontSize: '1.8rem', fontWeight: '700' }}>{profile.friends?.length || 0}</div>
                      </div>
                      <div>
+                        <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700', marginBottom: '5px' }}>VIEWS</div>
+                        <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#fff' }}>{(profile.totalViews || 0).toLocaleString()}</div>
+                     </div>
+                     <div>
                         <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700', marginBottom: '5px' }}>POINTS</div>
                         <div style={{ fontSize: '1.8rem', fontWeight: '700', color: 'var(--indigo)' }}>{(profile.points || 0).toLocaleString()}</div>
                      </div>

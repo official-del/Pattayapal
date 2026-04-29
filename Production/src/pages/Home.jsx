@@ -147,8 +147,13 @@ function RightSidebar({ user, categories }) {
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%)' }}></div>
                   {isActive && (
                     <div style={{ position: 'absolute', bottom: '15px', left: '15px', right: '15px', textAlign: 'left' }}>
-                      <div style={{ color: 'var(--accent)', fontSize: '0.6rem', fontWeight: '800', letterSpacing: '1px', marginBottom: '4px' }}>
-                        {item.category?.name?.toUpperCase() || 'GENERAL'}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <div style={{ color: 'var(--accent)', fontSize: '0.6rem', fontWeight: '800', letterSpacing: '1px' }}>
+                          {item.category?.name?.toUpperCase() || 'GENERAL'}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.5)', fontSize: '0.6rem', fontWeight: '700' }}>
+                          <FiEye size={10} /> {Number(item.views || 0).toLocaleString()}
+                        </div>
                       </div>
                       <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: '800', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.title}
