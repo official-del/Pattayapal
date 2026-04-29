@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import HoverVideoPlayer from './HoverVideoPlayer';
 import OptimizedImage from './OptimizedImage';
 import React from 'react';
-
+import { createPortal } from 'react-dom';
 const FeedPost = React.memo(({ post, onPostDeleted }) => {
   const { user, token: contextToken, profileUpdateTag } = useContext(AuthContext);
   const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
@@ -317,8 +317,8 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
       </AnimatePresence>
 
       {/* 🖼️ Fullscreen Image Modal */}
-      <AnimatePresence>
-        {selectedImage && (
+      {selectedImage && createPortal(
+        <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -326,7 +326,7 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
             onClick={() => setSelectedImage(null)}
             style={{
               position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-              background: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex',
+              background: 'rgba(0,0,0,0.95)', zIndex: 99999, display: 'flex',
               alignItems: 'center', justifyContent: 'center', padding: '20px',
               cursor: 'zoom-out', backdropFilter: 'blur(10px)'
             }}
@@ -355,8 +355,9 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
               </button>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </motion.div>
   );
 });

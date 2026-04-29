@@ -344,8 +344,8 @@ function ManageWallet() {
                       <div style={{ width: '60px', height: '60px', borderRadius: '18px', background: '#138B2E', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.5rem', fontWeight: '900' }}>K</div>
                       <div>
                         <p style={{ color: '#444', fontSize: '0.7rem', fontWeight: '800', margin: 0, letterSpacing: '1px' }}>ธนาคารกสิกรไทย</p>
-                        <p style={{ color: '#fff', fontSize: '1.3rem', fontWeight: '900', margin: '5px 0' }}>147-8-04211-2</p>
-                        <p style={{ color: '#22c55e', fontSize: '0.85rem', fontWeight: '700', margin: 0 }}>ชื่อบัญชี: บจ.พัทยา แพ็ล เอ็นเตอร์เทนเม้นท์</p>
+                        <p style={{ color: '#fff', fontSize: '1.3rem', fontWeight: '900', margin: '5px 0' }}>159-1-37596-9</p>
+                        <p style={{ color: '#22c55e', fontSize: '0.85rem', fontWeight: '700', margin: 0 }}>ชื่อบัญชี: วัชรพงศ์ เสือสง่า</p>
                       </div>
                     </div>
 

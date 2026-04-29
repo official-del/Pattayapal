@@ -8,9 +8,14 @@ const OptimizedImage = ({ src, alt, style, className, onClick, placeholder = 'rg
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentSrc, setCurrentSrc] = useState(null);
 
+  const imgRef = React.useRef(null);
+
   useEffect(() => {
-    // Basic pre-fetching if needed, but primarily we rely on browser lazy loading
     setCurrentSrc(src);
+    // If the image is already cached and complete before onLoad is attached
+    if (imgRef.current && imgRef.current.complete) {
+      setIsLoaded(true);
+    }
   }, [src]);
 
   return (
@@ -25,10 +30,12 @@ const OptimizedImage = ({ src, alt, style, className, onClick, placeholder = 'rg
       onClick={onClick}
     >
       <img
+        ref={imgRef}
         src={currentSrc}
         alt={alt}
         loading="lazy"
         onLoad={() => setIsLoaded(true)}
+        onError={() => setIsLoaded(true)}
         style={{
           width: '100%',
           height: '100%',
