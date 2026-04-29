@@ -64,7 +64,7 @@ export const uploadToGCS = async (file) => {
     let contentType = file.mimetype;
     let originalName = file.originalname;
 
-    // ─── [IMAGE OPTIMIZATION] ───
+    /* ─── [IMAGE OPTIMIZATION - DISABLED FOR STABILITY] ───
     if (file.mimetype.startsWith('image/') && fs.existsSync(file.path)) {
         try {
             const optimizedPath = `${file.path}-optimized.webp`;
@@ -87,6 +87,7 @@ export const uploadToGCS = async (file) => {
             // We fall back to original file (processedPath remains file.path)
         }
     }
+    ─── */
 
     // 1. ลองอัปโหลดขึ้น GCS ถ้ามีการตั้งค่ากุญแจไว้
     if (isConfigured) {

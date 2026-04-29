@@ -35,28 +35,28 @@ function computeCompletion(taskType, liveData, questId) {
     case 'PROFILE_FULL':
       return {
         checklist: [
-          { label: 'เขียนข้อมูลแนะนำตัว (Bio)',   done: !!liveData.bio },
-          { label: 'อัปโหลดรูปโปรไฟล์',            done: !!liveData.profileImageUrl },
-          { label: 'อัปโหลดรูปหน้าปก',             done: !!liveData.coverImageUrl },
+          { label: 'เขียนข้อมูลแนะนำตัว (Bio)', done: !!liveData.bio },
+          { label: 'อัปโหลดรูปโปรไฟล์', done: !!liveData.profileImageUrl },
+          { label: 'อัปโหลดรูปหน้าปก', done: !!liveData.coverImageUrl },
         ],
         isCompleted: !!(liveData.bio && liveData.profileImageUrl && liveData.coverImageUrl),
       };
-    case 'POST_WORK':
+    case 'POST WORK':
       return {
         checklist: [{ label: `อัปโหลดผลงานอย่างน้อย 1 ชิ้น (มีอยู่ ${liveData.worksCount} ชิ้น)`, done: liveData.worksCount > 0 }],
         isCompleted: liveData.worksCount > 0,
       };
-    case 'DAILY_LOGIN':
+    case 'DAILY LOGIN':
       return {
         checklist: [{ label: 'ล็อกอินเข้าสู่ระบบวันนี้', done: true }],
         isCompleted: true,
       };
-    case 'PROOF_SUBMISSION':
+    case 'PROOF SUBMISSION':
       const sub = liveData.submissions?.find(s => s.questId === questId);
       return {
-        checklist: [{ 
-          label: sub ? (sub.status === 'PENDING' ? 'กำลังตรวจสอบหลักฐาน...' : sub.status === 'REJECTED' ? 'หลักฐานถูกปฏิเสธ (ลองส่งใหม่)' : 'หลักฐานผ่านการตรวจสอบ') : 'ยังไม่ได้ส่งหลักฐาน', 
-          done: sub?.status === 'APPROVED' 
+        checklist: [{
+          label: sub ? (sub.status === 'PENDING' ? 'กำลังตรวจสอบหลักฐาน...' : sub.status === 'REJECTED' ? 'หลักฐานถูกปฏิเสธ (ลองส่งใหม่)' : 'หลักฐานผ่านการตรวจสอบ') : 'ยังไม่ได้ส่งหลักฐาน',
+          done: sub?.status === 'APPROVED'
         }],
         isCompleted: sub?.status === 'APPROVED',
         submissionStatus: sub?.status || null
@@ -95,7 +95,7 @@ function ProofModal({ isOpen, onClose, quest, onSuccess }) {
         <button onClick={onClose} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#888', cursor: 'pointer' }}><FiX size={24} /></button>
         <h2 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', fontWeight: '800' }}>ส่งหลักฐานการทำเควส</h2>
         <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '20px' }}>{quest.title}</p>
-        
+
         {error && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px', borderRadius: '10px', fontSize: '0.85rem', marginBottom: '15px', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</div>}
 
         <form onSubmit={handleSubmit}>
@@ -187,15 +187,15 @@ function Quests() {
   const userInfo = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
   const isAdmin = userInfo?.role === 'admin';
 
-  const [quests, setQuests]               = useState([]);
-  const [liveData, setLiveData]           = useState({ bio: '', profileImageUrl: '', coverImageUrl: '', worksCount: 0, claimedQuests: [], submissions: [] });
+  const [quests, setQuests] = useState([]);
+  const [liveData, setLiveData] = useState({ bio: '', profileImageUrl: '', coverImageUrl: '', worksCount: 0, claimedQuests: [], submissions: [] });
   const [loadingQuests, setLoadingQuests] = useState(true);
-  const [loadingLive, setLoadingLive]     = useState(true);
-  const [claimingId, setClaimingId]       = useState(null);
-  const [showModal, setShowModal]         = useState(false);
-  const [editQuest, setEditQuest]         = useState(null);
-  const [toast, setToast]                 = useState(null); // { type: 'success'|'error', msg }
-  
+  const [loadingLive, setLoadingLive] = useState(true);
+  const [claimingId, setClaimingId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [editQuest, setEditQuest] = useState(null);
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', msg }
+
   const [showProofModal, setShowProofModal] = useState(false);
   const [activeProofQuest, setActiveProofQuest] = useState(null);
 
@@ -311,7 +311,7 @@ function Quests() {
   const now = new Date();
   const activeQuests = enrichedQuests.filter(q => !q.expiresAt || new Date(q.expiresAt) > now);
   const coinQuests = activeQuests.filter(q => q.coinReward > 0);
-  const xpQuests   = activeQuests.filter(q => q.xpReward > 0);
+  const xpQuests = activeQuests.filter(q => q.xpReward > 0);
 
   const loading = loadingQuests || loadingLive;
 
@@ -427,7 +427,7 @@ function Quests() {
         editData={editQuest}
       />
 
-      <ProofModal 
+      <ProofModal
         isOpen={showProofModal}
         onClose={() => { setShowProofModal(false); setActiveProofQuest(null); }}
         quest={activeProofQuest}
@@ -461,8 +461,8 @@ function QuestSection({ title, emoji, color, borderColor, children }) {
 // ─── Quest Card ───────────────────────────────────────────────────────────────
 function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelete }) {
   const isClaiming = claimingId === quest._id;
-  const color      = quest.coinReward > 0 ? '#f59e0b' : '#6366f1';
-  const countdown  = useCountdown(quest.expiresAt);
+  const color = quest.coinReward > 0 ? '#f59e0b' : '#6366f1';
+  const countdown = useCountdown(quest.expiresAt);
   const isExpiringSoon = quest.expiresAt && (new Date(quest.expiresAt) - new Date()) < 3600000; // < 1 hour
 
   const buttonText = quest.isClaimed ? 'Claimed' : (quest.taskType === 'PROOF_SUBMISSION' && !quest.isCompleted) ? (quest.submissionStatus === 'PENDING' ? 'Pending Review' : 'Submit Proof') : 'Claim Reward';
@@ -578,7 +578,7 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelet
             {isClaiming ? 'รอสักครู่...' : buttonText}
           </button>
         ) : quest.submissionStatus === 'PENDING' ? (
-           <button disabled style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #222', color: '#666', padding: '10px 18px', borderRadius: '10px', fontWeight: '700', fontSize: '0.8rem', cursor: 'not-allowed' }}>
+          <button disabled style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #222', color: '#666', padding: '10px 18px', borderRadius: '10px', fontWeight: '700', fontSize: '0.8rem', cursor: 'not-allowed' }}>
             Pending Review
           </button>
         ) : (
