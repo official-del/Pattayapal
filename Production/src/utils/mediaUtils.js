@@ -11,10 +11,12 @@ const VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
 export const getFullUrl = (path, bustCache = false) => {
   if (!path) return "";
   
-  // If it's already a full URL (http/https), return it as is
-  let finalUrl = path;
-  if (!path.startsWith("http://") && !path.startsWith("https://")) {
-    const cleanPath = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
+  // If it's already a full URL or a special protocol, return it as is
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:") || path.startsWith("data:")) {
+    return path;
+  }
+  
+  const cleanPath = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
     
     // 💡 ระบบตรวจสอบอัตโนมัติ
     if (import.meta.env.PROD) {
