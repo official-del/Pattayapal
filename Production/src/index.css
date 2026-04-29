@@ -250,3 +250,7 @@ select:focus {
   box-shadow: 0 0 10px var(--accent-glow) !important;
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

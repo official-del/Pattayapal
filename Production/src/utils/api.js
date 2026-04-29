@@ -5,6 +5,8 @@ const API = axios.create({
   baseURL: CONFIG.API_URL
 });
 
+export { API };
+
 // 🛡️ Centralized Auth Interceptor
 API.interceptors.request.use(config => {
   const token = localStorage.getItem('token') || localStorage.getItem('userToken');
@@ -17,10 +19,10 @@ API.interceptors.request.use(config => {
 
 // ── Auth ──
 export const authAPI = {
-  login: (email, password) =>
+  login:      (email, password) =>
     API.post('/auth/login', { email, password }).then(res => res.data),
   getProfile: () =>
-    API.get('/auth/profile').then(res => res.data)
+    API.get('/auth/profile').then(res => res.data),
 };
 
 // ── Works ──
@@ -46,6 +48,9 @@ export const categoriesAPI = {
 export const usersAPI = {
   getPublicProfile: (id) =>
     API.get(`/users/${id}/public`).then(res => res.data),
+  
+  getPublicProfileByUsername: (username) =>
+    API.get(`/users/username/${username}`).then(res => res.data),
 
   getFriendStatus: (id) =>
     API.get(`/users/${id}/friend-status`).then(res => res.data),
@@ -106,7 +111,26 @@ export const usersAPI = {
     API.get('/users/me/rank-progress').then(res => res.data),
 
   getAllUsersAdmin: () =>
-    API.get('/users/admin/all').then(res => res.data)
+    API.get('/users/admin/all').then(res => res.data),
+
+  claimQuest: (questId, reward, xpReward) =>
+    API.post('/users/claim-quest', { questId, reward, xpReward }).then(res => res.data)
+};
+
+// ── Quests (User Generated) ──
+export const questsAPI = {
+  getActive: () => API.get('/quests').then(res => res.data),
+  create: (data) => API.post('/quests', data).then(res => res.data),
+  update: (id, data) => API.put(`/quests/${id}`, data).then(res => res.data),
+  delete: (id) => API.delete(`/quests/${id}`).then(res => res.data),
+  claim: (id) => API.post(`/quests/${id}/claim`).then(res => res.data)
+};
+
+// ── Quest Submissions (Proof of Work) ──
+export const questSubmissionsAPI = {
+  submit: (data) => API.post('/quest-submissions/submit', data).then(res => res.data),
+  getAll: (status = '') => API.get(`/quest-submissions/admin/all${status ? `?status=${status}` : ''}`).then(res => res.data),
+  review: (id, data) => API.patch(`/quest-submissions/admin/${id}/review`, data).then(res => res.data)
 };
 
 // ── Chat ──
@@ -164,6 +188,7 @@ export const notificationsAPI = {
 
 export const postsAPI = {
   getAll: () => API.get('/posts').then(res => res.data),
+  getById: (id) => API.get(`/posts/${id}`).then(res => res.data),
   create: (formData) => API.post('/posts', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }).then(res => res.data),
@@ -188,13 +213,21 @@ export const analyticsAPI = {
 
 // ── Wallet / Payments ──
 export const walletAPI = {
-  topup: (formData) =>
-    API.post('/wallet/topup', formData, {
+  // 💸 User: Submit manual topup (Slip upload)
+  topupManual: (formData) =>
+    API.post('/wallet/topup-manual', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data),
 
   getTransactions: () => 
     API.get('/wallet/transactions').then(res => res.data),
+
+  // 🛡️ Admin: Manage Topup requests
+  getAdminTopups: () =>
+    API.get('/wallet/admin/topups').then(res => res.data),
+
+  updateTopupStatus: (id, status) =>
+    API.patch(`/wallet/admin/topups/${id}/status`, { status }).then(res => res.data),
 
   // 💸 Freelancer: Request withdrawal
   requestWithdraw: (data) =>
@@ -216,5 +249,9 @@ export const walletAPI = {
   // 🛡️ Admin: Get security audit logs
   getAuditLogs: () =>
     API.get('/wallet/admin/audit-logs').then(res => res.data),
+
+  // 🛡️ Admin: Send coins directly to user (Manual adjustment)
+  adminAdjustBalance: (data) =>
+    API.post('/wallet/admin/adjust-balance', data).then(res => res.data),
 };
 

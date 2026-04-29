@@ -1,6 +1,7 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import { notificationsAPI } from '../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFullUrl } from '../../utils/mediaUtils';
@@ -31,13 +32,15 @@ const TYPE_MAP = {
 function Notifications() {
   const navigate = useNavigate();
   const { token } = useContext(AuthContext);
+  const { socket } = useSocket();
   const currentToken = token || localStorage.getItem('userToken') || localStorage.getItem('token');
 
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
+  const [newCount, setNewCount] = useState(0); // pulse counter for real-time arrivals
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!currentToken) return;
     try {
       setLoading(true);
@@ -48,9 +51,25 @@ function Notifications() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentToken]);
 
-  useEffect(() => { fetchNotifications(); }, [currentToken]);
+  // 🔌 Real-time: Listen for new notifications via Socket
+  useEffect(() => {
+    if (!socket) return;
+    const handleNew = (newNote) => {
+      setNotifications(prev => {
+        // Avoid duplicates
+        if (prev.some(n => n._id === newNote._id)) return prev;
+        return [newNote, ...prev];
+      });
+      setNewCount(c => c + 1);
+    };
+    socket.on('new_notification', handleNew);
+    return () => socket.off('new_notification', handleNew);
+  }, [socket]);
+
+  useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
+
 
   const handleMarkAllRead = async () => {
     try {

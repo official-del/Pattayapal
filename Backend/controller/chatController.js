@@ -178,9 +178,23 @@ export const sendMessage = async (req, res) => {
       return res.status(404).json({ message: "ไม่พบห้องสนทนา" });
     }
 
+    // ✅ REAL-TIME: Push message to recipient via Socket immediately from server
+    const io = req.app.get('io');
+    const sender = await User.findById(senderId).select('name profileImage');
+    const messagePayload = {
+      ...newMessage._doc,
+      conversationId,
+      roomId: conversationId,
+      senderName: sender?.name || 'Unknown',
+    };
+
+    // Emit to the conversation room (all connected participants see it)
+    if (io) {
+      io.to(conversationId).emit('receive_message', messagePayload);
+    }
+
     // 🔔 สร้างการแจ้งเตือน (Notification) สำหรับทุกคนในกลุ่มยกเว้นตัวเอง
     const recipients = conversation.participants.filter(p => p.user && p.user.toString() !== senderId.toString());
-    const sender = await User.findById(senderId).select('name profileImage');
 
     if (sender) {
       recipients.forEach(async (r) => {
@@ -201,7 +215,6 @@ export const sendMessage = async (req, res) => {
           });
           await note.save();
 
-          const io = req.app.get('io');
           if (io) {
             io.to(r.user.toString()).emit('new_notification', {
               ...note._doc,

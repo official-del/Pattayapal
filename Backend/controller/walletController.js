@@ -9,268 +9,102 @@ import { uploadToGCS } from '../utils/gcs.js';
 const EASYSLIP_API_KEY = () => process.env.EASYSLIP_API_KEY?.trim();
 
 // ──────────────────────────────────────────────
-// POST /api/wallet/topup
+// ADMIN: Adjust User Balance (Manual Injection)
 // ──────────────────────────────────────────────
-export const topupWallet = async (req, res) => {
+export const adminAdjustCoins = async (req, res) => {
+  try {
+    const { userId, amount, reason } = req.body;
+    const adminId = req.user._id || req.user.id;
+
+    if (!userId || amount === undefined) {
+      return res.status(400).json({ message: 'Missing userId or amount' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const change = parseFloat(amount);
+    const oldBalance = user.coinBalance || 0;
+    user.coinBalance = oldBalance + change;
+    await user.save();
+
+    // Log the transaction
+    const tx = new Transaction({
+      user: userId,
+      type: change >= 0 ? 'TOPUP' : 'WITHDRAW',
+      amount: Math.abs(change),
+      status: 'completed',
+      reference: `ADMIN_ADJUST: ${reason || 'Manual Adjustment'}`,
+    });
+    await tx.save();
+
+    // Log Audit
+    await AuditLog.create({
+      userId: adminId,
+      action: 'BALANCE_ADJUSTMENT',
+      severity: 'medium',
+      details: {
+        targetUser: user.email,
+        oldBalance,
+        newBalance: user.coinBalance,
+        change,
+        reason
+      }
+    });
+
+    // Notify user via Socket
+    const io = req.app.get('io');
+    if (io) {
+      io.to(userId.toString()).emit('balance_update', {
+        coinBalance: user.coinBalance,
+        title: change >= 0 ? 'เหรียญเข้าแล้ว!' : 'เหรียญถูกหัก!',
+        message: `ยอดเหรียญของคุณถูกปรับเปลี่ยนโดยแอดมิน: ${change >= 0 ? '+' : ''}${change} Coins`,
+        type: change >= 0 ? 'topup' : 'deduct'
+      });
+    }
+
+    return res.status(200).json({
+      message: 'ปรับยอดเหรียญสำเร็จแล้ว',
+      coinBalance: user.coinBalance
+    });
+  } catch (err) {
+    console.error('Admin adjust coins error:', err);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// ──────────────────────────────────────────────
+// POST /api/wallet/topup-manual (User submits slip)
+// ──────────────────────────────────────────────
+export const submitManualTopup = async (req, res) => {
   try {
     const { amount } = req.body;
-    const numAmount = parseFloat(amount);
+    const userId = req.user._id || req.user.id;
 
-    if (!numAmount || numAmount <= 0) {
-      return res.status(400).json({ message: 'กรุณาระบุจำนวนเงินที่ถูกต้อง' });
-    }
-    if (!req.file) {
-      return res.status(400).json({
-        status: 'ANOMALY',
-        code: 'MISSING_FILE',
-        message: 'กรุณาแนบสลิปโอนเงินเพื่อดำเนินการต่อ'
-      });
+    if (!amount || !req.file) {
+      return res.status(400).json({ message: 'กรุณาระบุจำนวนเงินและอัปโหลดรูปสถาพสลิป' });
     }
 
-    // ── อัปโหลดสลิปขึ้น GCS เพื่อเก็บเป็นหลักฐานถาวร ──
+    // Upload slip to GCS
     const slipUrl = await uploadToGCS(req.file);
 
-    // 🛡️ [FIX] Multer DiskStorage doesn't provide buffer. We must read it from path.
-    const fileBuffer = req.file.buffer || (req.file.path ? fs.readFileSync(req.file.path) : null);
-
-    if (!fileBuffer) throw new Error("ไม่สามารถอ่านข้อมูลไฟล์สลิปได้");
-
-    const apiKey = EASYSLIP_API_KEY();
-    if (!apiKey) {
-      return res.status(500).json({ message: 'ระบบยังไม่ได้ตั้งค่า EasySlip API Key' });
-    }
-
-    // ── STEP 1: Try to scan QR Code locally ──
-    const qrPayload = await scanQRFromBuffer(fileBuffer);
-
-    // ── STEP 2: Call EasySlip API ──
-    let slipData;
-
-    if (qrPayload) {
-      // Method A: Send QR payload as JSON (most reliable)
-      console.log('🚀 Calling EasySlip v2 with QR payload...');
-      try {
-        const response = await axios.post(
-          'https://developer.easyslip.com/api/v2/verify',
-          { payload: qrPayload },
-          {
-            headers: {
-              Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        slipData = response.data;
-        console.log('📋 EasySlip (QR) response:', JSON.stringify(slipData, null, 2));
-      } catch (e) {
-        console.warn('⚠️  QR payload method failed, trying image fallback...', e.response?.data || e.message);
-        slipData = null;
-      }
-    }
-
-    if (!slipData) {
-      // Method B: Multipart image upload (fallback)
-      console.log('🚀 Calling EasySlip v1 with image upload...');
-      try {
-        const formDataV1 = new FormData();
-        formDataV1.append('file', fileBuffer, {
-          filename: req.file.originalname || 'slip.jpg',
-          contentType: req.file.mimetype || 'image/jpeg',
-        });
-
-        const response = await axios.post(
-          'https://developer.easyslip.com/api/v1/verify',
-          formDataV1,
-          {
-            headers: {
-              ...formDataV1.getHeaders(),
-              Authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
-            },
-          }
-        );
-        slipData = response.data;
-        console.log('📋 EasySlip (v1-image) response:', JSON.stringify(slipData, null, 2));
-      } catch (v1Err) {
-        console.error('❌ EasySlip v1 failed:', v1Err.response?.data || v1Err.message);
-        // If both failed, we let the validation below handle the null slipData
-        slipData = null;
-      }
-    }
-
-    if (!slipData) {
-      return res.status(400).json({
-        status: 'ANOMALY',
-        code: 'VERIFICATION_FAILED',
-        message: 'ไม่สามารถตรวจสอบสลิปได้: ระบบอ่านข้อมูลในรูปภาพไม่สำเร็จ หรือ API ตรวจสอบสลิปขัดข้อง'
-      });
-    }
-
-    // ── STEP 3: Validate response ──
-    const isSuccess = slipData?.status === 200 || slipData?.success === true;
-    if (!isSuccess) {
-      const errCode = slipData?.message || 'unknown_error';
-      return res.status(400).json({
-        status: 'ANOMALY',
-        code: 'VALIDATION_FAILED',
-        message: easyslipErrorMsg(errCode)
-      });
-    }
-
-    const { amount: actualAmount, transRef } = parseSlipData(slipData);
-    const receiverName =
-      slipData?.data?.receiver?.displayName ||
-      slipData?.data?.receiver?.name ||
-      slipData?.data?.receiver?.account?.name?.th ||
-      slipData?.data?.receiver?.account?.name?.en ||
-      '';
-
-    console.log(`💰 Amount from slip: ${actualAmount}, Requested: ${numAmount}`);
-    console.log(`🔑 TransRef: ${transRef}`);
-    console.log(`🏦 Receiver: ${receiverName}`);
-
-    if (actualAmount === undefined || actualAmount === null) {
-      return res.status(400).json({ status: 'ANOMALY', code: 'READ_ERROR', message: 'ไม่สามารถอ่านยอดเงินจากสลิปนี้ได้' });
-    }
-
-    // 🔒 [SECURITY] Check Receiver Name if configured
-    const EXPECTED_RECEIVER = process.env.PAYMENT_RECEIVER_NAME;
-    if (EXPECTED_RECEIVER && receiverName) {
-      const isMatch = receiverName.toLowerCase().includes(EXPECTED_RECEIVER.toLowerCase());
-      if (!isMatch) {
-        console.warn(`🚨 SECURITY ALERT: Receiver mismatch! Expected: ${EXPECTED_RECEIVER}, Got: ${receiverName}`);
-
-        // 🛡️ Record Audit Log for Anomaly
-        await AuditLog.create({
-          userId: req.user._id || req.user.id,
-          action: 'FRAUD_ATTEMPT',
-          severity: 'high',
-          details: {
-            type: 'RECEIVER_MISMATCH',
-            expected: EXPECTED_RECEIVER,
-            got: receiverName,
-            slipData
-          },
-          ip: req.ip,
-          userAgent: req.headers['user-agent']
-        });
-
-        return res.status(400).json({
-          status: 'ANOMALY',
-          code: 'RECEIVER_MISMATCH',
-          message: `❌ ชื่อผู้รับในสลิป (${receiverName}) ไม่ตรงกับบัญชีของระบบ กรุณาโอนเงินเข้าบัญชีที่กำหนดเท่านั้น`
-        });
-      }
-    }
-
-    if (Math.abs(actualAmount - numAmount) > 1) {
-      return res.status(400).json({
-        status: 'ANOMALY',
-        code: 'AMOUNT_MISMATCH',
-        message: `ยอดเงินในสลิป (฿${actualAmount}) ไม่ตรงกับที่คุณระบุ (฿${numAmount})`,
-      });
-    }
-
-    if (!transRef) {
-      return res.status(400).json({ status: 'ANOMALY', code: 'REF_MISSING', message: 'ไม่พบเลขอ้างอิงของสลิปนี้' });
-    }
-
-    const existingTx = await Transaction.findOne({ transRef });
-    if (existingTx) {
-      // 🛡️ Record Audit Log for Attempted Reuse
-      await AuditLog.create({
-        userId: req.user._id || req.user.id,
-        action: 'SECURITY_ALERT',
-        severity: 'medium',
-        details: {
-          type: 'DUPLICATE_SLIP_REUSE',
-          transRef,
-          message: 'User attempted to reuse a validated slip'
-        },
-        ip: req.ip,
-        userAgent: req.headers['user-agent']
-      });
-
-      return res.status(400).json({
-        status: 'ANOMALY',
-        code: 'DUPLICATE_SLIP',
-        message: 'สลิปนี้ถูกใช้งานไปแล้วในระบบ ไม่สามารถเติมซ้ำได้'
-      });
-    }
-
-    // ── STEP 4: Save & update balance (Atomic Transaction) ──
-    const coinsToAdd = numAmount / 10;
-
-    // Start Session for Atomicity
-    const mongoose = (await import('mongoose')).default;
-    let session = null;
-    try {
-      session = await mongoose.startSession();
-      session.startTransaction();
-    } catch (sErr) {
-      console.warn('⚠️ MongoDB Sessions not supported (Local/Standalone). Proceeding without transaction.');
-      session = null;
-    }
-
-    try {
-      const txData = {
-        user: req.user._id || req.user.id,
-        type: 'TOPUP',
-        amount: coinsToAdd,
-        status: 'completed',
-        slipUrl: slipUrl,
-        reference: `EASYSLIP_${transRef}`,
-        transRef: transRef,
-      };
-
-      const tx = new Transaction(txData);
-      await tx.save(session ? { session } : {});
-
-      const updatedUser = await User.findByIdAndUpdate(
-        req.user._id || req.user.id,
-        { $inc: { coinBalance: coinsToAdd } },
-        { session: session || undefined, new: true }
-      );
-
-      if (!updatedUser) throw new Error('ERR_USER_NOT_FOUND');
-
-      if (session) {
-        await session.commitTransaction();
-        session.endSession();
-      }
-
-      // ⚡ Emit Real-time Balance Update via Socket.io
-      const io = req.app.get('io');
-      if (io) {
-        io.to(updatedUser._id.toString()).emit('balance_update', {
-          coinBalance: updatedUser.coinBalance,
-          message: `RECEIVED: +${coinsToAdd} Coins`
-        });
-      }
-
-      return res.status(200).json({
-        message: `เติมเงินสำเร็จ! คุณได้รับ ${coinsToAdd} Coins (จากการโอน ฿${numAmount})`,
-        coinBalance: updatedUser.coinBalance,
-        transaction: tx,
-      });
-
-    } catch (dbErr) {
-      if (session) {
-        await session.abortTransaction();
-        session.endSession();
-      }
-      throw dbErr;
-    }
-
-  } catch (err) {
-    const errDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-    console.error('❌ Wallet topup error:', errDetail);
-
-    // 🔥 [CRITICAL FIX] Ensure even system errors trigger the Anomaly Modal
-    return res.status(400).json({
-      status: 'ANOMALY',
-      code: 'SYSTEM_ERROR',
-      message: 'ระบบไม่สามารถประมวลผลสลิปได้ในขณะนี้: ' + (err.message || 'Unknown Error')
+    const tx = new Transaction({
+      user: userId,
+      type: 'TOPUP',
+      amount: Number(amount),
+      status: 'pending', // Waiting for Admin to check
+      slipUrl: slipUrl,
+      reference: 'MANUAL_DEPOSIT',
     });
+    await tx.save();
+
+    return res.status(201).json({
+      message: 'ส่งหลักฐานสำเร็จ! กรุณารอแอดมินตรวจสอบและเติมเหรียญให้คุณใน 1-3 ชม.',
+      transaction: tx
+    });
+  } catch (err) {
+    console.error('Manual topup error:', err);
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -416,7 +250,6 @@ export const updateWithdrawalStatus = async (req, res) => {
           tx.proofImage = { url: proofUrl };
         } catch (uploadErr) {
           console.error('⚠️ Receipt upload failed:', uploadErr);
-          // We continue but log it; missing receipt shouldn't block the logic unless strictly required
         }
       }
 
@@ -435,7 +268,9 @@ export const updateWithdrawalStatus = async (req, res) => {
         if (updatedUserObj) {
           io.to(uId).emit('balance_update', {
             coinBalance: updatedUserObj.coinBalance,
-            message: status === 'completed' ? 'WITHDRAWAL_APPROVED' : 'WITHDRAWAL_REJECTED'
+            title: status === 'completed' ? 'ถอนเงินสำเร็จ!' : 'คำขอถอนเงินถูกปฏิเสธ',
+            message: status === 'completed' ? `การถอนเงินจำนวน ฿${tx.amount * 10} ของคุณได้รับการอนุมัติแล้ว และยอดเหรียญถูกหักเรียบร้อย` : 'คำขอถอนเงินของคุณไม่ผ่านการอนุมัติ',
+            type: 'withdraw'
           });
         }
       }
@@ -467,6 +302,74 @@ export const updateWithdrawalStatus = async (req, res) => {
 
   } catch (err) {
     console.error('Admin withdrawal update error:', err);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// ──────────────────────────────────────────────
+// GET /api/wallet/admin/topups (Admin)
+// ──────────────────────────────────────────────
+export const getAdminTopups = async (req, res) => {
+  try {
+    const topups = await Transaction.find({ type: 'TOPUP' })
+      .populate('user', 'name email profileImage coinBalance')
+      .sort({ createdAt: -1 });
+    return res.json(topups);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// ──────────────────────────────────────────────
+// PATCH /api/wallet/admin/topups/:id/status (Admin)
+// ──────────────────────────────────────────────
+export const updateTopupStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // 'completed' or 'failed'
+
+    if (!['completed', 'failed'].includes(status)) {
+      return res.status(400).json({ message: 'สถานะไม่ถูกต้อง' });
+    }
+
+    const tx = await Transaction.findById(id).populate('user');
+    if (!tx) return res.status(404).json({ message: 'ไม่พบรายการนี้' });
+    if (tx.status !== 'pending') {
+      return res.status(400).json({ message: 'รายการนี้ถูกจัดการไปแล้ว' });
+    }
+
+    if (status === 'completed') {
+      const user = await User.findById(tx.user._id);
+      if (user) {
+        user.coinBalance = (user.coinBalance || 0) + tx.amount;
+        await user.save();
+
+        // Notify user
+        const io = req.app.get('io');
+        if (io) {
+          io.to(user._id.toString()).emit('balance_update', {
+            coinBalance: user.coinBalance,
+            title: 'เหรียญเข้าแล้ว!',
+            message: `แอดมินอนุมัติสลิปของคุณแล้ว: +${tx.amount} Coins`,
+            type: 'topup'
+          });
+        }
+      }
+    }
+
+    tx.status = status;
+    await tx.save();
+
+    await AuditLog.create({
+      action: 'BALANCE_ADJUSTMENT',
+      severity: 'low',
+      details: { txId: tx._id, type: 'TOPUP_MANUAL', status, targetUser: tx.user?.email },
+      ip: req.ip
+    });
+
+    return res.json({ message: `จัดการรายการสำเร็จ (${status})`, transaction: tx });
+  } catch (err) {
+    console.error('Update topup status error:', err);
     return res.status(500).json({ message: err.message });
   }
 };

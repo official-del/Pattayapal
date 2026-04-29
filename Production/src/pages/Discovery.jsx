@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { usersAPI } from '../utils/api';
+import { usersAPI, categoriesAPI } from '../utils/api';
 import { getFullUrl } from '../utils/mediaUtils';
 import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,8 +29,19 @@ function Discovery() {
   // Hire Modal State
   const [hireModal, setHireModal] = useState({ show: false, freelancerId: null, freelancerName: '' });
 
-  const professions = ['All', 'Photographer', 'Editor', 'Videographer', 'Director', 'Production Design', 'Creative Content', 'Film Production', 'Post Production', 'Digital Artist', 'AI Operations'];
+  const [professions, setProfessions] = useState(['All']);
   const ranks = ['All', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
+
+  useEffect(() => {
+    categoriesAPI.getAll()
+      .then(res => {
+        const data = Array.isArray(res) ? res : (res?.categories || res?.data || []);
+        const names = data.map(c => c.name);
+        // Combine 'All' with actual category names from DB
+        setProfessions(['All', ...names]);
+      })
+      .catch(err => console.error('Failed to load categories for filter:', err));
+  }, []);
 
   useEffect(() => {
     const init = async () => {

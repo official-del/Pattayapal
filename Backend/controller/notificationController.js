@@ -23,6 +23,10 @@ export const markAsRead = async (req, res) => {
 
     notification.isRead = true;
     await notification.save();
+
+    const io = req.app.get('io');
+    if (io) io.to(req.user.id.toString()).emit('notifications_read', { id: req.params.id });
+
     res.json({ message: 'Marked as read' });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -35,6 +39,10 @@ export const markAllAsRead = async (req, res) => {
       { recipient: req.user.id, isRead: false },
       { $set: { isRead: true } }
     );
+
+    const io = req.app.get('io');
+    if (io) io.to(req.user.id.toString()).emit('notifications_read', { all: true });
+
     res.json({ message: 'All marked as read' });
   } catch (err) {
     res.status(500).json({ message: err.message });

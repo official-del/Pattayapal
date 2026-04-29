@@ -53,10 +53,35 @@ if (!isConfigured) {
 
 /** 
  * 📤 อัปโหลดไฟล์: ลอง GCS ก่อน ถ้าพลาด (หรือไม่มีกุญแจ) จะเซฟลงโฟลเดอร์ uploads ในเครื่องแทน
+ * เพิ่มการบีบอัดรูปภาพด้วย Sharp เพื่อลดขนาดไฟล์แต่คงความคมชัด
  */
 export const uploadToGCS = async (file) => {
     if (!file) throw new Error("No file provided");
     if (!file.path) throw new Error("File must be uploaded to disk first (missing file.path)");
+
+    let processedPath = file.path;
+    let contentType = file.mimetype;
+    let originalName = file.originalname;
+
+    // ─── [IMAGE OPTIMIZATION] ───
+    if (file.mimetype.startsWith('image/')) {
+        try {
+            const optimizedPath = `${file.path}-optimized.webp`;
+            await sharp(file.path)
+                .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true }) // ปรับขนาดถ้าใหญ่เกินไป
+                .webp({ quality: 80 }) // แปลงเป็น WebP คุณภาพ 80
+                .toFile(optimizedPath);
+            
+            // ใช้ไฟล์ที่บีบอัดแล้วแทน
+            processedPath = optimizedPath;
+            contentType = 'image/webp';
+            originalName = path.parse(file.originalname).name + '.webp';
+            
+            console.log("⚡ [Sharp] Optimized image to WebP:", optimizedPath);
+        } catch (sharpError) {
+            console.error("⚠️ [Sharp] Optimization failed, using original file:", sharpError.message);
+        }
+    }
 
     // 1. ลองอัปโหลดขึ้น GCS ถ้ามีการตั้งค่ากุญแจไว้
     if (isConfigured) {
@@ -64,22 +89,23 @@ export const uploadToGCS = async (file) => {
             const bucketName = process.env.GCP_BUCKET_NAME;
             const bucket = storage.bucket(bucketName);
             
-            const fileExtension = path.extname(file.originalname);
+            const fileExtension = path.extname(originalName);
             const gcsFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
 
-            await bucket.upload(file.path, {
+            await bucket.upload(processedPath, {
                 destination: gcsFileName,
                 gzip: true,
                 metadata: {
-                    contentType: file.mimetype,
+                    contentType: contentType,
                 },
             });
             
             const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
             console.log("✅ [GCS] Uploaded & Made Public:", publicUrl);
             
-            // ลบไฟล์ชั่วคราว
+            // ลบไฟล์ชั่วคราว (ทั้งตัวจริงและตัวที่บีบอัด)
             if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            if (processedPath !== file.path && fs.existsSync(processedPath)) fs.unlinkSync(processedPath);
             
             return publicUrl;
         } catch (gcsError) {
@@ -94,20 +120,24 @@ export const uploadToGCS = async (file) => {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
 
-        const fileExtension = path.extname(file.originalname);
+        const fileExtension = path.extname(originalName);
         const localFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
         const targetPath = path.join(uploadDir, localFileName);
 
-        // ย้ายไฟล์ชั่วคราวมาเก็บที่ uploads
-        fs.renameSync(file.path, targetPath);
+        // ย้ายไฟล์ที่ผ่านการประมวลผลแล้ว (หรือไฟล์เดิม) มาเก็บที่ uploads
+        fs.renameSync(processedPath, targetPath);
         
+        // ลบไฟล์เดิมถ้ามีการสร้างไฟล์ใหม่ (optimized)
+        if (processedPath !== file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
+
         const localPath = `uploads/${localFileName}`;
         console.log("📂 [Local] Saved successfully:", localPath);
         return localPath;
     } catch (localError) {
         console.error("🔥 [FATAL] Both GCS and Local storage failed:", localError.message);
-        // ลบไฟล์ชั่วคราวถ้าทุกอย่างล้มเหลว
+        // ลบไฟล์ชั่วคราวทั้งหมดถ้าทุกอย่างล้มเหลว
         if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        if (processedPath !== file.path && fs.existsSync(processedPath)) fs.unlinkSync(processedPath);
         throw localError;
     }
 };

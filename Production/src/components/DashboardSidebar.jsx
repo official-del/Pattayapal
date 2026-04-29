@@ -3,7 +3,7 @@ import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiHome, FiGrid, FiPackage, FiBriefcase, FiUser, FiArrowLeft, FiMessageCircle, FiSettings, FiZap, FiDollarSign, FiActivity, FiGlobe, FiBell, FiSearch
+  FiHome, FiGrid, FiPackage, FiBriefcase, FiUser, FiArrowLeft, FiMessageCircle, FiSettings, FiZap, FiDollarSign, FiActivity, FiGlobe, FiBell, FiSearch, FiGift
 } from 'react-icons/fi';
 
 function DashboardSidebar({ show, onClose }) {
@@ -30,8 +30,7 @@ function DashboardSidebar({ show, onClose }) {
       { name: 'Platform Analytics', icon: <FiActivity />, href: '/admin/overview' },
       { name: 'Global Workspace', icon: <FiGlobe />, href: '/feed' },
       { name: 'Rankings & Hall of Fame', icon: <FiZap />, href: '/rankings' },
-      { name: 'Withdrawal Requests', icon: <FiArrowLeft style={{ transform: 'rotate(-45deg)' }} />, href: '/admin/withdrawals' },
-      { name: 'Account Settings', icon: <FiSettings />, href: '/dashboard/account' },
+      { name: 'Withdrawal Requests', icon: <FiArrowLeft style={{ transform: 'rotate(-45deg)' }} />, href: '/admin/withdrawals' }
     ];
   } else if (isFreelancer) {
     menuItems = [
@@ -39,7 +38,7 @@ function DashboardSidebar({ show, onClose }) {
       { name: 'Creator Leaderboards', icon: <FiZap />, href: '/rankings' },
       { name: 'Manage Job', icon: <FiBriefcase />, href: '/dashboard/hiring' },
       { name: 'My Coins', icon: <FiDollarSign />, href: '/dashboard/wallet' },
-      { name: 'Account Settings', icon: <FiSettings />, href: '/dashboard/account' },
+      { name: 'Daily Quests', icon: <FiGift />, href: '/dashboard/quests' }
     ];
   } else {
     menuItems = [
@@ -47,7 +46,7 @@ function DashboardSidebar({ show, onClose }) {
       { name: 'Manage Job', icon: <FiBriefcase />, href: '/dashboard/hiring' },
       { name: 'My Wallet', icon: <FiDollarSign />, href: '/dashboard/wallet' },
       { name: 'Support / Help', icon: <FiMessageCircle />, href: '/messenger' },
-      { name: 'Account Settings', icon: <FiSettings />, href: '/dashboard/account' },
+      { name: 'Daily Quests', icon: <FiGift />, href: '/dashboard/quests' }
     ];
   }
 

@@ -1,5 +1,5 @@
 import express from 'express';
-import { createPost, getPosts, likePost, commentPost, deleteComment, deletePost, replyCommentPost } from '../controller/postController.js';
+import { createPost, getPosts, getPostById, likePost, commentPost, deleteComment, deletePost, replyCommentPost } from '../controller/postController.js';
 import { protect } from '../middleware/auth.js';
 import multer from 'multer';
 
@@ -15,6 +15,7 @@ router.route('/')
   .post(protect, upload.array('media', 4), createPost);
 
 router.route('/:id')
+  .get(getPostById)
   .delete(protect, deletePost);
 
 router.route('/:id/like')

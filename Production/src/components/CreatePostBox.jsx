@@ -13,6 +13,7 @@ function CreatePostBox({ onPostCreated }) {
   const [content, setContent] = useState('');
   const [media, setMedia] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const fileInputRef = useRef(null);
@@ -60,108 +61,301 @@ function CreatePostBox({ onPostCreated }) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      style={{
-        display: 'flex', alignItems: 'center', gap: '15px',
-        marginBottom: '40px',
-        background: 'rgba(255,255,255,0.02)', // subtle background
-        padding: '15px',
-        borderRadius: '45px',
-        border: '1px solid rgba(255,87,51,0.1)'
-      }}
-    >
-      {/* Profile Picture */}
-      <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#111', border: '2px solid var(--accent)', overflow: 'hidden', flexShrink: 0 }}>
-        <img src={userInfo?.profileImage?.url ? (getFullUrl(userInfo.profileImage.url) + `?t=${profileUpdateTag}`) : 'https://via.placeholder.com/60'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Profile" />
-      </div>
+    <div className="create-post-container">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="create-post-box glass"
+      >
+        {/* Profile Picture */}
+        <div className="profile-pic-wrapper">
+          <img src={userInfo?.profileImage?.url ? (getFullUrl(userInfo.profileImage.url) + `?t=${profileUpdateTag}`) : 'https://via.placeholder.com/60'} alt="Profile" />
+        </div>
 
-      {/* Input Box */}
-      <div style={{
-        flex: 1,
-        background: 'rgba(0,0,0,0.5)',
-        borderRadius: '50px',
-        padding: '0 25px',
-        display: 'flex', alignItems: 'center',
-        height: '50px',
-        border: '1px solid rgba(255,255,255,0.05)'
-      }}>
-        <input
-          type="text"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="แนะนำตัวให้คอมมูนิตี้รู้จัก หรือแชร์ไอเดียของคุณที่นี่..."
-          style={{
-            flex: 1, background: 'transparent', border: 'none', outline: 'none',
-            color: '#fff', fontSize: '0.95rem', fontWeight: '500'
-          }}
-        />
-        {/* Hidden file input */}
-        <input type="file" ref={fileInputRef} accept="image/*,video/*" style={{ display: 'none' }} onChange={handleMediaChange} />
-      </div>
+        {/* Input Box */}
+        <div className="input-field-wrapper">
+          <input
+            type="text"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="แนะนำตัวให้คอมมูนิตี้ หรือแชร์ไอเดียของคุณ..."
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+          />
+          {/* Hidden file input */}
+          <input type="file" ref={fileInputRef} accept="image/*,video/*" style={{ display: 'none' }} onChange={handleMediaChange} />
+        </div>
 
-      {/* Action Circles */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button
-          onClick={() => fileInputRef.current.click()}
-          style={{
-            width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,87,51,0.1)'; e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
-          onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
-          title="Upload Media"
-        >
-          <FiImage color="inherit" size={20} />
-        </button>
+        {/* Action Circles */}
+        <div className="action-buttons-group">
+          <button
+            onClick={() => fileInputRef.current.click()}
+            className="action-circle-btn media-btn"
+            title="Upload Media"
+          >
+            <FiImage size={18} />
+          </button>
 
-        <button
-          onClick={handlePost}
-          disabled={isSubmitting || (!content.trim() && !media)}
-          style={{
-            width: '50px', height: '50px', borderRadius: '50%', background: 'var(--accent)',
-            border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: (!content.trim() && !media) ? 0.5 : 1,
-            boxShadow: '0 4px 15px rgba(255,87,51,0.3)'
-          }}
-          title="Post"
-        >
-          {isSubmitting ? <FiLoader className="spin" color="#fff" size={20} /> : <FiSend color="#fff" size={20} />}
-        </button>
+          <button
+            onClick={handlePost}
+            disabled={isSubmitting || (!content.trim() && !media)}
+            className="action-circle-btn send-post-btn"
+            title="Post"
+          >
+            {isSubmitting ? <FiLoader className="spin" size={18} /> : <FiSend size={18} />}
+          </button>
+        </div>
+      </motion.div>
 
-        {/* <button
-          style={{
-            width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,87,51,0.1)'; e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
-          onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
-        >
-          <FiZap color="inherit" size={20} />
-        </button> */}
-      </div>
-
-      {/* Media Stream Preview (Absolute positioning to not break the single row layout) */}
+      {/* Media Stream Preview */}
       <AnimatePresence>
         {mediaPreview && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 10 }}
-            style={{ position: 'absolute', top: '70px', left: '25px', zIndex: 10 }}
+            initial={{ opacity: 0, scale: 0.95, y: -10 }} 
+            animate={{ opacity: 1, scale: 1, y: 0 }} 
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            className="media-preview-wrapper"
           >
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <img src={mediaPreview} alt="Preview" style={{ maxHeight: '150px', borderRadius: '15px', border: '2px solid #ccc' }} />
-              <button onClick={removeMedia} style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(0,0,0,0.8)', color: '#fff', border: 'none', width: '25px', height: '25px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <FiX size={14} />
+            <div className="media-preview-card">
+              <img 
+                src={mediaPreview} 
+                alt="Preview" 
+                onClick={() => setSelectedImage(mediaPreview)}
+              />
+              <button onClick={removeMedia} className="remove-media-btn">
+                <FiX size={16} />
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+
+      {/* Fullscreen Preview Modal */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedImage(null)}
+            className="fullscreen-modal"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="modal-content"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img src={selectedImage} alt="Full preview" />
+              <button onClick={() => setSelectedImage(null)} className="modal-close-btn"><FiX /></button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style>{`
+        .create-post-container {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: clamp(30px, 6vw, 50px);
+          width: 100%;
+        }
+
+        .create-post-box {
+          display: flex;
+          align-items: center;
+          gap: clamp(10px, 2vw, 15px);
+          background: rgba(255,255,255,0.03) !important;
+          padding: clamp(10px, 2vw, 15px) !important;
+          border-radius: 40px !important;
+          border: 1px solid rgba(255,87,51,0.1) !important;
+          width: 100%;
+        }
+
+        .profile-pic-wrapper {
+          width: clamp(35px, 6vw, 45px);
+          height: clamp(35px, 6vw, 45px);
+          border-radius: 50%;
+          background: #111;
+          border: 2px solid var(--accent);
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+
+        .profile-pic-wrapper img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .input-field-wrapper {
+          flex: 1;
+          background: rgba(0,0,0,0.4);
+          border-radius: 30px;
+          padding: 0 clamp(15px, 3vw, 20px);
+          display: flex;
+          align-items: center;
+          height: clamp(38px, 6vw, 48px);
+          border: 1px solid rgba(255,255,255,0.05);
+          min-width: 0;
+        }
+
+        .input-field-wrapper input {
+          flex: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: #fff;
+          font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+          font-weight: 500;
+          width: 100%;
+        }
+
+        .input-field-wrapper input::placeholder {
+          color: #444;
+          font-weight: 700;
+        }
+
+        .action-buttons-group {
+          display: flex;
+          gap: clamp(6px, 1.5vw, 10px);
+          flex-shrink: 0;
+        }
+
+        .action-circle-btn {
+          width: clamp(38px, 6vw, 48px);
+          height: clamp(38px, 6vw, 48px);
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: 0.3s;
+        }
+
+        .media-btn {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: #666;
+        }
+
+        .media-btn:hover {
+          background: rgba(255,87,51,0.1);
+          border-color: var(--accent);
+          color: var(--accent);
+        }
+
+        .send-post-btn {
+          background: var(--accent);
+          border: none;
+          color: #fff;
+          box-shadow: 0 5px 15px rgba(255,87,51,0.2);
+        }
+
+        .send-post-btn:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+
+        .media-preview-wrapper {
+          padding-left: clamp(45px, 8vw, 60px);
+        }
+
+        .media-preview-card {
+          position: relative;
+          display: inline-block;
+          border-radius: 15px;
+          overflow: hidden;
+          border: 1px solid rgba(255,87,51,0.2);
+          box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+
+        .media-preview-card img {
+          max-height: 250px;
+          max-width: 100%;
+          display: block;
+          cursor: zoom-in;
+        }
+
+        .remove-media-btn {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: rgba(0,0,0,0.7);
+          color: #fff;
+          border: none;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          backdrop-filter: blur(5px);
+        }
+
+        .fullscreen-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0,0,0,0.95);
+          zIndex: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          cursor: zoom-out;
+          backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+          position: relative;
+          max-width: 95%;
+          max-height: 95%;
+        }
+
+        .modal-content img {
+          max-width: 100%;
+          max-height: 90vh;
+          border-radius: 12px;
+          display: block;
+        }
+
+        .modal-close-btn {
+          position: absolute;
+          top: -40px;
+          right: 0;
+          background: none;
+          border: none;
+          color: #fff;
+          font-size: 1.8rem;
+          cursor: pointer;
+        }
+
+        /* ── MOBILE OPTIMIZATION ── */
+        @media (max-width: 480px) {
+          .create-post-box {
+            padding: 8px !important;
+            gap: 8px !important;
+          }
+          .input-field-wrapper {
+            padding: 0 12px;
+          }
+          .action-buttons-group {
+            gap: 5px;
+          }
+          .media-preview-wrapper {
+            padding-left: 0;
+            display: flex;
+            justify-content: center;
+          }
+        }
+      `}</style>
+    </div>
   );
 }
 export default CreatePostBox;

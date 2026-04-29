@@ -199,26 +199,30 @@ const ProfileFrame = ({
         </div>
       )}
 
-      {/* ── XP Label (bottom, only on large sizes) ── */}
-      {displayRing && sizeNum >= 85 && (
+      {/* ── XP Label (bottom) ── */}
+      {displayRing && sizeNum >= 55 && (
         <div style={{
           position: 'absolute',
-          bottom: '-15%',
+          bottom: '-10px',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 10,
           background: '#000',
-          border: `1px solid ${colors.ring}44`,
+          border: `1px solid ${colors.ring}`,
           borderRadius: '20px',
-          padding: '2px 8px',
+          padding: sizeNum < 80 ? '2px 6px' : '4px 12px',
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
-          boxShadow: '0 5px 15px rgba(0,0,0,0.5)'
+          boxShadow: `0 0 15px ${colors.glow}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}>
           <span style={{
-            fontSize: `${Math.max(8, sizeNum * 0.05)}px`, 
-            fontWeight: '700',
-            color: colors.ring, letterSpacing: '1px',
+            fontSize: sizeNum < 80 ? '8px' : `${Math.max(9, sizeNum * 0.09)}px`, 
+            fontWeight: '800',
+            color: colors.ring,
+            letterSpacing: '0.5px',
           }}>
             {isMaxRank
               ? `MAX`

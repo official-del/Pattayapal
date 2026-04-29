@@ -43,9 +43,11 @@ router.post('/:id/like', protect, async (req, res) => {
       // ยังไม่เคย Like -> ให้เพิ่ม ID เข้าไป
       work.likes.push(req.user._id);
       
-      // 🏆 Reward Creator for the like
-      const io = req.app.get('io');
-      updateUserStats(work.createdBy, 'LIKE', {}, io).catch(err => console.error(err));
+      // 🏆 Reward Creator for the like (if not self-like)
+      if (work.createdBy.toString() !== req.user._id.toString()) {
+        const io = req.app.get('io');
+        updateUserStats(work.createdBy, 'LIKE', {}, io).catch(err => console.error(err));
+      }
     } else {
       // เคย Like แล้ว -> ให้เอา ID ออก (Unlike)
       work.likes.splice(index, 1);

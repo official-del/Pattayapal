@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { worksAPI, categoriesAPI, usersAPI } from '../../utils/api';
+import { worksAPI, categoriesAPI, usersAPI, walletAPI } from '../../utils/api';
 import axios from 'axios';
 import { CONFIG } from '../../utils/config';
 import { 
   FiFolder, FiSettings, FiGrid, FiBarChart2, FiPlus, FiArrowRight, FiArrowLeft, 
   FiTrash2, FiEdit3, FiEye, FiVideo, FiImage, FiMoreHorizontal, FiLogOut, FiHome, FiCheckCircle,
-  FiUsers, FiActivity, FiDollarSign, FiAward
+  FiUsers, FiActivity, FiDollarSign, FiAward, FiInfo, FiUploadCloud, FiSearch, FiChevronDown
 } from 'react-icons/fi';
 import { HiOutlineSparkles, HiOutlineCube } from 'react-icons/hi';
 import { RiDashboardLine, RiUserStarLine } from 'react-icons/ri';
+import { motion, AnimatePresence } from 'framer-motion';
 import '../../css/AdminDashboard.css';
 import AdminOverview from './AdminOverview';
 
@@ -34,43 +35,56 @@ export default function AdminDashboard() {
   const [editingCat, setEditingCat] = useState(null);
   const [catForm, setCatForm] = useState({ name: '', icon: '', description: '' });
   const [catSaving, setCatSaving] = useState(false);
+  
+   // ── Top-up state ──
+  const [topups, setTopups] = useState([]);
+  const [topupsLoading, setTopupsLoading] = useState(false);
+  const [topupFilter, setTopupFilter] = useState('pending'); // 'pending', 'all'
+
+  // ── Coin Adjustment state ──
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
+  const [adjustingUser, setAdjustingUser] = useState(null);
+  const [adjustAmount, setAdjustAmount] = useState('');
+  const [adjustReason, setAdjustReason] = useState('');
+  const [adjustLoading, setAdjustLoading] = useState(false);
 
   // Get token from localStorage (no need for Context)
   const activeToken = localStorage.getItem('token') || localStorage.getItem('userToken');
 
   useEffect(() => {
-    // Fetch user data directly from localStorage
+    // Initial Auth Check
     const rawUserInfo = localStorage.getItem('userInfo');
-
     if (!activeToken || !rawUserInfo) {
-      console.log("❌ Token or UserInfo not found. Redirecting to login");
       navigate('/login');
       return;
     }
 
     try {
       const userInfo = JSON.parse(rawUserInfo);
-      const isAdmin = userInfo?.role?.toLowerCase() === 'admin';
-
-      if (!isAdmin) {
-        console.log("❌ Not an admin. Redirecting to login");
+      if (userInfo?.role?.toLowerCase() !== 'admin') {
         alert("This page is for admins only");
         navigate('/login');
         return;
       }
-
-      // If all checks pass, load data
-      fetchWorks();
-      fetchCategories();
-      fetchAllUsers();
+      
+      // Lazy Load data based on tab
+      if (activeTab === 'overview') {
+        // Stats are in AdminOverview
+      } else if (activeTab === 'works') {
+        fetchWorks();
+      } else if (activeTab === 'users') {
+        fetchAllUsers();
+      } else if (activeTab === 'topups') {
+        fetchTopups();
+      } else if (activeTab === 'categories') {
+        fetchCategories();
+      }
 
     } catch (error) {
-      console.error("🔥 Error parsing login data:", error);
       navigate('/login');
     }
-  }, []); 
+  }, [activeTab]); 
 
-  /* ════════ WORKS ════════ */
   const fetchAllUsers = async () => {
     setUsersLoading(true);
     try {
@@ -80,7 +94,6 @@ export default function AdminDashboard() {
     finally { setUsersLoading(false); }
   };
 
-  /* ════════ WORKS ════════ */
   const fetchWorks = async () => {
     setWorksLoading(true);
     try {
@@ -91,66 +104,25 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteWork = async (work) => {
-    if (!window.confirm(`Delete project "${work.title}" permanently? This will also remove files from cloud.`)) return;
-
+    if (!window.confirm(`Delete project "${work.title}" permanently?`)) return;
     try {
-      const mediaUrl = work.mainImage?.url || work.mediaUrl;
-      if (mediaUrl && mediaUrl.includes('storage.googleapis.com')) {
-        await axios({
-          method: 'delete',
-          url: `${CONFIG.API_URL}/upload/delete`,
-          data: { url: mediaUrl },
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-
-      if (work.album && work.album.length > 0) {
-        for (const img of work.album) {
-          const imgUrl = img.url || img.previewUrl;
-          if (imgUrl && imgUrl.includes('storage.googleapis.com')) {
-            await axios({
-              method: 'delete',
-              url: `${CONFIG.API_URL}/upload/delete`,
-              data: { url: imgUrl },
-              headers: { 'Content-Type': 'application/json' }
-            });
-          }
-        }
-      }
-
       await worksAPI.delete(work._id, activeToken);
       setWorks(prev => prev.filter(w => w._id !== work._id));
-      alert('Project and cloud files deleted successfully!');
-
     } catch (error) {
-      console.error("❌ Failed to delete project:", error);
-      alert('Delete failed: ' + (error.response?.data?.message || error.message));
+      console.error(error);
     }
   };
 
   const handleToggleSlider = async (work) => {
     try {
-      const currentSliderCount = works.filter(w => w.showOnSlider).length;
-      if (!work.showOnSlider && currentSliderCount >= 5) {
-        alert('Slider limit: maximum 5 videos for better website speed');
-        return;
-      }
-
       const updatedStatus = !work.showOnSlider;
       const formData = new FormData();
       formData.append('showOnSlider', updatedStatus);
-
       await worksAPI.update(work._id, formData, activeToken);
-
-      setWorks(prev => prev.map(w =>
-        w._id === work._id ? { ...w, showOnSlider: updatedStatus } : w
-      ));
-    } catch (e) {
-      alert('Failed to update slider status');
-    }
+      setWorks(prev => prev.map(w => w._id === work._id ? { ...w, showOnSlider: updatedStatus } : w));
+    } catch (e) { console.error(e); }
   };
 
-  /* ════════ CATEGORIES ════════ */
   const fetchCategories = async () => {
     setCatLoading(true);
     try {
@@ -162,618 +134,420 @@ export default function AdminDashboard() {
 
   const openCatModal = (cat = null) => {
     setEditingCat(cat);
-    setCatForm(cat
-      ? { name: cat.name || '', icon: cat.icon || '', description: cat.description || '' }
-      : { name: '', icon: '', description: '' }
-    );
+    setCatForm(cat ? { name: cat.name, icon: cat.icon, description: cat.description } : { name: '', icon: '', description: '' });
     setShowCatModal(true);
   };
 
-  const closeCatModal = () => {
-    setShowCatModal(false);
-    setEditingCat(null);
-    setCatForm({ name: '', icon: '', description: '' });
-  };
+  const closeCatModal = () => { setShowCatModal(false); setEditingCat(null); };
 
   const handleSaveCat = async (e) => {
     e.preventDefault();
-    if (!catForm.name.trim()) return alert('Please enter a category name');
     setCatSaving(true);
     try {
       if (editingCat) {
-        const updated = await categoriesAPI.update(editingCat._id, catForm, activeToken);
-        setCategories(prev => prev.map(c => c._id === editingCat._id ? (updated.category || updated) : c));
+        await categoriesAPI.update(editingCat._id, catForm, activeToken);
       } else {
-        const created = await categoriesAPI.create(catForm, activeToken);
-        setCategories(prev => [...prev, created.category || created]);
+        await categoriesAPI.create(catForm, activeToken);
       }
+      fetchCategories();
       closeCatModal();
-    } catch (e) { alert('Save failed'); }
+    } catch (e) { console.error(e); }
     finally { setCatSaving(false); }
   };
 
   const handleDeleteCat = async (id) => {
-    if (!window.confirm('Delete this category?')) return;
+    if (!window.confirm('Delete category?')) return;
     await categoriesAPI.delete(id, activeToken);
-    setCategories(prev => prev.filter(c => c._id !== id));
+    fetchCategories();
   };
 
-  /* ════════ RENDER ════════ */
+  const handleAdjustCoins = async (e) => {
+    e.preventDefault();
+    setAdjustLoading(true);
+    try {
+      await walletAPI.adminAdjustBalance({
+        userId: adjustingUser._id,
+        amount: parseFloat(adjustAmount),
+        reason: adjustReason
+      });
+      alert('Success!');
+      setShowAdjustModal(false);
+      fetchAllUsers();
+    } catch (e) { console.error(e); }
+    finally { setAdjustLoading(false); }
+  };
+
+  const fetchTopups = async () => {
+    setTopupsLoading(true);
+    try {
+      const data = await walletAPI.getAdminTopups(activeToken);
+      setTopups(data || []);
+    } catch (e) { console.error(e); }
+    finally { setTopupsLoading(false); }
+  };
+
+  const handleUpdateTopupStatus = async (id, status) => {
+    try {
+      await walletAPI.updateTopupStatus(id, status, activeToken);
+      fetchTopups();
+    } catch (e) { console.error(e); }
+  };
+
+  // ── MEMOIZED DATA ──
+  const memoWorks = useMemo(() => {
+    return Object.values(works.reduce((groups, work) => {
+      const userId = work.createdBy?._id || 'unknown';
+      if (!groups[userId]) groups[userId] = { user: work.createdBy || { name: 'Unknown' }, items: [] };
+      groups[userId].items.push(work);
+      return groups;
+    }, {}));
+  }, [works]);
+
+  const memoUsers = useMemo(() => {
+    let res = [...allUsers];
+    if (userSearch) {
+      const q = userSearch.toLowerCase();
+      res = res.filter(u => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
+    }
+    return res.sort((a, b) => {
+      if (userSort === 'views') return (b.totalViews || 0) - (a.totalViews || 0);
+      if (userSort === 'coins') return (b.coinBalance || 0) - (a.coinBalance || 0);
+      return 0;
+    });
+  }, [allUsers, userSearch, userSort]);
+
+  const memoTopups = useMemo(() => {
+    return topups.filter(t => topupFilter === 'all' ? true : t.status === 'pending');
+  }, [topups, topupFilter]);
+
   return (
-    <div className="admin-page-root" style={{ fontFamily: "'Inter', 'Prompt', sans-serif" }}>
-
-      {/* ── Main Content ── */}
-      <main className="admin-main-viewport" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+    <div className="admin-page-root" style={{ fontFamily: "'Inter', 'Prompt', sans-serif", background: '#050505', minHeight: '100vh', color: '#fff' }}>
+      <main className="admin-main-viewport" style={{ width: '100%', maxWidth: '1440px', margin: '0 auto', padding: '30px 5%' }}>
         
-        {/* ✅ MODERN TOP NAV BAR */}
-        <header className="admin-top-bar">
-          
-          <div className="tab-nav-group">
-            <button 
-              onClick={() => setActiveTab('overview')}
-              className={`tab-nav-btn ${activeTab === 'overview' ? 'active' : ''}`}
-            >
-              <FiBarChart2 /> OVERVIEW
-            </button>
-            <button 
-              onClick={() => setActiveTab('works')}
-              className={`tab-nav-btn ${activeTab === 'works' ? 'active' : ''}`}
-            >
-              <FiFolder /> MANAGEMENT
-            </button>
-            <button 
-              onClick={() => setActiveTab('categories')}
-              className={`tab-nav-btn ${activeTab === 'categories' ? 'active' : ''}`}
-            >
-              <FiGrid /> CATEGORIES
-            </button>
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`tab-nav-btn ${activeTab === 'users' ? 'active' : ''}`}
-            >
-              <FiUsers /> USERS
-            </button>
+        {/* TOP NAV */}
+        <header style={{ 
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+          background: '#0a0a0a', 
+          padding: '12px 25px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)',
+          marginBottom: '50px', position: 'sticky', top: '20px', zIndex: 100
+        }}>
+          <div className="admin-tabs" style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '2px' }}>
+            {['overview', 'works', 'categories', 'users', 'topups'].map(tab => (
+              <button 
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{ 
+                  background: activeTab === tab ? '#ff5733' : 'transparent',
+                  color: activeTab === tab ? '#fff' : 'rgba(255,255,255,0.4)',
+                  border: 'none', padding: '10px 22px', borderRadius: '12px', 
+                  fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.3s ease',
+                  textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap'
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+            <button onClick={() => navigate('/admin/withdrawals')} style={{ background: 'transparent', color: '#ff5733', border: 'none', padding: '10px 22px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>PAYOUTS</button>
           </div>
-
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <Link to="/" className="btn-modern-back" style={{ textDecoration: 'none' }}>
-              <FiHome /> PREVIEW
-            </Link>
-            
-            <button 
-              onClick={() => {
-                if(window.confirm('Are you sure you want to sign out?')){
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('userToken');
-                  localStorage.removeItem('userInfo');
-                  window.location.href = '/'; 
-                }
-              }}
-              className="btn-modern-back"
-              style={{ color: '#ff4444' }}
-            >
-              <FiLogOut /> SIGN OUT
-            </button>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+             <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '1px' }}>PREVIEW</Link>
+             <button onClick={() => { localStorage.clear(); window.location.href='/'; }} style={{ background: 'none', border: 'none', color: '#ff4444', fontWeight: 800, cursor: 'pointer', fontSize: '0.75rem', letterSpacing: '1px' }}>LOGOUT</button>
           </div>
         </header>
 
-        <section className="admin-content-inner tab-fade-in" key={activeTab}>
+        {/* CONTENT SECTION */}
+        <section style={{ willChange: 'transform' }}>
+          <AnimatePresence mode="wait">
+            {activeTab === 'overview' && <motion.div key="ov" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}><AdminOverview /></motion.div>}
 
-          {/* ══════════ TAB: OVERVIEW ══════════ */}
-          {activeTab === 'overview' && (
-            <div style={{ marginTop: '20px' }}>
-              <AdminOverview embedded={true} />
-            </div>
-          )}
-
-          {/* ══════════ TAB: USERS ══════════ */}
-          {activeTab === 'users' && (() => {
-            const sorted = [...allUsers]
-              .filter(u =>
-                !userSearch ||
-                u.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
-                u.email?.toLowerCase().includes(userSearch.toLowerCase())
-              )
-              .sort((a, b) => {
-                if (userSort === 'views')    return (b.totalViews || 0) - (a.totalViews || 0);
-                if (userSort === 'earnings') return (b.totalEarnings || 0) - (a.totalEarnings || 0);
-                if (userSort === 'coins')    return (b.coinBalance || 0) - (a.coinBalance || 0);
-                if (userSort === 'works')    return (b.worksCount || 0) - (a.worksCount || 0);
-                if (userSort === 'points')   return (b.points || 0) - (a.points || 0);
-                return 0;
-              });
-
-            const totalViews    = allUsers.reduce((s, u) => s + (u.totalViews || 0), 0);
-            const totalEarnings = allUsers.reduce((s, u) => s + (u.totalEarnings || 0), 0);
-            const totalCoins    = allUsers.reduce((s, u) => s + (u.coinBalance || 0), 0);
-
-            const RANK_COLOR = {
-              Bronze:   '#cd7f32', Silver:   '#a8a8b3', Gold:     '#f59e0b',
-              Platinum: '#6ee7f7', Diamond:  '#6366f1', Master:   '#ef4444',
-            };
-
-            return (
-              <>
-                {/* ── Header ── */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                      <FiUsers style={{ color: 'var(--primary)', fontSize: '1.1rem' }} />
-                      <span style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 900, letterSpacing: '3px' }}>USER INTELLIGENCE</span>
-                    </div>
-                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px' }}>
-                      สมาชิก <span style={{ color: '#333', fontWeight: 300 }}>ทั้งหมด</span>
-                    </h2>
-                    <p style={{ color: '#333', fontSize: '0.75rem', marginTop: 6, fontWeight: 700, letterSpacing: '1px' }}>
-                      {allUsers.length} MEMBERS · SORTED BY {userSort.toUpperCase()}
-                    </p>
+            {activeTab === 'users' && (
+              <motion.div key="us" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                {/* Stat Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '50px' }}>
+                  <div style={{ background: '#0a0a0a', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '1px', marginBottom: '25px', textTransform: 'uppercase' }}>TOTAL USERS</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{allUsers.length}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <input
-                      value={userSearch}
-                      onChange={e => setUserSearch(e.target.value)}
-                      placeholder="🔍  ค้นหาชื่อหรืออีเมล..."
-                      style={{
-                        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                        color: '#fff', padding: '10px 16px', borderRadius: '14px',
-                        fontSize: '0.82rem', outline: 'none', width: '220px'
-                      }}
-                    />
-                    <select
-                      value={userSort}
-                      onChange={e => setUserSort(e.target.value)}
-                      style={{
-                        background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.07)',
-                        color: '#aaa', padding: '10px 14px', borderRadius: '14px',
-                        fontSize: '0.8rem', cursor: 'pointer', outline: 'none'
-                      }}
-                    >
-                      <option value="views">ยอดวิว</option>
-                      <option value="earnings">รายได้สะสม</option>
-                      <option value="coins">Coins</option>
-                      <option value="works">ผลงาน</option>
-                      <option value="points">แต้ม</option>
-                    </select>
-                    <button onClick={fetchAllUsers} className="btn-modern-back">↻</button>
+                  <div style={{ background: '#0a0a0a', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '1px', marginBottom: '25px', textTransform: 'uppercase' }}>ONLINE NOW</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#22c55e', lineHeight: 1 }}>{allUsers.filter(u => u.isOnline).length}</div>
+                  </div>
+                  <div style={{ background: '#0a0a0a', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '1px', marginBottom: '25px', textTransform: 'uppercase' }}>TOTAL COINS</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f59e0b', lineHeight: 1 }}>{allUsers.reduce((acc, u) => acc + (u.coinBalance || 0), 0).toLocaleString()}</div>
+                  </div>
+                  <div style={{ background: '#0a0a0a', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '1px', marginBottom: '25px', textTransform: 'uppercase' }}>AVG VIEWS</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#6ee7f7', lineHeight: 1 }}>{allUsers.length ? Math.round(allUsers.reduce((acc, u) => acc + (u.totalViews || 0), 0) / allUsers.length) : 0}</div>
                   </div>
                 </div>
 
-                {/* ── Summary Cards ── */}
-                <div className="admin-summary-grid" style={{ gap: 16, marginBottom: 32 }}>
-                  {[
-                    { label: 'TOTAL VIEWS', value: totalViews.toLocaleString(), icon: <FiEye />, color: '#6ee7f7' },
-                    { label: 'TOTAL COINS IN SYSTEM', value: totalCoins.toLocaleString(), icon: <FiDollarSign />, color: '#f59e0b' },
-                    { label: 'LIFETIME EARNINGS', value: `฿${(totalEarnings * 10).toLocaleString()}`, icon: <FiAward />, color: '#22c55e' },
-                  ].map(c => (
-                    <div key={c.label} style={{
-                      background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)',
-                      borderRadius: 20, padding: '20px 24px', position: 'relative', overflow: 'hidden'
-                    }}>
-                      <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: `radial-gradient(circle, ${c.color}20 0%, transparent 70%)` }} />
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: c.color, marginBottom: 10, fontSize: '0.85rem' }}>
-                        {c.icon}
-                        <span style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '2px', color: '#333' }}>{c.label}</span>
+                {/* Header & Controls */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '20px' }}>
+                  <h2 style={{ fontSize: '2rem', fontWeight: 900, margin: 0, letterSpacing: '-1px' }}>User Intelligence</h2>
+                  <div style={{ display: 'flex', gap: '15px' }}>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type="text" placeholder="Search users..." 
+                        value={userSearch} onChange={e => setUserSearch(e.target.value)}
+                        style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)', padding: '12px 20px', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '0.85rem', width: '250px' }}
+                      />
+                    </div>
+                    <select value={userSort} onChange={e => setUserSort(e.target.value)} style={{ background: '#0a0a0a', color: '#fff', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '0 20px', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}>
+                      <option value="views">Sort by Views</option>
+                      <option value="coins">Sort by Coins</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Data Table */}
+                <div className="admin-table-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowX: 'auto' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr 100px', padding: '0 25px 10px', color: '#555', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '1px', minWidth: '900px' }}>
+                    <span>USER</span>
+                    <span>RANK</span>
+                    <span>VIEWS</span>
+                    <span>WORKS</span>
+                    <span>COINS</span>
+                    <span>EARNINGS</span>
+                    <span style={{ textAlign: 'center' }}>ACTION</span>
+                  </div>
+                  {memoUsers.map(u => (
+                    <div key={u._id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr 100px', padding: '20px 25px', alignItems: 'center', background: '#0a0a0a', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.02)', minWidth: '900px', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#111'} onMouseOut={e => e.currentTarget.style.background = '#0a0a0a'}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <img src={u.profileImage?.url ? (u.profileImage.url.startsWith('http') ? u.profileImage.url : `${CONFIG.API_BASE_URL}/${u.profileImage.url}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=111&color=fff`} style={{ width: 40, height: 40, borderRadius: '10px', objectFit: 'cover' }} />
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#fff' }}>{u.name}</div>
+                          <div style={{ fontSize: '0.65rem', color: '#666', marginTop: '2px' }}>{u.email}</div>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', letterSpacing: '-1px' }}>{c.value}</div>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: u.rank === 'Gold' ? '#f59e0b' : '#fff' }}>{u.rank || 'Bronze'}</div>
+                      <div style={{ fontWeight: 900, fontSize: '0.9rem', color: '#fff' }}>{u.totalViews || 0}</div>
+                      <div style={{ fontWeight: 900, fontSize: '0.9rem', color: '#fff' }}>{u.worksCount || 0}</div>
+                      <div style={{ fontWeight: 900, fontSize: '0.9rem', color: '#f59e0b' }}>{u.coinBalance || 0}</div>
+                      <div style={{ fontWeight: 900, fontSize: '0.9rem', color: '#22c55e' }}>฿{(u.totalEarnings || 0) * 10}</div>
+                      <div style={{ textAlign: 'center' }}>
+                        <button onClick={() => { setAdjustingUser(u); setShowAdjustModal(true); }} style={{ background: '#fff', color: '#000', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 900, cursor: 'pointer', letterSpacing: '0.5px' }}>ADJUST</button>
+                      </div>
                     </div>
                   ))}
                 </div>
+              </motion.div>
+            )}
 
-                {/* ── User Cards ── */}
-                {usersLoading ? (
-                  <div className="loading-state">Loading users...</div>
-                ) : (
-                  <div style={{ overflowX: 'auto', paddingBottom: '15px' }}>
-                    <div style={{ minWidth: '950px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {/* Column Header */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 110px 90px 80px 80px 90px 100px 110px', gap: 12, padding: '6px 20px', alignItems: 'center' }}>
-                      {['#', 'ผู้ใช้งาน', 'Rank', 'ยอดวิว', 'ผลงาน', 'แต้ม', 'Coins', 'รายได้สะสม', 'สมัครเมื่อ'].map(h => (
-                        <span key={h} style={{ fontSize: '0.58rem', fontWeight: 900, letterSpacing: '1.5px', color: '#2a2a2a', textTransform: 'uppercase' }}>{h}</span>
-                      ))}
-                    </div>
-
-                    {sorted.map((u, idx) => {
-                      const rankColor = RANK_COLOR[u.rank] || '#cd7f32';
-                      const isTop3 = idx < 3;
-                      return (
-                        <div
-                          key={u._id}
-                          style={{
-                            display: 'grid',
-                            gridTemplateColumns: '48px 1fr 110px 80px 80px 90px 90px 110px 110px',
-                            gap: 12, padding: '16px 20px',
-                            background: isTop3 ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.012)',
-                            border: `1px solid ${isTop3 ? `${rankColor}18` : 'rgba(255,255,255,0.03)'}`,
-                            borderRadius: 18, alignItems: 'center',
-                            borderLeft: isTop3 ? `2px solid ${rankColor}60` : '2px solid transparent',
-                            transition: 'background 0.2s'
-                          }}
-                        >
-                          {/* Rank Number */}
-                          <div style={{
-                            fontSize: idx < 3 ? '1rem' : '0.8rem',
-                            fontWeight: 900,
-                            color: idx === 0 ? '#f59e0b' : idx === 1 ? '#a8a8b3' : idx === 2 ? '#cd7f32' : '#222',
-                            textAlign: 'center'
-                          }}>
-                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
-                          </div>
-
-                          {/* User Info */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                            <div style={{ position: 'relative', flexShrink: 0 }}>
-                              {u.profileImage?.url ? (
-                                <img
-                                  src={`${CONFIG.API_BASE_URL}/${u.profileImage.url}`}
-                                  alt=""
-                                  style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${rankColor}40` }}
-                                />
-                              ) : (
-                                <div style={{
-                                  width: 38, height: 38, borderRadius: '50%',
-                                  background: `linear-gradient(135deg, ${rankColor}30, ${rankColor}10)`,
-                                  border: `2px solid ${rankColor}30`,
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  fontSize: '0.85rem', fontWeight: 900, color: rankColor
-                                }}>
-                                  {u.name?.charAt(0)?.toUpperCase()}
-                                </div>
-                              )}
-                              {u.isOnline && (
-                                <div style={{ position: 'absolute', bottom: 1, right: 1, width: 9, height: 9, borderRadius: '50%', background: '#22c55e', border: '1.5px solid #000' }} />
-                              )}
-                            </div>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontWeight: 800, fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {u.name}
-                                {u.role === 'admin' && (
-                                  <span style={{ marginLeft: 6, fontSize: '0.55rem', background: 'rgba(255,87,51,0.15)', color: 'var(--primary)', padding: '2px 6px', borderRadius: 6, fontWeight: 900, verticalAlign: 'middle' }}>ADMIN</span>
-                                )}
-                              </div>
-                              <div style={{ fontSize: '0.62rem', color: '#2a2a2a', marginTop: 2 }}>{u.email}</div>
-                              {u.profession && u.profession !== 'General' && (
-                                <div style={{ fontSize: '0.6rem', color: '#333', marginTop: 1, fontWeight: 700 }}>{u.profession}</div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Rank Badge */}
-                          <div>
-                            <span style={{
-                              fontSize: '0.68rem', fontWeight: 900,
-                              color: rankColor, background: `${rankColor}12`,
-                              border: `1px solid ${rankColor}30`,
-                              padding: '4px 10px', borderRadius: 10
-                            }}>
-                              {u.rank || 'Bronze'}
-                            </span>
-                          </div>
-
-                          {/* Views */}
-                          <div style={{ textAlign: 'right', fontWeight: 800, fontSize: '0.88rem', color: '#6ee7f7' }}>
-                            {(u.totalViews || 0).toLocaleString()}
-                          </div>
-
-                          {/* Works */}
-                          <div style={{ textAlign: 'right', fontWeight: 800, fontSize: '0.88rem' }}>
-                            {u.worksCount || 0}
-                          </div>
-
-                          {/* Points */}
-                          <div style={{ textAlign: 'right', fontWeight: 800, fontSize: '0.88rem', color: '#a78bfa' }}>
-                            {(u.points || 0).toLocaleString()}
-                          </div>
-
-                          {/* Coins */}
-                          <div style={{ textAlign: 'right', fontWeight: 800, fontSize: '0.88rem', color: '#f59e0b' }}>
-                            {(u.coinBalance || 0).toLocaleString()}
-                          </div>
-
-                          {/* Lifetime Earnings */}
-                          <div style={{ textAlign: 'right', fontWeight: 800, fontSize: '0.85rem', color: '#22c55e' }}>
-                            ฿{((u.totalEarnings || 0) * 10).toLocaleString()}
-                          </div>
-
-                          {/* Join Date */}
-                          <div style={{ textAlign: 'right', color: '#222', fontSize: '0.7rem', fontWeight: 700 }}>
-                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString('th-TH') : '—'}
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {sorted.length === 0 && (
-                      <div style={{ textAlign: 'center', padding: '80px', color: '#222' }}>ไม่พบผู้ใช้งาน</div>
-                    )}
-                    </div>
+            {activeTab === 'works' && (
+              <motion.div key="wk" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                  <div style={{ background: '#0a0a0a', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', fontWeight: 800, marginBottom: '25px', letterSpacing: '1px' }}>TOTAL PROJECTS</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, lineHeight: 1 }}>{works.length}</div>
                   </div>
-                )}
-              </>
-            );
-          })()}
-
-          {/* ══════════ TAB: WORKS ══════════ */}
-          {activeTab === 'works' && (
-            <>
-              <div className="tab-header-flex" style={{ alignItems: 'center' }}>
-                <div>
-                  <h2 className="tab-title" style={{ border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 0 }}>
-                    <HiOutlineSparkles style={{ color: 'var(--primary)', fontSize: '1.8rem' }} /> WORKSPACE <span style={{ color: 'var(--text-mute)', fontWeight: 300 }}>PRO</span>
-                  </h2>
-                  <p style={{ color: 'var(--text-mute)', fontSize: '0.8rem', marginTop: '4px', fontWeight: 600, letterSpacing: '0.5px' }}>MANAGEMENT CONTROL CENTER</p>
+                  <div style={{ background: '#0a0a0a', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', fontWeight: 800, marginBottom: '25px', letterSpacing: '1px' }}>VIDEO CONTENT</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#ff5733', lineHeight: 1 }}>{works.filter(w => w.type === 'video').length}</div>
+                  </div>
+                  <div style={{ background: '#0a0a0a', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', fontWeight: 800, marginBottom: '25px', letterSpacing: '1px' }}>TOTAL ENGAGEMENT</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#6ee7f7', lineHeight: 1 }}>{works.reduce((acc, w) => acc + (w.views || 0), 0).toLocaleString()}</div>
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <button onClick={() => setShowChoice(true)} className="btn-primary-red">
-                    <FiPlus /> ADD PROJECT
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                  <h2 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px' }}>Workspace Pro</h2>
+                  <button onClick={() => navigate('/admin/works/new')} style={{ background: '#ff5733', border: 'none', padding: '12px 25px', borderRadius: '12px', color: '#fff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.8rem', letterSpacing: '1px' }}>
+                    <FiPlus /> NEW PROJECT
                   </button>
                 </div>
-              </div>
 
-              {worksLoading ? (
-                <div className="loading-state">Loading...</div>
-              ) : (
-                <div className="works-grouped-list">
-                  {Object.values(works.reduce((groups, work) => {
-                    const userId = work.createdBy?._id || 'unknown';
-                    if (!groups[userId]) groups[userId] = { 
-                      user: work.createdBy || { name: 'Unknown User' }, 
-                      items: [] 
-                    };
-                    groups[userId].items.push(work);
-                    return groups;
-                  }, {})).map((group, gIdx) => (
-                    <div key={gIdx} className="user-work-section">
-                      
-                      {/* PRO USER HEADER CARD */}
-                      <div className="section-user-header" style={{ border: 'none' }}>
-                        <div className={`user-avatar-pro ${!group.user?.profileImage?.url ? 'initials' : ''}`}>
-                           {group.user?.profileImage?.url ? (
-                              <img src={`${CONFIG.API_BASE_URL}/${group.user.profileImage.url}`} alt="" />
-                           ) : (
-                              group.user?.name?.charAt(0).toUpperCase()
-                           )}
-                        </div>
-                        <div className="user-meta">
-                          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <RiUserStarLine style={{ color: '#ff5733', fontSize: '1.1rem' }} /> {group.user?.name}
-                          </h3>
-                          <p>UID: {group.user?._id || 'N/A'}</p>
-                        </div>
-                        <div className="count-badge">
-                          {group.items.length} PROJECTS
-                        </div>
-                      </div>
-
-                      <div className="premium-table-wrap">
-                        <table className="dark-data-table">
-                          <thead>
-                            <tr>
-                              <th>PROJECT TITLE</th>
-                              <th>CATEGORY</th>
-                              <th>SLIDER</th>
-                              <th>TYPE</th>
-                              <th>STATUS</th>
-                              <th>VIEWS</th>
-                              <th style={{ textAlign: 'right' }}>ACTIONS</th>
+                {memoWorks.map((group, idx) => (
+                  <div key={idx} style={{ marginBottom: '40px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                      <img src={group.user?.profileImage?.url ? (group.user.profileImage.url.startsWith('http') ? group.user.profileImage.url : `${CONFIG.API_BASE_URL}/${group.user.profileImage.url}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(group.user?.name || 'User')}&background=111&color=fff`} style={{ width: 35, height: 35, borderRadius: 10, objectFit: 'cover' }} />
+                      <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>{group.user?.name} <span style={{ color: '#666', fontSize: '0.8rem', fontWeight: 600 }}>({group.items.length} Works)</span></h3>
+                    </div>
+                    <div className="admin-table-container" style={{ background: '#0a0a0a', borderRadius: '16px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                        <thead style={{ color: '#555', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '1px' }}>
+                          <tr>
+                            <th style={{ textAlign: 'left', padding: '20px 25px' }}>TITLE</th>
+                            <th style={{ padding: '20px' }}>CATEGORY</th>
+                            <th style={{ padding: '20px' }}>TYPE</th>
+                            <th style={{ padding: '20px' }}>VIEWS</th>
+                            <th style={{ textAlign: 'right', padding: '20px 25px' }}>ACTIONS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.items.map(work => (
+                            <tr key={work._id} style={{ borderTop: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#111'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                              <td style={{ padding: '20px 25px', fontWeight: 800, fontSize: '0.9rem' }}>{work.title}</td>
+                              <td style={{ textAlign: 'center', color: '#888', fontSize: '0.85rem', fontWeight: 700 }}>{work.category?.name || '—'}</td>
+                              <td style={{ textAlign: 'center', color: '#888', fontSize: '0.85rem', fontWeight: 700 }}>{work.type.toUpperCase()}</td>
+                              <td style={{ textAlign: 'center', fontWeight: 800 }}>{work.views || 0}</td>
+                              <td style={{ textAlign: 'right', padding: '20px 25px' }}>
+                                <button onClick={() => navigate(`/admin/works/${work._id}`)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', marginRight: '15px' }}><FiEdit3 size={18} /></button>
+                                <button onClick={() => handleDeleteWork(work)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}><FiTrash2 size={18} /></button>
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {group.items.map(work => (
-                              <tr key={work._id}>
-                                <td className="td-main-title">
-                                  {work.title} {work.featured && <span className="feat-star">★</span>}
-                                </td>
-                                <td>{work.category?.name || '—'}</td>
-                                <td>
-                                  {work.type === 'video' ? (
-                                    <button
-                                      onClick={() => handleToggleSlider(work)}
-                                      className={`slider-toggle-btn ${work.showOnSlider ? 'on' : 'off'}`}
-                                      title={work.showOnSlider ? 'Remove from Slider' : 'Show on Slider'}
-                                    >
-                                      {work.showOnSlider ? '🎬 ON' : '○ OFF'}
-                                    </button>
-                                  ) : (
-                                    <span style={{ color: '#333', fontSize: '0.7rem' }}>N/A</span>
-                                  )}
-                                </td>
-                                <td>
-                                  <span className={`type-badge ${work.type}`}>
-                                    {work.type === 'video' ? '▶ VIDEO' : '📷 IMAGE'}
-                                  </span>
-                                </td>
-                                <td>
-                                  <span className={`status-pill ${work.status}`}>{work.status}</span>
-                                </td>
-                                <td className="td-views">{work.views || 0}</td>
-                                <td className="td-actions" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                  <button className="btn-icon" onClick={() => navigate(`/admin/works/${work._id}`)}>
-                                    <FiEdit3 />
-                                  </button>
-                                  <button className="btn-icon delete" onClick={() => handleDeleteWork(work)}>
-                                    <FiTrash2 />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  ))}
-                  {works.length === 0 && <div className="td-empty" style={{ textAlign: 'center', padding: '100px', color: '#444' }}>No projects yet</div>}
+                  </div>
+                ))}
+              </motion.div>
+            )}
+
+            {activeTab === 'categories' && (
+              <motion.div key="cat" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                  <h2 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px' }}>Categories</h2>
+                  <button onClick={() => openCatModal()} style={{ background: '#ff5733', border: 'none', padding: '12px 25px', borderRadius: '12px', color: '#fff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.8rem', letterSpacing: '1px' }}>
+                    <FiPlus /> ADD CATEGORY
+                  </button>
                 </div>
-              )}
-            </>
-          )}
-
-          {/* ══════════ TAB: CATEGORIES ══════════ */}
-          {activeTab === 'categories' && (
-            <>
-              <div className="tab-header-flex" style={{ alignItems: 'center', marginBottom: '32px' }}>
-                <div>
-                   <h2 className="tab-title" style={{ border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 0 }}>
-                     <FiGrid style={{ color: 'var(--primary)' }} /> CATEGORY <span style={{ color: 'var(--text-mute)', fontWeight: 300 }}>SYSTEM</span>
-                   </h2>
-                   <p style={{ color: 'var(--text-mute)', fontSize: '0.8rem', marginTop: '4px', fontWeight: 600, letterSpacing: '0.5px' }}>ORGANIZE YOUR PROJECT COLLECTIONS</p>
-                </div>
-
-                <button onClick={() => openCatModal()} className="btn-primary-red">
-                  <FiPlus /> ADD CATEGORY
-                </button>
-              </div>
-
-              {catLoading ? (
-                <div className="loading-state">Loading...</div>
-              ) : (
-                <div className="cat-pro-grid">
-                  {categories.length === 0 ? (
-                    <div className="cat-empty" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px', color: '#444' }}>No categories yet, click + ADD CATEGORY to create one</div>
-                  ) : categories.map(cat => (
-                    <div key={cat._id} className="cat-pro-card">
-                      <div className="cat-icon-box">{cat.icon || '📁'}</div>
-                      <div className="cat-main-content">
-                        <div className="cat-name-pro">{cat.name}</div>
-                        {cat.description && <div className="cat-desc-pro">{cat.description}</div>}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '25px' }}>
+                  {categories.map(cat => (
+                    <div key={cat._id} style={{ background: '#0a0a0a', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                        <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+                          {cat.icon || '📁'}
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <button onClick={() => openCatModal(cat)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><FiEdit3 size={18} /></button>
+                          <button onClick={() => handleDeleteCat(cat._id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}><FiTrash2 size={18} /></button>
+                        </div>
                       </div>
-                      <div className="cat-footer-pro">
-                        <div className="cat-stats-pro">
-                          {works.filter(w => w.category?._id === cat._id || w.category === cat._id).length} PROJECTS
-                        </div>
-                        <div className="cat-actions-pro">
-                          <button className="btn-icon-sm" onClick={() => openCatModal(cat)}>
-                            <FiEdit3 />
-                          </button>
-                          <button className="btn-icon-sm delete" onClick={() => handleDeleteCat(cat._id)}>
-                            <FiTrash2 />
-                          </button>
-                        </div>
+                      <h3 style={{ margin: '0 0 8px 0', fontSize: '1.3rem', fontWeight: 800 }}>{cat.name}</h3>
+                      <p style={{ margin: 0, color: '#666', fontSize: '0.85rem', lineHeight: '1.5', fontWeight: 500 }}>{cat.description || 'No description provided.'}</p>
+                      <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                         <span style={{ fontSize: '0.7rem', color: '#ff5733', fontWeight: 800, letterSpacing: '1px' }}>{works.filter(w => (w.category?._id === cat._id || w.category === cat._id)).length} PROJECTS</span>
+                         <span style={{ fontSize: '0.7rem', color: '#444', fontWeight: 600 }}>ID: {cat._id.slice(-6)}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </>
-          )}
-
+              </motion.div>
+            )}
+            {activeTab === 'topups' && (
+              <motion.div key="tp" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                  <h2 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px' }}>Topup Verification</h2>
+                  <div style={{ display: 'flex', gap: '10px', background: '#0a0a0a', padding: '5px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <button onClick={() => setTopupFilter('pending')} style={{ background: topupFilter === 'pending' ? '#ff5733' : 'transparent', border: 'none', padding: '10px 20px', borderRadius: '8px', color: '#fff', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: '0.3s' }}>PENDING</button>
+                    <button onClick={() => setTopupFilter('all')} style={{ background: topupFilter === 'all' ? '#ff5733' : 'transparent', border: 'none', padding: '10px 20px', borderRadius: '8px', color: '#fff', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: '0.3s' }}>ALL</button>
+                  </div>
+                </div>
+                <div className="admin-table-container" style={{ display: 'flex', flexDirection: 'column', gap: '15px', overflowX: 'auto' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1fr 1fr 150px 100px', padding: '0 25px 10px', color: '#555', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '1px', minWidth: '800px' }}>
+                    <span>STATUS</span>
+                    <span>USER</span>
+                    <span>AMOUNT</span>
+                    <span>COINS</span>
+                    <span>SLIP</span>
+                    <span style={{ textAlign: 'right' }}>ACTIONS</span>
+                  </div>
+                  {memoTopups.map(t => (
+                    <div key={t._id} style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1fr 1fr 150px 100px', gap: '15px', padding: '20px 25px', alignItems: 'center', background: '#0a0a0a', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.03)', minWidth: '800px' }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 900, color: t.status === 'pending' ? '#f59e0b' : t.status === 'failed' ? '#ff4444' : '#22c55e', letterSpacing: '1px' }}>{t.status.toUpperCase()}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <img src={t.user?.profileImage?.url ? (t.user.profileImage.url.startsWith('http') ? t.user.profileImage.url : `${CONFIG.API_BASE_URL}/${t.user.profileImage.url}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(t.user?.name || 'User')}&background=111&color=fff`} style={{ width: 35, height: 35, borderRadius: '8px', objectFit: 'cover' }} />
+                        <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{t.user?.name}</span>
+                      </div>
+                      <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>฿{t.amount.toLocaleString()}</span>
+                      <span style={{ fontWeight: 800, color: '#f59e0b', fontSize: '0.9rem' }}>{t.amount/10} Coins</span>
+                      <button onClick={() => window.open(t.slipUrl, '_blank')} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}><FiImage /> VIEW</button>
+                      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                        {t.status === 'pending' && (
+                          <>
+                            <button onClick={() => handleUpdateTopupStatus(t._id, 'completed')} style={{ background: '#22c55e', border: 'none', width: 35, height: 35, borderRadius: '8px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FiCheckCircle size={16} /></button>
+                            <button onClick={() => handleUpdateTopupStatus(t._id, 'failed')} style={{ background: '#ff4444', border: 'none', width: 35, height: 35, borderRadius: '8px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FiTrash2 size={16} /></button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
       </main>
 
-      {/* ══ ADD PROJECT PRO Modal ══ */}
-      {showChoice && (
-        <div className="modal-overlay" onClick={() => setShowChoice(false)}>
-          <div className="pro-modal-card">
-            <div className="modal-pro-header" style={{ textAlign: 'center', display: 'block' }}>
-               <h3 style={{ fontSize: '1.2rem', color: '#ff5733' }}>NEW PROJECT</h3>
-               <p style={{ margin: '5px 0 0 0', fontSize: '0.8rem', color: '#444', fontWeight: 700 }}>CHOOSE YOUR CREATIVE FORMAT</p>
-            </div>
-            <div className="choice-grid">
-              <button className="choice-pro-item" onClick={() => { setShowChoice(false); navigate('/admin/works/new?type=image'); }}>
-                <div className="icon-box"><FiImage /></div>
-                <span>IMAGE PROJECT</span>
-              </button>
-              <button className="choice-pro-item" onClick={() => { setShowChoice(false); navigate('/admin/works/new?type=video'); }}>
-                <div className="icon-box"><FiVideo /></div>
-                <span>VIDEO PROJECT</span>
-              </button>
-            </div>
-            <div style={{ padding: '0 40px 40px' }}>
-               <button className="btn-cancel-cat" style={{ width: '100%', borderRadius: '12px' }} onClick={() => setShowChoice(false)}>CANCEL</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ══ Category Modal ══ */}
+      {/* MODALS */}
+      {/* CATEGORY MODAL */}
       {showCatModal && (
-        <div className="modal-overlay" onClick={closeCatModal}>
-          <div className="pro-modal-card" onClick={e => e.stopPropagation()}>
-            <div className="modal-pro-header">
-              <h3>{editingCat ? 'EDIT CATEGORY' : 'ADD CATEGORY'}</h3>
-              <button className="btn-modal-close" onClick={closeCatModal} style={{ fontSize: '1.5rem' }}>✕</button>
-            </div>
-            <form onSubmit={handleSaveCat} className="cat-modal-form">
-              <div className="cat-field">
-                <label>CATEGORY NAME</label>
-                <input
-                  type="text"
-                  value={catForm.name}
-                  placeholder="e.g., Motion Graphic"
-                  required
-                  style={{ borderRadius: '10px' }}
-                  onChange={e => setCatForm({ ...catForm, name: e.target.value })}
-                />
-              </div>
-              <div className="cat-field">
-                <label>ICON MARKER</label>
-                <input
-                  type="text"
-                  value={catForm.icon}
-                  placeholder="e.g., 🎬 🎨"
-                  style={{ borderRadius: '10px' }}
-                  onChange={e => setCatForm({ ...catForm, icon: e.target.value })}
-                />
-              </div>
-              <div className="cat-field">
-                <label>DESCRIPTION</label>
-                <textarea
-                  rows="3"
-                  value={catForm.description}
-                  placeholder="Short brief for this category..."
-                  style={{ borderRadius: '10px' }}
-                  onChange={e => setCatForm({ ...catForm, description: e.target.value })}
-                />
-              </div>
-              <div className="cat-modal-actions">
-                <button type="button" className="btn-cancel-cat" style={{ borderRadius: '12px' }} onClick={closeCatModal}>
-                  DISCARD
-                </button>
-                <button type="submit" className="btn-save-cat" style={{ borderRadius: '12px' }} disabled={catSaving}>
-                  {catSaving ? 'SAVING...' : editingCat ? 'UPDATE' : 'CREATE PRO'}
-                </button>
-              </div>
-            </form>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '450px', border: '1px solid rgba(255,255,255,0.05)' }}>
+             <h3 style={{ marginBottom: '30px', fontSize: '1.5rem', fontWeight: 900 }}>{editingCat ? 'Edit Category' : 'New Category'}</h3>
+             <div style={{ marginBottom: '20px' }}>
+               <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>CATEGORY NAME</label>
+               <input type="text" value={catForm.name} onChange={e => setCatForm({...catForm, name: e.target.value})} placeholder="e.g. Motion Graphic" style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', fontSize: '0.9rem', outline: 'none' }} />
+             </div>
+             <div style={{ marginBottom: '20px' }}>
+               <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>ICON (EMOJI)</label>
+               <input type="text" value={catForm.icon} onChange={e => setCatForm({...catForm, icon: e.target.value})} placeholder="e.g. 🎬" style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', fontSize: '0.9rem', outline: 'none' }} />
+             </div>
+             <div style={{ marginBottom: '30px' }}>
+               <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>DESCRIPTION</label>
+               <textarea value={catForm.description} onChange={e => setCatForm({...catForm, description: e.target.value})} placeholder="Brief description..." rows="3" style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', resize: 'none', fontSize: '0.9rem', outline: 'none' }} />
+             </div>
+             <div style={{ display: 'flex', gap: '15px' }}>
+               <button onClick={closeCatModal} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#111', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}>Cancel</button>
+               <button onClick={handleSaveCat} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#ff5733', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}>{catSaving ? 'Saving...' : 'Save Category'}</button>
+             </div>
+          </div>
+        </div>
+      )}
+      {/* COIN ADJUST MODAL */}
+      {showAdjustModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '400px', border: '1px solid rgba(255,255,255,0.05)' }}>
+             <h3 style={{ marginBottom: '30px', fontSize: '1.5rem', fontWeight: 900 }}>Adjust Coins</h3>
+             <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>AMOUNT (+ OR -)</label>
+             <input type="number" value={adjustAmount} onChange={e => setAdjustAmount(e.target.value)} placeholder="e.g. 100 or -50" style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', marginBottom: '20px', fontSize: '1rem', outline: 'none' }} />
+             
+             <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>REASON (OPTIONAL)</label>
+             <input type="text" value={adjustReason} onChange={e => setAdjustReason(e.target.value)} placeholder="Reason for adjustment..." style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', marginBottom: '30px', fontSize: '0.9rem', outline: 'none' }} />
+             
+             <div style={{ display: 'flex', gap: '15px' }}>
+               <button onClick={() => setShowAdjustModal(false)} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#111', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}>Cancel</button>
+               <button onClick={handleAdjustCoins} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#f59e0b', color: '#000', border: 'none', fontWeight: 900, cursor: 'pointer' }}>Confirm</button>
+             </div>
           </div>
         </div>
       )}
 
-      {/* CSS for Slider Toggle Button */}
-      <style>{`
-        .slider-toggle-btn {
-          border: none;
-          padding: 4px 10px;
-          border-radius: 4px;
-          font-size: 0.7rem;
-          font-weight: 800;
-          cursor: pointer;
-          transition: 0.3s;
-        }
-        .slider-toggle-btn.on {
-          background: rgba(255, 107, 53, 0.2);
-          color: #ff6b35;
-          border: 1px solid #ff6b35;
-          box-shadow: 0 0 10px rgba(255, 107, 53, 0.2);
-        }
-        .slider-toggle-btn.off {
-          background: #111;
-          color: #444;
-          border: 1px solid #222;
-        }
-        .slider-toggle-btn:hover {
-          transform: translateY(-2px);
-        }
-        .feat-star { color: #ffea00; margin-left: 5px; text-shadow: 0 0 5px rgba(255, 234, 0, 0.5); }
-        .admin-summary-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-        }
-        @media (max-width: 992px) {
-          .admin-summary-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
     </div>
   );
+}
+
+// Add these styles directly to the file or to AdminDashboard.css if preferred
+const styleBlock = `
+  /* Minimal Scrollbar for Table containers */
+  .admin-table-container::-webkit-scrollbar {
+    height: 8px;
+  }
+  .admin-table-container::-webkit-scrollbar-track {
+    background: #050505;
+  }
+  .admin-table-container::-webkit-scrollbar-thumb {
+    background: #222;
+    border-radius: 4px;
+  }
+  .admin-table-container::-webkit-scrollbar-thumb:hover {
+    background: #333;
+  }
+  
+  .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-tabs {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
+// Injecting styles directly
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = styleBlock;
+  document.head.appendChild(styleSheet);
 }

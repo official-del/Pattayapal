@@ -3,7 +3,7 @@ import { walletAPI, usersAPI } from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlusCircle, FiList, FiCheckCircle, FiUploadCloud, FiZap, FiChevronDown, FiInfo, FiArrowDownCircle, FiSend, FiBriefcase, FiCornerDownLeft, FiCopy, FiCreditCard } from 'react-icons/fi';
+import { FiPlusCircle, FiList, FiCheckCircle, FiUploadCloud, FiZap, FiChevronDown, FiInfo, FiArrowDownCircle, FiSend, FiBriefcase, FiCornerDownLeft, FiCopy, FiCreditCard, FiDollarSign } from 'react-icons/fi';
 import { CoinIcon, CoinBadge, CoinTag } from '../../components/CoinIcon';
 
 const THAI_BANKS = [
@@ -37,7 +37,6 @@ function ManageWallet() {
   const [slipFile, setSlipFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [selectedPackage, setSelectedPackage] = useState(null);
   const [anomaly, setAnomaly] = useState(null); // { code: string, message: string }
   const [showSuccess, setShowSuccess] = useState(null); // { amount: number, coins: number }
 
@@ -49,15 +48,6 @@ function ManageWallet() {
   const [wLoading, setWLoading] = useState(false);
   const [wStatusMsg, setWStatusMsg] = useState({ text: '', isSuccess: false });
   const [showBankDropdown, setShowBankDropdown] = useState(false);
-
-  const packages = [
-    { coins: 10, price: 100, label: 'เริ่มต้น / STARTER', color: '#ff5733' },
-    { coins: 50, price: 500, label: 'ยอดนิยม / POPULAR', color: '#6366f1', popular: true },
-    { coins: 100, price: 1000, label: 'มืออาชีพ / ELITE', color: '#ec4899' },
-    { coins: 500, price: 5000, label: 'คุ้มค่า / ULTIMATE', color: '#f59e0b' },
-    { coins: 1000, price: 10000, label: 'คุ้มค่ามว๊าก / UNREAL', color: '#f59e0b' },
-    { coins: 10000, price: 100000, label: 'คุ้มค่าที่สุดในโลก / UNBEATABLE', color: '#f59e0b' },
-  ];
 
   const [summaryData, setSummaryData] = useState(null);
 
@@ -137,31 +127,23 @@ function ManageWallet() {
       formData.append('amount', amount);
       formData.append('slip', slipFile);
 
-      const res = await walletAPI.topup(formData, currentToken);
-      const newBalance = res.coinBalance;
-      const coinsGained = newBalance - balance;
+      await walletAPI.topupManual(formData);
 
-      setBalance(newBalance);
       setAmount('');
       setSlipFile(null);
       if (fetchProfile) fetchProfile();
       fetchTransactions();
-      setShowSuccess({ amount: Number(amount), coins: coinsGained });
-    } catch (err) {
-      const data = err.response?.data;
-      // 🔥 บังคับให้เด้ง Pop-up ทุกกรณีที่เกิด Error เพื่อให้ User ทราบปัญหาทันที
-      setAnomaly({
-        code: data?.code || 'FETCH_ERROR',
-        message: data?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์ หรือรูปภาพสลิปไม่ถูกต้อง'
+
+      setShowSuccess({
+        amount: Number(amount),
+        coins: Number(amount) / 10,
+        isManual: true
       });
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'เกิดข้อผิดพลาดในการส่งหลักฐาน');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handlePackageSelect = (pkg) => {
-    setSelectedPackage(pkg);
-    setAmount(pkg.price);
   };
 
   const handleWithdrawSubmit = async (e) => {
@@ -188,8 +170,6 @@ function ManageWallet() {
       setWAmount('');
       if (fetchProfile) fetchProfile();
       fetchTransactions();
-      // Also show success modal for withdrawal request
-      setShowSuccess({ amount: numAmount * 10, coins: numAmount, isWithdraw: true });
     } catch (err) {
       const data = err.response?.data;
       if (data?.status === 'ANOMALY') {
@@ -231,7 +211,7 @@ function ManageWallet() {
         <div className="wallet-top-grid">
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="glass"
+            className="glass balance-card"
             style={{ display: 'flex', alignItems: 'center', gap: '30px', padding: '40px', borderRadius: '40px', border: '1px solid rgba(255,87,51,0.2)', position: 'relative', overflow: 'hidden' }}
           >
             <div style={{ position: 'absolute', top: '-100px', right: '-100px', width: '300px', height: '300px', background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)', opacity: 0.05 }}></div>
@@ -291,127 +271,103 @@ function ManageWallet() {
         <AnimatePresence mode="wait">
           {activeTab === 'topup' ? (
             <motion.div key="topup" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-              {/* Recharge Station */}
-              <div className="glass" style={{ borderRadius: '50px', padding: '50px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '40px', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                  เลือกแพ็กเกจเหรียญ
-                </h3>
+              <div className="glass glass-panel" style={{ borderRadius: '50px', padding: '50px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                <div className="topup-form-grid" style={{ display: 'grid', gap: '50px' }}>
+                  {/* Left: Form */}
+                  <div>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <FiPlusCircle color="var(--accent)" /> แจ้งเติมเหรียญ (Manual)
+                    </h3>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '45px' }}>
-                  {packages.map((pkg) => (
-                    <motion.div
-                      key={pkg.coins}
-                      whileHover={{ y: -8 }}
-                      onClick={() => handlePackageSelect(pkg)}
-                      style={{
-                        background: selectedPackage?.coins === pkg.coins ? `${pkg.color}11` : 'rgba(255,255,255,0.01)',
-                        border: `2px solid ${selectedPackage?.coins === pkg.coins ? pkg.color : 'rgba(255,255,255,0.03)'}`,
-                        borderRadius: '30px', padding: '30px', cursor: 'pointer', transition: '0.3s', position: 'relative', overflow: 'hidden', textAlign: 'center',
-                        boxShadow: selectedPackage?.coins === pkg.coins ? `0 15px 35px ${pkg.color}22` : 'none'
-                      }}
+                    <div style={{ marginBottom: '25px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#222', fontWeight: '700', letterSpacing: '2px', marginBottom: '12px' }}>จำนวนเงินที่โอน (THB)</label>
+                      <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="ระบุจำนวนเงิน เช่น 100"
+                        style={{ width: '100%', padding: '20px 25px', borderRadius: '25px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: '1.1rem', fontWeight: '700', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                      <div style={{ marginTop: '10px', color: 'var(--accent)', fontWeight: '700', fontSize: '0.85rem' }}>
+                        * ฿10 = 1 Coin (เติมขั้นต่ำ ฿10)
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '35px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#222', fontWeight: '700', letterSpacing: '2px', marginBottom: '12px' }}>แนบหลักฐานการโอน (สลิป)</label>
+                      <label style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px',
+                        padding: '40px', borderRadius: '30px', border: '2px dashed rgba(255,255,255,0.05)', background: slipFile ? 'rgba(255,87,51,0.05)' : 'rgba(255,255,255,0.01)',
+                        cursor: 'pointer', transition: '0.3s'
+                      }}>
+                        <input type="file" accept="image/*" hidden onChange={(e) => setSlipFile(e.target.files[0])} />
+                        {slipFile ? (
+                          <>
+                            <FiCheckCircle color="#22c55e" size={32} />
+                            <div style={{ textAlign: 'center' }}>
+                              <p style={{ color: '#fff', fontWeight: '700', margin: 0 }}>{slipFile.name}</p>
+                              <p style={{ color: '#444', fontSize: '0.7rem', marginTop: '5px' }}>คลิกเพื่อเปลี่ยนรูป</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <FiUploadCloud color="#222" size={32} />
+                            <p style={{ color: '#444', fontWeight: '700', margin: 0 }}>คลิกเพื่ออัปโหลดรูปสลิป</p>
+                          </>
+                        )}
+                      </label>
+                    </div>
+
+                    {errorMsg && (
+                      <div style={{ padding: '15px 25px', borderRadius: '20px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', marginBottom: '25px', fontSize: '0.85rem', fontWeight: '700' }}>
+                        {errorMsg}
+                      </div>
+                    )}
+
+                    <motion.button
+                      whileHover={{ scale: 1.02, boxShadow: '0 20px 40px var(--accent-glow)' }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleTopup}
+                      disabled={loading || !amount || !slipFile}
+                      className="withdraw-btn"
+                      style={{ width: '100%', padding: '22px', borderRadius: '25px', background: 'var(--accent)', color: '#fff', border: 'none', fontSize: '1.2rem', fontWeight: '900', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}
                     >
-                      {pkg.popular && <div style={{ position: 'absolute', top: '15px', right: '-30px', background: '#fff', color: '#000', fontSize: '0.6rem', padding: '4px 30px', transform: 'rotate(45deg)', fontWeight: '700', letterSpacing: '1px' }}>HOT</div>}
-                      <div style={{ color: pkg.color, marginBottom: '15px', fontSize: '2rem' }}><CoinIcon size={35} /></div>
-                      <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#fff', letterSpacing: '-1px' }}>{pkg.coins} <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>COINS</span></div>
-                      <div style={{ fontSize: '0.9rem', color: '#444', fontWeight: '700', marginTop: '5px' }}>฿{pkg.price.toLocaleString()}</div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <div style={{ marginBottom: '40px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem', color: '#222', fontWeight: '700', marginBottom: '15px', letterSpacing: '2px' }}>
-                    <FiInfo /> จำนวนเงินที่ต้องการเติม (ขั้นต่ำ 10 บาท)
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => { setAmount(e.target.value); setSelectedPackage(null); }}
-                      placeholder="ระบุจำนวนเงิน..."
-                      style={{ width: '100%', padding: '25px 25px 25px 60px', borderRadius: '25px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: '1.4rem', fontWeight: '700', outline: 'none', boxSizing: 'border-box' }}
-                    />
-                    <div style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', fontWeight: '700', fontSize: '1.4rem', pointerEvents: 'none' }}>฿</div>
+                      {loading ? 'กำลังส่งข้อมูล...' : <><FiCheckCircle /> ส่งหลักฐานการโอนเงิน</>}
+                    </motion.button>
                   </div>
 
-                  <AnimatePresence>
-                    {amount > 0 && (
-                      <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} style={{ marginTop: '20px', fontSize: '1rem', color: 'var(--accent)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,87,51,0.05)', padding: '15px 25px', borderRadius: '15px', border: '1px solid rgba(255,87,51,0.1)' }}>
-                        <FiCheckCircle /> คุณจะได้รับแต้มสะสม: <span style={{ fontSize: '1.4rem', marginLeft: '5px' }}>{(amount / 10).toLocaleString()}</span> เหรียญ
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/* Right: Bank Info */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '40px', padding: '40px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <h4 style={{ color: '#444', fontSize: '0.75rem', fontWeight: '900', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '30px' }}>ช่องทางการโอนเงิน</h4>
 
-                </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '40px' }}>
+                      <div style={{ width: '60px', height: '60px', borderRadius: '18px', background: '#138B2E', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.5rem', fontWeight: '900' }}>K</div>
+                      <div>
+                        <p style={{ color: '#444', fontSize: '0.7rem', fontWeight: '800', margin: 0, letterSpacing: '1px' }}>ธนาคารกสิกรไทย</p>
+                        <p style={{ color: '#fff', fontSize: '1.3rem', fontWeight: '900', margin: '5px 0' }}>147-8-04211-2</p>
+                        <p style={{ color: '#22c55e', fontSize: '0.85rem', fontWeight: '700', margin: 0 }}>ชื่อบัญชี: บจ.พัทยา แพ็ล เอ็นเตอร์เทนเม้นท์</p>
+                      </div>
+                    </div>
 
-                <AnimatePresence>
-                  {amount > 0 && (
-                    <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} style={{ borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '40px' }}>
-                      <div className="wallet-topup-action-grid">
-                        {/* 🏦 DIGITAL BANK CARD - K-BANK */}
-                        <div style={{ padding: '30px', borderRadius: '40px', textAlign: 'left', background: '#0a0a0a', border: '1px solid rgba(19, 139, 46, 0.3)', position: 'relative', overflow: 'hidden', boxShadow: '0 30px 60px rgba(0,0,0,0.8), 0 0 30px rgba(19, 139, 46, 0.1)' }}>
-                          <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'radial-gradient(circle, #138B2E 0%, transparent 70%)', opacity: 0.15 }} />
-
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-                            <div style={{ background: '#138B2E', color: '#fff', padding: '8px 16px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', letterSpacing: '1px' }}>K-BANK</div>
-                            <FiCreditCard size={24} color="#333" />
-                          </div>
-
-                          <div style={{ marginBottom: '30px' }}>
-                            <p style={{ color: '#444', fontSize: '0.65rem', fontWeight: '700', letterSpacing: '2px', marginBottom: '5px' }}>ACCOUNT NAME / ชื่อบัญชี</p>
-                            <div style={{ color: '#fff', fontSize: '1.1rem', fontWeight: '700' }}>บจก.พัทยา แพ็ล เอ็นเตอร์เทนเม้นท์</div>
-                          </div>
-
-                          <div style={{ marginBottom: '20px' }}>
-                            <p style={{ color: '#444', fontSize: '0.65rem', fontWeight: '700', letterSpacing: '2px', marginBottom: '8px' }}>ACCOUNT NUMBER / เลขที่บัญชี</p>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                              <div style={{ color: 'var(--accent)', fontSize: '1.8rem', fontWeight: '900', letterSpacing: '2px', fontFamily: 'monospace' }}>147-8-04211-2</div>
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => {
-                                  navigator.clipboard.writeText('1478042112');
-                                  alert('คัดลอกเลขบัญชีแล้ว!');
-                                }}
-                                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}
-                              >
-                                <FiCopy size={18} />
-                              </motion.button>
-                            </div>
-                          </div>
-
-                          <div style={{ fontSize: '0.7rem', color: '#222', fontWeight: '700', letterSpacing: '1px', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '15px' }}>
-                            ธนาคารกสิกรไทย - บัญชีกระแสรายวัน
-                          </div>
-                        </div>
-
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.75rem', color: '#222', fontWeight: '700', marginBottom: '15px', letterSpacing: '2px' }}>อัปโหลดหลักฐานการโอน</label>
-                          <div style={{ position: 'relative', overflow: 'hidden', marginBottom: '25px' }}>
-                            <input type="file" onChange={(e) => setSlipFile(e.target.files[0])} accept="image/*" style={{ opacity: 0, position: 'absolute', inset: 0, cursor: 'pointer', zIndex: 2 }} />
-                            <div className="glass" style={{ padding: '35px', borderRadius: '25px', border: '2px dashed rgba(255,255,255,0.05)', color: slipFile ? 'var(--accent)' : '#444', textAlign: 'center', fontWeight: '700', fontSize: '0.95rem' }}>
-                              {slipFile ? <><FiCheckCircle size={24} style={{ marginBottom: '10px', display: 'block', margin: '0 auto 10px' }} /> {slipFile.name}</> : <><FiUploadCloud size={24} style={{ marginBottom: '10px', display: 'block', margin: '0 auto 10px' }} /> คลิกเพื่ออัปโหลด</>}
-                            </div>
-                          </div>
-
-                          <motion.button
-                            whileHover={{ scale: 1.05, boxShadow: '0 15px 40px var(--accent-glow)' }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={handleTopup}
-                            disabled={loading || !slipFile}
-                            style={{ width: '100%', background: 'var(--accent)', color: '#fff', border: 'none', padding: '24px', borderRadius: '25px', fontWeight: '700', fontSize: '1.1rem', cursor: 'pointer', opacity: (loading || !slipFile) ? 0.4 : 1 }}
-                          >
-                            {loading ? 'กำลังตรวจสอบ...' : 'ยืนยันการทำรายการ'}
-                          </motion.button>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '25px', padding: '25px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', gap: '15px' }}>
+                        <FiInfo color="var(--accent)" size={20} style={{ flexShrink: 0 }} />
+                        <div style={{ fontSize: '0.8rem', color: '#888', lineHeight: '1.6', fontWeight: '600' }}>
+                          <span style={{ color: '#fff', fontWeight: '800' }}>ขั้นตอนการเติมเงิน:</span><br />
+                          1. โอนเงินเข้าบัญชีด้านบนตามจำนวนที่ต้องการ<br />
+                          2. ระบุจำนวนเงินและแนบรูปสลิปในฟอร์ม<br />
+                          3. กดส่งหลักฐานและรอแอดมินตรวจสอบ<br />
+                          4. เมื่ออนุมัติแล้ว เหรียญจะเข้าบัญชีทันที
                         </div>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.div>
           ) : (
             <motion.div key="withdraw" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <div className="glass" style={{ borderRadius: '50px', padding: '50px', border: '1px solid rgba(255,255,255,0.03)' }}>
+              <div className="glass glass-panel" style={{ borderRadius: '50px', padding: '50px', border: '1px solid rgba(255,255,255,0.03)' }}>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '40px', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '15px' }}>
                   แจ้งถอนเหรียญเข้าบัญชี
                 </h3>
@@ -528,7 +484,7 @@ function ManageWallet() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                className="glass"
+                className="glass transaction-item"
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '30px', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.03)' }}
               >
                 <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
@@ -541,7 +497,7 @@ function ManageWallet() {
                     <div style={{ fontSize: '0.75rem', color: '#333', fontWeight: '700', marginTop: '6px' }}>{new Date(tx.createdAt).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'end', gap: '8px' }}>
+                <div className="transaction-meta" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'end', gap: '8px' }}>
                   <CoinTag amount={tx.amount} positive={['TOPUP', 'EARN_JOB', 'REFUND'].includes(tx.type)} />
                   <div style={{ fontSize: '0.65rem', color: '#111', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase' }}>Status: {tx.status}</div>
 
@@ -641,10 +597,10 @@ function ManageWallet() {
               </div>
 
               <h2 style={{ fontSize: '2.5rem', fontWeight: '700', color: '#fff', marginBottom: '10px', letterSpacing: '-1px' }}>
-                {showSuccess.isWithdraw ? 'คำขอถอนเงินส่งแล้ว!' : 'เติมเหรียญสำเร็จ!'}
+                {showSuccess.isWithdraw ? 'คำขอถอนเงินส่งแล้ว!' : (showSuccess.isManual ? 'ส่งหลักฐานสำเร็จ!' : 'เติมเหรียญสำเร็จ!')}
               </h2>
               <p style={{ fontSize: '1.1rem', color: '#888', fontWeight: '500', marginBottom: '35px' }}>
-                {showSuccess.isWithdraw ? 'ทีมงานกำลังตรวจสอบข้อมูลของคุณ' : 'ยอดเหรียญของคุณได้รับการอัปเดตเรียบร้อยแล้ว'}
+                {showSuccess.isWithdraw ? 'ทีมงานกำลังตรวจสอบข้อมูลของคุณ' : (showSuccess.isManual ? 'กรุณารอแอดมินตรวจสอบสลิปและส่งเหรียญให้คุณ' : 'ยอดเหรียญของคุณได้รับการอัปเดตเรียบร้อยแล้ว')}
               </p>
 
               <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '45px' }}>
@@ -676,44 +632,94 @@ function ManageWallet() {
       <style>{`
         .wallet-main-container {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) 500px;
-          gap: 50px;
-          padding-bottom: 100px;
+          grid-template-columns: minmax(0, 1.2fr) 1fr;
+          gap: clamp(30px, 5vw, 60px);
+          padding-bottom: clamp(60px, 10vw, 120px);
         }
+
         .wallet-title {
-          font-size: 4.5rem;
+          font-size: clamp(2.5rem, 8vw, 4.5rem);
+          letter-spacing: -2px;
         }
+
         .wallet-top-grid {
           display: grid;
           grid-template-columns: 1.2fr 1fr;
-          gap: 20px;
-          margin-bottom: 50px;
+          gap: clamp(15px, 2vw, 25px);
+          margin-bottom: clamp(30px, 5vw, 50px);
         }
-        .wallet-topup-action-grid {
+
+        .topup-form-grid {
           display: grid;
-          grid-template-columns: 1.2fr 1fr;
-          gap: 40px;
-          align-items: center;
+          grid-template-columns: 1.1fr 1fr;
+          gap: clamp(30px, 4vw, 50px);
         }
+
         .wallet-withdraw-grid {
           display: grid;
           grid-template-columns: 1.2fr 1fr;
-          gap: 50px;
+          gap: clamp(30px, 5vw, 60px);
         }
 
-        @media (max-width: 1200px) {
-          .wallet-main-container { grid-template-columns: minmax(0, 1fr) 400px; gap: 30px; }
+        .glass-panel {
+           border-radius: clamp(30px, 5vw, 50px) !important;
+           padding: clamp(20px, 5vw, 50px) !important;
         }
 
-        @media (max-width: 1024px) {
-          .wallet-main-container { display: flex; flex-direction: column; gap: 40px; }
-          .wallet-top-grid { grid-template-columns: 1fr; }
-          .wallet-topup-action-grid { grid-template-columns: 1fr; }
-          .wallet-withdraw-grid { grid-template-columns: 1fr; gap: 30px; }
+        /* ── RESPONSIVE OVERRIDES ── */
+        @media (max-width: 1100px) {
+          .wallet-main-container {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .topup-form-grid,
+          .wallet-withdraw-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
         @media (max-width: 768px) {
-          .wallet-title { font-size: 2.8rem; }
+          .wallet-top-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .wallet-title {
+            line-height: 1.1;
+          }
+
+          .transaction-item {
+             padding: 20px !important;
+             flex-direction: column;
+             align-items: flex-start !important;
+             gap: 20px;
+          }
+
+          .transaction-meta {
+             width: 100%;
+             text-align: left !important;
+             align-items: flex-start !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .glass-panel {
+            padding: 20px !important;
+            border-radius: 25px !important;
+          }
+          
+          .balance-card {
+            flex-direction: column;
+            align-items: flex-start !important;
+            padding: 25px !important;
+            gap: 15px !important;
+          }
+          
+          .withdraw-btn {
+            font-size: 1rem !important;
+            padding: 18px !important;
+          }
         }
       `}</style>
     </motion.div>

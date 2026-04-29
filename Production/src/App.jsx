@@ -20,6 +20,7 @@ import Contact from './pages/Contact';
 
 // ── Feed / Community ──
 import Feed from './pages/Feed';
+import PostDetail from './pages/PostDetail';
 
 // ── Profile Page ──
 import UserProfile from './pages/UserProfile';
@@ -36,6 +37,7 @@ import ManageWorks from './pages/Dashboard/ManageWorks';
 import ManageJobs from './pages/Dashboard/ManageJobs';
 import ManageWallet from './pages/Dashboard/ManageWallet';
 import Notifications from './pages/Dashboard/Notifications';
+import Quests from './pages/Dashboard/Quests';
 
 
 // ── Auth Pages ──
@@ -139,6 +141,7 @@ function App() {
         <Route path="/clients"    element={<Clients />} />
         <Route path="/contact"    element={<Contact />} />
         <Route path="/feed"       element={<Feed />} />
+        <Route path="/posts/:id"  element={<PostDetail />} />
         <Route path="/rankings"   element={<RankingsHub />} />
         <Route path="/rankings/roles" element={<RoleRankings />} />
         <Route path="/leaderboard" element={<Navigate to="/rankings" replace />} />
@@ -165,6 +168,7 @@ function App() {
           <Route path="hiring" element={<ManageJobs />} />
           <Route path="works" element={<ManageWorks />} />
           <Route path="wallet" element={<ManageWallet />} />
+          <Route path="quests" element={<Quests />} />
         </Route>
 
         {/* ── Login / Register ── */}
@@ -183,6 +187,9 @@ function App() {
         {/* ── Legal Routes ── */}
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
+        
+        {/* ── Vanity URL Catch-All ── */}
+        <Route path="/:username" element={<UserProfile />} />
       </Routes>
       </SocketProvider>
     </AuthProvider>

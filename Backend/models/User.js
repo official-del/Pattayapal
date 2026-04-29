@@ -62,6 +62,16 @@ const userSchema = new mongoose.Schema({
     }
   ],
 
+  // 🎮 [NEW] Quests System
+  claimedQuests: [
+    {
+      questId: { type: String, required: true },
+      claimedAt: { type: Date, default: Date.now }
+    }
+  ],
+  lastLoginDate: { type: Date },
+  canCreateQuest: { type: Boolean, default: false }, // 🌟 สิทธิ์ในการสร้างเควส (แอดมินหรือได้รับอนุญาต)
+
   // 🏆 [GAMIFICATION] Ranking System
   points: { type: Number, default: 0 },
   rank: { 
@@ -85,6 +95,7 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, default: '' },
   address: { type: String, default: '' },
   birthday: { type: Date },
+  website: { type: String, default: '' },
   gender: { type: String, enum: ['Male', 'Female', 'Other', 'None'], default: 'None' },
 
   // 💼 [NEW] Professional Experience

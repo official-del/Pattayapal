@@ -6,11 +6,13 @@ import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiUsers, FiSearch, FiUserPlus, FiUserCheck, FiUserX, FiGlobe, FiTarget, FiActivity, FiZap, FiTrash2, FiArrowRight, FiLoader } from 'react-icons/fi';
 import ProfileFrame from '../components/ProfileFrame';
+import { useSocket } from '../context/SocketContext';
 
 function Friends() {
   const { user: contextUser, token: contextToken } = useContext(AuthContext);
   const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
   const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo'));
+  const { socket } = useSocket();
 
   const [friendRequests, setFriendRequests] = useState([]);
   const [friends, setFriends] = useState([]);
@@ -41,13 +43,42 @@ function Friends() {
     };
     fetchData();
     window.scrollTo(0, 0);
-  }, [currentToken]);
 
-  const acceptRequest = async (requesterId, requesterName, requesterAvatar) => {
+    if (socket) {
+      const handleRequestReceived = (data) => {
+        setFriendRequests(prev => [data, ...prev]);
+      };
+      const handleRequestAccepted = (newFriend) => {
+        setFriends(prev => [...prev, newFriend]);
+        setFriendRequests(prev => prev.filter(r => r.from?._id !== newFriend._id));
+      };
+      const handleFriendRemoved = ({ friendId }) => {
+        setFriends(prev => prev.filter(f => f._id !== friendId));
+      };
+
+      socket.on('friend_request_received', handleRequestReceived);
+      socket.on('friend_request_accepted', handleRequestAccepted);
+      socket.on('friend_removed', handleFriendRemoved);
+
+      return () => {
+        socket.off('friend_request_received', handleRequestReceived);
+        socket.off('friend_request_accepted', handleRequestAccepted);
+        socket.off('friend_removed', handleFriendRemoved);
+      };
+    }
+  }, [currentToken, socket]);
+
+  const acceptRequest = async (requesterId, requesterName, requesterAvatar, requesterRank, requesterPoints) => {
     try {
       await usersAPI.respondFriendRequest(requesterId, 'accept', currentToken);
       setFriendRequests(prev => prev.filter(r => r.from._id !== requesterId));
-      setFriends(prev => [...prev, { _id: requesterId, name: requesterName, profileImage: requesterAvatar }]);
+      setFriends(prev => [...prev, { 
+        _id: requesterId, 
+        name: requesterName, 
+        profileImage: requesterAvatar,
+        rank: requesterRank,
+        points: requesterPoints
+      }]);
     } catch (err) {
       alert('เกิดข้อผิดพลาด: ' + (err?.response?.data?.message || err.message));
     }
@@ -111,29 +142,109 @@ function Friends() {
 
   const tabs = [
     { id: 'search', label: 'ค้นหาและเพิ่มเพื่อน', icon: <FiSearch /> },
-    { id: 'requests', label: `คำขอที่รออยู่ (${friendRequests.length})`, icon: <FiUserPlus /> },
-    { id: 'friends', label: `รายชื่อเพื่อน (${friends.length})`, icon: <FiUsers /> },
+    { id: 'requests', label: 'คำขอที่รออยู่ (' + friendRequests.length + ')', icon: <FiUserPlus /> },
+    { id: 'friends', label: 'รายชื่อเพื่อน (' + friends.length + ')', icon: <FiUsers /> },
   ];
 
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } };
 
+  const friendsCSS = `
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    
+    .friends-tabs { 
+      display: flex; 
+      gap: 12px; 
+      margin-bottom: clamp(30px, 6vw, 60px); 
+      overflow-x: auto; 
+      padding-bottom: 10px; 
+      scroll-behavior: smooth; 
+      -webkit-overflow-scrolling: touch;
+    }
+    .friends-tabs::-webkit-scrollbar { display: none; }
+    .friends-tabs { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .friends-row-card { 
+      padding: clamp(20px, 3vw, 30px); 
+      border-radius: 35px; 
+      display: flex; 
+      align-items: center; 
+      gap: clamp(15px, 2.5vw, 25px); 
+      border: 1px solid rgba(255,255,255,0.03); 
+    }
+
+    .friends-hero-title {
+      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: -1px;
+    }
+
+    .friends-hero-subtitle {
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      color: #444;
+      margin-top: 15px;
+      font-weight: 700;
+      max-width: 600px;
+    }
+
+    @media (max-width: 1100px) { 
+      .friends-page-content { 
+        padding-left: 5% !important; 
+      } 
+    }
+    
+    @media (max-width: 768px) { 
+      .friends-row-card { 
+        flex-direction: column; 
+        text-align: center; 
+        gap: 20px; 
+      }
+      
+      .friend-action-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .friends-tabs {
+        margin-left: -5%;
+        margin-right: -5%;
+        padding-left: 5%;
+        padding-right: 5%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .friends-row-card {
+        padding: 25px 20px !important;
+      }
+      
+      .search-box-wrapper {
+        padding: 8px 20px !important;
+      }
+      
+      .search-input {
+        font-size: 1rem !important;
+      }
+    }
+  `;
+
   return (
     <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingBottom: '150px' }}>
+      <div className="friends-page-content" style={{ maxWidth: '1440px', margin: '0 auto', padding: '120px 5% 0', paddingLeft: 'max(5%, calc(240px + 3%))' }}>
 
-      {/* 🔮 Hero Header */}
-      <section style={{ padding: '150px 5% 60px' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
+        {/* 🔮 Hero Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 'clamp(40px, 8vw, 60px)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px' }}>
             <FiGlobe color="var(--accent)" size={18} />
-            <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '2px', fontSize: '1.2rem' }}>Friend Station</span>
+            <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '2px', fontSize: 'clamp(0.8rem, 1.5vw, 1.1rem)' }}>Friend Station</span>
           </div>
-          <h1 style={{ fontSize: '4.5rem', fontWeight: '700', margin: 0, letterSpacing: '0px', lineHeight: 1, marginTop: '10px' }}>รายชื่อสมาชิก</h1>
-          <p style={{ color: '#444', marginTop: '15px', fontWeight: '700', fontSize: '1rem' }}>สร้างเครือข่ายและเชื่อมต่อกับครีเอเตอร์ทั่วประเทศ</p>
+          <h1 className="friends-hero-title">รายชื่อสมาชิก</h1>
+          <p className="friends-hero-subtitle">สร้างเครือข่ายและเชื่อมต่อกับครีเอเตอร์ทั่วประเทศ</p>
         </motion.div>
-      </section>
 
-      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 5%' }}>
 
         {/* 🧬 Interactive Tabs */}
         <div className="friends-tabs">
@@ -177,15 +288,16 @@ function Friends() {
             {/* 🔍 Content: Search */}
             {activeTab === 'search' && (
               <div>
-                <div style={{ position: 'relative', maxWidth: '800px', margin: '0 auto 60px' }}>
-                  <div className="glass" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '10px 30px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                <div style={{ position: 'relative', maxWidth: '800px', margin: '0 auto clamp(40px, 8vw, 60px)' }}>
+                  <div className="glass search-box-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '10px 30px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.03)' }}>
                     <FiSearch color="#444" size={24} />
                     <input
                       type="text"
+                      className="search-input"
                       value={searchQuery}
                       onChange={e => handleSearch(e.target.value)}
                       placeholder="ค้นหาชื่อสมาชิก..."
-                      style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: '1.2rem', padding: '15px 0', outline: 'none', fontWeight: '700' }}
+                      style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', padding: '15px 0', outline: 'none', fontWeight: '700' }}
                     />
                     {searchLoading && <FiLoader className="spin" color="var(--accent)" />}
                   </div>
@@ -198,7 +310,7 @@ function Friends() {
                       const isSent = sentRequests.has(user._id);
                       return (
                         <motion.div variants={itemVariants} key={user._id} className="glass friends-row-card">
-                          <ProfileFrame rank={user.rank} points={user.points || 0} size="70px" showBadge={false}>
+                          <ProfileFrame rank={user.rank} points={user.points || 0} size="70px" showBadge={true}>
                             <img src={user.profileImage?.url ? getFullUrl(user.profileImage.url) : 'https://via.placeholder.com/70'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </ProfileFrame>
                           <div style={{ flex: 1 }}>
@@ -216,7 +328,7 @@ function Friends() {
                               </div>
                             )}
                           </div>
-                          <div>
+                          <div className="friend-action-container">
                             {isFriend ? (
                               <span style={{ color: '#22c55e', fontWeight: '700', fontSize: '0.8rem' }}>✓ เพื่อนกัน</span>
                             ) : isSent ? (
@@ -256,7 +368,7 @@ function Friends() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     {friendRequests.map(req => (
                       <motion.div variants={itemVariants} key={req._id} className="glass" style={{ padding: '30px', borderRadius: '35px', display: 'flex', alignItems: 'center', gap: '25px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                        <ProfileFrame rank={req.from.rank} points={req.from.points || 0} size="60px" showBadge={false}>
+                        <ProfileFrame rank={req.from.rank} points={req.from.points || 0} size="60px" showBadge={true}>
                           <img src={req.from.profileImage?.url ? getFullUrl(req.from.profileImage.url) : 'https://via.placeholder.com/60'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </ProfileFrame>
                         <div style={{ flex: 1 }}>
@@ -264,7 +376,7 @@ function Friends() {
                           <p style={{ color: '#444', margin: '4px 0 0', fontWeight: '700' }}>ต้องการเป็นเพื่อนกับคุณ</p>
                         </div>
                         <div style={{ display: 'flex', gap: '15px' }}>
-                          <motion.button onClick={() => acceptRequest(req.from._id, req.from.name, req.from.profileImage)} whileHover={{ scale: 1.05 }} style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '12px 25px', borderRadius: '20px', fontWeight: '700', cursor: 'pointer' }}>ยืนยัน</motion.button>
+                          <motion.button onClick={() => acceptRequest(req.from._id, req.from.name, req.from.profileImage, req.from.rank, req.from.points)} whileHover={{ scale: 1.05 }} style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '12px 25px', borderRadius: '20px', fontWeight: '700', cursor: 'pointer' }}>ยืนยัน</motion.button>
                           <motion.button onClick={() => rejectRequest(req.from._id)} whileHover={{ scale: 1.05 }} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 25px', borderRadius: '20px', fontWeight: '700', cursor: 'pointer' }}>ลบ</motion.button>
                         </div>
                       </motion.div>
@@ -290,7 +402,7 @@ function Friends() {
                         <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
                           <FiActivity color="#222" size={14} />
                         </div>
-                        <ProfileFrame rank={friend.rank} points={friend.points || 0} size="100px" showBadge={false}>
+                        <ProfileFrame rank={friend.rank} points={friend.points || 0} size="100px" showBadge={true}>
                           <img src={friend.profileImage?.url ? getFullUrl(friend.profileImage.url) : 'https://via.placeholder.com/100'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </ProfileFrame>
                         <h4 style={{ margin: '25px 0 5px', fontSize: '1.4rem', fontWeight: '700', letterSpacing: '-0.5px' }}>{friend.name}</h4>
@@ -311,31 +423,7 @@ function Friends() {
           </motion.div>
         </AnimatePresence>
       </div>
-
-      <style>{`
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        .friends-tabs {
-          display: flex; gap: 15px; margin-bottom: 60px; overflow-x: auto; padding-bottom: 10px;
-          scroll-behavior: smooth;
-        }
-        .friends-tabs::-webkit-scrollbar { display: none; }
-        .friends-tabs { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .friends-row-card {
-          padding: 30px; border-radius: 35px; display: flex; align-items: center; gap: 25px; border: 1px solid rgba(255,255,255,0.03);
-        }
-
-        @media (max-width: 768px) {
-          .friends-row-card {
-            flex-direction: column;
-            text-align: center;
-            gap: 15px;
-          }
-          h1 { font-size: 2.5rem !important; }
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: friendsCSS }} />
     </div>
   );
 }

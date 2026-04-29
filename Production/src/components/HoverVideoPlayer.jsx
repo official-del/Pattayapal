@@ -3,23 +3,52 @@ import { useRef, useState, useEffect } from 'react';
 /**
  * HoverVideoPlayer component
  * Shows a poster image by default, plays video on hover.
- * Helps reduce page lag by not autoplaying multiple videos.
+ * Optimized with Intersection Observer for lazy loading.
  */
 const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
   const videoRef = useRef(null);
+  const containerRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+
+  // Lazy loading using Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          setIsInView(entry.isIntersecting);
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!videoRef.current) return;
 
-    if (isHovered) {
+    if (isHovered && isInView) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(err => console.log("Play error:", err));
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => console.log("Play error:", err));
+      }
     } else {
       videoRef.current.pause();
-      videoRef.current.currentTime = 0.1;
+      if (videoRef.current.readyState >= 1) {
+        videoRef.current.currentTime = 0.1;
+      }
     }
-  }, [isHovered]);
+  }, [isHovered, isInView]);
 
   const handleTimeUpdate = (e) => {
     if (isHovered && e.target.currentTime >= 5) {
@@ -30,6 +59,7 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
 
   return (
     <div
+      ref={containerRef}
       className={className}
       style={{
         position: 'relative',
@@ -44,24 +74,27 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
     >
-      <video
-        ref={videoRef}
-        src={src}
-        poster={poster}
-        muted
-        playsInline
-        preload="metadata"
-        onTimeUpdate={handleTimeUpdate}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          display: 'block',
-          position: 'absolute',
-          inset: 0,
-          transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
-      />
+      {isInView && (
+        <video
+          ref={videoRef}
+          src={src}
+          poster={poster}
+          muted
+          playsInline
+          preload="metadata"
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={(e) => { if (!isHovered) e.target.currentTime = 0.1; }}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+            position: 'absolute',
+            inset: 0,
+            transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+        />
+      )}
 
       {/* Play Icon Indicator */}
       {!isHovered && (

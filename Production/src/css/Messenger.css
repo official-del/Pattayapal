@@ -340,10 +340,10 @@
 .message-area {
     flex: 1;
     overflow-y: auto;
-    padding: 30px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     position: relative;
 }
 
@@ -375,11 +375,11 @@
 }
 
 .msg-bubble {
-    padding: 12px 18px;
-    border-radius: 20px;
+    padding: 10px 16px;
+    border-radius: 16px;
     position: relative;
-    font-size: 0.95rem;
-    line-height: 1.5;
+    font-size: 0.9rem;
+    line-height: 1.4;
 }
 
 .me .msg-bubble {
@@ -476,12 +476,14 @@
 
 /* 🧩 INPUT AREA */
 .chat-input-wrapper {
-    padding: 20px 25px;
+    padding: 10px 20px;
     background: #050505;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
 .file-previews-container {
@@ -564,7 +566,8 @@
 
 .input-actions-left {
     display: flex;
-    gap: 10px;
+    gap: 5px;
+    flex-shrink: 0;
 }
 
 .input-form {
@@ -572,9 +575,15 @@
     display: flex;
     align-items: center;
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 16px;
-    padding: 5px 5px 5px 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 2px 2px 2px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: 0.3s;
+}
+
+.input-form:focus-within {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .input-form textarea {
@@ -583,8 +592,8 @@
     border: none;
     color: #fff;
     outline: none;
-    padding: 12px 0;
-    font-size: 0.95rem;
+    padding: 6px 0;
+    font-size: 0.85rem;
     resize: none;
     font-family: inherit;
     max-height: 150px;
@@ -601,7 +610,7 @@
     color: rgba(255, 255, 255, 0.2);
     font-size: 1.2rem;
     cursor: pointer;
-    padding: 8px;
+    padding: 6px;
     transition: 0.3s;
 }
 
@@ -610,11 +619,11 @@
 }
 
 .send-btn {
-    width: 45px;
-    height: 45px;
+    width: 38px;
+    height: 38px;
     background: var(--accent);
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     color: #fff;
     display: flex;
     align-items: center;
@@ -845,7 +854,29 @@
         padding: 15px 60px 15px 15px;
     }
 
-    /* Account for mobile hamburger */
+    .chat-input-wrapper {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .input-form {
+        padding: 2px 2px 2px 12px;
+    }
+
+    .input-form textarea {
+        font-size: 0.85rem;
+        padding: 6px 0;
+    }
+
+    .send-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    .input-aux-btn {
+        padding: 6px;
+        font-size: 1.1rem;
+    }
 }
 
 .lightbox-overlay {

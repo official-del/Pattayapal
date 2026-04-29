@@ -16,6 +16,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [isConnected, setIsConnected] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
 
   // 🏆 Gamification States
   const [pointEvent, setPointEvent] = useState(null);
@@ -34,6 +35,10 @@ export const SocketProvider = ({ children }) => {
     const id = user?._id || user?.id;
     if (id) {
       userIdRef.current = String(id);
+      // Request notification permission when user is logged in
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then(setNotificationPermission);
+      }
     } else {
       try {
         const info = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -57,6 +62,20 @@ export const SocketProvider = ({ children }) => {
       setOnlineUsers(new Set(ids.map(String)));
     } catch (err) {
       console.error('fetchOnlineUsers error:', err.message);
+    }
+  }, []);
+
+  const showBrowserNotification = useCallback((title, options = {}) => {
+    if (Notification.permission === 'granted' && document.hidden) {
+      try {
+        new Notification(title, {
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          ...options
+        });
+      } catch (err) {
+        console.error('Notification error:', err);
+      }
     }
   }, []);
 
@@ -100,6 +119,27 @@ export const SocketProvider = ({ children }) => {
 
     newSocket.on('rank_up', (data) => {
       setRankUpEvent(data);
+      showBrowserNotification("🏆 LEVEL UP!", {
+        body: `ยินดีด้วย! คุณเลื่อนระดับเป็น ${data.newRank} แล้ว`,
+      });
+    });
+
+    newSocket.on('new_notification', (data) => {
+      // Logic from Navbar is mainly for UI, here we do OS notification
+      showBrowserNotification("การแจ้งเตือนใหม่", {
+        body: data.message || data.text || "คุณมีการแจ้งเตือนใหม่จาก Pattayapal",
+      });
+    });
+
+    newSocket.on('receive_message', (data) => {
+      // Only show if it's not from us
+      const myId = userIdRef.current;
+      const senderId = data.sender?._id || data.sender;
+      if (myId && String(senderId) !== String(myId)) {
+        showBrowserNotification(`ข้อความใหม่จาก ${data.senderName || 'ผู้ใช้'}`, {
+          body: data.text || "คุณได้รับไฟล์แนบใหม่",
+        });
+      }
     });
 
     fetchOnlineUsers();
@@ -145,6 +185,8 @@ export const SocketProvider = ({ children }) => {
       emitTyping,
       emitStopTyping,
       refreshOnlineUsers: fetchOnlineUsers,
+      requestNotificationPermission: () => Notification.requestPermission().then(setNotificationPermission),
+      notificationPermission
     }}>
       {children}
       

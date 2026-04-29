@@ -9,6 +9,7 @@ import { protect, admin } from '../middleware/auth.js';
 import User from '../models/User.js';
 import {
   getPublicProfile,
+  getPublicProfileByUsername,
   getFriendStatus,
   sendFriendRequest,
   respondFriendRequest,
@@ -23,7 +24,8 @@ import {
   getOnlineUsers,
   getLeaderboard,
   getRankProgress,
-  changePassword
+  changePassword,
+  claimQuest
 } from '../controller/userController.js';
 
 const router = express.Router();
@@ -36,6 +38,34 @@ router.post('/register', register);
 router.post('/login', login);
 router.get('/profile', protect, getProfile);
 router.get('/verify-email/:token', verifyEmail);
+
+// ── Quest live data endpoint (real-time verification) ──
+router.get('/me/live-quest-data', protect, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const user = await User.findById(userId).select('bio profileImage coverImage claimedQuests');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const Work = (await import('../models/Work.js')).default;
+    const QuestSubmission = (await import('../models/QuestSubmission.js')).default;
+    
+    const [worksCount, submissions] = await Promise.all([
+      Work.countDocuments({ createdBy: userId }),
+      QuestSubmission.find({ userId }).select('questId status')
+    ]);
+
+    res.json({
+      bio: user.bio || '',
+      profileImageUrl: user.profileImage?.url || '',
+      coverImageUrl: user.coverImage?.url || '',
+      worksCount,
+      claimedQuests: user.claimedQuests || [],
+      submissions: submissions || [],
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // ==========================================
 // 📸 PROFILE IMAGE UPLOAD ROUTE
@@ -137,6 +167,18 @@ router.get('/online', protect, getOnlineUsers);
 // 👤 PUBLIC PROFILE ROUTES
 // ==========================================
 router.get('/:id/public', getPublicProfile);
+router.get('/username/:username', getPublicProfileByUsername);
+
+// ==========================================
+// 🛡 Admin Routes
+// ==========================================
+router.get('/admin/stats', protect, admin, getAdminStats);
+router.get('/admin/all', protect, admin, getAllUsersAdmin);
+
+// ==========================================
+// 🎮 Quests
+// ==========================================
+router.post('/claim-quest', protect, claimQuest);
 
 // ==========================================
 // 👥 FRIEND SYSTEM ROUTES (ต้อง login)
@@ -149,7 +191,6 @@ router.delete('/:id/friend-request', protect, cancelFriendRequest);
 router.patch('/me/profile', protect, updateProfile);
 router.patch('/me/password', protect, changePassword);
 router.get('/search', protect, searchUsers);
-router.get('/admin/stats', protect, admin, getAdminStats);
 router.get('/admin/all', protect, admin, getAllUsersAdmin);
 
 export default router;

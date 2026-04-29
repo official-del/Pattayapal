@@ -98,26 +98,78 @@ function Messenger() {
       // แปลงเป็น String เพื่อป้องกันปัญหา Type ไม่ตรงกันระหว่าง ObjectId ฝั่ง DB กับ String
       const currentChatId = String(activeChatIdRef.current);
       const incomingChatId = String(data.conversationId || data.roomId || data.conversation);
+      const isFromMe = String(data.sender?._id || data.sender) === String(contextUserId);
 
+      // ✅ 1. Update the active chat messages panel
       if (currentChatId === incomingChatId) {
         setMessages((prev) => {
           const isDuplicate = prev.some(m => String(m._id) === String(data._id));
           if (isDuplicate) return prev;
-          
-          if (data.sender !== contextUserId) {
-            socket.emit("mark_read", {
-              conversationId: data.conversationId || incomingChatId,
-              readerId: contextUserId,
-              senderId: data.sender
-            });
-            return [...prev, { ...data, isRead: true }];
+
+          if (isFromMe) {
+            // Replace optimistic placeholder if it exists, else just add
+            const optimisticIdx = prev.findIndex(m => m._optimistic);
+            if (optimisticIdx !== -1) {
+              const updated = [...prev];
+              updated[optimisticIdx] = { ...data, isRead: false };
+              return updated;
+            }
+            return [...prev, data];
           }
-          return [...prev, data];
+          
+          // Message from other person — mark as read since we're looking at it
+          socket.emit("mark_read", {
+            conversationId: incomingChatId,
+            readerId: contextUserId,
+            senderId: data.sender?._id || data.sender
+          });
+          return [...prev, { ...data, isRead: true }];
         });
-      } else {
-        console.log("🛑 ข้อความเข้า แต่ไม่ได้เปิดห้องแชทนี้อยู่");
       }
-      fetchConversations(activeTabRef.current);
+
+      // ✅ 2. Real-time inbox: update conversation preview & bubble to top
+      setConversations((prev) => {
+        const convIdx = prev.findIndex(c => String(c._id) === incomingChatId);
+        
+        // Loophole fix: If it's a new conversation, create a temp entry
+        if (convIdx === -1) {
+          const newConv = {
+            _id: incomingChatId,
+            participants: [data.sender], 
+            lastMessage: {
+              _id: data._id,
+              text: data.text || (data.attachments?.length > 0 ? `[file]` : ''),
+              sender: data.sender?._id || data.sender,
+              isRead: currentChatId === incomingChatId,
+              createdAt: data.createdAt || new Date().toISOString()
+            },
+            updatedAt: data.createdAt || new Date().toISOString(),
+            isGroup: false,
+            unreadCount: (currentChatId !== incomingChatId && !isFromMe) ? 1 : 0
+          };
+          return [newConv, ...prev];
+        }
+
+        const updated = [...prev];
+        const conv = { ...updated[convIdx] };
+        
+        conv.lastMessage = {
+          ...conv.lastMessage,
+          _id: data._id,
+          text: data.text || (data.attachments?.length > 0 ? `[file]` : ''),
+          sender: data.sender?._id || data.sender,
+          isRead: currentChatId === incomingChatId,
+          createdAt: data.createdAt || new Date().toISOString(),
+        };
+        conv.updatedAt = data.createdAt || new Date().toISOString();
+
+        if (currentChatId !== incomingChatId && !isFromMe) {
+          conv.unreadCount = (conv.unreadCount || 0) + 1;
+        }
+
+        updated.splice(convIdx, 1);
+        return [conv, ...updated];
+      });
     };
 
     const handleMessagesRead = (data) => {
@@ -292,19 +344,31 @@ function Messenger() {
     }
 
     setIsUploading(true);
+    // Optimistic: add message immediately to our own UI (will be deduped when socket arrives)
+    const optimisticId = `opt_${Date.now()}`;
+    const optimisticMsg = {
+      _id: optimisticId,
+      conversationId: currentChat._id,
+      sender: contextUserId,
+      text: newMessage,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      attachments: [],
+      _optimistic: true,
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    setNewMessage('');
+    selectedFiles.forEach(f => { if (f.preview) URL.revokeObjectURL(f.preview); });
+    setSelectedFiles([]);
+
     try {
       const res = await chatAPI.sendMessage(formData, currentToken);
+      // Replace the optimistic message with the real one from server
+      setMessages(prev => prev.map(m => m._id === optimisticId ? res : m));
       if (socket) {
-        socket.emit("send_message", { ...res, roomId: currentChat._id });
+        // No need to re-emit send_message: backend already emits receive_message to the room
         socket.emit("stop_typing", { roomId: currentChat._id, userId: contextUserId });
       }
-      setMessages([...messages, res]);
-      setNewMessage("");
-      // Clean up object URLs
-      selectedFiles.forEach(f => {
-        if (f.preview) URL.revokeObjectURL(f.preview);
-      });
-      setSelectedFiles([]);
     } catch (err) {
       console.error("Send message error:", err);
     } finally {
@@ -495,18 +559,10 @@ function Messenger() {
   };
 
   useEffect(() => {
-    const container = messageAreaRef.current;
-    if (!container) return;
-
-    // Smart Scroll: Only scroll if user is already at the bottom or it's their own message
-    const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 150;
-    const lastMessage = messages[messages.length - 1];
-    const isMe = lastMessage?.sender === contextUserId;
-
-    if (isAtBottom || isMe) {
-      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: currentChat ? "auto" : "smooth" });
     }
-  }, [messages, contextUserId]);
+  }, [messages, currentChat]);
 
 
   if (loading) return (
@@ -835,7 +891,6 @@ function Messenger() {
                            }}
                         />
                         <div className="input-actions-right">
-                           <button type="button" className="input-aux-btn"><FiMic /></button>
                            <button type="submit" className="send-btn" disabled={(!newMessage.trim() && selectedFiles.length === 0) || isUploading}>
                               {isUploading ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><FiZap /></motion.div> : <FiSend />}
                            </button>

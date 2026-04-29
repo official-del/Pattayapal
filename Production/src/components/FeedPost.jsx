@@ -1,13 +1,15 @@
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { postsAPI } from '../utils/api';
-import { FiHeart, FiMessageSquare, FiMoreHorizontal, FiSend, FiClock, FiBriefcase, FiUserCheck, FiTrash2, FiActivity, FiShare2, FiZap } from 'react-icons/fi';
+import { FiHeart, FiMessageSquare, FiMoreHorizontal, FiSend, FiClock, FiBriefcase, FiUserCheck, FiTrash2, FiActivity, FiShare2, FiZap, FiX } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { getFullUrl, isVideoUrl } from '../utils/mediaUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import HoverVideoPlayer from './HoverVideoPlayer';
+import OptimizedImage from './OptimizedImage';
+import React from 'react';
 
-function FeedPost({ post, onPostDeleted }) {
+const FeedPost = React.memo(({ post, onPostDeleted }) => {
   const { user, token: contextToken, profileUpdateTag } = useContext(AuthContext);
   const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
   const userInfo = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -21,6 +23,8 @@ function FeedPost({ post, onPostDeleted }) {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [expandedReplies, setExpandedReplies] = useState({});
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const isAuthor = userInfo && (post.author?._id === (userInfo._id || userInfo.id));
   const displayAuthor = isAuthor ? userInfo : post.author;
@@ -74,6 +78,14 @@ function FeedPost({ post, onPostDeleted }) {
     } catch (err) { alert('ลบไม่สำเร็จ'); }
   };
 
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}/posts/${post._id}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -91,9 +103,11 @@ function FeedPost({ post, onPostDeleted }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(20px, 4vw, 30px)', gap: 'clamp(12px, 2vw, 20px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 2vw, 20px)', minWidth: 0 }}>
           <Link to={`/profile/${post.author?._id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
-            <div style={{ width: 'clamp(45px, 10vw, 60px)', height: 'clamp(45px, 10vw, 60px)', borderRadius: '50%', background: '#000', border: `2px solid rgba(255,255,255,0.05)`, overflow: 'hidden' }}>
-              <img src={displayAuthor?.profileImage?.url ? (getFullUrl(displayAuthor.profileImage.url) + (isAuthor ? `?t=${profileUpdateTag}` : '')) : 'https://via.placeholder.com/60'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-            </div>
+            <OptimizedImage 
+              src={displayAuthor?.profileImage?.url ? (getFullUrl(displayAuthor.profileImage.url) + (isAuthor ? `?t=${profileUpdateTag}` : '')) : 'https://via.placeholder.com/60'} 
+              style={{ width: 'clamp(45px, 10vw, 60px)', height: 'clamp(45px, 10vw, 60px)', borderRadius: '50%', background: '#000', border: `2px solid rgba(255,255,255,0.05)` }} 
+              alt="" 
+            />
           </Link>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)', flexWrap: 'wrap' }}>
@@ -108,7 +122,24 @@ function FeedPost({ post, onPostDeleted }) {
         </div>
 
         {isAuthor && (
-          <motion.button whileHover={{ scale: 1.1, color: '#ef4444' }} onClick={handleDeletePost} style={{ background: 'rgba(255,255,255,0.02)', border: 'none', color: '#111', cursor: 'pointer', padding: 'clamp(8px, 1.5vw, 12px)', borderRadius: '15px', flexShrink: 0 }}>
+          <motion.button 
+            whileHover={{ scale: 1.1, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }} 
+            onClick={handleDeletePost} 
+            style={{ 
+              background: 'rgba(255,255,255,0.05)', 
+              border: '1px solid rgba(255,255,255,0.1)', 
+              color: '#888', 
+              cursor: 'pointer', 
+              padding: 'clamp(8px, 1.5vw, 12px)', 
+              borderRadius: '15px', 
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease'
+            }}
+            title="ลบโพสต์"
+          >
             <FiTrash2 style={{ width: '18px', height: '18px' }} />
           </motion.button>
         )}
@@ -128,7 +159,12 @@ function FeedPost({ post, onPostDeleted }) {
           {isVideoUrl(post.media[0].url) ? (
             <HoverVideoPlayer src={getFullUrl(post.media[0].url)} style={{ width: '100%', height: 'auto' }} />
           ) : (
-            <img src={getFullUrl(post.media[0].url)} style={{ width: '100%', height: 'auto', display: 'block', maxWidth: '100%' }} alt="Pipeline media" />
+            <OptimizedImage 
+              src={getFullUrl(post.media[0].url)} 
+              onClick={() => setSelectedImage(getFullUrl(post.media[0].url))}
+              style={{ width: '100%', height: 'auto', minHeight: '200px', cursor: 'zoom-in' }} 
+              alt="Pipeline media" 
+            />
           )}
         </motion.div>
       )}
@@ -142,11 +178,11 @@ function FeedPost({ post, onPostDeleted }) {
           style={{
             height: 'clamp(45px, 10vw, 60px)', borderRadius: '30px', border: `1px solid ${isLiked ? 'var(--accent)' : 'rgba(255,255,255,0.03)'}`,
             display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)', cursor: 'pointer', padding: '0 clamp(15px, 3vw, 30px)',
-            color: isLiked ? 'var(--accent)' : '#444', fontWeight: '700', fontSize: 'clamp(0.75rem, 1.3vw, 0.95rem)', transition: '0.3s', whiteSpace: 'nowrap'
+            color: isLiked ? 'var(--accent)' : '#fff', fontWeight: '700', fontSize: 'clamp(0.75rem, 1.3vw, 0.95rem)', transition: '0.3s', whiteSpace: 'nowrap'
           }}
         >
           <FiHeart fill={isLiked ? 'var(--accent)' : 'none'} style={{ width: '20px', height: '20px', flexShrink: 0 }} />
-          <span style={{ color: isLiked ? '#fff' : 'inherit' }}>{likesCount} <span style={{ fontSize: 'clamp(0.6rem, 1vw, 0.7rem)', opacity: 0.5, marginLeft: '5px' }}>Like</span></span>
+          <span style={{ color: '#fff' }}>{likesCount} <span style={{ fontSize: 'clamp(0.6rem, 1vw, 0.7rem)', opacity: 0.5, marginLeft: '5px' }}>Like</span></span>
         </motion.button>
 
         <motion.button
@@ -156,24 +192,26 @@ function FeedPost({ post, onPostDeleted }) {
           style={{
             height: 'clamp(45px, 10vw, 60px)', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)',
             display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)', cursor: 'pointer', padding: '0 clamp(15px, 3vw, 30px)',
-            color: showComments ? 'var(--accent)' : '#444', fontWeight: '700', fontSize: 'clamp(0.75rem, 1.3vw, 0.95rem)', transition: '0.3s', whiteSpace: 'nowrap'
+            color: showComments ? 'var(--accent)' : '#fff', fontWeight: '700', fontSize: 'clamp(0.75rem, 1.3vw, 0.95rem)', transition: '0.3s', whiteSpace: 'nowrap'
           }}
         >
           <FiMessageSquare style={{ width: '20px', height: '20px', flexShrink: 0 }} />
-          <span style={{ color: showComments ? '#fff' : 'inherit' }}>{comments.length} <span style={{ fontSize: 'clamp(0.6rem, 1vw, 0.7rem)', opacity: 0.5, marginLeft: '5px' }}>Comment</span></span>
+          <span style={{ color: '#fff' }}>{comments.length} <span style={{ fontSize: 'clamp(0.6rem, 1vw, 0.7rem)', opacity: 0.5, marginLeft: '5px' }}>Comment</span></span>
         </motion.button>
 
         <div style={{ flex: 1, minWidth: '20px' }} />
 
         <motion.button
           whileTap={{ scale: 0.95 }}
+          onClick={handleShare}
           className="glass"
           style={{
-            width: 'clamp(45px, 10vw, 60px)', height: 'clamp(45px, 10vw, 60px)', borderRadius: '30px', display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.03)',
-            justifyContent: 'center', cursor: 'pointer', color: '#111', flexShrink: 0
+            width: 'clamp(45px, 10vw, 60px)', height: 'clamp(45px, 10vw, 60px)', borderRadius: '30px', display: 'flex', alignItems: 'center', border: `1px solid ${copied ? 'var(--accent)' : 'rgba(255,255,255,0.03)'}`,
+            justifyContent: 'center', cursor: 'pointer', color: copied ? 'var(--accent)' : '#fff', flexShrink: 0, transition: '0.3s'
           }}
+          title="Share Post"
         >
-          <FiShare2 style={{ width: '20px', height: '20px' }} />
+          {copied ? <FiZap style={{ width: '20px', height: '20px' }} /> : <FiShare2 style={{ width: '20px', height: '20px' }} />}
         </motion.button>
       </div>
 
@@ -202,7 +240,7 @@ function FeedPost({ post, onPostDeleted }) {
                         <div className="glass" style={{ padding: 'clamp(12px, 2vw, 20px) clamp(15px, 3vw, 25px)', borderRadius: 'clamp(18px, 3vw, 30px)', borderTopLeftRadius: '0', flex: 1, border: '1px solid rgba(255,255,255,0.02)', minWidth: 0, boxSizing: 'border-box' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '10px', flexWrap: 'wrap' }}>
                             <span style={{ fontWeight: '700', fontSize: 'clamp(0.65rem, 1.2vw, 0.8rem)', color: 'var(--accent)', letterSpacing: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{c.user?.name?.toUpperCase() || 'ANON USER'}</span>
-                            {canDelete && <button onClick={() => handleDeleteComment(c._id)} style={{ background: 'none', border: 'none', color: '#111', cursor: 'pointer', flexShrink: 0 }}><FiTrash2 style={{ width: '14px', height: '14px' }} /></button>}
+                            {canDelete && <button onClick={() => handleDeleteComment(c._id)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', flexShrink: 0 }}><FiTrash2 style={{ width: '14px', height: '14px' }} /></button>}
                           </div>
                           <div style={{ fontSize: 'clamp(0.8rem, 1.5vw, 1rem)', color: '#666', fontWeight: '500', lineHeight: 1.5, wordBreak: 'break-word', overflowWrap: 'break-word' }}>{c.text}</div>
 
@@ -277,7 +315,50 @@ function FeedPost({ post, onPostDeleted }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 🖼️ Fullscreen Image Modal */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedImage(null)}
+            style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+              background: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex',
+              alignItems: 'center', justifyContent: 'center', padding: '20px',
+              cursor: 'zoom-out', backdropFilter: 'blur(10px)'
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              style={{ position: 'relative', maxWidth: '95%', maxHeight: '95%' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={selectedImage} 
+                alt="Full preview" 
+                style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: '15px', display: 'block', border: '1px solid rgba(255,255,255,0.1)' }} 
+              />
+              <button 
+                onClick={() => setSelectedImage(null)}
+                style={{
+                  position: 'absolute', top: '-40px', right: '0',
+                  background: 'none', border: 'none', color: '#fff',
+                  fontSize: '2rem', cursor: 'pointer', display: 'flex', alignItems: 'center'
+                }}
+              >
+                <FiX />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
-}
+});
+
 export default FeedPost;

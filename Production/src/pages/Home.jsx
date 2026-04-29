@@ -5,13 +5,14 @@ import { postsAPI, worksAPI, usersAPI, categoriesAPI } from '../utils/api';
 import CreatePostBox from '../components/CreatePostBox';
 import FeedPost from '../components/FeedPost';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getMediaUrl, workIsVideo } from '../utils/mediaUtils';
+import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
 import {
   FiActivity, FiZap, FiHash, FiAlertTriangle,
   FiTrendingUp, FiUsers, FiCompass, FiMessageSquare, FiCamera, FiVideo, FiSliders, FiFilm, FiLayout, FiPenTool,
   FiMaximize, FiCpu, FiBriefcase, FiStar, FiEye, FiChevronRight, FiLoader
 } from 'react-icons/fi';
 import ProfileFrame from '../components/ProfileFrame';
+import OptimizedImage from '../components/OptimizedImage';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 const getCategoryIcon = (name) => {
@@ -67,8 +68,8 @@ function RightSidebar({ user, categories }) {
   return (
     <aside style={{
       width: '320px', flexShrink: 0, position: 'sticky', top: '100px',
-      height: 'calc(100vh - 120px)', overflowY: 'auto', paddingLeft: '10px',
-      scrollbarWidth: 'none', display: 'flex', flexDirection: 'column', gap: '30px'
+      paddingLeft: '10px',
+      display: 'flex', flexDirection: 'column', gap: '30px'
     }}>
 
       {/* Trending Section */}
@@ -109,7 +110,40 @@ function RightSidebar({ user, categories }) {
                   }}
                   onClick={() => window.location.href = `/works/${item._id}`}
                 >
-                  <img src={getMediaUrl(item)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {/* Author Avatar at Top-Left */}
+                  <div style={{ position: 'absolute', top: '15px', left: '15px', zIndex: 11 }}>
+                    <div style={{
+                      width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden',
+                      border: '2px solid rgba(255,255,255,0.2)', background: '#111',
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+                    }}>
+                      {item.createdBy?.profileImage?.url || item.author?.profileImage?.url ? (
+                        <OptimizedImage
+                          src={getFullUrl(item.createdBy?.profileImage?.url || item.author?.profileImage?.url)}
+                          alt=""
+                          style={{ width: '100%', height: '100%' }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', fontSize: '10px', fontWeight: '900' }}>
+                          {(item.createdBy?.name || item.author?.name || 'PP').slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {workIsVideo(item) ? (
+                    <video
+                      src={getMediaUrl(item)}
+                      poster={item.coverImage?.url ? getFullUrl(item.coverImage.url) : (typeof item.coverImage === 'string' ? getFullUrl(item.coverImage) : undefined)}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onLoadedMetadata={(e) => e.target.currentTime = 0.1}
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <OptimizedImage src={getMediaUrl(item)} alt="" style={{ width: '100%', height: '100%' }} />
+                  )}
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%)' }}></div>
                   {isActive && (
                     <div style={{ position: 'absolute', bottom: '15px', left: '15px', right: '15px', textAlign: 'left' }}>
@@ -186,7 +220,7 @@ function RightSidebar({ user, categories }) {
                     >
                       <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: '#222' }}>
                         {freelancer.profileImage?.url ? (
-                          <img src={freelancer.profileImage.url} alt={freelancer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <OptimizedImage src={freelancer.profileImage.url} alt={freelancer.name} style={{ width: '100%', height: '100%' }} />
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
                             <FiUsers size={30} />
@@ -207,50 +241,66 @@ function RightSidebar({ user, categories }) {
       </div>
 
       {/* 🛠️ GridServices Section */}
-      {categories.length > 0 && (
-        <div className="glass" style={{
-          padding: '30px 20px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)',
-          background: 'rgba(255,255,255,0.01)', marginTop: '30px'
-        }}>
-          <div style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <FiZap size={14} />
-            <span style={{ fontSize: '0.7rem', fontWeight: '800', letterSpacing: '2px' }}>CORE SERVICES</span>
-          </div>
-          <div style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '900', textTransform: 'uppercase', marginBottom: '20px', letterSpacing: '1px' }}>
-            EXPLORE SERVICES
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '12px'
+      {(() => {
+        const PROFESSIONS = [
+          { name: 'Photographer', icon: <FiCamera /> },
+          { name: 'Editor', icon: <FiSliders /> },
+          { name: 'Videographer', icon: <FiVideo /> },
+          { name: 'Director', icon: <FiFilm /> },
+          { name: 'Production Design', icon: <FiLayout /> },
+          { name: 'Creative Content', icon: <FiPenTool /> },
+          { name: 'Film Production', icon: <FiMaximize /> },
+          { name: 'Digital Artist', icon: <FiCpu /> },
+        ];
+        return (
+          <div className="glass" style={{
+            padding: '30px 20px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)',
+            background: 'rgba(255,255,255,0.01)', marginTop: '30px'
           }}>
-            {(Array.isArray(categories) ? categories : []).slice(0, 6).map((cat, i) => (
-              <motion.div
-                key={cat?._id || i}
-                whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.05)' }}
-                onClick={() => window.location.href = `/works?category=${encodeURIComponent(cat?.name || 'General')}`}
-                style={{
-                  padding: '15px',
-                  borderRadius: '20px',
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
-                }}
-              >
-                <div style={{ color: 'var(--accent)', fontSize: '1.2rem' }}>{getCategoryIcon(cat?.name)}</div>
-                <div>
-                  <div style={{ color: '#fff', fontSize: '0.8rem', fontWeight: '800', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat?.name || 'General'}</div>
-                  <div style={{ color: '#555', fontSize: '0.6rem', fontWeight: '700' }}>VIEW PROJECTS</div>
-                </div>
-              </motion.div>
-            ))}
+            <div style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <FiZap size={14} />
+              <span style={{ fontSize: '0.7rem', fontWeight: '800', letterSpacing: '2px' }}>CORE SERVICES</span>
+            </div>
+            <div style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '900', textTransform: 'uppercase', marginBottom: '20px', letterSpacing: '1px' }}>
+              EXPLORE SERVICES
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+              {PROFESSIONS.map((prof, i) => (
+                <motion.div
+                  key={i}
+                  whileHover={{ x: 6, background: 'rgba(255,255,255,0.05)' }}
+                  onClick={() => window.location.href = `/freelancers?profession=${encodeURIComponent(prof.name)}`}
+                  style={{
+                    padding: '16px 18px',
+                    borderRadius: '18px',
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    transition: 'background 0.2s'
+                  }}
+                >
+                  <div style={{
+                    width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,87,51,0.05)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)',
+                    fontSize: '1.1rem', border: '1px solid rgba(255,87,51,0.1)', flexShrink: 0
+                  }}>
+                    {prof.icon}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{prof.name}</div>
+                    <div style={{ color: 'var(--accent)', fontSize: '0.6rem', fontWeight: '800', letterSpacing: '1px', marginTop: '3px' }}>FIND FREELANCERS</div>
+                  </div>
+                  <FiChevronRight size={14} color="#333" />
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </aside>
   );
 }

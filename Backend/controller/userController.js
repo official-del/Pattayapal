@@ -2,19 +2,18 @@ import User from '../models/User.js';
 import Work from '../models/Work.js';
 import Notification from '../models/Notification.js';
 import Job from '../models/Job.js';
+import Transaction from '../models/Transaction.js';
 
-// GET Public Profile
+// GET Public Profile (by ID)
 const getPublicProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select('-password -email -friendRequests')
-      .populate('friends', 'name username profileImage _id');
+      .populate('friends', 'name username profileImage _id rank points profession');
 
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
 
-    const worksWithComments = await Work.find({
-      'comments.userId': user._id
-    })
+    const worksWithComments = await Work.find({ 'comments.userId': user._id })
       .select('title _id mainImage type videoUrl comments')
       .limit(20);
 
@@ -27,11 +26,46 @@ const getPublicProfile = async (req, res) => {
             _id: c._id,
             text: c.text,
             createdAt: c.createdAt,
-            work: {
-              _id: work._id,
-              title: work.title,
-              mainImage: work.mainImage
-            }
+            work: { _id: work._id, title: work.title, mainImage: work.mainImage }
+          });
+        });
+    });
+
+    recentComments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.status(200).json({
+      user,
+      recentComments: recentComments.slice(0, 10),
+      friendsCount: user.friends?.length || 0
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET Public Profile (by Username)
+const getPublicProfileByUsername = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username.toLowerCase() })
+      .select('-password -email -friendRequests')
+      .populate('friends', 'name username profileImage _id rank points profession');
+
+    if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
+
+    const worksWithComments = await Work.find({ 'comments.userId': user._id })
+      .select('title _id mainImage type videoUrl comments')
+      .limit(20);
+
+    const recentComments = [];
+    worksWithComments.forEach(work => {
+      work.comments
+        .filter(c => c.userId?.toString() === user._id.toString())
+        .forEach(c => {
+          recentComments.push({
+            _id: c._id,
+            text: c.text,
+            createdAt: c.createdAt,
+            work: { _id: work._id, title: work.title, mainImage: work.mainImage }
           });
         });
     });
@@ -121,6 +155,10 @@ const sendFriendRequest = async (req, res) => {
           ...note._doc,
           sender: { name: me.name, profileImage: me.profileImage }
         });
+        // ✅ Real-time friend request sync
+        io.to(targetId.toString()).emit('friend_request_received', {
+          from: { _id: me._id, name: me.name, profileImage: me.profileImage, rank: me.rank, points: me.points, profession: me.profession }
+        });
       }
     } catch (err) { console.error("Friend Request Notification Error:", err); }
 
@@ -153,6 +191,13 @@ const respondFriendRequest = async (req, res) => {
       requester.friends.push(myId);
       await requester.save();
 
+      const io = req.app.get('io');
+      if (io) {
+        io.to(requesterId.toString()).emit('friend_request_accepted', {
+          _id: me._id, name: me.name, profileImage: me.profileImage, rank: me.rank, points: me.points
+        });
+      }
+
       res.json({ message: 'ยืนยันเพื่อนสำเร็จ', status: 'friends' });
     } else if (action === 'reject') {
       request.status = 'rejected';
@@ -174,6 +219,11 @@ const removeFriend = async (req, res) => {
 
     await User.findByIdAndUpdate(myId, { $pull: { friends: friendId } });
     await User.findByIdAndUpdate(friendId, { $pull: { friends: myId } });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(friendId.toString()).emit('friend_removed', { friendId: myId });
+    }
 
     res.json({ message: 'ยกเลิกเพื่อนสำเร็จ', status: 'none' });
   } catch (err) {
@@ -206,7 +256,7 @@ const updateProfile = async (req, res) => {
   try {
     const { 
       bio, name, profession, isAvailableForHire, serviceTags, servicePackages,
-      phone, address, birthday, gender, username, experience, skills 
+      phone, address, birthday, gender, username, experience, skills, website 
     } = req.body;
     
     const updateData = { bio };
@@ -224,6 +274,7 @@ const updateProfile = async (req, res) => {
     if (typeof address !== 'undefined') updateData.address = address;
     if (typeof birthday !== 'undefined') updateData.birthday = birthday;
     if (typeof gender !== 'undefined') updateData.gender = gender;
+    if (typeof website !== 'undefined') updateData.website = website;
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
@@ -247,7 +298,7 @@ const getMyFriendRequests = async (req, res) => {
     const me = await User.findById(req.user.id)
       .populate({
         path: 'friendRequests.from',
-        select: 'name profileImage _id'
+        select: 'name profileImage _id rank points profession'
       });
     
     const pendingRequests = me.friendRequests.filter(r => r.status === 'pending');
@@ -280,7 +331,7 @@ const searchUsers = async (req, res) => {
     }
 
     const users = await User.find(queryObj)
-      .select('name profileImage _id role profession isAvailableForHire skills rank')
+      .select('name profileImage _id role profession isAvailableForHire skills rank points')
       .limit(20);
 
     res.json(users);
@@ -509,8 +560,69 @@ const changePassword = async (req, res) => {
   }
 };
 
+// Claim Quest Reward
+const claimQuest = async (req, res) => {
+  try {
+    const { questId, reward, xpReward } = req.body;
+    const userId = req.user.id || req.user._id;
+
+    if (!questId) {
+      return res.status(400).json({ message: 'ข้อมูลไม่ครบถ้วน' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+
+    // Check if already claimed today for daily quests
+    if (questId === 'daily_login') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const claimedToday = user.claimedQuests?.find(q => 
+        q.questId === questId && new Date(q.claimedAt) >= today
+      );
+      if (claimedToday) {
+        return res.status(400).json({ message: 'คุณได้รับรางวัลรายวันนี้ไปแล้ว' });
+      }
+    } else {
+      // For one-time quests
+      const alreadyClaimed = user.claimedQuests?.find(q => q.questId === questId);
+      if (alreadyClaimed) {
+        return res.status(400).json({ message: 'เควสนี้ถูกรับไปแล้ว' });
+      }
+    }
+
+    // Update user balance and claimed status
+    if (reward) user.coinBalance = (user.coinBalance || 0) + Number(reward);
+    if (xpReward) user.points = (user.points || 0) + Number(xpReward);
+    if (!user.claimedQuests) user.claimedQuests = [];
+    user.claimedQuests.push({ questId, claimedAt: new Date() });
+    
+    await user.save();
+
+    // Create a transaction log
+    const tx = new Transaction({
+      user: userId,
+      type: 'TOPUP',
+      amount: Number(reward),
+      status: 'completed',
+      reference: `QUEST_REWARD: ${questId}`
+    });
+    await tx.save();
+
+    res.json({ 
+      message: 'รับรางวัลสำเร็จ!', 
+      coinBalance: user.coinBalance,
+      points: user.points,
+      claimedQuests: user.claimedQuests
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export {
   getPublicProfile,
+  getPublicProfileByUsername,
   getFriendStatus,
   sendFriendRequest,
   respondFriendRequest,
@@ -525,5 +637,6 @@ export {
   getOnlineUsers,
   getLeaderboard,
   getRankProgress,
-  changePassword
+  changePassword,
+  claimQuest
 };

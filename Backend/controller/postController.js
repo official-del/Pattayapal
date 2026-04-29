@@ -18,6 +18,20 @@ export const getPosts = async (req, res) => {
   }
 };
 
+export const getPostById = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate('author', 'name profileImage profession rank')
+      .populate('comments.user', 'name profileImage')
+      .populate('comments.replies.user', 'name profileImage');
+    
+    if (!post) return res.status(404).json({ message: "Post not found" });
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const createPost = async (req, res) => {
   try {
     const { content, postType } = req.body;
@@ -100,7 +114,7 @@ export const commentPost = async (req, res) => {
            type: 'comment',
            referenceId: post._id,
            text: `${commentingUser.name} ได้แสดงความคิดเห็นในโพสต์ของคุณ: "${textPreview}"`,
-           link: '/feed'
+           link: `/posts/${post._id}`
          });
          await note.save();
 
@@ -215,7 +229,7 @@ export const replyCommentPost = async (req, res) => {
            type: 'comment',
            referenceId: post._id,
            text: `${replyingUser.name} ได้ตอบกลับคอมเมนต์ของคุณ: "${textPreview}"`,
-           link: '/feed'
+           link: `/posts/${post._id}`
          });
          await note.save();
 

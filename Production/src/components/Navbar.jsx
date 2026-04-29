@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, useRef } from 'react';
+import { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
@@ -9,7 +9,7 @@ import { notificationsAPI } from '../utils/api';
 import {
   FiMenu, FiX, FiBell, FiUser, FiMessageCircle, FiTrendingUp, FiLogOut, FiHome,
   FiBriefcase, FiZap, FiBox, FiUsers, FiLayers, FiMail, FiBookOpen, FiSettings, FiCamera, FiDollarSign, FiGlobe,
-  FiActivity, FiGrid, FiSearch, FiStar
+  FiActivity, FiGrid, FiSearch, FiStar, FiGift
 } from 'react-icons/fi';
 import { CoinIcon, CoinBadge } from './CoinIcon';
 import RankBadge from './RankBadge';
@@ -24,22 +24,34 @@ function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const { user, token, logout, profileUpdateTag } = useContext(AuthContext);
-  const localUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-  const userInfo = user || localUserInfo;
+  const { user, token, logout, profileUpdateTag, fetchProfile } = useContext(AuthContext);
+  const userInfo = useMemo(() => {
+    if (user) return user;
+    try { return JSON.parse(localStorage.getItem('userInfo') || '{}'); } catch { return {}; }
+  }, [user]);
   const { socket } = useSocket();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [balanceUpdateMessage, setBalanceUpdateMessage] = useState(null);
   const audioRef = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"));
 
   const currentToken = token || localStorage.getItem('userToken') || localStorage.getItem('token');
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -53,14 +65,52 @@ function Navbar() {
       } catch (err) { console.error("Notif error", err); }
     };
     fetchNotifs();
-    if (!socket) return;
-    socket.on('new_notification', (newNote) => {
+    const handleNewNotification = (newNote) => {
       setNotifications(prev => [newNote, ...prev].slice(0, 50));
       setUnreadCount(prev => prev + 1);
       play8BitSuccess();
-    });
-    return () => socket.off('new_notification');
-  }, [currentToken, userInfo?._id, socket]);
+    };
+
+    const handleNotificationsRead = (data) => {
+      if (data.all) {
+        setUnreadCount(0);
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      } else if (data.id) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        setNotifications(prev => prev.map(n => n._id === data.id ? { ...n, isRead: true } : n));
+      }
+    };
+
+    if (socket) {
+      const handleBalanceUpdate = (data) => {
+        if (data.message) {
+          setBalanceUpdateMessage({
+            title: data.title || 'เหรียญเข้าแล้ว!',
+            message: data.message,
+            newBalance: data.coinBalance
+          });
+          play8BitSuccess();
+          if (fetchProfile) fetchProfile(); // Update global user balance
+        }
+      };
+
+      socket.on('new_notification', handleNewNotification);
+      socket.on('notifications_read', handleNotificationsRead);
+      socket.on('balance_update', handleBalanceUpdate);
+      return () => {
+        socket.off('new_notification', handleNewNotification);
+        socket.off('notifications_read', handleNotificationsRead);
+        socket.off('balance_update', handleBalanceUpdate);
+      };
+    }
+  }, [currentToken, userInfo?._id, socket, fetchProfile]);
+
+  // Reset badge when navigating to Notifications page
+  useEffect(() => {
+    if (location.pathname === '/notifications') {
+      setUnreadCount(0);
+    }
+  }, [location.pathname]);
 
   // Dispatch event when mobile menu opens/closes and toggle body scroll
   useEffect(() => {
@@ -96,6 +146,7 @@ function Navbar() {
     { name: 'Admin Panel', href: '/admin/dashboard', icon: <FiSettings /> },
     { name: 'Insights', href: '/admin/overview', icon: <FiActivity /> },
     { name: 'Withdrawals', href: '/admin/withdrawals', icon: <FiDollarSign /> },
+    { name: 'Daily Quests', href: '/dashboard/quests', icon: <FiGift /> },
     { name: 'System Notifications', href: '/notifications', icon: <FiBell /> },
     { name: 'Global Feed', href: '/feed', icon: <FiGlobe /> },
   ] : isFreelancer ? [
@@ -103,19 +154,22 @@ function Navbar() {
     { name: 'Manage Portfolio', href: '/manage-portfolio', icon: <FiGrid /> },
     { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
     { name: 'My Coin', href: '/dashboard/wallet', icon: <FiDollarSign /> },
+    { name: 'Daily Quests', href: '/dashboard/quests', icon: <FiGift /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
-    { name: 'Social', href: '/feed', icon: <FiGlobe /> },
+    // { name: 'Social', href: '/feed', icon: <FiGlobe /> },
   ] : isClient ? [
     { name: 'Client Center', href: '/dashboard', icon: <FiHome /> },
     { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
     { name: 'My Wallet', href: '/dashboard/wallet', icon: <FiDollarSign /> },
-    { name: 'Social', href: '/feed', icon: <FiGlobe /> },
+    { name: 'Daily Quests', href: '/dashboard/quests', icon: <FiGift /> },
+    // { name: 'Social', href: '/feed', icon: <FiGlobe /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
   ] : [
     { name: 'Client Center', href: '/dashboard', icon: <FiHome /> },
     { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
     { name: 'My Wallet', href: '/dashboard/wallet', icon: <FiDollarSign /> },
-    { name: 'Social', href: '/feed', icon: <FiGlobe /> },
+    { name: 'Daily Quests', href: '/dashboard/quests', icon: <FiGift /> },
+    // { name: 'Social', href: '/feed', icon: <FiGlobe /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
   ];
 
@@ -336,17 +390,70 @@ function Navbar() {
                 {currentToken ? (
                   <button className="p-logout-action" onClick={handleLogout}>
                     <div className="p-item-icon"><FiLogOut /></div>
-                    <span className="p-item-label">DISCONNECT</span>
+                    <span className="p-item-label">Logout</span>
                   </button>
                 ) : (
                   <Link to="/login" className="p-login-action" onClick={() => setIsOpen(false)}>
                     <div className="p-item-icon"><FiZap /></div>
-                    <span className="p-item-label">INITIALIZE</span>
+                    <span className="p-item-label">Login / Register</span>
                   </Link>
                 )}
               </div>
             </motion.aside>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* 💰 Global Balance Update Notification Modal */}
+      <AnimatePresence>
+        {balanceUpdateMessage && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '20px' }}>
+            <motion.div
+              initial={{ scale: 0.5, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.5, y: 50, opacity: 0 }}
+              className="glass"
+              style={{
+                padding: '50px', borderRadius: '40px', maxWidth: '500px', width: '100%',
+                border: '2px solid #f59e0b', textAlign: 'center',
+                boxShadow: '0 0 60px rgba(245, 158, 11, 0.2)',
+                position: 'relative', overflow: 'hidden'
+              }}
+            >
+              {/* Confetti Glow */}
+              <div style={{ position: 'absolute', top: '-50px', left: '-50px', width: '150px', height: '150px', background: 'radial-gradient(circle, #f59e0b 0%, transparent 70%)', opacity: 0.2 }} />
+              
+              <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', margin: '0 auto 30px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                <CoinIcon size={55} />
+              </div>
+
+              <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', marginBottom: '15px', letterSpacing: '-1px' }}>
+                {balanceUpdateMessage.title}
+              </h2>
+              <p style={{ fontSize: '1.1rem', color: '#f59e0b', fontWeight: '700', marginBottom: '30px', lineHeight: '1.5' }}>
+                {balanceUpdateMessage.message}
+              </p>
+
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '25px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '35px' }}>
+                <div style={{ color: '#888', fontSize: '0.75rem', fontWeight: '700', letterSpacing: '2px', marginBottom: '10px', textTransform: 'uppercase' }}>
+                  CURRENT BALANCE
+                </div>
+                <div style={{ fontSize: '2.5rem', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                  <CoinIcon size={32} />
+                  {balanceUpdateMessage.newBalance.toLocaleString()}
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: '0 10px 20px rgba(245, 158, 11, 0.2)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setBalanceUpdateMessage(null)}
+                style={{ width: '100%', padding: '20px', borderRadius: '20px', background: '#f59e0b', border: 'none', color: '#111', fontWeight: '800', fontSize: '1.1rem', cursor: 'pointer' }}
+              >
+                รับทราบ
+              </motion.button>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>

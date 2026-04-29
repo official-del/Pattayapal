@@ -90,6 +90,9 @@ export const login = async (req, res) => {
         totalViews: user.totalViews,
         totalEarnings: user.totalEarnings,
         coinBalance: user.coinBalance,
+        points: user.points,
+        claimedQuests: user.claimedQuests,
+        canCreateQuest: user.canCreateQuest,
       },
     });
   } catch (error) {
@@ -101,7 +104,16 @@ export const getProfile = async (req, res) => {
   try {
     // 💡 .select('-password') เป็นทริคเพิ่มความปลอดภัย ไม่ให้ส่งรหัสผ่านกลับไปหน้าบ้านครับ
     const user = await User.findById(req.user.id).select('-password');
-    res.status(200).json(user);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    // Calculate worksCount dynamically
+    const Work = (await import('../models/Work.js')).default;
+    const worksCount = await Work.countDocuments({ createdBy: user._id });
+    
+    const userObj = user.toObject();
+    userObj.worksCount = worksCount;
+    
+    res.status(200).json(userObj);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

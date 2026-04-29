@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
-import { usersAPI, chatAPI, worksAPI } from '../utils/api';
+import { usersAPI, chatAPI, worksAPI, postsAPI } from '../utils/api';
+import FeedPost from '../components/FeedPost';
 import { getFullUrl, isVideoUrl } from '../utils/mediaUtils';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
@@ -60,7 +61,7 @@ export const SKILL_CATEGORIES = [
 ];
 
 function UserProfile() {
-   const { userId } = useParams();
+   const { userId, username } = useParams();
    const navigate = useNavigate();
    const { user: contextUser, token: contextToken, fetchProfile: refreshContext, updateUser, profileUpdateTag } = useContext(AuthContext);
 
@@ -68,7 +69,7 @@ function UserProfile() {
    const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo') || '{}');
 
    const currentUserId = String(currentUser?._id || currentUser?.id || "");
-   const targetProfileId = String(userId || currentUserId);
+   const [targetProfileId, setTargetProfileId] = useState(userId || "");
    const isMyProfile = !!currentUserId && (currentUserId === targetProfileId);
 
    const [profile, setProfile] = useState(null);
@@ -88,9 +89,11 @@ function UserProfile() {
    const [phoneText, setPhoneText] = useState('');
    const [addressText, setAddressText] = useState('');
    const [birthdayText, setBirthdayText] = useState('');
+   const [websiteText, setWebsiteText] = useState('');
    const [genderText, setGenderText] = useState('None');
    const [experience, setExperience] = useState([]);
    const [skills, setSkills] = useState([]);
+    const [userPosts, setUserPosts] = useState([]);
 
    const [servicePackages, setServicePackages] = useState([]);
    const [showPkgModal, setShowPkgModal] = useState(false);
@@ -155,24 +158,38 @@ function UserProfile() {
          }
       };
 
-      socket.on('status_change', handleStatusChange);
-      socket.on('profile_updated', handleProfileUpdate);
-      socket.on('work_updated', handleWorkUpdate);
+      if (socket) {
+         socket.on('status_change', handleStatusChange);
+         socket.on('profile_updated', handleProfileUpdate);
+         socket.on('work_updated', handleWorkUpdate);
 
-      return () => {
-         socket.off('status_change', handleStatusChange);
-         socket.off('profile_updated', handleProfileUpdate);
-         socket.off('work_updated', handleWorkUpdate);
-      };
+         return () => {
+            socket.off('status_change', handleStatusChange);
+            socket.off('profile_updated', handleProfileUpdate);
+            socket.off('work_updated', handleWorkUpdate);
+         };
+      }
    }, [socket, targetProfileId]);
 
    useEffect(() => {
       const fetchData = async () => {
-         if (!targetProfileId) return;
+         // Determine what to fetch
+         const identifier = userId || username || currentUserId;
+         if (!identifier) return;
+
          setLoading(true);
          try {
-            const data = await usersAPI.getPublicProfile(targetProfileId);
-            setProfile(data.user);
+            let data;
+            if (username) {
+               data = await usersAPI.getPublicProfileByUsername(username);
+            } else {
+               data = await usersAPI.getPublicProfile(identifier);
+            }
+
+            const fetchedUser = data.user;
+            setProfile(fetchedUser);
+            if (fetchedUser?._id) setTargetProfileId(String(fetchedUser._id));
+
             setRecentComments(data.recentComments || []);
             setBioText(data.user?.bio || '');
             setNameText(data.user?.name || '');
@@ -187,6 +204,7 @@ function UserProfile() {
             setExperience(data.user?.experience || []);
             setSkills(data.user?.skills || []);
             setServicePackages(data.user?.servicePackages || []);
+            setWebsiteText(data.user?.website || '');
 
             const wRes = await worksAPI.getByUser(targetProfileId);
             setWorks(wRes.works || []);
@@ -202,12 +220,18 @@ function UserProfile() {
                const reqs = await usersAPI.getMyFriendRequests(currentToken);
                setFriendRequests(reqs);
             }
+            const postsRes = await postsAPI.getAll();
+            const allPosts = Array.isArray(postsRes) ? postsRes : (postsRes?.posts || postsRes?.data || []);
+            const filteredPosts = allPosts.filter(p => 
+               (p.author?._id || p.author) === targetProfileId
+            );
+            setUserPosts(filteredPosts);
          } catch (err) { console.error('Profile fetch failed', err); }
          finally { setLoading(false); setWorksLoading(false); }
       };
       fetchData();
       window.scrollTo(0, 0);
-   }, [targetProfileId, currentToken]);
+   }, [userId, username, currentUserId, currentToken]);
 
    const handleFriendAction = async () => {
       if (!currentToken) return alert('กรุณาเข้าสู่ระบบก่อนครับ');
@@ -276,7 +300,8 @@ function UserProfile() {
             gender: genderText,
             experience: experience,
             skills: skills,
-            servicePackages: servicePackages
+            servicePackages: servicePackages,
+            website: websiteText
          };
          await usersAPI.updateProfile(updatePayload, currentToken);
          setProfile(p => ({ ...p, ...updatePayload }));
@@ -537,8 +562,30 @@ function UserProfile() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><FiGlobe /></div>
                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700' }}>PERSONAL SITE</div>
-                              <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--indigo)', wordBreak: 'break-all' }}>pattaya-pal.com/{profile.username}</div>
+                              <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700' }}>{profile.website ? 'PERSONAL SITE' : 'PROFILE URL'}</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                 <a 
+                                    href={profile.website ? (profile.website.startsWith('http') ? profile.website : `https://${profile.website}`) : `/${profile.username || 'profile/' + profile._id}`} 
+                                    target={profile.website ? "_blank" : "_self"}
+                                    rel="noreferrer"
+                                    style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--indigo)', wordBreak: 'break-all', textDecoration: 'none', transition: '0.3s' }}
+                                    onMouseEnter={(e) => e.target.style.color = 'var(--accent)'}
+                                    onMouseLeave={(e) => e.target.style.color = 'var(--indigo)'}
+                                 >
+                                    {profile.website || `${window.location.host}/${profile.username || profile._id}`}
+                                 </a>
+                                 <button 
+                                    onClick={() => {
+                                       const link = profile.website || `${window.location.origin}/${profile.username || 'profile/' + profile._id}`;
+                                       navigator.clipboard.writeText(link);
+                                       alert('คัดลอกลิงก์สำเร็จ!');
+                                    }}
+                                    style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', display: 'flex', padding: '5px' }}
+                                    title="Copy Link"
+                                 >
+                                    <FiBookmark size={14} />
+                                 </button>
+                              </div>
                            </div>
                         </div>
                      </div>
@@ -565,9 +612,10 @@ function UserProfile() {
                   <div className="glass tabs-container" style={{ padding: '10px', borderRadius: '25px', display: 'flex', gap: '10px', width: 'fit-content', maxWidth: '100%', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)' }}>
                      <style>{`.tabs-container::-webkit-scrollbar { display: none; }`}</style>
                      {[
-                        { id: 'portfolio', label: 'TIMELINE', icon: <FiActivity /> },
+                        { id: 'portfolio', label: 'PORTFOLIO', icon: <FiActivity /> },
                         { id: 'packages', label: 'PACKAGES', icon: <FiZap /> },
-                        { id: 'about', label: 'EXPERIENCE', icon: <FiAward /> }
+                        { id: 'about', label: 'EXPERIENCE', icon: <FiAward /> },
+                        { id: 'timeline', label: 'TIMELINE', icon: <FiClock /> }
                      ].map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? 'var(--accent)' : 'transparent', border: 'none', padding: '12px 25px', borderRadius: '18px', color: activeTab === tab.id ? '#fff' : '#666', fontWeight: '700', cursor: 'pointer', transition: '0.3s', display: 'flex', alignItems: 'center', gap: '10px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                            {tab.icon} {tab.label}
@@ -744,6 +792,22 @@ function UserProfile() {
                               </div>
                            )}
 
+                           {activeTab === 'timeline' && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '700px', margin: '0 auto' }}>
+                                 {userPosts.length > 0 ? userPosts.map(post => (
+                                    <FeedPost 
+                                       key={post._id} 
+                                       post={post} 
+                                       onDelete={(id) => setUserPosts(prev => prev.filter(p => p._id !== id))}
+                                    />
+                                 )) : (
+                                    <div style={{ padding: '100px', textAlign: 'center', color: '#444', fontWeight: '700', letterSpacing: '4px' }}>
+                                       NO SOCIAL POSTS RECORDED
+                                    </div>
+                                 )}
+                              </div>
+                           )}
+
                         </motion.div>
                      </AnimatePresence>
                   </div>
@@ -797,6 +861,11 @@ function UserProfile() {
                            <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>DATE OF BIRTH</label>
                            <input type="date" value={birthdayText} onChange={e => setBirthdayText(e.target.value)} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', outline: 'none' }} />
                         </div>
+                     </div>
+
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>PERSONAL WEBSITE</label>
+                        <input value={websiteText} onChange={e => setWebsiteText(e.target.value)} placeholder="https://yourportfolio.com" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', outline: 'none' }} />
                      </div>
 
                      {/* Gender & Profession */}
