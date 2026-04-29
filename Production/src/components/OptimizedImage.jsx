@@ -18,6 +18,16 @@ const OptimizedImage = ({ src, alt, style, className, onClick, placeholder = 'rg
     }
   }, [src]);
 
+  const handleError = () => {
+    // If it failed and it's a GCS URL, try falling back to the local API URL
+    if (src && src.includes('storage.googleapis.com') && !src.includes('fallback=true')) {
+      const fileName = src.split('/').pop();
+      // Simple fallback to local /uploads/
+      setCurrentSrc(`/uploads/${fileName}`);
+    }
+    setIsLoaded(true);
+  };
+
   return (
     <div 
       style={{ 
@@ -35,7 +45,7 @@ const OptimizedImage = ({ src, alt, style, className, onClick, placeholder = 'rg
         alt={alt}
         loading="lazy"
         onLoad={() => setIsLoaded(true)}
-        onError={() => setIsLoaded(true)}
+        onError={handleError}
         style={{
           width: '100%',
           height: '100%',

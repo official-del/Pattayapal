@@ -17,15 +17,15 @@ export const getFullUrl = (path, bustCache = false) => {
   }
   
   const cleanPath = path.replace(/^\/+/, "").replace(/^uploads\/+/, "");
+  let finalUrl = "";
     
-    // 💡 ระบบตรวจสอบอัตโนมัติ
-    if (import.meta.env.PROD) {
-      // บน Host จริง: ดึงจาก Google Cloud Storage
-      finalUrl = `https://storage.googleapis.com/pattayapal-assets/${cleanPath}`;
-    } else {
-      // ในเครื่องเรา: ดึงจาก localhost:5000/uploads
-      finalUrl = `${API_URL}/uploads/${cleanPath}`;
-    }
+  // 💡 ระบบตรวจสอบอัตโนมัติ
+  if (import.meta.env.PROD) {
+    // บน Host จริง: ดึงจาก Google Cloud Storage
+    finalUrl = `https://storage.googleapis.com/pattayapal-assets/${cleanPath}`;
+  } else {
+    // ในเครื่องเรา: ดึงจาก localhost:5000/uploads
+    finalUrl = `${API_URL}/uploads/${cleanPath}`;
   }
 
   if (bustCache) {

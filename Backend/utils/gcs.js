@@ -65,22 +65,26 @@ export const uploadToGCS = async (file) => {
     let originalName = file.originalname;
 
     // ─── [IMAGE OPTIMIZATION] ───
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith('image/') && fs.existsSync(file.path)) {
         try {
             const optimizedPath = `${file.path}-optimized.webp`;
+            console.log("⚡ [Sharp] Starting optimization for:", file.path);
+            
             await sharp(file.path)
-                .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true }) // ปรับขนาดถ้าใหญ่เกินไป
-                .webp({ quality: 80 }) // แปลงเป็น WebP คุณภาพ 80
+                .rotate() // Auto-rotate based on EXIF
+                .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 80 })
                 .toFile(optimizedPath);
             
-            // ใช้ไฟล์ที่บีบอัดแล้วแทน
-            processedPath = optimizedPath;
-            contentType = 'image/webp';
-            originalName = path.parse(file.originalname).name + '.webp';
-            
-            console.log("⚡ [Sharp] Optimized image to WebP:", optimizedPath);
+            if (fs.existsSync(optimizedPath)) {
+                processedPath = optimizedPath;
+                contentType = 'image/webp';
+                originalName = path.parse(file.originalname).name + '.webp';
+                console.log("✅ [Sharp] Optimization successful:", optimizedPath);
+            }
         } catch (sharpError) {
-            console.error("⚠️ [Sharp] Optimization failed, using original file:", sharpError.message);
+            console.error("⚠️ [Sharp] Optimization failed:", sharpError.message);
+            // We fall back to original file (processedPath remains file.path)
         }
     }
 
