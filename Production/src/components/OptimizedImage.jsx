@@ -18,12 +18,22 @@ const OptimizedImage = ({ src, alt, style, className, onClick, placeholder = 'rg
     }
   }, [src]);
 
+  const [errorType, setErrorType] = useState(null); // 'gcs', 'cloudinary', or 'general'
+
   const handleError = () => {
-    // If it failed and it's a GCS URL, try falling back to the local API URL
+    // 1. Handle GCS Fallback to Local
     if (src && src.includes('storage.googleapis.com') && !src.includes('fallback=true')) {
       const fileName = src.split('/').pop();
-      // Simple fallback to local /uploads/
       setCurrentSrc(`/uploads/${fileName}`);
+      setErrorType('gcs');
+    } 
+    // 2. Handle Cloudinary Failures (Legacy Data)
+    else if (src && src.includes('cloudinary.com')) {
+      setErrorType('cloudinary');
+      console.warn("Legacy Cloudinary asset failed to load (401/404):", src);
+    }
+    else {
+      setErrorType('general');
     }
     setIsLoaded(true);
   };
@@ -34,27 +44,46 @@ const OptimizedImage = ({ src, alt, style, className, onClick, placeholder = 'rg
         position: 'relative', 
         overflow: 'hidden', 
         backgroundColor: placeholder,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         ...style 
       }} 
       className={className}
       onClick={onClick}
     >
-      <img
-        ref={imgRef}
-        src={currentSrc}
-        alt={alt}
-        loading="lazy"
-        onLoad={() => setIsLoaded(true)}
-        onError={handleError}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          display: 'block',
-          opacity: isLoaded ? 1 : 0,
-          transition: 'opacity 0.5s ease-in-out',
-        }}
-      />
+      {errorType === 'cloudinary' ? (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '20px', 
+          color: '#666', 
+          fontSize: '0.7rem',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <div style={{ opacity: 0.5 }}>Media unavailable</div>
+          <div style={{ fontSize: '0.5rem', opacity: 0.3 }}>Legacy data</div>
+        </div>
+      ) : (
+        <img
+          ref={imgRef}
+          src={currentSrc}
+          alt={alt}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
+          onError={handleError}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: (errorType === 'general' && isLoaded) ? 'none' : 'block',
+            opacity: isLoaded ? 1 : 0,
+            transition: 'opacity 0.5s ease-in-out',
+          }}
+        />
+      )}
       {!isLoaded && (
         <div style={{
           position: 'absolute',

@@ -130,10 +130,14 @@ export const uploadToGCS = async (file) => {
         const targetPath = path.join(uploadDir, localFileName);
 
         // ย้ายไฟล์ที่ผ่านการประมวลผลแล้ว (หรือไฟล์เดิม) มาเก็บที่ uploads
-        fs.renameSync(processedPath, targetPath);
+        // ใช้ copy + unlink แทน rename เพื่อความปลอดภัยในการทำงานข้าม Volume ใน Docker
+        fs.copyFileSync(processedPath, targetPath);
+        fs.unlinkSync(processedPath);
         
-        // ลบไฟล์เดิมถ้ามีการสร้างไฟล์ใหม่ (optimized)
-        if (processedPath !== file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        // ลบไฟล์เดิมถ้ามีการสร้างไฟล์ใหม่ (optimized) และไฟล์นั้นยังอยู่
+        if (processedPath !== file.path && fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+        }
 
         const localPath = `uploads/${localFileName}`;
         console.log("📂 [Local] Saved successfully:", localPath);
