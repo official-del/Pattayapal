@@ -1,9 +1,10 @@
+import { toast } from 'react-hot-toast';
 import React from 'react';
 
 export default function MediaUploader({ onUploadSuccess }) {
   const handleUpload = () => {
     if (!window.cloudinary) {
-      alert("Cloudinary SDK กำลังโหลดหรือโหลดไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ");
+      toast.success("Cloudinary SDK กำลังโหลดหรือโหลดไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ");
       return;
     }
 

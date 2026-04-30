@@ -1,3 +1,5 @@
+import { customConfirm } from '../../utils/customConfirm';
+import { toast } from 'react-hot-toast';
 import { useState, useEffect, useContext } from 'react';
 import { jobsAPI } from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
@@ -117,19 +119,19 @@ function ManageJobs() {
     } catch (err) {
       console.error("Status update error:", err);
       const errMsg = err.response?.data?.message || 'Update failed';
-      alert(`ไม่สามารถอัปเดตสถานะได้: ${errMsg}`);
+      toast.error(`ไม่สามารถอัปเดตสถานะได้: ${errMsg}`);
     }
   };
 
   const handleUpdateProgress = async (jobId, newProgress) => {
     try {
-      if (!window.confirm(`ยืนยันการตั้งค่าสถานะเป็น ${STAGE_LABELS[newProgress] || newProgress}?`)) return;
+      if (!await customConfirm(`ยืนยันการตั้งค่าสถานะเป็น ${STAGE_LABELS[newProgress] || newProgress}?`)) return;
       await jobsAPI.updateProgress(jobId, newProgress, currentToken);
       fetchJobs();
     } catch (err) {
       console.error("Progress update error:", err);
       const errMsg = err.response?.data?.message || 'Failed to update progress';
-      alert(`ไม่สามารถอัปเดตความคืบหน้าได้: ${errMsg}`);
+      toast.error(`ไม่สามารถอัปเดตความคืบหน้าได้: ${errMsg}`);
     }
   };
 
@@ -351,8 +353,8 @@ function ManageJobs() {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           className="btn-primary"
-                          onClick={() => {
-                            if (window.confirm('คุณต้องการยืนยันการรับมอบงานและโอนเหรียญให้ฟรีแลนซ์ใช่หรือไม่?')) {
+                          onClick={async () => {
+                            if (await customConfirm('คุณต้องการยืนยันการรับมอบงานและโอนเหรียญให้ฟรีแลนซ์ใช่หรือไม่?')) {
                               handleUpdateStatus(job._id, 'completed')
                             }
                           }}

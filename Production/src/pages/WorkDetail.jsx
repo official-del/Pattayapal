@@ -1,3 +1,5 @@
+import { customConfirm } from '../utils/customConfirm';
+import { toast } from 'react-hot-toast';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { worksAPI } from '../utils/api';
@@ -80,7 +82,7 @@ function WorkDetail() {
   }, [id]);
 
   const handleLike = async () => {
-    if (!token) return alert("Please log in to like this project");
+    if (!token) return toast.error("Please log in to like this project");
     try {
       const res = await axios.post(`${API_BASE_URL}/api/works/${id}/like`, {}, {
         headers: { Authorization: `Bearer ${token}` }
@@ -93,7 +95,7 @@ function WorkDetail() {
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    if (!userInfo) return alert("Please log in to join the discussion");
+    if (!userInfo) return toast.error("Please log in to join the discussion");
     setIsSubmitting(true);
     try {
       const res = await axios.post(`${API_BASE_URL}/api/works/${id}/comment`, {
@@ -104,14 +106,14 @@ function WorkDetail() {
       });
       setComments(res.data);
       setCommentText("");
-    } catch (err) { alert("Comment protocol failed."); }
+    } catch (err) { toast.error("Comment protocol failed."); }
     finally { setIsSubmitting(false); }
   };
 
   const handleReplySubmit = async (e, commentId) => {
     e.preventDefault();
     if (!replyText.trim()) return;
-    if (!userInfo) return alert("Please log in to reply 🙏");
+    if (!userInfo) return toast.error("Please log in to reply 🙏");
     try {
       const res = await worksAPI.replyComment(id, commentId, {
         user: userInfo?.name || "Anonymous",
@@ -123,17 +125,17 @@ function WorkDetail() {
       setReplyText("");
       setReplyingTo(null);
       setExpandedReplies(prev => ({ ...prev, [commentId]: true }));
-    } catch (err) { alert("Reply failed."); }
+    } catch (err) { toast.error("Reply failed."); }
   };
 
   const deleteComment = async (commentId) => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) return;
+    if (!await customConfirm("Are you sure you want to delete this comment?")) return;
     try {
       const res = await axios.delete(`${API_BASE_URL}/api/works/${id}/comment/${commentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setComments(res.data);
-    } catch (err) { alert("Deletion signal failed."); }
+    } catch (err) { toast.error("Deletion signal failed."); }
   };
 
   if (loading) return (
@@ -186,7 +188,7 @@ function WorkDetail() {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert("🔗 Link copied to clipboard!");
+        toast.success("🔗 Link copied to clipboard!");
       }
     } catch (err) {
       console.error("Error sharing:", err);

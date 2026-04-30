@@ -1,3 +1,5 @@
+import { customConfirm } from '../../utils/customConfirm';
+import { toast } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { worksAPI } from '../../utils/api';
@@ -15,8 +17,8 @@ const MediaItem = ({ work, navigate }) => {
   return (
     <div className="mw-media-box">
       {isActuallyVideo ? (
-        <HoverVideoPlayer 
-          src={mediaUrl} 
+        <HoverVideoPlayer
+          src={mediaUrl}
           style={{ width: '100%', height: '100%' }}
         />
       ) : (
@@ -71,13 +73,13 @@ function ManageWorks() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!window.confirm("ยืนยันการลบผลงานนี้ใช่หรือไม่? ข้อมูลจะถูกลบออกจากระบบอย่างถาวร")) return;
+    if (!await customConfirm("ยืนยันการลบผลงานนี้ใช่หรือไม่? ข้อมูลจะถูกลบออกจากระบบอย่างถาวร")) return;
     try {
       const token = localStorage.getItem('userToken') || localStorage.getItem('token');
       await worksAPI.delete(id, token);
       setWorks(works.filter(w => w._id !== id));
     } catch (err) {
-      alert("ล้มเหลว: " + err.message);
+      toast.error("ล้มเหลว: " + err.message);
     }
   };
 
@@ -93,13 +95,13 @@ function ManageWorks() {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="manage-works-container">
-      
+
       {/* 🚀 Workspace Header */}
       <header className="mw-header">
         <div className="mw-title-group">
           <div className="mw-badge">
-             <FiLayers color="var(--mw-accent)" size={18} />
-             <span className="mw-badge-text">คลังผลงาน / WORKSPACE</span>
+            <FiLayers color="var(--mw-accent)" size={18} />
+            <span className="mw-badge-text">คลังผลงาน / WORKSPACE</span>
           </div>
           <h2 className="mw-main-title">จัดการผลงาน</h2>
           <p className="mw-subtitle">
@@ -127,28 +129,28 @@ function ManageWorks() {
         ) : (
           works.map((work) => (
             <motion.div key={work._id} variants={itemVariants} className="work-card">
-              
+
               <MediaItem work={work} navigate={navigate} />
-              
+
               <div className="mw-card-content">
                 <h4 className="work-title">{work.title}</h4>
-                
+
                 <div className="tag-row">
                   <span className="category-tag">{work.category?.name || 'ทั่วไป'}</span>
                   <span className={`status-tag ${work.status === 'published' ? 'status-published' : 'status-draft'}`}>
                     {work.status === 'published' ? 'เผยแพร่แล้ว' : 'ฉบับร่าง'}
                   </span>
                 </div>
-                
+
                 <div className="action-row">
-                  <motion.button 
+                  <motion.button
                     whileHover={{ y: -2 }}
                     onClick={() => navigate(`/edit-work/${work._id}`)}
                     className="edit-btn"
                   >
                     <FiEdit2 /> แก้ไขข้อมูล
                   </motion.button>
-                  <motion.button 
+                  <motion.button
                     whileHover={{ scale: 1.1 }}
                     onClick={() => handleDelete(work._id)}
                     className="delete-btn"

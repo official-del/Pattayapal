@@ -1,3 +1,4 @@
+import { customConfirm } from '../../utils/customConfirm';
 import { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
@@ -88,7 +89,7 @@ function Notifications() {
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();
-    if (!window.confirm('ลบการแจ้งเตือนนี้?')) return;
+    if (!await customConfirm('ลบการแจ้งเตือนนี้?')) return;
     try {
       await notificationsAPI.delete(id);
       setNotifications(prev => prev.filter(n => n._id !== id));
@@ -96,7 +97,7 @@ function Notifications() {
   };
 
   const handleDeleteAll = async () => {
-    if (!window.confirm('คุณต้องการลบการแจ้งเตือนทั้งหมดใช่หรือไม่?')) return;
+    if (!await customConfirm('คุณต้องการลบการแจ้งเตือนทั้งหมดใช่หรือไม่?')) return;
     try {
       await notificationsAPI.deleteAll();
       setNotifications([]);

@@ -1,3 +1,5 @@
+import { customConfirm } from '../../utils/customConfirm';
+import { toast } from 'react-hot-toast';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { worksAPI, categoriesAPI } from '../../utils/api'; 
@@ -94,7 +96,7 @@ export default function AdminWorkForm() {
       setFormData(prev => ({ ...prev, mediaUrl: res.data.url }));
     } catch (err) {
       console.error("❌ Upload failed:", err);
-      alert('อัปโหลดล้มเหลว: ' + (err.response?.data?.message || err.message));
+      toast.error('อัปโหลดล้มเหลว: ' + (err.response?.data?.message || err.message));
     } finally {
       setImgUploading(false);
       // เคลียร์ค่า input เพื่อให้เลือกไฟล์เดิมซ้ำได้ถ้าต้องการ
@@ -116,7 +118,7 @@ export default function AdminWorkForm() {
   const removeAlbumItem = async (index) => {
     const target = albumImages[index];
     if (!target.isNew && (target.url || target.previewUrl)) {
-      if (window.confirm("ต้องการลบรูปนี้ออกจาก Cloud จริงหรือไม่?")) {
+      if (await customConfirm("ต้องการลบรูปนี้ออกจาก Cloud จริงหรือไม่?")) {
         await deleteFileFromGCS(target.url || target.previewUrl);
       } else { return; }
     }
@@ -126,7 +128,7 @@ export default function AdminWorkForm() {
   // ── 💾 บันทึกข้อมูล ──
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!formData.mediaUrl) return alert('กรุณาอัปโหลดสื่อหลักก่อนบันทึก');
+    if (!formData.mediaUrl) return toast.error('กรุณาอัปโหลดสื่อหลักก่อนบันทึก');
     setLoading(true);
 
     const token = localStorage.getItem('token');
@@ -152,7 +154,7 @@ export default function AdminWorkForm() {
       navigate('/admin/dashboard');
     } catch (err) {
       console.error("❌ Save failed:", err);
-      alert('บันทึกไม่สำเร็จ: ' + (err.response?.data?.message || 'API Error'));
+      toast.success('บันทึกไม่สำเร็จ: ' + (err.response?.data?.message || 'API Error'));
     } finally { setLoading(false); }
   };
 
@@ -220,7 +222,7 @@ export default function AdminWorkForm() {
                     type="button"
                     className="btn-replace-media"
                     onClick={async () => {
-                      if (window.confirm("ต้องการลบวิดีโอนี้ออกจาก Cloud ใช่หรือไม่?")) {
+                      if (await customConfirm("ต้องการลบวิดีโอนี้ออกจาก Cloud ใช่หรือไม่?")) {
                         await deleteFileFromGCS(formData.mediaUrl);
                         setFormData({ ...formData, mediaUrl: '' });
                       }
@@ -241,7 +243,7 @@ export default function AdminWorkForm() {
                       type="button"
                       className="btn-change"
                       onClick={async () => {
-                        if (window.confirm("ต้องการลบรูปภาพหลักออกจาก Cloud ใช่หรือไม่?")) {
+                        if (await customConfirm("ต้องการลบรูปภาพหลักออกจาก Cloud ใช่หรือไม่?")) {
                           await deleteFileFromGCS(formData.mediaUrl);
                           setFormData({ ...formData, mediaUrl: '' });
                         }

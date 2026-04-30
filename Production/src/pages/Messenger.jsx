@@ -1,3 +1,4 @@
+import { toast } from 'react-hot-toast';
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { chatAPI } from '../utils/api';
@@ -517,10 +518,10 @@ function Messenger() {
         if (isInsideThailand(lat, lng)) {
           updateMapPosition(lat, lng);
         } else {
-          alert("Found but outside Thailand boundary.");
+          toast.error("Found but outside Thailand boundary.");
         }
       } else {
-        alert("Place not found. Try more specific name.");
+        toast.error("Place not found. Try more specific name.");
       }
     } catch (err) {
       console.error("Search Error:", err);
@@ -999,7 +1000,7 @@ function Messenger() {
                         disabled={!pickedLocation || !isInsideThailand(pickedLocation.lat, pickedLocation.lng)}
                         onClick={() => {
                           if (!isInsideThailand(pickedLocation.lat, pickedLocation.lng)) {
-                            return alert("ขออภัย ระบบรองรับเฉพาะการแชร์ตำแหน่งภายในประเทศไทยเท่านั้น");
+                            return toast.error("ขออภัย ระบบรองรับเฉพาะการแชร์ตำแหน่งภายในประเทศไทยเท่านั้น");
                           }
 
                           chatAPI.sendMessage({

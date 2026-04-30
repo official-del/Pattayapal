@@ -1,7 +1,9 @@
+import { customConfirm } from '../../utils/customConfirm';
+import { toast } from 'react-hot-toast';
 import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiTarget, FiCheckCircle, FiGift, FiPlus, FiEdit, FiTrash2, FiRefreshCw, FiAlertCircle, FiClock, FiLink, FiX, FiCheck, FiImage } from 'react-icons/fi';
+import { FiTarget, FiCheckCircle, FiGift, FiPlus, FiEdit, FiTrash2, FiRefreshCw, FiAlertCircle, FiClock, FiLink, FiX, FiCheck, FiImage, FiZap } from 'react-icons/fi';
 import { play8BitSuccess } from '../../utils/soundEffects';
 import { questsAPI, questSubmissionsAPI, API } from '../../utils/api';
 import CreateQuestModal from '../../components/CreateQuestModal';
@@ -156,7 +158,7 @@ function AdminReviewQueue({ onUpdate }) {
       await fetchSubmissions();
       onUpdate();
     } catch (err) {
-      alert(err.response?.data?.message || 'Error reviewing submission');
+      toast.error(err.response?.data?.message || 'Error reviewing submission');
     } finally {
       setReviewingId(null);
     }
@@ -185,12 +187,12 @@ function AdminReviewQueue({ onUpdate }) {
                 
                 <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                   {sub.proofUrl && (
-                    <a href={sub.proofUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', background: 'rgba(59,130,246,0.1)', padding: '5px 12px', borderRadius: '8px' }}>
+                    <a href={sub.proofUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#ff5733', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', background: 'rgba(255,87,51,0.1)', padding: '5px 12px', borderRadius: '8px' }}>
                       <FiLink size={12} /> View Link
                     </a>
                   )}
                   {sub.proofImage && (
-                    <a href={sub.proofImage} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', background: 'rgba(245,158,11,0.1)', padding: '5px 12px', borderRadius: '8px' }}>
+                    <a href={sub.proofImage} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', background: 'rgba(245,158,11,0.1)', padding: '5px 12px', borderRadius: '8px' }}>
                       <FiImage size={12} /> View Screenshot
                     </a>
                   )}
@@ -203,7 +205,7 @@ function AdminReviewQueue({ onUpdate }) {
                 )}
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button disabled={isReviewing} onClick={() => handleReview(sub._id, 'APPROVED')} style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e', padding: '8px 15px', borderRadius: '10px', cursor: isReviewing ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: '800' }}>{isReviewing ? '...' : 'Approve'}</button>
+                <button disabled={isReviewing} onClick={() => handleReview(sub._id, 'APPROVED')} style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b', padding: '8px 15px', borderRadius: '10px', cursor: isReviewing ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: '800' }}>{isReviewing ? '...' : 'Approve'}</button>
                 <button disabled={isReviewing} onClick={() => handleReview(sub._id, 'REJECTED')} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 15px', borderRadius: '10px', cursor: isReviewing ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: '800' }}>{isReviewing ? '...' : 'Reject'}</button>
               </div>
             </div>
@@ -334,7 +336,7 @@ function Quests() {
   };
 
   const handleDelete = async (questId) => {
-    if (!window.confirm('ต้องการลบเควสนี้หรือไม่?')) return;
+    if (!await customConfirm('ต้องการลบเควสนี้หรือไม่?')) return;
     try {
       await questsAPI.delete(questId);
       showToast('success', 'ลบเควสสำเร็จ');
@@ -431,7 +433,7 @@ function Quests() {
           {toast && (
             <motion.div
               initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-              style={{ marginBottom: '20px', padding: '14px 20px', borderRadius: '14px', background: toast.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`, color: toast.type === 'success' ? '#22c55e' : '#ef4444', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 10001, position: 'relative' }}
+              style={{ marginBottom: '20px', padding: '14px 20px', borderRadius: '14px', background: toast.type === 'success' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${toast.type === 'success' ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)'}`, color: toast.type === 'success' ? '#f59e0b' : '#ef4444', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 10001, position: 'relative' }}
             >
               {toast.type === 'success' ? <FiCheckCircle size={18} /> : <FiAlertCircle size={18} />}
               {toast.msg}
@@ -462,7 +464,7 @@ function Quests() {
             )}
 
             {xpQuests.length > 0 && (
-              <QuestSection title="Experience Quests" emoji="⚡" color="#6366f1" borderColor="rgba(99,102,241,0.1)">
+              <QuestSection title="Experience Quests" emoji={<FiZap size={20} color="#ff5733" />} color="#ff5733" borderColor="rgba(255,87,51,0.1)">
                 {xpQuests.map((q, i) => (
                   <QuestCard key={q._id} quest={q} index={i} isAdmin={isAdmin}
                     claimingId={claimingId} onClaim={handleClaim} onAccept={handleAccept}
@@ -557,7 +559,7 @@ function QuestSection({ title, emoji, color, borderColor, children }) {
 // ─── Quest Card ───────────────────────────────────────────────────────────────
 function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onAccept, onEdit, onDelete }) {
   const isClaiming = claimingId === quest._id;
-  const color = quest.coinReward > 0 ? '#f59e0b' : '#6366f1';
+  const color = quest.coinReward > 0 ? '#f59e0b' : '#ff5733';
   
   // Expiry of the quest itself
   const expiryCountdown = useCountdown(quest.expiresAt);
@@ -586,8 +588,8 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onAccept, onEdi
       transition={{ delay: index * 0.07 }}
       className="quest-card-hover quest-card-container"
       style={{
-        background: quest.isClaimed ? 'rgba(34,197,94,0.04)' : (quest.isAccepted ? 'rgba(245,158,11,0.03)' : '#0a0a0a'),
-        border: `1px solid ${quest.isClaimed ? 'rgba(34,197,94,0.2)' : (quest.isAccepted ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.06)')}`,
+        background: quest.isClaimed ? 'rgba(255,255,255,0.02)' : (quest.isAccepted ? 'rgba(245,158,11,0.03)' : '#0a0a0a'),
+        border: `1px solid ${quest.isClaimed ? 'rgba(255,255,255,0.05)' : (quest.isAccepted ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.06)')}`,
         borderRadius: '24px',
         padding: '24px 30px',
         display: 'flex',
@@ -606,7 +608,7 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onAccept, onEdi
           </div>
         )}
         {quest.isClaimed && (
-          <div style={{ background: '#22c55e', color: '#000', padding: '4px 16px', borderBottomLeftRadius: '12px', fontSize: '0.65rem', fontWeight: '900', letterSpacing: '1px' }}>
+          <div style={{ background: '#111', color: '#888', borderLeft: '1px solid #333', borderBottom: '1px solid #333', padding: '4px 16px', borderBottomLeftRadius: '12px', fontSize: '0.65rem', fontWeight: '900', letterSpacing: '1px' }}>
             CLAIMED
           </div>
         )}
@@ -655,9 +657,9 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onAccept, onEdi
         {(quest.isAccepted || !requiresAcceptance) && quest.checklist?.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {quest.checklist.map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: item.done ? '#22c55e' : '#555' }}>
-                <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `1.5px solid ${item.done ? '#22c55e' : '#333'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', background: item.done ? 'rgba(34,197,94,0.12)' : 'transparent', flexShrink: 0 }}>
-                  {item.done && <FiCheckCircle size={10} />}
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: item.done ? '#f59e0b' : '#555' }}>
+                <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `1.5px solid ${item.done ? '#f59e0b' : '#333'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', background: item.done ? 'rgba(245,158,11,0.15)' : 'transparent', flexShrink: 0 }}>
+                  {item.done && <FiCheckCircle size={10} color="#f59e0b" />}
                 </div>
                 <span style={{ fontWeight: item.done ? '700' : '400' }}>{item.label}</span>
               </div>
@@ -674,7 +676,7 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onAccept, onEdi
             <div style={{ color: '#f59e0b', fontWeight: '900', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '6px' }}>+{quest.coinReward} <CoinIcon size={20} /></div>
           )}
           {quest.xpReward > 0 && (
-            <div style={{ color: '#6366f1', fontWeight: '900', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>+{quest.xpReward} <span style={{ fontSize: '0.8rem' }}>⚡</span></div>
+            <div style={{ color: '#ff5733', fontWeight: '900', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>+{quest.xpReward} <FiZap size={16} /></div>
           )}
         </div>
 
@@ -683,7 +685,7 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onAccept, onEdi
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
             <span style={{ color: '#555', fontSize: '0.7rem', fontWeight: '700', textAlign: 'center', padding: '6px', border: '1px solid #222', borderRadius: '8px' }}>Admin View</span>
             <div style={{ display: 'flex', gap: '6px' }}>
-              <button onClick={() => onEdit(quest)} title="Edit" style={{ flex: 1, background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', color: '#3b82f6', padding: '8px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={() => onEdit(quest)} title="Edit" style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#aaa', padding: '8px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <FiEdit size={13} />
               </button>
               <button onClick={() => onDelete(quest._id)} title="Delete" style={{ flex: 1, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '8px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -692,7 +694,7 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onAccept, onEdi
             </div>
           </div>
         ) : quest.isClaimed ? (
-          <button disabled style={{ background: 'transparent', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e', padding: '10px 18px', borderRadius: '10px', fontWeight: '800', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.7 }}>
+          <button disabled style={{ background: '#111', border: '1px solid #333', color: '#666', padding: '10px 18px', borderRadius: '10px', fontWeight: '800', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.7 }}>
             <FiCheckCircle size={14} /> Claimed
           </button>
         ) : (!quest.isAccepted && requiresAcceptance) ? (

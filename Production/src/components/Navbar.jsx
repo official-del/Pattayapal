@@ -1,3 +1,4 @@
+import { customConfirm } from '../utils/customConfirm';
 import { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -128,8 +129,8 @@ function Navbar() {
     };
   }, [isOpen]);
 
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to log out?')) {
+  const handleLogout = async () => {
+    if (await customConfirm('Are you sure you want to log out?')) {
       if (logout) logout();
       localStorage.clear();
       sessionStorage.clear();

@@ -1,3 +1,4 @@
+import { toast } from 'react-hot-toast';
 import { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { jobsAPI } from '../utils/api';
@@ -100,7 +101,7 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
            }));
         }
       } else {
-        alert("ไม่พบสถานที่ที่ระบุ");
+        toast.error("ไม่พบสถานที่ที่ระบุ");
       }
     } catch (err) {
       console.error("Search error:", err);
@@ -119,7 +120,7 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
     
     // 🛡️ Client-side safety check
     if (userInfo?._id === freelancerId || userInfo?.id === freelancerId) {
-      return alert("คุณไม่สามารถจ้างงานตนเองได้ครับ");
+      return toast.error("คุณไม่สามารถจ้างงานตนเองได้ครับ");
     }
 
     setLoading(true);
@@ -128,11 +129,11 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
         freelancerId,
         ...formData
       }, currentToken);
-      alert(`ส่งคำขอจ้างงานให้คุณ ${freelancerName} สำเร็จ!`);
+      toast.success(`ส่งคำขอจ้างงานให้คุณ ${freelancerName} สำเร็จ!`);
       if (fetchProfile) fetchProfile();
       onClose();
     } catch (err) {
-      alert(err.response?.data?.message || 'จ้างงานไม่สำเร็จ');
+      toast.success(err.response?.data?.message || 'จ้างงานไม่สำเร็จ');
     } finally {
       setLoading(false);
     }

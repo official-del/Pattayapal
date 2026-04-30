@@ -1,3 +1,5 @@
+import { customConfirm } from '../utils/customConfirm';
+import { toast } from 'react-hot-toast';
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { usersAPI, chatAPI, worksAPI, postsAPI } from '../utils/api';
@@ -235,7 +237,7 @@ function UserProfile() {
    }, [userId, username, currentUserId, currentToken]);
 
    const handleFriendAction = async () => {
-      if (!currentToken) return alert('กรุณาเข้าสู่ระบบก่อนครับ');
+      if (!currentToken) return toast.error('กรุณาเข้าสู่ระบบก่อนครับ');
       setFriendLoading(true);
       try {
          if (friendStatus === 'none') {
@@ -249,16 +251,16 @@ function UserProfile() {
             setFriendStatus('friends');
             setProfile(p => ({ ...p, friends: [...(p.friends || []), { _id: currentUser._id, name: currentUser.name }] }));
          } else if (friendStatus === 'friends') {
-            if (!window.confirm(`ยกเลิกเพื่อนกับ ${profile?.name}?`)) return;
+            if (!await customConfirm(`ยกเลิกเพื่อนกับ ${profile?.name}?`)) return;
             await usersAPI.removeFriend(targetProfileId, currentToken);
             setFriendStatus('none');
          }
-      } catch { alert('Operation failed.'); }
+      } catch { toast.error('Operation failed.'); }
       finally { setFriendLoading(false); }
    };
 
    const handlePackageSubmit = () => {
-      if (!pkgForm.title || !pkgForm.price) return alert('โปรดกรอกชื่อและราคาแพ็กเกจ');
+      if (!pkgForm.title || !pkgForm.price) return toast.error('โปรดกรอกชื่อและราคาแพ็กเกจ');
       const newPkg = { ...pkgForm, features: pkgForm.features.split(',').map(f => f.trim()).filter(Boolean) };
       if (pkgEditingIndex !== null) {
          const updated = [...servicePackages];
@@ -279,8 +281,8 @@ function UserProfile() {
       setShowPkgModal(true);
    };
 
-   const handleDeletePackage = (index) => {
-      if (window.confirm('ยืนยันหน้าการลบแพ็กเกจนี้?')) {
+   const handleDeletePackage = async (index) => {
+      if (await customConfirm('ยืนยันหน้าการลบแพ็กเกจนี้?')) {
          setServicePackages(servicePackages.filter((_, i) => i !== index));
       }
    };
@@ -309,7 +311,7 @@ function UserProfile() {
          if (updateUser) updateUser(updatePayload);
          if (refreshContext) refreshContext();
          setEditingProfile(false);
-      } catch { alert('Profile update failed.'); }
+      } catch { toast.error('Profile update failed.'); }
    };
 
    const onFileSelect = (e, type) => {
@@ -336,7 +338,7 @@ function UserProfile() {
             setProfile(p => ({ ...p, profileImage: res.profileImage }));
             if (updateUser) updateUser({ profileImage: res.profileImage });
             if (refreshContext) refreshContext();
-         } catch { alert('Image upload failed.'); }
+         } catch { toast.error('Image upload failed.'); }
          finally { setAvatarLoading(false); }
       } else {
          setCoverLoading(true);
@@ -345,7 +347,7 @@ function UserProfile() {
             setProfile(p => ({ ...p, coverImage: res.coverImage }));
             if (updateUser) updateUser({ coverImage: res.coverImage });
             if (refreshContext) refreshContext();
-         } catch { alert('Cover upload failed.'); }
+         } catch { toast.error('Cover upload failed.'); }
          finally { setCoverLoading(false); }
       }
    };
@@ -353,11 +355,11 @@ function UserProfile() {
 
 
    const handleStartChat = async () => {
-      if (!currentToken) return alert('กรุณาเข้าสู่ระบบก่อนครับ');
+      if (!currentToken) return toast.error('กรุณาเข้าสู่ระบบก่อนครับ');
       try {
          const conv = await chatAPI.getOrCreateConversation(targetProfileId, currentToken);
          navigate(`/messenger/${conv._id}`);
-      } catch { alert('Secure connection failed.'); }
+      } catch { toast.error('Secure connection failed.'); }
    };
 
    if (loading) return (
@@ -583,7 +585,7 @@ function UserProfile() {
                                     onClick={() => {
                                        const link = profile.website || `${window.location.origin}/${profile.username || 'profile/' + profile._id}`;
                                        navigator.clipboard.writeText(link);
-                                       alert('คัดลอกลิงก์สำเร็จ!');
+                                       toast.success('คัดลอกลิงก์สำเร็จ!');
                                     }}
                                     style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', display: 'flex', padding: '5px' }}
                                     title="Copy Link"

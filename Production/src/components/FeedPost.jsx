@@ -1,3 +1,5 @@
+import { customConfirm } from '../utils/customConfirm';
+import { toast } from 'react-hot-toast';
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { postsAPI } from '../utils/api';
@@ -63,19 +65,19 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!window.confirm('คุณต้องการลบคอมเมนต์นี้ใช่หรือไม่?')) return;
+    if (!await customConfirm('คุณต้องการลบคอมเมนต์นี้ใช่หรือไม่?')) return;
     try {
       const updatedComments = await postsAPI.deleteComment(post._id, commentId, currentToken);
       setComments(updatedComments);
-    } catch (err) { alert('ลบไม่สำเร็จ'); }
+    } catch (err) { toast.success('ลบไม่สำเร็จ'); }
   };
 
   const handleDeletePost = async () => {
-    if (!window.confirm('คุณต้องการลบโพสต์นี้ใช่หรือไม่?')) return;
+    if (!await customConfirm('คุณต้องการลบโพสต์นี้ใช่หรือไม่?')) return;
     try {
       await postsAPI.delete(post._id, currentToken);
       if (onPostDeleted) onPostDeleted(post._id);
-    } catch (err) { alert('ลบไม่สำเร็จ'); }
+    } catch (err) { toast.success('ลบไม่สำเร็จ'); }
   };
 
   const handleShare = () => {

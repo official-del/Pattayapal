@@ -1,3 +1,5 @@
+import { customConfirm } from '../utils/customConfirm';
+import { toast } from 'react-hot-toast';
 import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { usersAPI } from '../utils/api';
@@ -80,7 +82,7 @@ function Friends() {
         points: requesterPoints
       }]);
     } catch (err) {
-      alert('เกิดข้อผิดพลาด: ' + (err?.response?.data?.message || err.message));
+      toast.error('เกิดข้อผิดพลาด: ' + (err?.response?.data?.message || err.message));
     }
   };
 
@@ -89,17 +91,17 @@ function Friends() {
       await usersAPI.respondFriendRequest(requesterId, 'reject', currentToken);
       setFriendRequests(prev => prev.filter(r => r.from._id !== requesterId));
     } catch (err) {
-      alert('เกิดข้อผิดพลาด');
+      toast.error('เกิดข้อผิดพลาด');
     }
   };
 
   const removeFriend = async (friendId, friendName) => {
-    if (!window.confirm(`ยืนยันการยกเลิกเพื่อนกับ ${friendName}?`)) return;
+    if (!await customConfirm(`ยืนยันการยกเลิกเพื่อนกับ ${friendName}?`)) return;
     try {
       await usersAPI.removeFriend(friendId, currentToken);
       setFriends(prev => prev.filter(f => f._id !== friendId));
     } catch (err) {
-      alert('เกิดข้อผิดพลาด');
+      toast.error('เกิดข้อผิดพลาด');
     }
   };
 
@@ -125,7 +127,7 @@ function Friends() {
       await usersAPI.sendFriendRequest(targetId, currentToken);
       setSentRequests(prev => new Set([...prev, targetId]));
     } catch (err) {
-      alert(err?.response?.data?.message || 'เกิดข้อผิดพลาด');
+      toast.error(err?.response?.data?.message || 'เกิดข้อผิดพลาด');
     }
   };
 

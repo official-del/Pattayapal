@@ -1,3 +1,5 @@
+import { customConfirm } from '../../utils/customConfirm';
+import { toast } from 'react-hot-toast';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { worksAPI, categoriesAPI, usersAPI, walletAPI } from '../../utils/api';
@@ -62,7 +64,7 @@ export default function AdminDashboard() {
     try {
       const userInfo = JSON.parse(rawUserInfo);
       if (userInfo?.role?.toLowerCase() !== 'admin') {
-        alert("This page is for admins only");
+        toast.error("This page is for admins only");
         navigate('/login');
         return;
       }
@@ -104,7 +106,7 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteWork = async (work) => {
-    if (!window.confirm(`Delete project "${work.title}" permanently?`)) return;
+    if (!await customConfirm(`Delete project "${work.title}" permanently?`)) return;
     try {
       await worksAPI.delete(work._id, activeToken);
       setWorks(prev => prev.filter(w => w._id !== work._id));
@@ -156,7 +158,7 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteCat = async (id) => {
-    if (!window.confirm('Delete category?')) return;
+    if (!await customConfirm('Delete category?')) return;
     await categoriesAPI.delete(id, activeToken);
     fetchCategories();
   };
@@ -170,7 +172,7 @@ export default function AdminDashboard() {
         amount: parseFloat(adjustAmount),
         reason: adjustReason
       });
-      alert('Success!');
+      toast.success('Success!');
       setShowAdjustModal(false);
       fetchAllUsers();
     } catch (e) { console.error(e); }

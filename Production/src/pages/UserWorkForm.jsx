@@ -1,3 +1,4 @@
+import { toast } from 'react-hot-toast';
 import { useState, useEffect, useRef, useContext } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { worksAPI, categoriesAPI } from '../utils/api';
@@ -58,7 +59,7 @@ function UserWorkForm() {
         const isAdmin = userInfo?.role === 'admin';
 
         if (creatorId !== currentUserId && !isAdmin) {
-          alert("คุณไม่มีสิทธิ์แก้ไขผลงานนี้");
+          toast.error("คุณไม่มีสิทธิ์แก้ไขผลงานนี้");
           return navigate(-1);
         }
 
@@ -90,7 +91,7 @@ function UserWorkForm() {
       });
       setFormData(prev => ({ ...prev, mediaUrl: res.data.url }));
     } catch (err) {
-      alert('อัปโหลดล้มเหลว: ' + (err.response?.data?.message || err.message));
+      toast.error('อัปโหลดล้มเหลว: ' + (err.response?.data?.message || err.message));
     } finally {
       setImgUploading(false);
       e.target.value = null;
@@ -117,7 +118,7 @@ function UserWorkForm() {
       });
       setFormData(prev => ({ ...prev, mediaUrl: res.data.url }));
     } catch (err) {
-      alert('อัปโหลดวิดีโอล้มเหลว: ' + (err.response?.data?.message || err.message));
+      toast.error('อัปโหลดวิดีโอล้มเหลว: ' + (err.response?.data?.message || err.message));
     } finally {
       setVideoUploading(false);
       e.target.value = null;
@@ -129,7 +130,7 @@ function UserWorkForm() {
     
     // Check limit
     if (albumImages.length + files.length > 10) {
-      alert('คุณสามารถอัปโหลดไฟล์ในอัลบั้มได้สูงสุด 10 ไฟล์เท่านั้น');
+      toast.error('คุณสามารถอัปโหลดไฟล์ในอัลบั้มได้สูงสุด 10 ไฟล์เท่านั้น');
       // Slice the new files to fit the remaining slots
       const availableSlots = 10 - albumImages.length;
       if (availableSlots <= 0) return;
@@ -151,7 +152,7 @@ function UserWorkForm() {
 
   const handleSave = async (e) => {
     if (e) e.preventDefault();
-    if (!formData.mediaUrl) return alert('กรุณาอัปโหลดรูปภาพหลักหรืองานวิดีโอก่อนบันทึก');
+    if (!formData.mediaUrl) return toast.error('กรุณาอัปโหลดรูปภาพหลักหรืองานวิดีโอก่อนบันทึก');
     setLoading(true);
 
     const token = localStorage.getItem('userToken') || localStorage.getItem('token');
@@ -172,7 +173,7 @@ function UserWorkForm() {
       else await worksAPI.create(submitData, token);
       navigate(`/dashboard/works`);
     } catch (err) {
-      alert('บันทึกไม่สำเร็จ: ' + (err.response?.data?.message || 'API Error'));
+      toast.success('บันทึกไม่สำเร็จ: ' + (err.response?.data?.message || 'API Error'));
     } finally { setLoading(false); }
   };
 

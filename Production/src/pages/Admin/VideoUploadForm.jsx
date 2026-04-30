@@ -1,3 +1,4 @@
+import { toast } from 'react-hot-toast';
 import React, { useState } from 'react';
 import axios from 'axios';
 import { CONFIG } from '../../utils/config';
@@ -17,7 +18,7 @@ export default function VideoUploadForm({ onComplete }) {
       setStatus('idle');
       setProgress(0);
     } else {
-      alert('กรุณาเลือกไฟล์วิดีโอเท่านั้น (MP4, MOV)');
+      toast.error('กรุณาเลือกไฟล์วิดีโอเท่านั้น (MP4, MOV)');
     }
   };
 
@@ -55,7 +56,7 @@ export default function VideoUploadForm({ onComplete }) {
     } catch (err) {
       // console.error("❌ GCS Upload Error:", err);
       setStatus('error');
-      alert('อัปโหลดวิดีโอไม่สำเร็จ: ' + (err.response?.data?.message || err.message));
+      toast.success('อัปโหลดวิดีโอไม่สำเร็จ: ' + (err.response?.data?.message || err.message));
     }
   };
 

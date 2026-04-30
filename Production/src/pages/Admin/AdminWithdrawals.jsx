@@ -1,3 +1,4 @@
+import { customConfirm } from '../../utils/customConfirm';
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { walletAPI } from '../../utils/api';
@@ -77,9 +78,9 @@ function AdminWithdrawals() {
     const currentProof = proofFiles[id];
 
     if (status === 'completed' && !currentProof) {
-      if (!window.confirm('🚨 SECURITY WARNING: No proof of transfer selected. Continue anyway?')) return;
+      if (!await customConfirm('🚨 SECURITY WARNING: No proof of transfer selected. Continue anyway?')) return;
     } else {
-       if (!window.confirm(`GANTRIES ACTIVE: Confirm ${label} for this sector?`)) return;
+       if (!await customConfirm(`GANTRIES ACTIVE: Confirm ${label} for this sector?`)) return;
     }
 
     try {

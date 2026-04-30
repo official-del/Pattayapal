@@ -1,3 +1,4 @@
+import { toast } from 'react-hot-toast';
 import { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '../utils/canvasUtils';
@@ -26,7 +27,7 @@ const ImageCropModal = ({ image, aspect, onCropComplete, onClose, title = "CROP 
       onCropComplete(croppedImageBlob);
     } catch (e) {
       console.error(e);
-      alert("Error cropping image");
+      toast.error("Error cropping image");
     }
   };
 

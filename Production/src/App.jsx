@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import PixelSplashIntro from './components/PixelSplashIntro';
 import { play8BitClick } from './utils/soundEffects';
 import { AnimatePresence } from 'framer-motion';
+import { Toaster } from 'react-hot-toast';
 
 
 // ── Public Pages ──
@@ -108,6 +109,36 @@ function App() {
   return (
     <AuthProvider> 
       <SocketProvider>
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: '#111',
+            color: '#fff',
+            border: '1px solid #333',
+            padding: '16px',
+            borderRadius: '12px',
+            fontWeight: '600',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+          },
+          success: {
+            style: {
+              background: '#0a0a0a',
+              border: '1px solid rgba(245,158,11,0.3)',
+              color: '#f59e0b',
+            },
+            iconTheme: { primary: '#f59e0b', secondary: '#0a0a0a' },
+          },
+          error: {
+            style: {
+              background: '#0a0a0a',
+              border: '1px solid rgba(239,68,68,0.3)',
+              color: '#ef4444',
+            },
+            iconTheme: { primary: '#ef4444', secondary: '#0a0a0a' },
+          },
+        }}
+      />
       <AnimatePresence>
         {showSplash && !isLegalPage && <PixelSplashIntro onComplete={handleSplashComplete} />}
       </AnimatePresence>
