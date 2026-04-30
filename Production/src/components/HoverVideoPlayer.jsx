@@ -40,7 +40,7 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
       videoRef.current.currentTime = 0;
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch(err => console.log("Play error:", err));
+        playPromise.catch(err => {});
       }
     } else {
       videoRef.current.pause();

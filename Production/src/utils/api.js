@@ -260,4 +260,4 @@ export const walletAPI = {
   adminAdjustBalance: (data) =>
     API.post('/wallet/admin/adjust-balance', data).then(res => res.data),
 };
-
+

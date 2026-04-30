@@ -63,14 +63,14 @@ export default function AdminWorkForm() {
   const deleteFileFromGCS = async (url) => {
     if (!url || !url.includes('storage.googleapis.com')) return;
     try {
-      console.log("📡 [Frontend] กำลังยิงคำสั่งลบไปที่ Cloud:", url);
+      // console.log("📡 [Frontend] กำลังยิงคำสั่งลบไปที่ Cloud:", url);
       await axios({
         method: 'delete',
         url: `${CONFIG.API_URL}/upload/delete`,
         data: { url: url },
         headers: { 'Content-Type': 'application/json' }
       });
-      console.log("🗑️ ลบสำเร็จ!");
+      // console.log("🗑️ ลบสำเร็จ!");
     } catch (err) {
       console.error("❌ ลบไฟล์ไม่สำเร็จ:", err.response?.data || err.message);
     }
@@ -90,7 +90,7 @@ export default function AdminWorkForm() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      console.log("✅ Main Image Uploaded:", res.data.url);
+      // console.log("✅ Main Image Uploaded:", res.data.url);
       setFormData(prev => ({ ...prev, mediaUrl: res.data.url }));
     } catch (err) {
       console.error("❌ Upload failed:", err);

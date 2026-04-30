@@ -177,7 +177,7 @@ export default function PixelSplashIntro({ onComplete }) {
 
   const startGame = () => {
     audioRef.current.loop = true;
-    audioRef.current.play().catch(e => console.log('Audio error:', e));
+    audioRef.current.play().catch(e => {});
     setGameState('playing');
   };
 

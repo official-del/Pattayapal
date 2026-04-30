@@ -68,7 +68,7 @@ export default function ThreeSplashScreen({ onComplete }) {
 
   const handleEnter = () => {
     setIsWarping(true);
-    audioRef.current.play().catch(e => console.log("Audio block", e));
+    audioRef.current.play().catch(e => {});
     
     setTimeout(() => {
       onComplete();

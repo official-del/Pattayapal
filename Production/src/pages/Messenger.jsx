@@ -93,7 +93,7 @@ function Messenger() {
     if (!socket) return;
 
     const handleReceiveMessage = (data) => {
-      console.log("📥 Socket รับข้อมูลข้อความใหม่:", data);
+      // console.log("📥 Socket รับข้อมูลข้อความใหม่:", data);
       
       // แปลงเป็น String เพื่อป้องกันปัญหา Type ไม่ตรงกันระหว่าง ObjectId ฝั่ง DB กับ String
       const currentChatId = String(activeChatIdRef.current);

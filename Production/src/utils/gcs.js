@@ -36,7 +36,7 @@ export const uploadToGCS = (file) => {
 
             blobStream.on('finish', () => {
                 const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-                console.log("✅ [GCS] Upload Finished:", publicUrl);
+                // console.log("✅ [GCS] Upload Finished:", publicUrl);
                 resolve(publicUrl);
             });
 

@@ -95,7 +95,7 @@ function ManageWallet() {
     if (!socket) return;
 
     const handleBalanceUpdate = (data) => {
-      console.log('⚡ Socket Balance Update:', data);
+      // console.log('⚡ Socket Balance Update:', data);
       if (data.coinBalance !== undefined) {
         setBalance(data.coinBalance);
         fetchTransactions(); // Refresh list to show new completion/proof
