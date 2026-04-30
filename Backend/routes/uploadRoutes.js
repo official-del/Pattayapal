@@ -14,7 +14,8 @@ router.post('/single', upload.single('file'), async (req, res) => {
         const url = await uploadToGCS(req.file);
         res.status(200).json({ url });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("🔥 [upload/single] Error:", error.message);
+        res.status(500).json({ message: error.message, details: error.stack });
     }
 });
 
@@ -27,6 +28,19 @@ router.delete('/delete', async (req, res) => {
     const success = await deleteFromGCS(url);
     if (success) res.status(200).json({ message: 'Deleted' });
     else res.status(500).json({ message: 'Delete failed' });
+});
+
+router.get('/test-env', (req, res) => {
+    const pk = process.env.GCP_PRIVATE_KEY || '';
+    res.json({
+        hasEmail: !!process.env.GCP_CLIENT_EMAIL,
+        hasKey: !!process.env.GCP_PRIVATE_KEY,
+        keyLength: pk.length,
+        keyStart: pk.substring(0, 27),
+        keyEnd: pk.substring(pk.length - 25),
+        projectId: process.env.GCP_PROJECT_ID,
+        bucket: process.env.GCP_BUCKET_NAME
+    });
 });
 
 export default router;
