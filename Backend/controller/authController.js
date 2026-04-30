@@ -10,7 +10,24 @@ export const register = async (req, res) => {
     // Check if user exists
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ message: 'User already exists' });
+      if (user.isEmailVerified) {
+        return res.status(400).json({ message: 'User already exists' });
+      } else {
+        // User exists but is not verified: Update info and resend email
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        user.name = name;
+        user.password = password; 
+        user.profession = profession || 'General';
+        user.verificationToken = verificationToken;
+        user.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
+        
+        await user.save();
+        await sendVerificationEmail(user.email, verificationToken, req);
+        
+        return res.status(200).json({
+          message: 'This email was previously registered but not verified. A new verification link has been sent to your inbox.',
+        });
+      }
     }
 
     // Create verification token
