@@ -1,193 +1,156 @@
 import { Storage } from '@google-cloud/storage';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import sharp from 'sharp';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import fs from 'fs';
+// ==========================================
+// 🔑 GCS CREDENTIAL RESOLUTION (Priority Order)
+// 1. Individual ENV vars (GCP_CLIENT_EMAIL + GCP_PRIVATE_KEY)  ← Best for Hostinger
+// 2. Full JSON ENV var (GCP_KEY_JSON)
+// 3. Local key file (gcs-key.json)                             ← Local dev only
+// ==========================================
 
-const keyPath = path.join(__dirname, '../config/gcs-key.json'); 
-const keyExists = fs.existsSync(keyPath);
+const bucketName = process.env.GCP_BUCKET_NAME;
+const projectId = process.env.GCP_PROJECT_ID;
 
-// 🛡️ [NEW] Support for Environment Variable Credentials (for Hostinger/Heroku)
-let credentials;
+let credentials = null;
+let credentialSource = 'none';
 
-// 🛡️ [NEW] Support for Individual Fields (Robust for Hostinger/Heroku)
+// Priority 1: Individual fields (most reliable for Hostinger)
 if (process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY) {
     credentials = {
         client_email: process.env.GCP_CLIENT_EMAIL.trim(),
         private_key: process.env.GCP_PRIVATE_KEY.replace(/\\n/g, '\n').trim(),
     };
-    // console.log("🚀 [GCS] Using Individual Credentials (Email/Key)");
-} 
-// Fallback to full JSON
+    credentialSource = 'ENV:EMAIL+KEY';
+}
+// Priority 2: Full JSON string
 else if (process.env.GCP_KEY_JSON) {
-    let keyContent = process.env.GCP_KEY_JSON.trim();
-    keyContent = keyContent.replace(/^["']|["']$/g, '');
-    
+    let keyContent = process.env.GCP_KEY_JSON.trim().replace(/^["']|["']$/g, '');
     try {
         credentials = JSON.parse(keyContent);
-        // console.log("🚀 [GCS] Using raw JSON from Environment Variable");
-    } catch (e) {
+        credentialSource = 'ENV:JSON';
+    } catch {
         try {
-            const decoded = Buffer.from(keyContent, 'base64').toString();
-            credentials = JSON.parse(decoded);
-            // console.log("🚀 [GCS] Using Base64 encoded JSON");
-        } catch (b64Error) {
-            console.error("❌ [GCS] JSON Parse Error:", e.message, "| Base64 Error:", b64Error.message);
+            credentials = JSON.parse(Buffer.from(keyContent, 'base64').toString());
+            credentialSource = 'ENV:JSON_BASE64';
+        } catch (e) {
+            console.error('❌ [GCS] GCP_KEY_JSON parse failed:', e.message);
         }
     }
+}
+// Priority 3: Local key file
+else {
+    const keyPath = path.join(__dirname, '../config/gcs-key.json');
+    if (fs.existsSync(keyPath)) {
+        try {
+            const raw = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+            credentials = {
+                client_email: raw.client_email,
+                private_key: raw.private_key,
+            };
+            credentialSource = 'FILE:gcs-key.json';
+        } catch (e) {
+            console.error('❌ [GCS] Failed to read gcs-key.json:', e.message);
+        }
+    }
+}
+
+const isConfigured = !!(credentials && bucketName);
+
+if (!isConfigured) {
+    console.error('🔥 [GCS] CRITICAL: No valid credentials found! All uploads will fail to reach GCS.');
+    console.error('    → Set GCP_CLIENT_EMAIL and GCP_PRIVATE_KEY in your environment variables.');
+} else {
+    console.log(`✅ [GCS] Initialized via [${credentialSource}] → Bucket: ${bucketName}`);
 }
 
 const storage = new Storage({
-    projectId: process.env.GCP_PROJECT_ID,
-    ...(credentials ? { credentials } : (keyExists ? { keyFilename: keyPath } : {})),
+    projectId,
+    credentials,
 });
 
-const isConfigured = !!(credentials || keyExists || process.env.GCP_PROJECT_ID);
-
-if (!isConfigured) {
-    console.warn("⚠️ [GCS] Warning: No credentials found (file or env). Fallback to LOCAL storage.");
-}
-
-/** 
- * 📤 อัปโหลดไฟล์: ลอง GCS ก่อน ถ้าพลาด (หรือไม่มีกุญแจ) จะเซฟลงโฟลเดอร์ uploads ในเครื่องแทน
- * เพิ่มการบีบอัดรูปภาพด้วย Sharp เพื่อลดขนาดไฟล์แต่คงความคมชัด
+/**
+ * 📤 Upload a file to GCS.
+ * Throws an error if GCS upload fails (no local fallback – local files aren't persistent on cloud servers).
  */
 export const uploadToGCS = async (file) => {
-    if (!file) throw new Error("No file provided");
-    if (!file.path) throw new Error("File must be uploaded to disk first (missing file.path)");
+    if (!file) throw new Error('No file provided to uploadToGCS');
+    if (!file.path) throw new Error('File must be saved to disk first (missing file.path)');
 
-    let processedPath = file.path;
-    let contentType = file.mimetype;
-    let originalName = file.originalname;
-
-    /* ─── [IMAGE OPTIMIZATION - DISABLED FOR STABILITY] ───
-    if (file.mimetype.startsWith('image/') && fs.existsSync(file.path)) {
-        try {
-            const optimizedPath = `${file.path}-optimized.webp`;
-            // console.log("⚡ [Sharp] Starting optimization for:", file.path);
-            
-            await sharp(file.path)
-                .rotate() // Auto-rotate based on EXIF
-                .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
-                .webp({ quality: 80 })
-                .toFile(optimizedPath);
-            
-            if (fs.existsSync(optimizedPath)) {
-                processedPath = optimizedPath;
-                contentType = 'image/webp';
-                originalName = path.parse(file.originalname).name + '.webp';
-                // console.log("✅ [Sharp] Optimization successful:", optimizedPath);
-            }
-        } catch (sharpError) {
-            console.error("⚠️ [Sharp] Optimization failed:", sharpError.message);
-            // We fall back to original file (processedPath remains file.path)
-        }
-    }
-    ─── */
-
-    // 1. ลองอัปโหลดขึ้น GCS ถ้ามีการตั้งค่ากุญแจไว้
-    if (isConfigured) {
-        try {
-            const bucketName = process.env.GCP_BUCKET_NAME;
-            const bucket = storage.bucket(bucketName);
-            
-            const fileExtension = path.extname(originalName);
-            const gcsFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
-
-            const [gcsFile] = await bucket.upload(processedPath, {
-                destination: gcsFileName,
-                metadata: {
-                    contentType: contentType,
-                    cacheControl: 'public, max-age=31536000',
-                },
-            });
-            
-            // 🔥 Ensure the file is public so Facebook/Social crawlers can see it
-            try {
-                await gcsFile.makePublic();
-            } catch (pErr) {
-                // If the bucket has Uniform Bucket-Level Access, makePublic() might fail or be unnecessary.
-                // We catch it to prevent upload failure.
-                // console.log("ℹ️ [GCS] makePublic info:", pErr.message);
-            }
-            
-            const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
-            // console.log("✅ [GCS] Uploaded & Made Public:", publicUrl);
-            
-            // ลบไฟล์ชั่วคราว (ทั้งตัวจริงและตัวที่บีบอัด)
-            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-            if (processedPath !== file.path && fs.existsSync(processedPath)) fs.unlinkSync(processedPath);
-            
-            return publicUrl;
-        } catch (gcsError) {
-            console.error("❌ [GCS] Upload failed, falling back to LOCAL:", gcsError.message);
-        }
+    if (!isConfigured) {
+        throw new Error('GCS is not configured. Please set GCP_CLIENT_EMAIL, GCP_PRIVATE_KEY, and GCP_BUCKET_NAME environment variables.');
     }
 
-    // 2. ระบบสำรอง: LOCAL STORAGE
     try {
-        const uploadDir = path.join(__dirname, '../uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+        const bucket = storage.bucket(bucketName);
+        const fileExtension = path.extname(file.originalname || '');
+        const gcsFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
+
+        const [gcsFile] = await bucket.upload(file.path, {
+            destination: gcsFileName,
+            metadata: {
+                contentType: file.mimetype,
+                cacheControl: 'public, max-age=31536000',
+            },
+        });
+
+        // Make the file publicly accessible
+        try {
+            await gcsFile.makePublic();
+        } catch (pubErr) {
+            // Bucket may use Uniform Access Control (fine) – URL still works if bucket is public
+            console.warn(`⚠️ [GCS] makePublic() skipped (may not be needed):`, pubErr.message);
         }
 
-        const fileExtension = path.extname(originalName);
-        const localFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
-        const targetPath = path.join(uploadDir, localFileName);
+        const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
+        console.log(`✅ [GCS] Uploaded: ${publicUrl}`);
 
-        // ย้ายไฟล์ที่ผ่านการประมวลผลแล้ว (หรือไฟล์เดิม) มาเก็บที่ uploads
-        // ใช้ copy + unlink แทน rename เพื่อความปลอดภัยในการทำงานข้าม Volume ใน Docker
-        fs.copyFileSync(processedPath, targetPath);
-        fs.unlinkSync(processedPath);
-        
-        // ลบไฟล์เดิมถ้ามีการสร้างไฟล์ใหม่ (optimized) และไฟล์นั้นยังอยู่
-        if (processedPath !== file.path && fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-        }
-
-        const localPath = `uploads/${localFileName}`;
-        // console.log("📂 [Local] Saved successfully:", localPath);
-        return localPath;
-    } catch (localError) {
-        console.error("🔥 [FATAL] Both GCS and Local storage failed:", localError.message);
-        // ลบไฟล์ชั่วคราวทั้งหมดถ้าทุกอย่างล้มเหลว
+        // Clean up temp file
         if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-        if (processedPath !== file.path && fs.existsSync(processedPath)) fs.unlinkSync(processedPath);
-        throw localError;
+
+        return publicUrl;
+    } catch (gcsError) {
+        // Clean up temp file even on error
+        if (file.path && fs.existsSync(file.path)) {
+            try { fs.unlinkSync(file.path); } catch {}
+        }
+        console.error('🔥 [GCS] Upload failed:', gcsError.message);
+        throw new Error(`GCS Upload Error: ${gcsError.message}`);
     }
 };
 
-/** 🗑️ ลบไฟล์: แกะชื่อไฟล์แบบชัวร์ๆ 100% */
+/**
+ * 🗑️ Delete a file from GCS.
+ */
 export const deleteFromGCS = async (fileUrl) => {
     try {
         if (!fileUrl || !fileUrl.includes('storage.googleapis.com')) {
-            // console.log("⚠️ [GCS] URL ไม่ถูกต้อง ข้ามการลบ:", fileUrl);
+            return false; // Not a GCS URL, skip silently
+        }
+
+        if (!isConfigured) {
+            console.warn('⚠️ [GCS] Cannot delete – GCS not configured.');
             return false;
         }
 
-        // แกะชื่อไฟล์: ตัด URL ส่วนหน้าออก และตัดตัวหลังเครื่องหมาย ? (ถ้ามี)
-        const fileName = fileUrl.split('/').pop().split('?')[0]; 
-        const bucketName = process.env.GCP_BUCKET_NAME;
-
-        // console.log(`🗑️ [GCS Debug] กำลังขอลบไฟล์: "${fileName}" จากถัง: "${bucketName}"`);
-
+        const fileName = fileUrl.split('/').pop().split('?')[0];
         const file = storage.bucket(bucketName).file(fileName);
         const [exists] = await file.exists();
 
         if (!exists) {
-            console.error(`❌ [GCS] ไม่พบไฟล์ "${fileName}" (อาจถูกลบไปก่อนหน้า)`);
-            return true; // คืนค่า true เพื่อให้ระบบหน้าบ้านเดินหน้าต่อได้
+            console.warn(`⚠️ [GCS] File not found, skipping delete: ${fileName}`);
+            return true;
         }
 
         await file.delete();
-        // console.log(`✅ [GCS] ลบไฟล์ "${fileName}" สำเร็จ!`);
+        console.log(`✅ [GCS] Deleted: ${fileName}`);
         return true;
     } catch (error) {
-        console.error("🔥 [GCS Delete Fatal Error]:", error.message);
+        console.error('🔥 [GCS] Delete error:', error.message);
         return false;
     }
 };
