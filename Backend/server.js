@@ -16,6 +16,8 @@ import authRoutes from './routes/authRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import User from './models/User.js';
+import Work from './models/Work.js';
+import Post from './models/Post.js';
 import userAuthRoutes from './routes/userAuthRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
@@ -27,7 +29,6 @@ import walletRoutes from './routes/walletRoutes.js';
 import questRoutes from './routes/questRoutes.js';
 import questSubmissionRoutes from './routes/questSubmissionRoutes.js';
 import testEmailRoute from './routes/testEmailRoute.js';
-import Work from './models/Work.js';
 
 // ตั้งค่าสำหรับ ES Module
 const __filename = fileURLToPath(import.meta.url);
@@ -287,40 +288,64 @@ app.get('*', async (req, res) => {
         }
       }
 
-      // 2. Check for Profile (/profile/:id or /profile/:username)
-      const profileMatch = req.url.match(/\/profile\/([a-zA-Z0-9_-]+)/);
-      if (profileMatch) {
+      // 2. Check for Profile (/profile/:id or /profile/:username or /:username)
+      const profileMatch = req.url.match(/\/profile\/([a-zA-Z0-9_-]+)/) || (req.url !== '/' && !req.url.startsWith('/api') && req.url.match(/\/([a-zA-Z0-9_-]+)/));
+      if (profileMatch && !workMatch && !req.url.startsWith('/works') && !req.url.startsWith('/posts')) {
         const identifier = profileMatch[1];
         let user;
-        if (identifier.length === 24 && /^[0-9a-fA-F]+$/.test(identifier)) {
-          user = await User.findById(identifier).select('name username bio profileImage profession');
-        } else {
-          user = await User.findOne({ username: identifier.toLowerCase() }).select('name username bio profileImage profession');
-        }
+        try {
+          if (identifier.length === 24 && /^[0-9a-fA-F]+$/.test(identifier)) {
+            user = await User.findById(identifier).select('name username bio profileImage profession');
+          } else {
+            user = await User.findOne({ username: identifier.toLowerCase() }).select('name username bio profileImage profession');
+          }
 
-        if (user) {
-          title = `${user.name} (@${user.username}) | Pattayapal Profile`;
-          description = user.bio?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `${user.name} - ${user.profession || 'Freelancer'} on Pattayapal`;
-          if (user.profileImage?.url) {
-            image = user.profileImage.url.startsWith('http') ? user.profileImage.url : `https://pattayapal.com${user.profileImage.url.startsWith('/') ? '' : '/'}${user.profileImage.url}`;
+          if (user) {
+            title = `${user.name} (@${user.username}) | Pattayapal Profile`;
+            description = user.bio?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `${user.name} - ${user.profession || 'Freelancer'} on Pattayapal`;
+            if (user.profileImage?.url) {
+              image = user.profileImage.url.startsWith('http') ? user.profileImage.url : `https://pattayapal.com${user.profileImage.url.startsWith('/') ? '' : '/'}${user.profileImage.url}`;
+            }
+          }
+        } catch (err) {
+          console.error("Profile SEO Error:", err);
+        }
+      }
+
+      // 3. Check for Post Detail (/posts/:id)
+      const postMatch = req.url.match(/\/posts\/([a-zA-Z0-9]+)/);
+      if (postMatch) {
+        const post = await Post.findById(postMatch[1]).select('content media author').populate('author', 'name');
+        if (post) {
+          title = post.author ? `Post by ${post.author.name} | Pattayapal` : "Post | Pattayapal Portfolio";
+          description = post.content?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || description;
+          if (post.media && post.media.length > 0 && post.media[0].url) {
+            const firstMedia = post.media[0].url;
+            image = firstMedia.startsWith('http') ? firstMedia : `https://pattayapal.com${firstMedia.startsWith('/') ? '' : '/'}${firstMedia}`;
           }
         }
       }
 
-      // Inject into HTML
+      // Inject into HTML with flexible regex (handling newlines and multiple spaces)
+      const replaceMeta = (tagHtml, property, value, attr = 'property') => {
+        const regex = new RegExp(`<meta\\s+${attr}="${property}"[\\s\\S]*?content=".*?"\\s*\\/>`, 'g');
+        return tagHtml.replace(regex, `<meta ${attr}="${property}" content="${value}" />`);
+      };
+
       html = html.replace(/<title>.*?<\/title>/g, `<title>${title}</title>`);
-      html = html.replace(/<meta property="og:title" content=".*?" \/>/g, `<meta property="og:title" content="${title}" />`);
-      html = html.replace(/<meta property="twitter:title" content=".*?" \/>/g, `<meta property="twitter:title" content="${title}" />`);
       
-      html = html.replace(/<meta name="description" content=".*?" \/>/g, `<meta name="description" content="${description}" />`);
-      html = html.replace(/<meta property="og:description" content=".*?" \/>/g, `<meta property="og:description" content="${description}" />`);
-      html = html.replace(/<meta property="twitter:description" content=".*?" \/>/g, `<meta property="twitter:description" content="${description}" />`);
+      html = replaceMeta(html, 'og:title', title);
+      html = replaceMeta(html, 'twitter:title', title);
       
-      html = html.replace(/<meta property="og:image" content=".*?" \/>/g, `<meta property="og:image" content="${image}" />`);
-      html = html.replace(/<meta property="twitter:image" content=".*?" \/>/g, `<meta property="twitter:image" content="${image}" />`);
+      html = replaceMeta(html, 'description', description, 'name');
+      html = replaceMeta(html, 'og:description', description);
+      html = replaceMeta(html, 'twitter:description', description);
       
-      html = html.replace(/<meta property="og:url" content=".*?" \/>/g, `<meta property="og:url" content="${url}" />`);
-      html = html.replace(/<meta property="twitter:url" content=".*?" \/>/g, `<meta property="twitter:url" content="${url}" />`);
+      html = replaceMeta(html, 'og:image', image);
+      html = replaceMeta(html, 'twitter:image', image);
+      
+      html = replaceMeta(html, 'og:url', url);
+      html = replaceMeta(html, 'twitter:url', url);
 
       res.send(html);
     } catch (err) {
