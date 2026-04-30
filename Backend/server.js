@@ -336,7 +336,7 @@ app.get('*', async (req, res) => {
 // ==========================================
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
-    console.log('✨ Connected to MongoDB Atlas Success!');
+    // console.log('✨ Connected to MongoDB Atlas Success!');
     await createFirstAdmin();
   })
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
@@ -351,7 +351,7 @@ const createFirstAdmin = async () => {
         email: adminEmail,
         password: process.env.INITIAL_ADMIN_PASSWORD || 'admin1234'
       });
-      console.log('👤 First Admin Created');
+      // console.log('👤 First Admin Created');
     }
   } catch (error) {
     console.error('❌ Error creating admin:', error);
@@ -372,6 +372,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Production mode: Ready to serve API and Frontend`);
+  // console.log(`🚀 Server running on port ${PORT}`);
+  // console.log(`🌐 Production mode: Ready to serve API and Frontend`);
 });

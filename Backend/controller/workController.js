@@ -10,7 +10,7 @@ export const createWork = async (req, res) => {
     const workData = { ...req.body };
     const mediaUrl = req.body.mainImageUrl || req.body.mediaUrl;
 
-    console.log("🛠️ [CreateWork] Payload:", req.body);
+    // console.log("🛠️ [CreateWork] Payload:", req.body);
 
     // 🎬 Video Logic
     if (req.body.type === 'video') {
@@ -56,7 +56,7 @@ export const createWork = async (req, res) => {
     const io = req.app.get('io');
     if (io) io.emit('work_updated', { action: 'create', work: savedWork });
 
-    console.log("✅ [CreateWork] Success:", work._id);
+    // console.log("✅ [CreateWork] Success:", work._id);
     res.status(201).json({ message: 'Created successfully', work: savedWork });
   } catch (error) {
     console.error("🔥 Create Work Error Details:", error);
@@ -70,7 +70,7 @@ export const updateWork = async (req, res) => {
     let work = await Work.findById(req.params.id);
     if (!work) return res.status(404).json({ message: 'Not found' });
 
-    console.log("🛠️ [UpdateWork] Payload:", req.body);
+    // console.log("🛠️ [UpdateWork] Payload:", req.body);
 
     // 🔐 Ownership Check
     const isOwner = work.createdBy.toString() === req.user.id;
@@ -151,7 +151,7 @@ export const updateWork = async (req, res) => {
     const io = req.app.get('io');
     if (io) io.emit('work_updated', { action: 'update', work: updated });
 
-    console.log("✅ [UpdateWork] Success:", updated._id);
+    // console.log("✅ [UpdateWork] Success:", updated._id);
     res.status(200).json({ message: 'Updated', work: updated });
   } catch (error) {
     console.error("🔥 Update Work Error Details:", error);

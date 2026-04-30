@@ -32,7 +32,7 @@ export const register = async (req, res) => {
     await user.save();
  
     // Send verification email
-    await sendVerificationEmail(user.email, verificationToken);
+    await sendVerificationEmail(user.email, verificationToken, req);
 
     res.status(201).json({
       message: 'Registration successful! Please check your email to verify your account.',

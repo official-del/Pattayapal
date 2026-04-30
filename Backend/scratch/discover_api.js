@@ -9,27 +9,27 @@ const endpoints = [
   'https://api.easyslip.com/api/v2/verify',
 ];
 
-console.log('🔍 Starting API Endpoint Discovery...');
+// console.log('🔍 Starting API Endpoint Discovery...');
 
 async function testEndpoints() {
   for (const url of endpoints) {
     try {
-      console.log(`📡 Testing: ${url}`);
+      // console.log(`📡 Testing: ${url}`);
       const res = await axios.get(url); // Most APIs return 405 or 401 on GET, but not 404 if endpoint exists
-      console.log(`✅ Success (GET): ${url} -> Status: ${res.status}`);
+      // console.log(`✅ Success (GET): ${url} -> Status: ${res.status}`);
     } catch (err) {
       if (err.response) {
         if (err.response.status !== 404) {
-          console.log(`🎯 FOUND! (Resp: ${err.response.status}): ${url}`);
+          // console.log(`🎯 FOUND! (Resp: ${err.response.status}): ${url}`);
         } else {
-          console.log(`❌ 404 Not Found: ${url}`);
+          // console.log(`❌ 404 Not Found: ${url}`);
         }
       } else {
-        console.log(`⚠️ Network Error: ${url} -> ${err.message}`);
+        // console.log(`⚠️ Network Error: ${url} -> ${err.message}`);
       }
     }
   }
-  console.log('🏁 Discovery Finished.');
+  // console.log('🏁 Discovery Finished.');
 }
 
 testEndpoints();

@@ -12,6 +12,6 @@ import Message from './models/Message.js';
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
     const msgs = await Message.find({ 'attachments.0': { $exists: true } }).sort({createdAt: -1}).limit(5);
-    console.log(JSON.stringify(msgs.map(m => m.attachments), null, 2));
+    // console.log(JSON.stringify(msgs.map(m => m.attachments), null, 2));
     process.exit(0);
   });

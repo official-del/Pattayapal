@@ -20,7 +20,7 @@ router.post('/single', upload.single('file'), async (req, res) => {
 
 router.delete('/delete', async (req, res) => {
     const { url } = req.body;
-    console.log("📩 [API Receive] ข้อมูลที่ได้รับจากหน้าบ้าน:", req.body);
+    // console.log("📩 [API Receive] ข้อมูลที่ได้รับจากหน้าบ้าน:", req.body);
 
     if (!url) return res.status(400).json({ message: 'URL is required' });
 

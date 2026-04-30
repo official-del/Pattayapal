@@ -20,7 +20,7 @@ if (process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY) {
         client_email: process.env.GCP_CLIENT_EMAIL.trim(),
         private_key: process.env.GCP_PRIVATE_KEY.replace(/\\n/g, '\n').trim(),
     };
-    console.log("🚀 [GCS] Using Individual Credentials (Email/Key)");
+    // console.log("🚀 [GCS] Using Individual Credentials (Email/Key)");
 } 
 // Fallback to full JSON
 else if (process.env.GCP_KEY_JSON) {
@@ -29,12 +29,12 @@ else if (process.env.GCP_KEY_JSON) {
     
     try {
         credentials = JSON.parse(keyContent);
-        console.log("🚀 [GCS] Using raw JSON from Environment Variable");
+        // console.log("🚀 [GCS] Using raw JSON from Environment Variable");
     } catch (e) {
         try {
             const decoded = Buffer.from(keyContent, 'base64').toString();
             credentials = JSON.parse(decoded);
-            console.log("🚀 [GCS] Using Base64 encoded JSON");
+            // console.log("🚀 [GCS] Using Base64 encoded JSON");
         } catch (b64Error) {
             console.error("❌ [GCS] JSON Parse Error:", e.message, "| Base64 Error:", b64Error.message);
         }
@@ -68,7 +68,7 @@ export const uploadToGCS = async (file) => {
     if (file.mimetype.startsWith('image/') && fs.existsSync(file.path)) {
         try {
             const optimizedPath = `${file.path}-optimized.webp`;
-            console.log("⚡ [Sharp] Starting optimization for:", file.path);
+            // console.log("⚡ [Sharp] Starting optimization for:", file.path);
             
             await sharp(file.path)
                 .rotate() // Auto-rotate based on EXIF
@@ -80,7 +80,7 @@ export const uploadToGCS = async (file) => {
                 processedPath = optimizedPath;
                 contentType = 'image/webp';
                 originalName = path.parse(file.originalname).name + '.webp';
-                console.log("✅ [Sharp] Optimization successful:", optimizedPath);
+                // console.log("✅ [Sharp] Optimization successful:", optimizedPath);
             }
         } catch (sharpError) {
             console.error("⚠️ [Sharp] Optimization failed:", sharpError.message);
@@ -107,7 +107,7 @@ export const uploadToGCS = async (file) => {
             });
             
             const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
-            console.log("✅ [GCS] Uploaded & Made Public:", publicUrl);
+            // console.log("✅ [GCS] Uploaded & Made Public:", publicUrl);
             
             // ลบไฟล์ชั่วคราว (ทั้งตัวจริงและตัวที่บีบอัด)
             if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
@@ -141,7 +141,7 @@ export const uploadToGCS = async (file) => {
         }
 
         const localPath = `uploads/${localFileName}`;
-        console.log("📂 [Local] Saved successfully:", localPath);
+        // console.log("📂 [Local] Saved successfully:", localPath);
         return localPath;
     } catch (localError) {
         console.error("🔥 [FATAL] Both GCS and Local storage failed:", localError.message);
@@ -156,7 +156,7 @@ export const uploadToGCS = async (file) => {
 export const deleteFromGCS = async (fileUrl) => {
     try {
         if (!fileUrl || !fileUrl.includes('storage.googleapis.com')) {
-            console.log("⚠️ [GCS] URL ไม่ถูกต้อง ข้ามการลบ:", fileUrl);
+            // console.log("⚠️ [GCS] URL ไม่ถูกต้อง ข้ามการลบ:", fileUrl);
             return false;
         }
 
@@ -164,7 +164,7 @@ export const deleteFromGCS = async (fileUrl) => {
         const fileName = fileUrl.split('/').pop().split('?')[0]; 
         const bucketName = process.env.GCP_BUCKET_NAME;
 
-        console.log(`🗑️ [GCS Debug] กำลังขอลบไฟล์: "${fileName}" จากถัง: "${bucketName}"`);
+        // console.log(`🗑️ [GCS Debug] กำลังขอลบไฟล์: "${fileName}" จากถัง: "${bucketName}"`);
 
         const file = storage.bucket(bucketName).file(fileName);
         const [exists] = await file.exists();
@@ -175,7 +175,7 @@ export const deleteFromGCS = async (fileUrl) => {
         }
 
         await file.delete();
-        console.log(`✅ [GCS] ลบไฟล์ "${fileName}" สำเร็จ!`);
+        // console.log(`✅ [GCS] ลบไฟล์ "${fileName}" สำเร็จ!`);
         return true;
     } catch (error) {
         console.error("🔥 [GCS Delete Fatal Error]:", error.message);
