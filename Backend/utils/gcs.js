@@ -98,13 +98,22 @@ export const uploadToGCS = async (file) => {
             const fileExtension = path.extname(originalName);
             const gcsFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
 
-            await bucket.upload(processedPath, {
+            const [gcsFile] = await bucket.upload(processedPath, {
                 destination: gcsFileName,
                 metadata: {
                     contentType: contentType,
                     cacheControl: 'public, max-age=31536000',
                 },
             });
+            
+            // 🔥 Ensure the file is public so Facebook/Social crawlers can see it
+            try {
+                await gcsFile.makePublic();
+            } catch (pErr) {
+                // If the bucket has Uniform Bucket-Level Access, makePublic() might fail or be unnecessary.
+                // We catch it to prevent upload failure.
+                // console.log("ℹ️ [GCS] makePublic info:", pErr.message);
+            }
             
             const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
             // console.log("✅ [GCS] Uploaded & Made Public:", publicUrl);
