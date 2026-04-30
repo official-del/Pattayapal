@@ -49,7 +49,10 @@ export const register = async (req, res) => {
     await user.save();
  
     // Send verification email
-    await sendVerificationEmail(user.email, verificationToken, req);
+    const emailResult = await sendVerificationEmail(user.email, verificationToken, req);
+    if (!emailResult.success) {
+      console.error('[Register] Email send failed:', emailResult.error);
+    }
 
     res.status(201).json({
       message: 'Registration successful! Please check your email to verify your account.',

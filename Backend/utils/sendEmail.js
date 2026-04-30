@@ -96,9 +96,9 @@ export const sendVerificationEmail = async (userEmail, token, req = null, custom
     };
 
     await transporter.sendMail(mailOptions);
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('❌ [SMTP Error] Failed to send email:', error.message);
-    return false;
+    return { success: false, error: error.message, code: error.code };
   }
 };
