@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/Navbar';
@@ -58,9 +58,21 @@ import AdminWithdrawals from './pages/Admin/AdminWithdrawals';
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   
   // 🔍 ตรวจสอบว่าตอนนี้อยู่ในหน้า Admin หรือไม่
   const isAdminPage = location.pathname.startsWith('/admin');
+
+  // 🔒 ตรวจสอบ Token และหน้า Public
+  const hasToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+  const isPublicPage = ['/login', '/auth', '/verify-email', '/terms', '/privacy', '/admin/login'].some(p => location.pathname.startsWith(p));
+
+  // 🚀 Redirect guest to login if accessing private pages
+  useEffect(() => {
+    if (!hasToken && !isPublicPage) {
+      navigate('/login', { replace: true });
+    }
+  }, [hasToken, isPublicPage, navigate]);
 
   const [showSplash, setShowSplash] = useState(() => {
      // ⚖️ ไม่แสดงเกมในหน้ากฎหมาย (Terms / Privacy)
@@ -145,8 +157,8 @@ function App() {
 
 
 
-      {/* ✅ ถ้าเป็นหน้าแอดมิน จะซ่อน Sidebar อันนี้ทิ้งไปเลย */}
-      {!isAdminPage && <Navbar />}
+      {/* ✅ ถ้าเป็นหน้าแอดมิน หน้า Public (เช่น Login) หรือไม่มี Token (Guest) จะซ่อน Sidebar */}
+      {!isAdminPage && !isPublicPage && hasToken && <Navbar />}
 
       <Routes>
 
