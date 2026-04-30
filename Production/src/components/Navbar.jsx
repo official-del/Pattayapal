@@ -241,9 +241,9 @@ function Navbar() {
 
       {/* 🛸 Neo-Cyber Premium Sidebar */}
       <AnimatePresence>
-        {(isOpen || window.innerWidth > 1100) && (
+        {(isOpen || window.innerWidth > 1700) && (
           <>
-            {isOpen && window.innerWidth <= 1100 && (
+            {isOpen && window.innerWidth <= 1700 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -254,9 +254,9 @@ function Navbar() {
             )}
 
             <motion.aside
-              initial={window.innerWidth <= 1100 ? { x: '-100%' } : { x: 0 }}
+              initial={window.innerWidth <= 1700 ? { x: '-100%' } : { x: 0 }}
               animate={{ x: 0 }}
-              exit={window.innerWidth <= 1100 ? { x: '-100%' } : { x: 0 }}
+              exit={window.innerWidth <= 1700 ? { x: '-100%' } : { x: 0 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className={`premium-sidebar-container ${isOpen ? 'm-open' : ''}`}
             >

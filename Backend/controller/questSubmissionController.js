@@ -2,6 +2,7 @@ import QuestSubmission from '../models/QuestSubmission.js';
 import Quest from '../models/Quest.js';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
+import { uploadToGCS } from '../utils/gcs.js';
 
 // ── Submit Proof (User) ──
 export const submitProof = async (req, res) => {
@@ -9,7 +10,14 @@ export const submitProof = async (req, res) => {
     const { questId, proofUrl } = req.body;
     const userId = req.user.id || req.user._id;
 
-    if (!proofUrl) return res.status(400).json({ message: 'กรุณาระบุลิงก์เพื่อเป็นหลักฐาน' });
+    if (!proofUrl && !req.file) {
+      return res.status(400).json({ message: 'กรุณาระบุลิงก์หลักฐาน หรืออัปโหลดรูปภาพ' });
+    }
+
+    let proofImageUrl = '';
+    if (req.file) {
+      proofImageUrl = await uploadToGCS(req.file);
+    }
 
     const quest = await Quest.findById(questId);
     if (!quest) return res.status(404).json({ message: 'ไม่พบเควสนี้' });
@@ -34,7 +42,8 @@ export const submitProof = async (req, res) => {
     const submission = new QuestSubmission({
       questId,
       userId,
-      proofUrl,
+      proofUrl: proofUrl || '',
+      proofImage: proofImageUrl,
     });
 
     await submission.save();
@@ -111,9 +120,6 @@ export const reviewSubmission = async (req, res) => {
           if (!user.claimedQuests) user.claimedQuests = [];
           user.claimedQuests.push({ questId: quest._id.toString(), claimedAt: new Date() });
           await user.save();
-
-          quest.currentClaims += 1;
-          await quest.save();
         }
       }
     }

@@ -12,7 +12,8 @@ const EMPTY_FORM = {
   coinReward: 0,
   xpReward: 0,
   requiredRank: 'All',
-  maxClaims: 0,
+  maxParticipants: 0,
+  durationDays: 0,
   expiresAt: '',   // ISO string or empty
 };
 
@@ -33,7 +34,8 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
         coinReward:   editData.coinReward   ?? 0,
         xpReward:     editData.xpReward     ?? 0,
         requiredRank: editData.requiredRank || 'All',
-        maxClaims:    editData.maxClaims    ?? 0,
+        maxParticipants: editData.maxParticipants ?? 0,
+        durationDays: editData.durationDays ?? 0,
         expiresAt:    editData.expiresAt ? new Date(editData.expiresAt).toISOString().slice(0, 16) : '',
       });
     } else {
@@ -165,9 +167,9 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
             )}
           </div>
 
-          {/* Rank & Max Claims */}
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{ flex: 1 }}>
+          {/* Rank, Max Participants, and Duration */}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 140px' }}>
               <label style={labelStyle}>Rank ขั้นต่ำ</label>
               <select value={form.requiredRank} onChange={e => set('requiredRank', e.target.value)} style={inputStyle}>
                 <option value="All">ทุกระดับ</option>
@@ -179,9 +181,13 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
                 <option value="Conqueror">Conqueror เท่านั้น</option>
               </select>
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>จำนวนสิทธิ์สูงสุด</label>
-              <input type="number" min="0" value={form.maxClaims} onChange={e => set('maxClaims', e.target.value)} placeholder="0 = ไม่จำกัด" style={inputStyle} />
+            <div style={{ flex: '1 1 120px' }}>
+              <label style={labelStyle}>จำกัดคนรับ</label>
+              <input type="number" min="0" value={form.maxParticipants} onChange={e => set('maxParticipants', e.target.value)} placeholder="0 = ไม่จำกัด" style={inputStyle} />
+            </div>
+            <div style={{ flex: '1 1 120px' }}>
+              <label style={labelStyle}>เวลาทำ (วัน)</label>
+              <input type="number" min="0" value={form.durationDays} onChange={e => set('durationDays', e.target.value)} placeholder="0 = ไม่จำกัด" style={inputStyle} />
             </div>
           </div>
 

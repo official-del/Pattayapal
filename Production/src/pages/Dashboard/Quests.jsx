@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiTarget, FiCheckCircle, FiGift, FiPlus, FiEdit, FiTrash2, FiRefreshCw, FiAlertCircle, FiClock, FiLink, FiX, FiCheck } from 'react-icons/fi';
+import { FiTarget, FiCheckCircle, FiGift, FiPlus, FiEdit, FiTrash2, FiRefreshCw, FiAlertCircle, FiClock, FiLink, FiX, FiCheck, FiImage } from 'react-icons/fi';
 import { play8BitSuccess } from '../../utils/soundEffects';
 import { questsAPI, questSubmissionsAPI, API } from '../../utils/api';
 import CreateQuestModal from '../../components/CreateQuestModal';
@@ -71,6 +71,7 @@ function computeCompletion(taskType, liveData, questId) {
 // ─── Proof Submission Modal ──────────────────────────────────────────────────
 function ProofModal({ isOpen, onClose, quest, onSuccess }) {
   const [proofUrl, setProofUrl] = useState('');
+  const [proofImage, setProofImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -78,10 +79,16 @@ function ProofModal({ isOpen, onClose, quest, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!proofUrl.trim()) return setError('กรุณาระบุลิงก์หลักฐาน');
+    if (!proofUrl.trim() && !proofImage) return setError('กรุณาระบุลิงก์หลักฐาน หรืออัปโหลดรูปภาพ');
+    
     try {
       setLoading(true);
-      await questSubmissionsAPI.submit({ questId: quest._id, proofUrl });
+      const formData = new FormData();
+      formData.append('questId', quest._id);
+      if (proofUrl.trim()) formData.append('proofUrl', proofUrl);
+      if (proofImage) formData.append('image', proofImage);
+
+      await questSubmissionsAPI.submit(formData);
       onSuccess();
       onClose();
     } catch (err) {
@@ -101,8 +108,16 @@ function ProofModal({ isOpen, onClose, quest, onSuccess }) {
         {error && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px', borderRadius: '10px', fontSize: '0.85rem', marginBottom: '15px', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</div>}
 
         <form onSubmit={handleSubmit}>
-          <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: '0.85rem', fontWeight: '700' }}>ลิงก์โพสต์ที่แชร์ หรือหลักฐานอื่นๆ</label>
-          <input required type="url" value={proofUrl} onChange={e => setProofUrl(e.target.value)} placeholder="https://facebook.com/..." style={{ width: '100%', background: '#111', border: '1px solid #333', color: '#fff', padding: '12px', borderRadius: '12px', marginBottom: '20px', outline: 'none' }} />
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: '0.85rem', fontWeight: '700' }}>ลิงก์โพสต์ หรือ หลักฐาน (URL)</label>
+            <input type="url" value={proofUrl} onChange={e => setProofUrl(e.target.value)} placeholder="https://..." style={{ width: '100%', background: '#111', border: '1px solid #333', color: '#fff', padding: '12px', borderRadius: '12px', outline: 'none' }} />
+          </div>
+
+          <div style={{ marginBottom: '25px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: '0.85rem', fontWeight: '700' }}>หรือ อัปโหลดรูปภาพหลักฐาน (Screenshot)</label>
+            <input type="file" accept="image/*" onChange={e => setProofImage(e.target.files[0])} style={{ width: '100%', color: '#888', fontSize: '0.85rem' }} />
+          </div>
+
           <button type="submit" disabled={loading} style={{ width: '100%', background: 'var(--accent, #f59e0b)', color: '#000', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', transition: '0.2s' }}>
             {loading ? 'กำลังส่ง...' : 'ยืนยันการส่งหลักฐาน'}
           </button>
@@ -160,16 +175,32 @@ function AdminReviewQueue({ onUpdate }) {
           const isReviewing = reviewingId === sub._id;
           return (
             <div key={sub._id} style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '16px', padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', opacity: isReviewing ? 0.6 : 1 }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+              <div style={{ flex: 1, minWidth: '250px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                   <img src={sub.userId?.profileImage?.url || 'https://via.placeholder.com/40'} style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
                   <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{sub.userId?.username}</span>
                   <span style={{ color: '#555' }}>→</span>
                   <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#fff' }}>{sub.questId?.title}</span>
                 </div>
-                <a href={sub.proofUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <FiLink size={12} /> View Proof Link
-                </a>
+                
+                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                  {sub.proofUrl && (
+                    <a href={sub.proofUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', background: 'rgba(59,130,246,0.1)', padding: '5px 12px', borderRadius: '8px' }}>
+                      <FiLink size={12} /> View Link
+                    </a>
+                  )}
+                  {sub.proofImage && (
+                    <a href={sub.proofImage} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', background: 'rgba(245,158,11,0.1)', padding: '5px 12px', borderRadius: '8px' }}>
+                      <FiImage size={12} /> View Screenshot
+                    </a>
+                  )}
+                </div>
+
+                {sub.proofImage && (
+                  <div style={{ marginTop: '10px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #222', maxWidth: '150px' }}>
+                    <img src={sub.proofImage} style={{ width: '100%', height: 'auto', display: 'block' }} />
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button disabled={isReviewing} onClick={() => handleReview(sub._id, 'APPROVED')} style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e', padding: '8px 15px', borderRadius: '10px', cursor: isReviewing ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: '800' }}>{isReviewing ? '...' : 'Approve'}</button>
@@ -190,7 +221,7 @@ function Quests() {
   const isAdmin = userInfo?.role === 'admin';
 
   const [quests, setQuests] = useState([]);
-  const [liveData, setLiveData] = useState({ bio: '', profileImageUrl: '', coverImageUrl: '', worksCount: 0, claimedQuests: [], submissions: [] });
+  const [liveData, setLiveData] = useState({ bio: '', profileImageUrl: '', coverImageUrl: '', worksCount: 0, claimedQuests: [], activeQuests: [], submissions: [] });
   const [loadingQuests, setLoadingQuests] = useState(true);
   const [loadingLive, setLoadingLive] = useState(true);
   const [claimingId, setClaimingId] = useState(null);
@@ -215,6 +246,7 @@ function Quests() {
         coverImageUrl: userInfo?.coverImage?.url || '',
         worksCount: userInfo?.worksCount || 0,
         claimedQuests: userInfo?.claimedQuests || [],
+        activeQuests: userInfo?.activeQuests || [],
         submissions: [],
       });
     } finally {
@@ -247,12 +279,37 @@ function Quests() {
     return claimed.some(q => q.questId === questId.toString());
   };
 
+  const isQuestAccepted = (questId) => {
+    const active = liveData.activeQuests || [];
+    if (!active.length) return false;
+    return active.some(q => q.questId === questId.toString());
+  };
+
+  const getQuestDeadline = (questId) => {
+    const active = liveData.activeQuests || [];
+    const entry = active.find(q => q.questId === questId.toString());
+    return entry?.deadline;
+  };
+
   const showToast = (type, msg) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 4000);
   };
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
+  const handleAccept = async (questId) => {
+    setClaimingId(questId);
+    try {
+      await questsAPI.accept(questId);
+      showToast('success', '✨ รับเควสสำเร็จ! อย่าลืมทำภายในเวลาที่กำหนดนะครับ');
+      await fetchLiveData();
+    } catch (err) {
+      showToast('error', err.response?.data?.message || 'เกิดข้อผิดพลาดในการรับเควส');
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
   const handleClaim = async (quest) => {
     if (quest.taskType === 'PROOF_SUBMISSION' && !quest.isCompleted) {
       const sub = liveData.submissions?.find(s => s.questId === quest._id);
@@ -301,12 +358,18 @@ function Quests() {
   // ── Derived data ─────────────────────────────────────────────────────────────
   const enrichedQuests = quests.map(q => {
     const { checklist, isCompleted, submissionStatus } = computeCompletion(q.taskType, liveData, q._id);
+    const isClaimed = isQuestClaimed(q._id);
+    const isAccepted = isQuestAccepted(q._id);
+    const deadline = getQuestDeadline(q._id);
+
     return {
       ...q,
       checklist,
       isCompleted,
       submissionStatus,
-      isClaimed: isQuestClaimed(q._id),
+      isClaimed,
+      isAccepted,
+      deadline
     };
   });
 
@@ -392,7 +455,7 @@ function Quests() {
               <QuestSection title="Coin Quests" emoji={<CoinIcon size={22} />} color="#f59e0b" borderColor="rgba(245,158,11,0.1)">
                 {coinQuests.map((q, i) => (
                   <QuestCard key={q._id} quest={q} index={i} isAdmin={isAdmin}
-                    claimingId={claimingId} onClaim={handleClaim}
+                    claimingId={claimingId} onClaim={handleClaim} onAccept={handleAccept}
                     onEdit={handleEdit} onDelete={handleDelete} />
                 ))}
               </QuestSection>
@@ -402,7 +465,7 @@ function Quests() {
               <QuestSection title="Experience Quests" emoji="⚡" color="#6366f1" borderColor="rgba(99,102,241,0.1)">
                 {xpQuests.map((q, i) => (
                   <QuestCard key={q._id} quest={q} index={i} isAdmin={isAdmin}
-                    claimingId={claimingId} onClaim={handleClaim}
+                    claimingId={claimingId} onClaim={handleClaim} onAccept={handleAccept}
                     onEdit={handleEdit} onDelete={handleDelete} />
                 ))}
               </QuestSection>
@@ -492,13 +555,29 @@ function QuestSection({ title, emoji, color, borderColor, children }) {
 }
 
 // ─── Quest Card ───────────────────────────────────────────────────────────────
-function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelete }) {
+function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onAccept, onEdit, onDelete }) {
   const isClaiming = claimingId === quest._id;
   const color = quest.coinReward > 0 ? '#f59e0b' : '#6366f1';
-  const countdown = useCountdown(quest.expiresAt);
-  const isExpiringSoon = quest.expiresAt && (new Date(quest.expiresAt) - new Date()) < 3600000; // < 1 hour
+  
+  // Expiry of the quest itself
+  const expiryCountdown = useCountdown(quest.expiresAt);
+  
+  // Personal deadline after accepting
+  const deadlineCountdown = useCountdown(quest.deadline);
 
-  const buttonText = quest.isClaimed ? 'Claimed' : (quest.taskType === 'PROOF_SUBMISSION' && !quest.isCompleted) ? (quest.submissionStatus === 'PENDING' ? 'Pending Review' : 'Submit Proof') : 'Claim Reward';
+  const isExpiringSoon = quest.expiresAt && (new Date(quest.expiresAt) - new Date()) < 3600000;
+  const isDeadlineSoon = quest.deadline && (new Date(quest.deadline) - new Date()) < 3600000;
+
+  const requiresAcceptance = quest.maxParticipants > 0 || quest.durationDays > 0;
+  
+  let buttonText = 'Claim Reward';
+  if (quest.isClaimed) buttonText = 'Claimed';
+  else if (!quest.isAccepted && requiresAcceptance) buttonText = 'Accept Quest';
+  else if (quest.taskType === 'PROOF_SUBMISSION' && !quest.isCompleted) {
+    buttonText = quest.submissionStatus === 'PENDING' ? 'Pending Review' : 'Submit Proof';
+  }
+
+  const slotsLeft = quest.maxParticipants > 0 ? quest.maxParticipants - quest.participantCount : null;
 
   return (
     <motion.div
@@ -507,8 +586,8 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelet
       transition={{ delay: index * 0.07 }}
       className="quest-card-hover quest-card-container"
       style={{
-        background: quest.isClaimed ? 'rgba(34,197,94,0.04)' : '#0a0a0a',
-        border: `1px solid ${quest.isClaimed ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'}`,
+        background: quest.isClaimed ? 'rgba(34,197,94,0.04)' : (quest.isAccepted ? 'rgba(245,158,11,0.03)' : '#0a0a0a'),
+        border: `1px solid ${quest.isClaimed ? 'rgba(34,197,94,0.2)' : (quest.isAccepted ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.06)')}`,
         borderRadius: '24px',
         padding: '24px 30px',
         display: 'flex',
@@ -519,12 +598,19 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelet
         overflow: 'hidden',
       }}
     >
-      {/* Claimed badge */}
-      {quest.isClaimed && (
-        <div style={{ position: 'absolute', top: 0, right: 0, background: '#22c55e', color: '#000', padding: '4px 16px', borderBottomLeftRadius: '12px', fontSize: '0.65rem', fontWeight: '900', letterSpacing: '1px' }}>
-          CLAIMED
-        </div>
-      )}
+      {/* Badges */}
+      <div style={{ position: 'absolute', top: 0, right: 0, display: 'flex' }}>
+        {quest.isAccepted && !quest.isClaimed && (
+          <div style={{ background: 'var(--accent, #f59e0b)', color: '#000', padding: '4px 16px', borderBottomLeftRadius: '12px', fontSize: '0.65rem', fontWeight: '900', letterSpacing: '1px' }}>
+            ACCEPTED
+          </div>
+        )}
+        {quest.isClaimed && (
+          <div style={{ background: '#22c55e', color: '#000', padding: '4px 16px', borderBottomLeftRadius: '12px', fontSize: '0.65rem', fontWeight: '900', letterSpacing: '1px' }}>
+            CLAIMED
+          </div>
+        )}
+      </div>
 
       {/* Icon */}
       <div className="quest-card-icon" style={{ width: '56px', height: '56px', borderRadius: '18px', background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${color}30`, flexShrink: 0, transition: '0.3s' }}>
@@ -542,18 +628,31 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelet
           )}
         </div>
 
-        {/* Expiry countdown */}
-        {countdown && countdown !== 'expired' && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginBottom: '8px', background: isExpiringSoon ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.04)', border: `1px solid ${isExpiringSoon ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '8px', padding: '3px 10px', fontSize: '0.75rem', color: isExpiringSoon ? '#ef4444' : '#888', fontWeight: '700' }}>
-            <FiClock size={11} />
-            หมดอายุใน {countdown}
-          </div>
-        )}
+        {/* Status Pills (Slots, Expiry, Deadline) */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+          {slotsLeft !== null && !quest.isClaimed && !quest.isAccepted && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: slotsLeft <= 3 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${slotsLeft <= 3 ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.2)'}`, borderRadius: '8px', padding: '3px 10px', fontSize: '0.7rem', color: slotsLeft <= 3 ? '#ef4444' : '#f59e0b', fontWeight: '800' }}>
+               เหลือ {slotsLeft} ที่นั่ง
+            </div>
+          )}
+
+          {expiryCountdown && expiryCountdown !== 'expired' && !quest.isAccepted && !quest.isClaimed && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: isExpiringSoon ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.04)', border: `1px solid ${isExpiringSoon ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '8px', padding: '3px 10px', fontSize: '0.7rem', color: isExpiringSoon ? '#ef4444' : '#888', fontWeight: '700' }}>
+              <FiClock size={11} /> หมดอายุใน {expiryCountdown}
+            </div>
+          )}
+
+          {deadlineCountdown && deadlineCountdown !== 'expired' && quest.isAccepted && !quest.isClaimed && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: isDeadlineSoon ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.15)', border: `1px solid ${isDeadlineSoon ? '#ef4444' : '#f59e0b'}`, borderRadius: '8px', padding: '3px 10px', fontSize: '0.75rem', color: isDeadlineSoon ? '#ef4444' : '#f59e0b', fontWeight: '900' }}>
+              <FiClock size={11} /> ส่งภายใน {deadlineCountdown}
+            </div>
+          )}
+        </div>
 
         <p style={{ color: '#777', fontSize: '0.875rem', margin: '0 0 12px 0', lineHeight: 1.55 }}>{quest.description}</p>
 
         {/* Checklist */}
-        {quest.checklist?.length > 0 && (
+        {(quest.isAccepted || !requiresAcceptance) && quest.checklist?.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {quest.checklist.map((item, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: item.done ? '#22c55e' : '#555' }}>
@@ -595,6 +694,14 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelet
         ) : quest.isClaimed ? (
           <button disabled style={{ background: 'transparent', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e', padding: '10px 18px', borderRadius: '10px', fontWeight: '800', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.7 }}>
             <FiCheckCircle size={14} /> Claimed
+          </button>
+        ) : (!quest.isAccepted && requiresAcceptance) ? (
+           <button
+            onClick={() => onAccept(quest._id)}
+            disabled={isClaiming || (slotsLeft !== null && slotsLeft <= 0)}
+            style={{ background: 'var(--accent, #f59e0b)', border: 'none', color: '#000', padding: '10px 18px', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '0.85rem', boxShadow: `0 4px 15px rgba(245,158,11,0.2)`, transition: 'all 0.2s', opacity: (isClaiming || (slotsLeft !== null && slotsLeft <= 0)) ? 0.7 : 1 }}
+          >
+            {isClaiming ? 'รอสักครู่...' : 'Accept Quest'}
           </button>
         ) : (quest.isCompleted || (quest.taskType === 'PROOF_SUBMISSION' && quest.submissionStatus !== 'PENDING')) ? (
           <button

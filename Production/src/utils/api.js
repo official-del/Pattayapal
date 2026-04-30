@@ -123,12 +123,18 @@ export const questsAPI = {
   create: (data) => API.post('/quests', data).then(res => res.data),
   update: (id, data) => API.put(`/quests/${id}`, data).then(res => res.data),
   delete: (id) => API.delete(`/quests/${id}`).then(res => res.data),
+  accept: (id) => API.post(`/quests/${id}/accept`).then(res => res.data),
   claim: (id) => API.post(`/quests/${id}/claim`).then(res => res.data)
 };
 
 // ── Quest Submissions (Proof of Work) ──
 export const questSubmissionsAPI = {
-  submit: (data) => API.post('/quest-submissions/submit', data).then(res => res.data),
+  submit: (data) => {
+    const isFormData = data instanceof FormData;
+    return API.post('/quest-submissions/submit', data, {
+      headers: { ...(isFormData ? { 'Content-Type': 'multipart/form-data' } : {}) }
+    }).then(res => res.data);
+  },
   getAll: (status = '') => API.get(`/quest-submissions/admin/all${status ? `?status=${status}` : ''}`).then(res => res.data),
   review: (id, data) => API.patch(`/quest-submissions/admin/${id}/review`, data).then(res => res.data)
 };

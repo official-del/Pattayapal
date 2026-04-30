@@ -22,7 +22,7 @@ export const getActiveQuests = async (req, res) => {
 // ── CREATE Quest ──────────────────────────────────────────────────────────────
 export const createQuest = async (req, res) => {
   try {
-    const { title, description, taskType, rewardType, coinReward, xpReward, requiredRank, maxClaims, expiresAt } = req.body;
+    const { title, description, taskType, rewardType, coinReward, xpReward, requiredRank, maxParticipants, durationDays, expiresAt } = req.body;
     const userId = req.user.id || req.user._id;
 
     const user = await User.findById(userId);
@@ -48,7 +48,8 @@ export const createQuest = async (req, res) => {
       coinReward: finalCoin,
       xpReward:   finalXp,
       requiredRank: requiredRank || 'All',
-      maxClaims: Number(maxClaims) || 0,
+      maxParticipants: Number(maxParticipants) || 0,
+      durationDays: Number(durationDays) || 0,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
       createdBy: userId,
     });
@@ -56,6 +57,79 @@ export const createQuest = async (req, res) => {
     await quest.save();
     await quest.populate('createdBy', 'name username profileImage rank');
     res.status(201).json(quest);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── ACCEPT Quest ──────────────────────────────────────────────────────────────
+export const acceptQuest = async (req, res) => {
+  try {
+    const { questId } = req.params;
+    const userId = req.user.id || req.user._id;
+
+    const [quest, user] = await Promise.all([
+      Quest.findById(questId),
+      User.findById(userId),
+    ]);
+
+    if (!quest) return res.status(404).json({ message: 'ไม่พบเควสนี้' });
+    if (!user)  return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+
+    if (user.role === 'admin') {
+      return res.status(403).json({ message: 'แอดมินไม่สามารถรับเควสได้' });
+    }
+
+    if (!quest.isActive) {
+      return res.status(400).json({ message: 'เควสนี้ปิดรับแล้ว' });
+    }
+
+    // Check expiry
+    if (quest.expiresAt && new Date() > quest.expiresAt) {
+      return res.status(400).json({ message: 'เควสนี้หมดอายุแล้ว' });
+    }
+
+    // Check Participant Limit
+    if (quest.maxParticipants > 0 && quest.participantCount >= quest.maxParticipants) {
+      return res.status(400).json({ message: 'เควสนี้มีคนรับครบจำนวนแล้ว' });
+    }
+
+    // Check if already claimed
+    const alreadyClaimed = user.claimedQuests?.some(q => q.questId === questId.toString());
+    if (alreadyClaimed) return res.status(400).json({ message: 'คุณเคยรับรางวัลจากเควสนี้ไปแล้ว' });
+
+    // Check if already accepted
+    const alreadyAccepted = user.activeQuests?.some(q => q.questId.toString() === questId.toString());
+    if (alreadyAccepted) return res.status(400).json({ message: 'คุณรับเควสนี้ไปแล้ว' });
+
+    // Check Rank Requirement
+    const rankHierarchy = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Conqueror'];
+    if (quest.requiredRank !== 'All') {
+      const userRankIndex = rankHierarchy.indexOf(user.rank || 'Bronze');
+      const reqRankIndex  = rankHierarchy.indexOf(quest.requiredRank);
+      if (userRankIndex < reqRankIndex) {
+        return res.status(403).json({ message: `ต้องมีแรงค์ ${quest.requiredRank} ขึ้นไปเพื่อรับเควสนี้` });
+      }
+    }
+
+    // Add to activeQuests
+    const deadline = quest.durationDays > 0 ? new Date(Date.now() + quest.durationDays * 24 * 60 * 60 * 1000) : null;
+    
+    if (!user.activeQuests) user.activeQuests = [];
+    user.activeQuests.push({
+      questId: quest._id,
+      acceptedAt: new Date(),
+      deadline
+    });
+
+    await user.save();
+
+    // Increment Participant Count
+    quest.participantCount += 1;
+    await quest.save();
+
+    res.json({ message: 'รับเควสสำเร็จ!', deadline });
 
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -76,22 +150,32 @@ export const claimQuest = async (req, res) => {
     if (!quest) return res.status(404).json({ message: 'ไม่พบเควสนี้' });
     if (!user)  return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
 
+    // Check if it's a limited quest that must be accepted first
+    const activeEntry = user.activeQuests?.find(q => q.questId.toString() === questId.toString());
+    
+    // If the quest has a participant limit or duration, it MUST be in activeQuests
+    if ((quest.maxParticipants > 0 || quest.durationDays > 0) && !activeEntry) {
+      return res.status(400).json({ message: 'กรุณากดรับเควสก่อนทำภารกิจ' });
+    }
+
+    // Check Deadline
+    if (activeEntry?.deadline && new Date() > activeEntry.deadline) {
+      return res.status(400).json({ message: 'คุณทำเควสไม่ทันตามเวลาที่กำหนด' });
+    }
+
     // Admin cannot claim
     if (user.role === 'admin') {
       return res.status(403).json({ message: 'แอดมินไม่สามารถรับรางวัลจากเควสได้' });
     }
 
+    // ... (rest of the checks)
     if (!quest.isActive) {
       return res.status(400).json({ message: 'เควสนี้ปิดรับแล้ว' });
     }
 
-    // Check expiry
+    // Check expiry (General quest expiry)
     if (quest.expiresAt && new Date() > quest.expiresAt) {
       return res.status(400).json({ message: 'เควสนี้หมดอายุแล้ว' });
-    }
-
-    if (quest.maxClaims > 0 && quest.currentClaims >= quest.maxClaims) {
-      return res.status(400).json({ message: 'เควสนี้ถูกรับครบตามจำนวนแล้ว' });
     }
 
     // Check already claimed (DAILY_LOGIN allows once per day)
@@ -108,13 +192,13 @@ export const claimQuest = async (req, res) => {
       if (alreadyClaimed) return res.status(400).json({ message: 'คุณรับรางวัลจากเควสนี้ไปแล้ว' });
     }
 
-    // Check Rank Requirement
+    // Check Rank Requirement (again just in case they lost rank)
     const rankHierarchy = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Conqueror'];
     if (quest.requiredRank !== 'All') {
       const userRankIndex = rankHierarchy.indexOf(user.rank || 'Bronze');
       const reqRankIndex  = rankHierarchy.indexOf(quest.requiredRank);
       if (userRankIndex < reqRankIndex) {
-        return res.status(403).json({ message: `ต้องมีแรงค์ ${quest.requiredRank} ขึ้นไปเพื่อรับเควสนี้` });
+        return res.status(403).json({ message: `ต้องมีแรงค์ ${quest.requiredRank} ขึ้นไปเพื่อรับรางวัลนี้` });
       }
     }
 
@@ -150,10 +234,13 @@ export const claimQuest = async (req, res) => {
 
     if (!user.claimedQuests) user.claimedQuests = [];
     user.claimedQuests.push({ questId: quest._id.toString(), claimedAt: new Date() });
-    await user.save();
 
-    quest.currentClaims += 1;
-    await quest.save();
+    // Remove from activeQuests if it exists
+    if (activeEntry) {
+      user.activeQuests = user.activeQuests.filter(q => q.questId.toString() !== questId.toString());
+    }
+
+    await user.save();
 
     res.json({
       message: 'รับรางวัลสำเร็จ!',
@@ -170,7 +257,7 @@ export const claimQuest = async (req, res) => {
 export const updateQuest = async (req, res) => {
   try {
     const { questId } = req.params;
-    const { title, description, taskType, rewardType, coinReward, xpReward, requiredRank, maxClaims, isActive, expiresAt } = req.body;
+    const { title, description, taskType, rewardType, coinReward, xpReward, requiredRank, maxParticipants, durationDays, isActive, expiresAt } = req.body;
     const userId = req.user.id || req.user._id;
 
     const user = await User.findById(userId);
@@ -195,7 +282,8 @@ export const updateQuest = async (req, res) => {
     quest.coinReward  = finalCoin;
     quest.xpReward    = finalXp;
     quest.requiredRank = requiredRank || quest.requiredRank;
-    quest.maxClaims   = maxClaims !== undefined ? Number(maxClaims) : quest.maxClaims;
+    quest.maxParticipants = maxParticipants !== undefined ? Number(maxParticipants) : quest.maxParticipants;
+    quest.durationDays    = durationDays !== undefined ? Number(durationDays) : quest.durationDays;
     quest.isActive    = isActive  !== undefined ? isActive          : quest.isActive;
     quest.expiresAt   = expiresAt !== undefined ? (expiresAt ? new Date(expiresAt) : null) : quest.expiresAt;
 

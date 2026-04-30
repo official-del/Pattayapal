@@ -65,16 +65,33 @@ router.post('/:id/like', protect, async (req, res) => {
   }
 });
 
-// ✅ Increment View Count
+// ✅ Increment View Count (Unique)
 router.post('/:id/view', async (req, res) => {
   try {
-    console.log(`[DEBUG] Incrementing views for work: ${req.params.id}`);
-    const work = await Work.findByIdAndUpdate(
-      req.params.id, 
-      { $inc: { views: 1 } }, 
-      { new: true }
-    );
+    const work = await Work.findById(req.params.id);
     if (!work) return res.status(404).json({ message: "ไม่พบผลงาน" });
+
+    const viewerId = req.user?.id || req.user?._id;
+    const viewerIp = req.ip;
+    const isOwner = viewerId && viewerId.toString() === work.createdBy.toString();
+
+    if (!isOwner) {
+      try {
+        const WorkView = (await import('../models/WorkView.js')).default;
+        const viewData = { workId: work._id };
+        if (viewerId) viewData.viewerId = viewerId;
+        else viewData.viewerIp = viewerIp;
+
+        await WorkView.create(viewData);
+        work.views = (work.views || 0) + 1;
+        await work.save();
+      } catch (err) {
+        if (err.code !== 11000) { // Ignore duplicate key errors
+          console.error("Work view error:", err);
+        }
+      }
+    }
+
     res.json({ views: work.views });
   } catch (err) {
     res.status(500).json({ message: err.message });

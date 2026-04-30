@@ -69,6 +69,13 @@ const userSchema = new mongoose.Schema({
       claimedAt: { type: Date, default: Date.now }
     }
   ],
+  activeQuests: [
+    {
+      questId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quest' },
+      acceptedAt: { type: Date, default: Date.now },
+      deadline: { type: Date }
+    }
+  ],
   lastLoginDate: { type: Date },
   canCreateQuest: { type: Boolean, default: false }, // 🌟 สิทธิ์ในการสร้างเควส (แอดมินหรือได้รับอนุญาต)
 

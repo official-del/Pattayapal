@@ -43,7 +43,7 @@ router.get('/verify-email/:token', verifyEmail);
 router.get('/me/live-quest-data', protect, async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
-    const user = await User.findById(userId).select('bio profileImage coverImage claimedQuests');
+    const user = await User.findById(userId).select('bio profileImage coverImage claimedQuests activeQuests');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const Work = (await import('../models/Work.js')).default;
@@ -60,6 +60,7 @@ router.get('/me/live-quest-data', protect, async (req, res) => {
       coverImageUrl: user.coverImage?.url || '',
       worksCount,
       claimedQuests: user.claimedQuests || [],
+      activeQuests: user.activeQuests || [],
       submissions: submissions || [],
     });
   } catch (err) {

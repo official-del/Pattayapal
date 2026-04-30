@@ -11,7 +11,12 @@ export default function VerifyEmail() {
   const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error'
   const [message, setMessage] = useState('');
 
+  const requestSent = React.useRef(false);
+
   useEffect(() => {
+    if (!token || requestSent.current) return;
+    requestSent.current = true;
+
     const verifyToken = async () => {
       try {
         const res = await axios.get(`${CONFIG.API_BASE_URL}/api/users/verify-email/${token}`);
@@ -23,9 +28,7 @@ export default function VerifyEmail() {
       }
     };
 
-    if (token) {
-      verifyToken();
-    }
+    verifyToken();
   }, [token]);
 
   return (

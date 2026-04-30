@@ -390,7 +390,7 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1700px) {
   .mobile-top-nav {
     display: flex;
   }
@@ -443,7 +443,7 @@
   }
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1700px) {
   body {
     padding-top: 65px;
   }
@@ -519,6 +519,6 @@
   border: 1px solid #000;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1700px) {
   .hide-mobile { display: none !important; }
 }

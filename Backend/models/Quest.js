@@ -21,8 +21,9 @@ const questSchema = new mongoose.Schema({
   },
 
   createdBy:     { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  maxClaims:     { type: Number, default: 0 },   // 0 = unlimited
-  currentClaims: { type: Number, default: 0 },
+  maxParticipants: { type: Number, default: 0 },  // 0 = unlimited
+  participantCount: { type: Number, default: 0 },
+  durationDays: { type: Number, default: 0 },    // 0 = no time limit (after accepting)
   isActive:      { type: Boolean, default: true },
   expiresAt:     { type: Date, default: null },  // null = never expires
 
