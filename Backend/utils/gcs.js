@@ -8,9 +8,9 @@ const __dirname = path.dirname(__filename);
 
 // ==========================================
 // 🔑 GCS CREDENTIAL RESOLUTION (Priority Order)
-// 1. Individual ENV vars (GCP_CLIENT_EMAIL + GCP_PRIVATE_KEY)  ← Best for Hostinger
-// 2. Full JSON ENV var (GCP_KEY_JSON)
-// 3. Local key file (gcs-key.json)                             ← Local dev only
+// 1. Full JSON ENV var (GCP_KEY_JSON) - Base64 encoded (Safest for Hostinger)
+// 2. Individual ENV vars (GCP_CLIENT_EMAIL + GCP_PRIVATE_KEY)
+// 3. Local key file (gcs-key.json)
 // ==========================================
 
 const bucketName = process.env.GCP_BUCKET_NAME;
@@ -19,31 +19,44 @@ const projectId = process.env.GCP_PROJECT_ID;
 let credentials = null;
 let credentialSource = 'none';
 
-// Priority 1: Individual fields (most reliable for Hostinger)
-if (process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY) {
-    credentials = {
-        client_email: process.env.GCP_CLIENT_EMAIL.trim(),
-        private_key: process.env.GCP_PRIVATE_KEY.replace(/\\n/g, '\n').trim(),
-    };
-    credentialSource = 'ENV:EMAIL+KEY';
-}
-// Priority 2: Full JSON string
-else if (process.env.GCP_KEY_JSON) {
+// Helper to ensure private key is formatted correctly
+const formatKey = (key) => key.replace(/\\n/g, '\n').replace(/"/g, '').trim();
+
+// Priority 1: Full JSON string (Base64)
+if (process.env.GCP_KEY_JSON) {
     let keyContent = process.env.GCP_KEY_JSON.trim().replace(/^["']|["']$/g, '');
     try {
-        credentials = JSON.parse(keyContent);
+        const raw = JSON.parse(keyContent);
+        credentials = {
+            client_email: raw.client_email,
+            private_key: formatKey(raw.private_key)
+        };
         credentialSource = 'ENV:JSON';
     } catch {
         try {
-            credentials = JSON.parse(Buffer.from(keyContent, 'base64').toString());
+            const raw = JSON.parse(Buffer.from(keyContent, 'base64').toString('utf8'));
+            credentials = {
+                client_email: raw.client_email,
+                private_key: formatKey(raw.private_key)
+            };
             credentialSource = 'ENV:JSON_BASE64';
         } catch (e) {
             console.error('❌ [GCS] GCP_KEY_JSON parse failed:', e.message);
         }
     }
 }
+
+// Priority 2: Individual fields
+if (!credentials && process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY) {
+    credentials = {
+        client_email: process.env.GCP_CLIENT_EMAIL.trim(),
+        private_key: formatKey(process.env.GCP_PRIVATE_KEY),
+    };
+    credentialSource = 'ENV:EMAIL+KEY';
+}
+
 // Priority 3: Local key file
-else {
+if (!credentials) {
     const keyPath = path.join(__dirname, '../config/gcs-key.json');
     if (fs.existsSync(keyPath)) {
         try {
