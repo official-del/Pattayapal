@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiX } from 'react-icons/fi';
 import { questsAPI } from '../utils/api';
+import { CoinIcon } from './CoinIcon';
 
 const EMPTY_FORM = {
   title: '',
@@ -148,7 +149,7 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
                   onClick={() => set('rewardType', type)}
                   style={{ flex: 1, padding: '10px', borderRadius: '10px', border: `1.5px solid ${form.rewardType === type ? (type === 'COIN' ? '#f59e0b' : '#6366f1') : '#2a2a2a'}`, background: form.rewardType === type ? (type === 'COIN' ? 'rgba(245,158,11,0.1)' : 'rgba(99,102,241,0.1)') : 'transparent', color: form.rewardType === type ? (type === 'COIN' ? '#f59e0b' : '#6366f1') : '#555', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.85rem' }}
                 >
-                  {type === 'COIN' ? '🪙 Coins' : '⚡ XP'}
+                  {type === 'COIN' ? <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CoinIcon size={16} /> Coins</div> : '⚡ XP'}
                 </button>
               ))}
             </div>
@@ -156,7 +157,7 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
 
           {/* Reward Amount */}
           <div>
-            <label style={labelStyle}>{form.rewardType === 'COIN' ? '🪙 จำนวน Coin' : '⚡ จำนวน XP'}</label>
+            <label style={labelStyle}>{form.rewardType === 'COIN' ? <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CoinIcon size={16} /> จำนวน Coin</div> : '⚡ จำนวน XP'}</label>
             {form.rewardType === 'COIN' ? (
               <input type="number" min="1" required value={form.coinReward} onChange={e => set('coinReward', e.target.value)} style={inputStyle} />
             ) : (

@@ -1,11 +1,11 @@
 import React from 'react';
 
 // ── New rank images from assets/Rank/ ──
-import bronzeImg   from '../assets/Rank/Bronze.png';
-import silverImg   from '../assets/Rank/Silver.png';
-import goldImg     from '../assets/Rank/Gold.png';
+import bronzeImg from '../assets/Rank/Bronze.png';
+import silverImg from '../assets/Rank/Silver.png';
+import goldImg from '../assets/Rank/Gold.png';
 import platinumImg from '../assets/Rank/Patinum.png';   // Note: filename has typo in folder
-import diamondImg  from '../assets/Rank/Diamond.png';
+import diamondImg from '../assets/Rank/Diamond.png';
 import commanderImg from '../assets/Rank/Commander.png';
 
 /**
@@ -15,25 +15,23 @@ import commanderImg from '../assets/Rank/Commander.png';
  */
 const RankBadge = ({ rank, showName = true, size = 'md' }) => {
   const rankImages = {
-    Bronze:    bronzeImg,
-    Silver:    silverImg,
-    Gold:      goldImg,
-    Platinum:  platinumImg,
-    Diamond:   diamondImg,
+    Bronze: bronzeImg,
+    Silver: silverImg,
+    Gold: goldImg,
+    Platinum: platinumImg,
+    Diamond: diamondImg,
     Conqueror: commanderImg,
-    Commander: commanderImg,
-    Master:    commanderImg,
   };
 
   const rankColors = {
-    Bronze:    '#cd7f32',
-    Silver:    '#a8a8b3',
-    Gold:      '#f59e0b',
-    Platinum:  '#6ee7f7',
-    Diamond:   '#6366f1',
-    Conqueror: '#ef4444',
-    Commander: '#ef4444',
-    Master:    '#ef4444',
+    Bronze: '#cd7f32',
+    Silver: '#a8a8b3',
+    Gold: '#f59e0b',
+    Platinum: '#6ee7f7',
+    Diamond: '#6366f1',
+    Conqueror: '#00d2ff',
+    Commander: '#00d2ff',
+    Master: '#00d2ff',
   };
 
   const badgeSize = {

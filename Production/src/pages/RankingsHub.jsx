@@ -118,7 +118,7 @@ export default function RankingsHub() {
           <div className="tab-switcher" style={{ display: 'inline-flex', gap: '10px', marginTop: '40px', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.03)', flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
               { id: 'points', label: 'XP', icon: <FiAward /> },
-              { id: 'earnings', label: 'COINS', icon: <FiDollarSign /> }
+              { id: 'earnings', label: 'COINS', icon: <CoinIcon size={16} /> }
             ].map(tab => (
               <button
                 key={tab.id}

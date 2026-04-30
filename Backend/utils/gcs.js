@@ -106,9 +106,6 @@ export const uploadToGCS = async (file) => {
                 },
             });
             
-            // Make the file publicly readable
-            await bucket.file(gcsFileName).makePublic();
-            
             const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
             console.log("✅ [GCS] Uploaded & Made Public:", publicUrl);
             

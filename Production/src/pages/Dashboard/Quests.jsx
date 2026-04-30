@@ -5,6 +5,7 @@ import { FiTarget, FiCheckCircle, FiGift, FiPlus, FiEdit, FiTrash2, FiRefreshCw,
 import { play8BitSuccess } from '../../utils/soundEffects';
 import { questsAPI, questSubmissionsAPI, API } from '../../utils/api';
 import CreateQuestModal from '../../components/CreateQuestModal';
+import { CoinIcon } from '../../components/CoinIcon';
 
 // ─── Countdown helper ─────────────────────────────────────────────────────────
 function useCountdown(expiresAt) {
@@ -329,10 +330,10 @@ function Quests() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', gap: '20px', flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: '900', letterSpacing: '-1px', margin: 0 }}>
+            <h1 style={{ fontSize: 'clamp(2rem, 8vw, 2.8rem)', fontWeight: '900', letterSpacing: '-1.5px', margin: 0, lineHeight: 1.1 }}>
               Daily <span style={{ color: 'var(--accent, #f59e0b)' }}>Quests</span>
             </h1>
-            <p style={{ color: '#666', fontSize: '0.95rem', marginTop: '6px', margin: '6px 0 0 0' }}>
+            <p style={{ color: '#888', fontSize: 'clamp(0.85rem, 3vw, 0.95rem)', marginTop: '8px', margin: '8px 0 0 0', maxWidth: '400px' }}>
               ทำภารกิจสะสมความสำเร็จเพื่อรับรางวัลพิเศษ
             </p>
           </div>
@@ -388,7 +389,7 @@ function Quests() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '35px' }}>
 
             {coinQuests.length > 0 && (
-              <QuestSection title="Coin Quests" emoji="🪙" color="#f59e0b" borderColor="rgba(245,158,11,0.1)">
+              <QuestSection title="Coin Quests" emoji={<CoinIcon size={22} />} color="#f59e0b" borderColor="rgba(245,158,11,0.1)">
                 {coinQuests.map((q, i) => (
                   <QuestCard key={q._id} quest={q} index={i} isAdmin={isAdmin}
                     claimingId={claimingId} onClaim={handleClaim}
@@ -437,7 +438,38 @@ function Quests() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        .quest-card-hover:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.1) !important; }
+        .quest-card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+        .quest-card-hover:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.15) !important; background: rgba(255,255,255,0.02) !important; }
+        .quest-card-hover:hover .quest-card-icon { transform: scale(1.1) rotate(5deg); }
+        
+        @media (max-width: 640px) {
+          .quest-card-container {
+            padding: 20px !important;
+            gap: 16px !important;
+          }
+          .quest-card-icon {
+            width: 48px !important;
+            height: 48px !important;
+          }
+          .quest-card-content {
+            min-width: 100% !important;
+            order: 2;
+          }
+          .quest-card-right {
+            width: 100% !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            order: 3;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+          }
+          .quest-card-rewards {
+            align-items: flex-start !important;
+            flex-direction: row !important;
+            gap: 12px !important;
+          }
+        }
       `}</style>
     </div>
   );
@@ -473,17 +505,16 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelet
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.07 }}
-      className="quest-card-hover"
+      className="quest-card-hover quest-card-container"
       style={{
         background: quest.isClaimed ? 'rgba(34,197,94,0.04)' : '#0a0a0a',
         border: `1px solid ${quest.isClaimed ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'}`,
-        borderRadius: '20px',
-        padding: '24px 28px',
+        borderRadius: '24px',
+        padding: '24px 30px',
         display: 'flex',
-        gap: '20px',
+        gap: '24px',
         alignItems: 'flex-start',
         flexWrap: 'wrap',
-        transition: 'all 0.25s ease',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -496,19 +527,14 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelet
       )}
 
       {/* Icon */}
-      <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${color}30`, flexShrink: 0 }}>
+      <div className="quest-card-icon" style={{ width: '56px', height: '56px', borderRadius: '18px', background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${color}30`, flexShrink: 0, transition: '0.3s' }}>
         <FiGift size={24} color={color} />
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, minWidth: '220px' }}>
+      <div className="quest-card-content" style={{ flex: 1, minWidth: '220px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: '800', margin: 0, color: '#fff' }}>{quest.title}</h3>
-          {quest.taskType && quest.taskType !== 'MANUAL' && (
-            <span style={{ background: `${color}15`, color, padding: '2px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '800', border: `1px solid ${color}30` }}>
-              {quest.taskType === 'PROFILE_FULL' ? 'PROFILE' : quest.taskType === 'POST_WORK' ? 'WORK' : quest.taskType === 'PROOF_SUBMISSION' ? 'SOCIAL' : quest.taskType}
-            </span>
-          )}
           {quest.requiredRank && quest.requiredRank !== 'All' && (
             <span style={{ background: 'rgba(255,255,255,0.05)', color: '#888', padding: '2px 8px', borderRadius: '6px', fontSize: '0.65rem' }}>
               {quest.requiredRank}+
@@ -542,14 +568,14 @@ function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onEdit, onDelet
       </div>
 
       {/* Right Column: reward + action */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px', minWidth: '110px' }}>
+      <div className="quest-card-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '15px', minWidth: '130px' }}>
         {/* Rewards */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
+        <div className="quest-card-rewards" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
           {quest.coinReward > 0 && (
-            <div style={{ color: '#f59e0b', fontWeight: '900', fontSize: '1.1rem' }}>+{quest.coinReward} 🪙</div>
+            <div style={{ color: '#f59e0b', fontWeight: '900', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '6px' }}>+{quest.coinReward} <CoinIcon size={20} /></div>
           )}
           {quest.xpReward > 0 && (
-            <div style={{ color: '#6366f1', fontWeight: '900', fontSize: '0.9rem' }}>+{quest.xpReward} ⚡</div>
+            <div style={{ color: '#6366f1', fontWeight: '900', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>+{quest.xpReward} <span style={{ fontSize: '0.8rem' }}>⚡</span></div>
           )}
         </div>
 

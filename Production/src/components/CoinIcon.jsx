@@ -1,37 +1,20 @@
-// 🪙 CoinIcon - Premium Gold Coin SVG Icon
-// ใช้แทน $ หรือ text ทุกที่ในระบบ
+import palCoinImg from '../assets/pal-coin.png';
 
 export function CoinIcon({ size = 20, style = {} }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
-    >
-      {/* Outer ring */}
-      <circle cx="16" cy="16" r="15" fill="#D97706" />
-      {/* Main coin body */}
-      <circle cx="16" cy="16" r="13" fill="#F59E0B" />
-      {/* Inner shine */}
-      <circle cx="16" cy="16" r="10" fill="#FCD34D" />
-      {/* ฿ Symbol */}
-      <text
-        x="16"
-        y="21"
-        textAnchor="middle"
-        fontSize="12"
-        fontWeight="900"
-        fontFamily="'Segoe UI', Arial, sans-serif"
-        fill="#92400E"
-      >
-        P
-      </text>
-      {/* Shine highlight */}
-      <ellipse cx="12" cy="11" rx="3" ry="2" fill="rgba(255,255,255,0.35)" transform="rotate(-30 12 11)" />
-    </svg>
+    <img
+      src={palCoinImg}
+      alt="Coin"
+      style={{
+        width: size,
+        height: size,
+        display: 'inline-block',
+        verticalAlign: 'middle',
+        flexShrink: 0,
+        objectFit: 'contain',
+        ...style
+      }}
+    />
   );
 }
 

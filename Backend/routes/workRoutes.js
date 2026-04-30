@@ -65,6 +65,22 @@ router.post('/:id/like', protect, async (req, res) => {
   }
 });
 
+// ✅ Increment View Count
+router.post('/:id/view', async (req, res) => {
+  try {
+    console.log(`[DEBUG] Incrementing views for work: ${req.params.id}`);
+    const work = await Work.findByIdAndUpdate(
+      req.params.id, 
+      { $inc: { views: 1 } }, 
+      { new: true }
+    );
+    if (!work) return res.status(404).json({ message: "ไม่พบผลงาน" });
+    res.json({ views: work.views });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ✅ แก้ไข Route Comment ให้เสถียรขึ้น
 router.post('/:id/comment', async (req, res) => {
   try {

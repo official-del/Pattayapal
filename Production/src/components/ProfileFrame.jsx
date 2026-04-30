@@ -17,7 +17,9 @@ const RANK_COLORS = {
   Gold: { ring: '#f59e0b', glow: '#f59e0b77', track: '#2a1c00' },
   Platinum: { ring: '#6ee7f7', glow: '#6ee7f766', track: '#001a20' },
   Diamond: { ring: '#818cf8', glow: '#818cf888', track: '#0a0a20' },
-  Conqueror: { ring: '#ef4444', glow: '#ef4444aa', track: '#200000' },
+  Conqueror: { ring: '#00d2ff', glow: '#00d2ffaa', track: '#001520' },
+  Commander: { ring: '#00d2ff', glow: '#00d2ffaa', track: '#001520' },
+  Master:    { ring: '#00d2ff', glow: '#00d2ffaa', track: '#001520' },
 };
 
 /**

@@ -7,6 +7,7 @@ import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import HireModal from '../components/HireModal';
 import ImageCropModal from '../components/ImageCropModal';
+import HoverVideoPlayer from '../components/HoverVideoPlayer';
 import { useSocket } from '../context/SocketContext';
 import { formatLastSeen } from '../utils/timeUtils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -464,8 +465,8 @@ function UserProfile() {
                         <h1 style={{ fontSize: 'clamp(2rem, 5vw, 4rem)', fontWeight: '900', margin: 0, color: '#fff', letterSpacing: '2px', textTransform: 'uppercase', lineHeight: 1 }}>{profile.name}</h1>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
                            <span style={{ color: '#555', fontWeight: '700', fontSize: '1.1rem' }}>@{profile.username}</span>
-                           <div style={{ background: 'rgba(255,87,51,0.1)', padding: '6px 15px', borderRadius: '12px', border: '1px solid rgba(255,87,51,0.1)' }}>
-                              <span style={{ color: 'var(--p-accent)', fontWeight: '800', fontSize: '0.8rem', letterSpacing: '1px' }}>{profile.profession || 'GENERAL'}</span>
+                           <div style={{ background: 'rgba(255, 87, 51, 0.1)', padding: '6px 15px', borderRadius: '12px', border: '1px solid rgba(255, 87, 51, 0.1)' }}>
+                              <span style={{ color: 'var(--accent)', fontWeight: '800', fontSize: '0.8rem', letterSpacing: '1px' }}>{profile.profession || 'GENERAL'}</span>
                            </div>
                         </div>
                      </div>
@@ -504,7 +505,7 @@ function UserProfile() {
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass" style={{ padding: '30px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                         <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '2px' }}>IDENTITY RANK</label>
-                        <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--accent)' }}>XP: {(profile.points || 0).toLocaleString()}</div>
+                        <div style={{ fontSize: '0.7rem', fontWeight: '700', color: ['Conqueror', 'Commander', 'Master'].includes(profile.rank) ? '#00d2ff' : 'var(--accent)' }}>XP: {(profile.points || 0).toLocaleString()}</div>
                      </div>
 
                      <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
@@ -528,7 +529,11 @@ function UserProfile() {
                                  initial={{ width: 0 }}
                                  animate={{ width: `${rankProgress.progress || 0}%` }}
                                  transition={{ duration: 1, ease: "easeOut" }}
-                                 style={{ height: '100%', background: 'var(--accent)', boxShadow: '0 0 15px var(--accent)' }}
+                                 style={{ 
+                                    height: '100%', 
+                                    background: ['Conqueror', 'Commander', 'Master'].includes(profile.rank) ? '#00d2ff' : 'var(--accent)', 
+                                    boxShadow: `0 0 15px ${['Conqueror', 'Commander', 'Master'].includes(profile.rank) ? '#00d2ff' : 'var(--accent)'}` 
+                                 }}
                               />
                            </div>
                         </div>
@@ -643,24 +648,11 @@ function UserProfile() {
                                     <motion.div whileHover={{ y: -10 }} key={w._id} onClick={() => navigate(`/works/${w._id}`)} style={{ cursor: 'pointer', borderRadius: '30px', overflow: 'hidden', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)' }}>
                                        <div style={{ height: '240px', overflow: 'hidden', position: 'relative', background: '#111' }}>
                                           {w.type === 'video' ? (
-                                             <>
-                                                {w.mainImage?.url && !isVideoUrl(w.mainImage.url) ? (
-                                                   <img 
-                                                      src={getFullUrl(w.mainImage.url)} 
-                                                      loading="lazy"
-                                                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                                   />
-                                                ) : (w.mainImage?.url || w.mediaUrl) ? (
-                                                   <video src={getFullUrl(w.mainImage?.url || w.mediaUrl)} muted preload="metadata" autoPlay loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                   <div style={{ width: '100%', height: '100%', background: '#0a0a0a' }} />
-                                                )}
-                                                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)' }}>
-                                                   <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'rgba(255,87,51,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 25px var(--accent-glow)', backdropFilter: 'blur(4px)' }}>
-                                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21" /></svg>
-                                                   </div>
-                                                </div>
-                                             </>
+                                             <HoverVideoPlayer 
+                                                src={getFullUrl(w.mainImage?.url || w.mediaUrl)} 
+                                                poster={w.mainImage?.url && !isVideoUrl(w.mainImage.url) ? getFullUrl(w.mainImage.url) : null}
+                                                style={{ width: '100%', height: '100%' }}
+                                             />
                                           ) : w.mainImage?.url ? (
                                              <img 
                                                 src={getFullUrl(w.mainImage.url)} 

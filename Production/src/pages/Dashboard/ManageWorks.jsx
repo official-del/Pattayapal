@@ -4,6 +4,7 @@ import { worksAPI } from '../../utils/api';
 import { getFullUrl, isVideoUrl } from '../../utils/mediaUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiEdit2, FiTrash2, FiEye, FiVideo, FiPlay, FiLayers, FiActivity, FiArrowRight } from 'react-icons/fi';
+import HoverVideoPlayer from '../../components/HoverVideoPlayer';
 import '../../css/ManageWorks.css';
 
 // 🎥 Sub-component for individual media items
@@ -14,17 +15,10 @@ const MediaItem = ({ work, navigate }) => {
   return (
     <div className="mw-media-box">
       {isActuallyVideo ? (
-        <>
-          <video
-            src={mediaUrl}
-            muted preload="metadata" autoPlay loop playsInline
-          />
-          <div className="mw-play-overlay">
-            <div className="play-icon-glow">
-              <FiPlay size={18} color="#fff" />
-            </div>
-          </div>
-        </>
+        <HoverVideoPlayer 
+          src={mediaUrl} 
+          style={{ width: '100%', height: '100%' }}
+        />
       ) : (
         <img
           src={mediaUrl}

@@ -121,28 +121,64 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
           </div>
         </div>
 
-        {isAuthor && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)' }}>
           <motion.button 
-            whileHover={{ scale: 1.1, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }} 
-            onClick={handleDeletePost} 
+            whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.1)' }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleShare}
             style={{ 
-              background: 'rgba(255,255,255,0.05)', 
-              border: '1px solid rgba(255,255,255,0.1)', 
-              color: '#888', 
+              background: copied ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)', 
+              border: `1px solid ${copied ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`, 
+              color: copied ? 'var(--accent)' : '#888', 
               cursor: 'pointer', 
               padding: 'clamp(8px, 1.5vw, 12px)', 
               borderRadius: '15px', 
-              flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              position: 'relative'
             }}
-            title="ลบโพสต์"
+            title="แชร์โพสต์"
           >
-            <FiTrash2 style={{ width: '18px', height: '18px' }} />
+            {copied ? <FiZap style={{ width: '18px', height: '18px' }} /> : <FiShare2 style={{ width: '18px', height: '18px' }} />}
+            <AnimatePresence>
+              {copied && (
+                <motion.span
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  style={{ position: 'absolute', bottom: '-25px', left: '50%', transform: 'translateX(-50%)', fontSize: '10px', color: 'var(--accent)', fontWeight: '800', whiteSpace: 'nowrap' }}
+                >
+                  COPIED!
+                </motion.span>
+              )}
+            </AnimatePresence>
           </motion.button>
-        )}
+
+          {isAuthor && (
+            <motion.button 
+              whileHover={{ scale: 1.1, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }} 
+              onClick={handleDeletePost} 
+              style={{ 
+                background: 'rgba(255,255,255,0.05)', 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                color: '#888', 
+                cursor: 'pointer', 
+                padding: 'clamp(8px, 1.5vw, 12px)', 
+                borderRadius: '15px', 
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
+              }}
+              title="ลบโพสต์"
+            >
+              <FiTrash2 style={{ width: '18px', height: '18px' }} />
+            </motion.button>
+          )}
+        </div>
       </div>
 
       {/* Intelligence Payload */}
@@ -199,20 +235,6 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
           <span style={{ color: '#fff' }}>{comments.length} <span style={{ fontSize: 'clamp(0.6rem, 1vw, 0.7rem)', opacity: 0.5, marginLeft: '5px' }}>Comment</span></span>
         </motion.button>
 
-        <div style={{ flex: 1, minWidth: '20px' }} />
-
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={handleShare}
-          className="glass"
-          style={{
-            width: 'clamp(45px, 10vw, 60px)', height: 'clamp(45px, 10vw, 60px)', borderRadius: '30px', display: 'flex', alignItems: 'center', border: `1px solid ${copied ? 'var(--accent)' : 'rgba(255,255,255,0.03)'}`,
-            justifyContent: 'center', cursor: 'pointer', color: copied ? 'var(--accent)' : '#fff', flexShrink: 0, transition: '0.3s'
-          }}
-          title="Share Post"
-        >
-          {copied ? <FiZap style={{ width: '20px', height: '20px' }} /> : <FiShare2 style={{ width: '20px', height: '20px' }} />}
-        </motion.button>
       </div>
 
       {/* 🧬 Responses Feed Sub-System */}

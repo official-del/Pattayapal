@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiHome, FiGrid, FiPackage, FiBriefcase, FiUser, FiArrowLeft, FiMessageCircle, FiSettings, FiZap, FiDollarSign, FiActivity, FiGlobe, FiBell, FiSearch, FiGift
 } from 'react-icons/fi';
+import { CoinIcon } from './CoinIcon';
 
 function DashboardSidebar({ show, onClose }) {
   const location = useLocation();
@@ -184,7 +185,7 @@ function DashboardSidebar({ show, onClose }) {
         </div>
         <Link to="/dashboard/wallet" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ color: '#f59e0b', fontSize: '1.4rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FiDollarSign />
+            <CoinIcon size={22} />
             {(userInfo?.coinBalance || localUserInfo?.coinBalance || 0).toLocaleString()}
           </div>
           <span style={{ fontSize: '0.6rem', color: '#444', fontWeight: '700', letterSpacing: '1px' }}>COINS</span>

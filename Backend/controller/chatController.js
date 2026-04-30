@@ -182,7 +182,7 @@ export const sendMessage = async (req, res) => {
     const io = req.app.get('io');
     const sender = await User.findById(senderId).select('name profileImage');
     const messagePayload = {
-      ...newMessage._doc,
+      ...newMessage.toJSON(),
       conversationId,
       roomId: conversationId,
       senderName: sender?.name || 'Unknown',

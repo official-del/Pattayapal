@@ -3,6 +3,7 @@ import Work from '../models/Work.js';
 import Notification from '../models/Notification.js';
 import Job from '../models/Job.js';
 import Transaction from '../models/Transaction.js';
+import ProfileView from '../models/ProfileView.js';
 
 // GET Public Profile (by ID)
 const getPublicProfile = async (req, res) => {
@@ -13,12 +14,25 @@ const getPublicProfile = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
 
-    // ✅ Increment Profile Views (skip if owner is viewing their own profile)
+    // ✅ Unique Profile Views (count only once per unique viewer/IP)
     const viewerId = req.user?.id || req.user?._id;
+    const viewerIp = req.ip;
     const isOwner = viewerId && viewerId.toString() === user._id.toString();
+
     if (!isOwner) {
-      user.totalViews = (user.totalViews || 0) + 1;
-      await user.save();
+      try {
+        const viewData = { targetId: user._id };
+        if (viewerId) viewData.viewerId = viewerId;
+        else viewData.viewerIp = viewerIp;
+
+        await ProfileView.create(viewData);
+        user.totalViews = (user.totalViews || 0) + 1;
+        await user.save();
+      } catch (err) {
+        if (err.code !== 11000) {
+          console.error("Profile view error:", err);
+        }
+      }
     }
 
     const worksWithComments = await Work.find({ 'comments.userId': user._id })
@@ -60,12 +74,25 @@ const getPublicProfileByUsername = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
     
-    // ✅ Increment Profile Views (skip if owner is viewing their own profile)
+    // ✅ Unique Profile Views (count only once per unique viewer/IP)
     const viewerId = req.user?.id || req.user?._id;
+    const viewerIp = req.ip;
     const isOwner = viewerId && viewerId.toString() === user._id.toString();
+
     if (!isOwner) {
-      user.totalViews = (user.totalViews || 0) + 1;
-      await user.save();
+      try {
+        const viewData = { targetId: user._id };
+        if (viewerId) viewData.viewerId = viewerId;
+        else viewData.viewerIp = viewerIp;
+
+        await ProfileView.create(viewData);
+        user.totalViews = (user.totalViews || 0) + 1;
+        await user.save();
+      } catch (err) {
+        if (err.code !== 11000) {
+          console.error("Profile view error:", err);
+        }
+      }
     }
 
     const worksWithComments = await Work.find({ 'comments.userId': user._id })

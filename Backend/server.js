@@ -26,6 +26,7 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import questRoutes from './routes/questRoutes.js';
 import questSubmissionRoutes from './routes/questSubmissionRoutes.js';
+import Work from './models/Work.js';
 
 // ตั้งค่าสำหรับ ES Module
 const __filename = fileURLToPath(import.meta.url);
@@ -257,13 +258,73 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', uptime: process.uptime() });
 });
 
-// ✅ Catch-all route เพื่อรองรับ SPA (React Router) 
-// ต้องอยู่หลัง API Routes ทั้งหมดเสมอ!
-app.get('*', (req, res) => {
+// ✅ Catch-all route เพื่อรองรับ SPA (React Router) + Dynamic SEO Meta Tags
+app.get('*', async (req, res) => {
   const indexPath = path.join(__dirname, 'dist', 'index.html');
-  // เช็คว่ามีไฟล์ dist หรือไม่ (ป้องกัน Error กรณีรันใน dev แล้วยังไม่ได้ build)
+  
   if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
+    try {
+      let html = fs.readFileSync(indexPath, 'utf8');
+
+      // Default Meta Data
+      let title = "Pattayapal Portfolio | Community & Workspace for Freelancers";
+      let description = "Pattayapal แพลตฟอร์มรวมผลงานและชุมชนฟรีแลนซ์คุณภาพ แหล่งรวมโปรดักชั่น ดีไซน์ และการตลาดออนไลน์ที่ดีที่สุด";
+      let image = "https://pattayapal.com/og-image.jpg";
+      let url = `https://pattayapal.com${req.url}`;
+
+      // 1. Check for Work Detail (/works/:id)
+      const workMatch = req.url.match(/\/works\/([a-zA-Z0-9]+)/);
+      if (workMatch) {
+        const work = await Work.findById(workMatch[1]).select('title description mainImage');
+        if (work) {
+          title = `${work.title} | Pattayapal Portfolio`;
+          description = work.description?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || description;
+          if (work.mainImage?.url) {
+            image = work.mainImage.url.startsWith('http') ? work.mainImage.url : `https://pattayapal.com${work.mainImage.url.startsWith('/') ? '' : '/'}${work.mainImage.url}`;
+          }
+        }
+      }
+
+      // 2. Check for Profile (/profile/:id or /profile/:username)
+      const profileMatch = req.url.match(/\/profile\/([a-zA-Z0-9_-]+)/);
+      if (profileMatch) {
+        const identifier = profileMatch[1];
+        let user;
+        if (identifier.length === 24 && /^[0-9a-fA-F]+$/.test(identifier)) {
+          user = await User.findById(identifier).select('name username bio profileImage profession');
+        } else {
+          user = await User.findOne({ username: identifier.toLowerCase() }).select('name username bio profileImage profession');
+        }
+
+        if (user) {
+          title = `${user.name} (@${user.username}) | Pattayapal Profile`;
+          description = user.bio?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `${user.name} - ${user.profession || 'Freelancer'} on Pattayapal`;
+          if (user.profileImage?.url) {
+            image = user.profileImage.url.startsWith('http') ? user.profileImage.url : `https://pattayapal.com${user.profileImage.url.startsWith('/') ? '' : '/'}${user.profileImage.url}`;
+          }
+        }
+      }
+
+      // Inject into HTML
+      html = html.replace(/<title>.*?<\/title>/g, `<title>${title}</title>`);
+      html = html.replace(/<meta property="og:title" content=".*?" \/>/g, `<meta property="og:title" content="${title}" />`);
+      html = html.replace(/<meta property="twitter:title" content=".*?" \/>/g, `<meta property="twitter:title" content="${title}" />`);
+      
+      html = html.replace(/<meta name="description" content=".*?" \/>/g, `<meta name="description" content="${description}" />`);
+      html = html.replace(/<meta property="og:description" content=".*?" \/>/g, `<meta property="og:description" content="${description}" />`);
+      html = html.replace(/<meta property="twitter:description" content=".*?" \/>/g, `<meta property="twitter:description" content="${description}" />`);
+      
+      html = html.replace(/<meta property="og:image" content=".*?" \/>/g, `<meta property="og:image" content="${image}" />`);
+      html = html.replace(/<meta property="twitter:image" content=".*?" \/>/g, `<meta property="twitter:image" content="${image}" />`);
+      
+      html = html.replace(/<meta property="og:url" content=".*?" \/>/g, `<meta property="og:url" content="${url}" />`);
+      html = html.replace(/<meta property="twitter:url" content=".*?" \/>/g, `<meta property="twitter:url" content="${url}" />`);
+
+      res.send(html);
+    } catch (err) {
+      console.error("SEO Injection Error:", err);
+      res.sendFile(indexPath);
+    }
   } else {
     res.status(404).send('Backend is running, but Frontend build (dist) not found. Please run npm run build.');
   }

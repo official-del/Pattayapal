@@ -66,7 +66,7 @@ function DashboardOverview() {
     { label: 'ACTIVE JOBS', value: summary?.jobsPostedCount || 0, icon: <FiPackage />, color: '#ff5733' },
     { label: 'COIN BALANCE', value: summary?.coinBalance || 0, isCoin: true, icon: <CoinIcon size={28} />, color: '#f59e0b' },
     { label: 'ACTIVE HIRES', value: summary?.activeHiresCount || 0, icon: <FiUsers />, color: '#6366f1' },
-    { label: 'TOTAL BUDGET', value: summary?.totalBudgetSpent || 0, isCoin: true, icon: <FiActivity />, color: '#22c55e' },
+    { label: 'TOTAL BUDGET', value: summary?.totalBudgetSpent || 0, isCoin: true, icon: <CoinIcon size={28} />, color: '#22c55e' },
   ] : [
     { label: 'PORTFOLIO', value: summary?.totalWorks || 0, icon: <FiPackage />, color: '#ff5733' },
     { label: 'REACH', value: summary?.totalViews || 0, icon: <FiEye />, color: '#6366f1' },

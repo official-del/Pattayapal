@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { worksAPI } from '../utils/api';
 import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
@@ -11,6 +11,9 @@ import HoverVideoPlayer from '../components/HoverVideoPlayer';
 import { CONFIG } from '../utils/config';
 
 const API_BASE_URL = CONFIG.API_BASE_URL;
+
+// 🛡️ Global tracker to prevent double-incrementing in development/Strict Mode
+const sessionViewedIds = new Set();
 
 function WorkDetail() {
   const { id } = useParams();
@@ -38,8 +41,21 @@ function WorkDetail() {
     const fetchAllData = async () => {
       setLoading(true);
       try {
+        // 📈 Increment View Count First (Only once per project ID per session load)
+        let resView = null;
+        if (!sessionViewedIds.has(id)) {
+          sessionViewedIds.add(id); // ✅ Add immediately to prevent race conditions
+          resView = await axios.post(`${API_BASE_URL}/api/works/${id}/view`).catch(err => null);
+        }
+        
         const resDetail = await worksAPI.getById(id);
         const data = resDetail.work || resDetail;
+        
+        // If view increment was successful, use that count, otherwise use what's in data
+        if (resView && resView.data) {
+          data.views = resView.data.views;
+        }
+
         setWork(data);
         setComments(data.comments || []);
         setLikesCount(data.likes?.length || 0);
@@ -309,20 +325,20 @@ function WorkDetail() {
           <motion.aside variants={itemVariants} style={{ position: 'sticky', top: '150px' }}>
             <div className="glass" style={{ padding: '50px', borderRadius: '60px', border: '1px solid rgba(255,255,255,0.03)' }}>
               {/* Operative Bio */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '25px', marginBottom: '50px' }}>
-                <div style={{ width: '65px', height: '65px', borderRadius: '50%', background: '#000', border: '2px solid var(--accent)', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(15px, 3vw, 25px)', marginBottom: 'clamp(20px, 5vw, 50px)' }}>
+                <div style={{ width: 'clamp(45px, 10vw, 65px)', height: 'clamp(45px, 10vw, 65px)', borderRadius: '50%', background: '#000', border: '2px solid var(--accent)', overflow: 'hidden', flexShrink: 0 }}>
                   <img src={work.createdBy?.profileImage?.url ? getFullUrl(work.createdBy.profileImage.url) : 'https://via.placeholder.com/65'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '1px' }}>Creator</span>
-                  <Link to={`/profile/${work.createdBy?._id || work.createdBy?.id}`} style={{ display: 'block', color: '#fff', fontSize: '1.5rem', fontWeight: '700', textDecoration: 'none', marginTop: '4px' }}>{work.createdBy?.name || 'Unknown'}</Link>
+                  <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '1px' }}>Creator</span>
+                  <Link to={`/profile/${work.createdBy?._id || work.createdBy?.id}`} style={{ display: 'block', color: '#fff', fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', fontWeight: '700', textDecoration: 'none', marginTop: '2px' }}>{work.createdBy?.name || 'Unknown'}</Link>
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '35px' }}>
-                <div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#222', letterSpacing: '2px', display: 'block', marginBottom: '10px' }}>Category</span>
-                  <div className="glass" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: '15px', color: 'var(--accent)', fontWeight: '700', fontSize: '0.85rem', border: '1px solid rgba(255,87,51,0.1)' }}>{work.category?.name?.toUpperCase() || 'GENERAL'}</div>
+                 <div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#333', letterSpacing: '2px', display: 'block', marginBottom: '10px' }}>Category</span>
+                  <div className="glass" style={{ display: 'inline-block', padding: 'clamp(6px, 1.5vw, 10px) clamp(12px, 3vw, 20px)', borderRadius: '12px', color: 'var(--accent)', fontWeight: '700', fontSize: 'clamp(0.7rem, 2vw, 0.85rem)', border: '1px solid rgba(255,87,51,0.1)' }}>{work.category?.name?.toUpperCase() || 'GENERAL'}</div>
                 </div>
                 <div>
                   <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#222', letterSpacing: '1px', display: 'block', marginBottom: '10px' }}>Description</span>
@@ -331,28 +347,28 @@ function WorkDetail() {
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+                 <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, 15px)', marginTop: '20px' }}>
                   <motion.button
                     onClick={handleLike}
                     whileHover={{ scale: 1.05, boxShadow: isLiked ? '0 0 30px var(--accent-glow)' : 'none' }}
                     className="glass"
-                    style={{ flex: 1, padding: '20px', borderRadius: '30px', color: isLiked ? 'var(--accent)' : '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', border: `1px solid ${isLiked ? 'var(--accent)' : 'rgba(255,255,255,0.03)'}`, cursor: 'pointer', transition: '0.3s' }}
+                    style={{ flex: 1, padding: 'clamp(12px, 3vw, 20px)', borderRadius: 'clamp(15px, 4vw, 30px)', color: isLiked ? 'var(--accent)' : '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: `1px solid ${isLiked ? 'var(--accent)' : 'rgba(255,255,255,0.03)'}`, cursor: 'pointer', transition: '0.3s', fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }}
                   >
-                    <FiHeart fill={isLiked ? 'var(--accent)' : 'none'} size={20} /> {likesCount}
+                    <FiHeart fill={isLiked ? 'var(--accent)' : 'none'} size={18} /> {likesCount}
                   </motion.button>
                   <div 
                     className="glass" 
-                    style={{ flex: 1, padding: '20px', borderRadius: '30px', color: '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.03)' }}
+                    style={{ flex: 1, padding: 'clamp(12px, 3vw, 20px)', borderRadius: 'clamp(15px, 4vw, 30px)', color: '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: '1px solid rgba(255,255,255,0.03)', fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }}
                   >
-                    <FiEye size={20} /> {Number(work.views || 0).toLocaleString()}
+                    <FiEye size={18} /> {Number(work.views || 0).toLocaleString()}
                   </div>
                   <motion.button 
                     onClick={handleShare}
                     whileHover={{ scale: 1.05 }} 
                     className="glass" 
-                    style={{ flex: 1, padding: '20px', borderRadius: '30px', color: '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer' }}
+                    style={{ flex: 1, padding: 'clamp(12px, 3vw, 20px)', borderRadius: 'clamp(15px, 4vw, 30px)', color: '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer', fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }}
                   >
-                    <FiExternalLink size={20} /> Share
+                    <FiExternalLink size={18} /> Share
                   </motion.button>
                 </div>
               </div>
@@ -503,8 +519,8 @@ function WorkDetail() {
         }
         @media (max-width: 768px) {
           .work-detail-container { padding: 80px 4% 0 !important; }
-          .work-title { font-size: 3rem !important; margin-bottom: 25px !important; }
-          .glass { padding: 30px !important; border-radius: 40px !important; }
+          .work-title { font-size: 2.5rem !important; margin-bottom: 20px !important; }
+          .glass { padding: 25px !important; border-radius: 35px !important; }
         }
         @media (max-width: 480px) {
           .work-detail-container { padding: 60px 15px 0 !important; }
