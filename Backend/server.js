@@ -26,6 +26,7 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import questRoutes from './routes/questRoutes.js';
 import questSubmissionRoutes from './routes/questSubmissionRoutes.js';
+import testEmailRoute from './routes/testEmailRoute.js';
 import Work from './models/Work.js';
 
 // ตั้งค่าสำหรับ ES Module
@@ -252,6 +253,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/quests', questRoutes);
 app.use('/api/quest-submissions', questSubmissionRoutes);
+app.use('/api/test', testEmailRoute);
 
 // ✅ Health Check สำหรับ Docker / Load Balancer
 app.get('/api/health', (req, res) => {
