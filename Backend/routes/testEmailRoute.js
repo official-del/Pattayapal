@@ -19,7 +19,13 @@ router.get('/email', async (req, res) => {
 
   console.log(`[Test] Attempting to send test email to: ${targetEmail}`);
   
-  const success = await sendVerificationEmail(targetEmail, 'TEST_TOKEN_' + Date.now(), req);
+  const timeStr = new Date().toLocaleTimeString('th-TH');
+  const success = await sendVerificationEmail(
+    targetEmail, 
+    'TEST_TOKEN_' + Date.now(), 
+    req,
+    `🧪 PATTAYAPAL TEST [${timeStr}]`
+  );
   
   if (success) {
     res.json({ 

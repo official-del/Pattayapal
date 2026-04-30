@@ -5,8 +5,9 @@ import nodemailer from 'nodemailer';
  * @param {string} userEmail - Recipient email.
  * @param {string} token - Verification token.
  * @param {object} req - Optional Express request object for dynamic URL detection.
+ * @param {string} customSubject - Optional custom subject for the email.
  */
-export const sendVerificationEmail = async (userEmail, token, req = null) => {
+export const sendVerificationEmail = async (userEmail, token, req = null, customSubject = null) => {
   try {
     let transporter;
 
@@ -73,7 +74,7 @@ export const sendVerificationEmail = async (userEmail, token, req = null) => {
     const mailOptions = {
       from: smtpUser || '"Pattayapal Team" <no-reply@pattayapal.com>',
       to: userEmail,
-      subject: 'Verify your Pattayapal account',
+      subject: customSubject || 'Verify your Pattayapal account',
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 40px; text-align: center; background-color: #050505; color: #fff; border: 1px solid #1a1a1a; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
           <div style="margin-bottom: 30px;">
