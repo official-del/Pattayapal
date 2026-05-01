@@ -13,8 +13,16 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 const FeedPost = React.memo(({ post, onPostDeleted }) => {
   const { user, token: contextToken, profileUpdateTag } = useContext(AuthContext);
-  const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
-  const userInfo = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
+  let currentToken = contextToken;
+  let userInfo = user;
+  if (!currentToken || !userInfo) {
+    try {
+      currentToken = currentToken || localStorage.getItem('userToken') || localStorage.getItem('token');
+      userInfo = userInfo || JSON.parse(localStorage.getItem('userInfo') || '{}');
+    } catch (e) {
+      if (!userInfo) userInfo = {};
+    }
+  }
 
   const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
   const [isLiked, setIsLiked] = useState(userInfo?._id || userInfo?.id ? post.likes?.includes(userInfo._id || userInfo.id) : false);

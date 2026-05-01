@@ -7,8 +7,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 function CreatePostBox({ onPostCreated }) {
   const { user, token: contextToken, profileUpdateTag } = useContext(AuthContext);
-  const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
-  const userInfo = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
+  let currentToken = contextToken;
+  let userInfo = user;
+  if (!currentToken || !userInfo) {
+    try {
+      currentToken = currentToken || localStorage.getItem('userToken') || localStorage.getItem('token');
+      userInfo = userInfo || JSON.parse(localStorage.getItem('userInfo') || '{}');
+    } catch (e) {
+      if (!userInfo) userInfo = {};
+    }
+  }
 
   const [content, setContent] = useState('');
   const [media, setMedia] = useState(null);
