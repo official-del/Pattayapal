@@ -16,7 +16,9 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [isConnected, setIsConnected] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
+  const [notificationPermission, setNotificationPermission] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'denied'
+  );
 
   // 🏆 Gamification States
   const [pointEvent, setPointEvent] = useState(null);
@@ -36,7 +38,7 @@ export const SocketProvider = ({ children }) => {
     if (id) {
       userIdRef.current = String(id);
       // Request notification permission when user is logged in
-      if (Notification.permission === 'default') {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
         Notification.requestPermission().then(setNotificationPermission);
       }
     } else {
@@ -66,7 +68,7 @@ export const SocketProvider = ({ children }) => {
   }, []);
 
   const showBrowserNotification = useCallback((title, options = {}) => {
-    if (Notification.permission === 'granted' && document.hidden) {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden) {
       try {
         new Notification(title, {
           icon: '/favicon.ico',
@@ -185,7 +187,12 @@ export const SocketProvider = ({ children }) => {
       emitTyping,
       emitStopTyping,
       refreshOnlineUsers: fetchOnlineUsers,
-      requestNotificationPermission: () => Notification.requestPermission().then(setNotificationPermission),
+      requestNotificationPermission: () => {
+        if (typeof Notification !== 'undefined') {
+          return Notification.requestPermission().then(setNotificationPermission);
+        }
+        return Promise.resolve('denied');
+      },
       notificationPermission
     }}>
       {children}
