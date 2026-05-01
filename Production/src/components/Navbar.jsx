@@ -39,7 +39,12 @@ function Navbar() {
   const [balanceUpdateMessage, setBalanceUpdateMessage] = useState(null);
   const audioRef = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"));
 
-  const currentToken = token || localStorage.getItem('userToken') || localStorage.getItem('token');
+  let currentToken = token;
+  if (!currentToken) {
+    try {
+      currentToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+    } catch (e) {}
+  }
 
   useEffect(() => {
     let ticking = false;

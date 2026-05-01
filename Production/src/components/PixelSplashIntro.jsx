@@ -44,7 +44,13 @@ export default function PixelSplashIntro({ onComplete }) {
   // ── Refs & DOM ──
   const playerRef = useRef({ x: 100, y: GROUND_H + 100, vx: 0, vy: 0, isJumping: true, faceRight: true });
   const keysRef = useRef({ left: false, right: false, jump: false });
-  const audioRef = useRef(new Audio(musicFile));
+  const audioRef = useRef(null);
+  
+  useEffect(() => {
+    try {
+      audioRef.current = new Audio(musicFile);
+    } catch(e) {}
+  }, []);
 
   const playerNodeRef = useRef(null);
   const cameraNodeRef = useRef(null);
@@ -143,7 +149,9 @@ export default function PixelSplashIntro({ onComplete }) {
     // Win condition check
     if (p.x >= GOAL_X) {
       setGameState('won');
-      audioRef.current.volume = 0.3; // Lower volume for won screen
+      if (audioRef.current) {
+        audioRef.current.volume = 0.3; // Lower volume for won screen
+      }
     }
 
     // ── Render Updates via Refs (Zero React Overhead) ──
@@ -176,18 +184,20 @@ export default function PixelSplashIntro({ onComplete }) {
   }, [gameState]); // Rebind if state changes
 
   const startGame = () => {
-    audioRef.current.loop = true;
-    audioRef.current.play().catch(e => {});
+    if (audioRef.current) {
+      audioRef.current.loop = true;
+      audioRef.current.play().catch(e => {});
+    }
     setGameState('playing');
   };
 
   const skipGame = () => {
-    audioRef.current.pause();
+    if (audioRef.current) audioRef.current.pause();
     onComplete();
   };
 
   const handleAuthNav = (path, stateObj) => {
-    audioRef.current.pause();
+    if (audioRef.current) audioRef.current.pause();
     onComplete();
     if (path) {
       if (stateObj) navigate(path, stateObj);

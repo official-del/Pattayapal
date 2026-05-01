@@ -418,7 +418,14 @@ function LeftSidebar({ categories }) {
 // ─── Main Home Page ───────────────────────────────────────────────────────────
 function Home() {
   const { user } = useContext(AuthContext);
-  const userInfo = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
+  let userInfo = user;
+  if (!userInfo) {
+    try {
+      userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    } catch (e) {
+      userInfo = {};
+    }
+  }
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {

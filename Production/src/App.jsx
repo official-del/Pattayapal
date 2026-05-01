@@ -64,7 +64,12 @@ function App() {
   const isAdminPage = location.pathname.startsWith('/admin');
 
   // 🔒 ตรวจสอบ Token และหน้า Public
-  const hasToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+  let hasToken = false;
+  try {
+    hasToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+  } catch (e) {
+    console.warn("Storage access denied");
+  }
   const isPublicPage = ['/login', '/auth', '/verify-email', '/terms', '/privacy', '/admin/login'].some(p => location.pathname.startsWith(p));
 
   // 🚀 Redirect guest to login if accessing private pages
@@ -80,18 +85,26 @@ function App() {
      if (path === '/terms' || path === '/privacy') return false;
 
      // ข้ามเกมทันทีถ้าล็อกอินแล้ว
-     const hasToken = localStorage.getItem('userToken') || localStorage.getItem('token');
-     if (hasToken) return false;
+     let tokenExists = false;
+     try {
+       tokenExists = localStorage.getItem('userToken') || localStorage.getItem('token');
+     } catch (e) {}
+     if (tokenExists) return false;
      
      // ข้ามเกมถ้าเคยเล่นไปแล้วใน session นี้ (เปิดเว็บหน้าแรกครั้งเดียวพอ)
-     const hasSeen = sessionStorage.getItem('hasSeenSplash');
+     let hasSeen = false;
+     try {
+       hasSeen = sessionStorage.getItem('hasSeenSplash');
+     } catch (e) {}
      if (hasSeen) return false;
      
      return true;
   });
 
   const handleSplashComplete = () => {
-    sessionStorage.setItem('hasSeenSplash', 'true');
+    try {
+      sessionStorage.setItem('hasSeenSplash', 'true');
+    } catch (e) {}
     setShowSplash(false);
   };
 
@@ -113,7 +126,9 @@ function App() {
   // ⚖️ ถ้าเข้าหน้ากฎหมาย ให้ถือว่าข้ามการแสดง Splash ไปเลย เพื่อไม่ให้มันเด้งขึ้นมาตอนกดย้อนกลับ
   useEffect(() => {
     if (isLegalPage) {
-      sessionStorage.setItem('hasSeenSplash', 'true');
+      try {
+        sessionStorage.setItem('hasSeenSplash', 'true');
+      } catch (e) {}
       setShowSplash(false);
     }
   }, [isLegalPage]);

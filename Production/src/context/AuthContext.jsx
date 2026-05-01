@@ -7,7 +7,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   
   // 🧹 Sanitize token: remove literal 'null' or 'undefined' strings
-  const initialToken = localStorage.getItem('token');
+  let initialToken = null;
+  try {
+    initialToken = localStorage.getItem('token');
+  } catch (e) {}
   const [token, setToken] = useState(initialToken === 'null' || initialToken === 'undefined' ? null : initialToken);
   
   const [loading, setLoading] = useState(true);
@@ -18,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     // 🧹 Extra safety: if token becomes literal string somehow, clear it
     if (token === 'null' || token === 'undefined') {
        setToken(null);
-       localStorage.removeItem('token');
+       try { localStorage.removeItem('token'); } catch (e) {}
        return;
     }
 
@@ -61,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       userData.coinBalance = balance > 0 ? balance : 0;
       
       setUser(userData);
-      localStorage.setItem('userInfo', JSON.stringify(userData));
+      try { localStorage.setItem('userInfo', JSON.stringify(userData)); } catch(e) {}
     } catch (error) {
       const status = error.response?.status;
       // 🕵️ Only logout if it's explicitly 401 (Unauthorized)
@@ -74,12 +77,12 @@ export const AuthProvider = ({ children }) => {
         // We keep the last known 'user' from localStorage if possible.
         console.warn('📡 Network/Server error during profile fetch:', error.message);
         
-        const cachedUser = localStorage.getItem('userInfo');
-        if (cachedUser && !user) {
-           try {
+        try {
+          const cachedUser = localStorage.getItem('userInfo');
+          if (cachedUser && !user) {
              setUser(JSON.parse(cachedUser));
-           } catch (e) {}
-        }
+          }
+        } catch (e) {}
       }
     } finally {
       setLoading(false);
@@ -115,8 +118,10 @@ export const AuthProvider = ({ children }) => {
         
         userData.coinBalance = balance > 0 ? balance : 0;
         setUser(userData);
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userInfo', JSON.stringify(userData));
+        try {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('userInfo', JSON.stringify(userData));
+        } catch(e) {}
         return { success: true };
       }
       return { success: false, message: 'Invalid server response' };
@@ -133,15 +138,17 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('userToken'); // 👈 เพิ่มการลบตัวนี้ด้วย
-    localStorage.removeItem('userInfo');
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userToken'); // 👈 เพิ่มการลบตัวนี้ด้วย
+      localStorage.removeItem('userInfo');
+    } catch(e) {}
   };
 
   const updateUser = (newData) => {
     setUser(prev => {
       const updated = { ...prev, ...newData };
-      localStorage.setItem('userInfo', JSON.stringify(updated));
+      try { localStorage.setItem('userInfo', JSON.stringify(updated)); } catch(e) {}
       return updated;
     });
     setProfileUpdateTag(Date.now());
