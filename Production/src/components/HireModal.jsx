@@ -110,7 +110,7 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
     }
   };
 
-  const userInfo = user || JSON.parse(localStorage.getItem('userInfo'));
+  const userInfo = user || JSON.parse(window.safeStorage.getItem('userInfo'));
   const coinBalance = user?.coinBalance || userInfo?.coinBalance || 0;
 
   const isInsufficient = formData.budget > coinBalance;

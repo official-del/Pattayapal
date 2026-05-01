@@ -12,8 +12,8 @@ import { useSocket } from '../context/SocketContext';
 
 function Friends() {
   const { user: contextUser, token: contextToken } = useContext(AuthContext);
-  const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
-  const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo'));
+  const currentToken = contextToken || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
+  const currentUser = contextUser || JSON.parse(window.safeStorage.getItem('userInfo'));
   const { socket } = useSocket();
 
   const [friendRequests, setFriendRequests] = useState([]);

@@ -131,7 +131,7 @@ export default function AdminWorkForm() {
     if (!formData.mediaUrl) return toast.error('กรุณาอัปโหลดสื่อหลักก่อนบันทึก');
     setLoading(true);
 
-    const token = localStorage.getItem('token');
+    const token = window.safeStorage.getItem('token');
     const submitData = new FormData();
 
     // บีบอัดข้อมูลใส่ FormData

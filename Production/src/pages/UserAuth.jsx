@@ -23,8 +23,8 @@ export default function UserAuth() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('userToken') || localStorage.getItem('token');
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    const token = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
+    const userInfo = JSON.parse(window.safeStorage.getItem('userInfo'));
 
     if (token && userInfo) {
       if (userInfo.role?.toLowerCase() === 'admin') {
@@ -81,9 +81,9 @@ export default function UserAuth() {
           coinBalance: finalBalance > 0 ? finalBalance : 0
         };
 
-        localStorage.setItem('userToken', res.data.token);
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('userInfo', JSON.stringify(userDataToSave));
+        window.safeStorage.setItem('userToken', res.data.token);
+        window.safeStorage.setItem('token', res.data.token);
+        window.safeStorage.setItem('userInfo', JSON.stringify(userDataToSave));
 
         if (userDataToSave.role?.toLowerCase() === 'admin') {
           navigate('/admin/dashboard');

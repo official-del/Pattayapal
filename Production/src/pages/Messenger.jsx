@@ -32,8 +32,8 @@ const FileIcon = ({ type, name }) => {
 function Messenger() {
   const { conversationId } = useParams();
   const { user: contextUser, token: contextToken, logout, profileUpdateTag } = useContext(AuthContext);
-  const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
-  const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo'));
+  const currentToken = contextToken || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
+  const currentUser = contextUser || JSON.parse(window.safeStorage.getItem('userInfo'));
   const contextUserId = currentUser?._id || currentUser?.id;
 
   // 🧪 State Management

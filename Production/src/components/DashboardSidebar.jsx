@@ -10,7 +10,7 @@ import { CoinIcon } from './CoinIcon';
 function DashboardSidebar({ show, onClose }) {
   const location = useLocation();
   const { user } = useContext(AuthContext);
-  const localUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const localUserInfo = JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
   const userInfo = user || localUserInfo;
   const [isNavbarOpen, setIsNavbarOpen] = useState(false);
 

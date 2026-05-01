@@ -9,7 +9,7 @@ export { API };
 
 // 🛡️ Centralized Auth Interceptor
 API.interceptors.request.use(config => {
-  const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+  const token = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
     config.headers['x-auth-token'] = token; // Fallback for stripping proxies

@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   // 🧹 Sanitize token: remove literal 'null' or 'undefined' strings
   let initialToken = null;
   try {
-    initialToken = localStorage.getItem('token');
+    initialToken = window.safeStorage.getItem('token');
   } catch (e) {}
   const [token, setToken] = useState(initialToken === 'null' || initialToken === 'undefined' ? null : initialToken);
   
@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     // 🧹 Extra safety: if token becomes literal string somehow, clear it
     if (token === 'null' || token === 'undefined') {
        setToken(null);
-       try { localStorage.removeItem('token'); } catch (e) {}
+       try { window.safeStorage.removeItem('token'); } catch (e) {}
        return;
     }
 
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       userData.coinBalance = balance > 0 ? balance : 0;
       
       setUser(userData);
-      try { localStorage.setItem('userInfo', JSON.stringify(userData)); } catch(e) {}
+      try { window.safeStorage.setItem('userInfo', JSON.stringify(userData)); } catch(e) {}
     } catch (error) {
       const status = error.response?.status;
       // 🕵️ Only logout if it's explicitly 401 (Unauthorized)
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
         console.warn('📡 Network/Server error during profile fetch:', error.message);
         
         try {
-          const cachedUser = localStorage.getItem('userInfo');
+          const cachedUser = window.safeStorage.getItem('userInfo');
           if (cachedUser && !user) {
              setUser(JSON.parse(cachedUser));
           }
@@ -119,8 +119,8 @@ export const AuthProvider = ({ children }) => {
         userData.coinBalance = balance > 0 ? balance : 0;
         setUser(userData);
         try {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('userInfo', JSON.stringify(userData));
+          window.safeStorage.setItem('token', data.token);
+          window.safeStorage.setItem('userInfo', JSON.stringify(userData));
         } catch(e) {}
         return { success: true };
       }
@@ -139,16 +139,16 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     try {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userToken'); // 👈 เพิ่มการลบตัวนี้ด้วย
-      localStorage.removeItem('userInfo');
+      window.safeStorage.removeItem('token');
+      window.safeStorage.removeItem('userToken'); // 👈 เพิ่มการลบตัวนี้ด้วย
+      window.safeStorage.removeItem('userInfo');
     } catch(e) {}
   };
 
   const updateUser = (newData) => {
     setUser(prev => {
       const updated = { ...prev, ...newData };
-      try { localStorage.setItem('userInfo', JSON.stringify(updated)); } catch(e) {}
+      try { window.safeStorage.setItem('userInfo', JSON.stringify(updated)); } catch(e) {}
       return updated;
     });
     setProfileUpdateTag(Date.now());

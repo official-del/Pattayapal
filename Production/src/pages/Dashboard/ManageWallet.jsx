@@ -20,8 +20,8 @@ const THAI_BANKS = [
 
 function ManageWallet() {
   const { user, token: contextToken, fetchProfile } = useContext(AuthContext);
-  const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
-  const userInfoRaw = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const currentToken = contextToken || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
+  const userInfoRaw = user || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
   const { socket } = useSocket();
 
   // Normalization

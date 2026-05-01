@@ -27,7 +27,7 @@ export const SocketProvider = ({ children }) => {
   const socketRef = useRef(null);
   const userIdRef = useRef((() => {
     try {
-      const info = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const info = JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
       const id = info?._id || info?.id;
       return id ? String(id) : null;
     } catch (_) { return null; }
@@ -43,7 +43,7 @@ export const SocketProvider = ({ children }) => {
       }
     } else {
       try {
-        const info = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const info = JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
         const storedId = info?._id || info?.id;
         if (storedId) userIdRef.current = String(storedId);
       } catch (_) {}
@@ -58,7 +58,7 @@ export const SocketProvider = ({ children }) => {
 
   const fetchOnlineUsers = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+      const token = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
       if (!token) return;
       const ids = await usersAPI.getOnlineUsers();
       setOnlineUsers(new Set(ids.map(String)));

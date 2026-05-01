@@ -28,7 +28,7 @@ function Navbar() {
   const { user, token, logout, profileUpdateTag, fetchProfile } = useContext(AuthContext);
   const userInfo = useMemo(() => {
     if (user) return user;
-    try { return JSON.parse(localStorage.getItem('userInfo') || '{}'); } catch { return {}; }
+    try { return JSON.parse(window.safeStorage.getItem('userInfo') || '{}'); } catch { return {}; }
   }, [user]);
   const { socket } = useSocket();
   const location = useLocation();
@@ -42,7 +42,7 @@ function Navbar() {
   let currentToken = token;
   if (!currentToken) {
     try {
-      currentToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+      currentToken = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
     } catch (e) {}
   }
 
@@ -137,8 +137,8 @@ function Navbar() {
   const handleLogout = async () => {
     if (await customConfirm('Are you sure you want to log out?')) {
       if (logout) logout();
-      localStorage.clear();
-      sessionStorage.clear();
+      window.safeStorage.clear();
+      window.safeSessionStorage.clear();
       window.location.href = '/';
     }
   };

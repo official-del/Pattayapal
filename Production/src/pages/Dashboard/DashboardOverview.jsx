@@ -21,7 +21,7 @@ function DashboardOverview() {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+        const token = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
         const [summaryData, views, platforms, rank] = await Promise.allSettled([
           usersAPI.getDashboardSummary(token),
           analyticsAPI.getViewTrend(token),

@@ -16,8 +16,8 @@ import { PRODUCTION_SKILLS } from './UserProfile';
 function Discovery() {
   const { user: contextUser, token: contextToken } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
-  const currentToken = contextToken || localStorage.getItem('userToken');
-  const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const currentToken = contextToken || window.safeStorage.getItem('userToken');
+  const currentUser = contextUser || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
 
   const [freelancers, setFreelancers] = useState([]);
   const [loading, setLoading] = useState(true);

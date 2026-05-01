@@ -66,7 +66,7 @@ function App() {
   // 🔒 ตรวจสอบ Token และหน้า Public
   let hasToken = false;
   try {
-    hasToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+    hasToken = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
   } catch (e) {
     console.warn("Storage access denied");
   }
@@ -87,14 +87,14 @@ function App() {
      // ข้ามเกมทันทีถ้าล็อกอินแล้ว
      let tokenExists = false;
      try {
-       tokenExists = localStorage.getItem('userToken') || localStorage.getItem('token');
+       tokenExists = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
      } catch (e) {}
      if (tokenExists) return false;
      
      // ข้ามเกมถ้าเคยเล่นไปแล้วใน session นี้ (เปิดเว็บหน้าแรกครั้งเดียวพอ)
      let hasSeen = false;
      try {
-       hasSeen = sessionStorage.getItem('hasSeenSplash');
+       hasSeen = window.safeSessionStorage.getItem('hasSeenSplash');
      } catch (e) {}
      if (hasSeen) return false;
      
@@ -103,7 +103,7 @@ function App() {
 
   const handleSplashComplete = () => {
     try {
-      sessionStorage.setItem('hasSeenSplash', 'true');
+      window.safeSessionStorage.setItem('hasSeenSplash', 'true');
     } catch (e) {}
     setShowSplash(false);
   };
@@ -127,7 +127,7 @@ function App() {
   useEffect(() => {
     if (isLegalPage) {
       try {
-        sessionStorage.setItem('hasSeenSplash', 'true');
+        window.safeSessionStorage.setItem('hasSeenSplash', 'true');
       } catch (e) {}
       setShowSplash(false);
     }

@@ -11,8 +11,8 @@ function DashboardLayout() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const currentToken = token || localStorage.getItem('userToken');
-  const userInfo = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const currentToken = token || window.safeStorage.getItem('userToken');
+  const userInfo = user || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
 
   // 🛡️ Access Control
   if (!currentToken || !userInfo?.role) return <Navigate to="/login" />;

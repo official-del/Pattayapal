@@ -37,7 +37,7 @@ const STATUS_CONFIG = {
 
 function AdminWithdrawals() {
   const { token } = useContext(AuthContext);
-  const currentToken = token || localStorage.getItem('userToken') || localStorage.getItem('token');
+  const currentToken = token || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
 
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -17,8 +17,8 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
   let userInfo = user;
   if (!currentToken || !userInfo) {
     try {
-      currentToken = currentToken || localStorage.getItem('userToken') || localStorage.getItem('token');
-      userInfo = userInfo || JSON.parse(localStorage.getItem('userInfo') || '{}');
+      currentToken = currentToken || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
+      userInfo = userInfo || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
     } catch (e) {
       if (!userInfo) userInfo = {};
     }

@@ -68,8 +68,8 @@ function UserProfile() {
    const navigate = useNavigate();
    const { user: contextUser, token: contextToken, fetchProfile: refreshContext, updateUser, profileUpdateTag } = useContext(AuthContext);
 
-   const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
-   const currentUser = contextUser || JSON.parse(localStorage.getItem('userInfo') || '{}');
+   const currentToken = contextToken || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
+   const currentUser = contextUser || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
 
    const currentUserId = String(currentUser?._id || currentUser?.id || "");
    const [targetProfileId, setTargetProfileId] = useState(userId || "");

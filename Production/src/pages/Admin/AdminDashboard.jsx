@@ -51,11 +51,11 @@ export default function AdminDashboard() {
   const [adjustLoading, setAdjustLoading] = useState(false);
 
   // Get token from localStorage (no need for Context)
-  const activeToken = localStorage.getItem('token') || localStorage.getItem('userToken');
+  const activeToken = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
 
   useEffect(() => {
     // Initial Auth Check
-    const rawUserInfo = localStorage.getItem('userInfo');
+    const rawUserInfo = window.safeStorage.getItem('userInfo');
     if (!activeToken || !rawUserInfo) {
       navigate('/login');
       return;
@@ -253,7 +253,7 @@ export default function AdminDashboard() {
           </div>
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
              <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '1px' }}>PREVIEW</Link>
-             <button onClick={() => { localStorage.clear(); window.location.href='/'; }} style={{ background: 'none', border: 'none', color: '#ff4444', fontWeight: 800, cursor: 'pointer', fontSize: '0.75rem', letterSpacing: '1px' }}>LOGOUT</button>
+             <button onClick={() => { window.safeStorage.clear(); window.location.href='/'; }} style={{ background: 'none', border: 'none', color: '#ff4444', fontWeight: 800, cursor: 'pointer', fontSize: '0.75rem', letterSpacing: '1px' }}>LOGOUT</button>
           </div>
         </header>
 

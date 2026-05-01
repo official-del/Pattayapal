@@ -219,7 +219,7 @@ function AdminReviewQueue({ onUpdate }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 function Quests() {
   const { user, fetchProfile } = useContext(AuthContext);
-  const userInfo = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const userInfo = user || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
   const isAdmin = userInfo?.role === 'admin';
 
   const [quests, setQuests] = useState([]);

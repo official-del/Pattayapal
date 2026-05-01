@@ -57,7 +57,7 @@ function ManageWorks() {
 
   const fetchMyWorks = async () => {
     try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const userInfo = JSON.parse(window.safeStorage.getItem('userInfo'));
       const id = userInfo._id || userInfo.id;
       const res = await worksAPI.getByUser(id);
       setWorks(res.works || []);
@@ -75,7 +75,7 @@ function ManageWorks() {
   const handleDelete = async (id) => {
     if (!await customConfirm("ยืนยันการลบผลงานนี้ใช่หรือไม่? ข้อมูลจะถูกลบออกจากระบบอย่างถาวร")) return;
     try {
-      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+      const token = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
       await worksAPI.delete(id, token);
       setWorks(works.filter(w => w._id !== id));
     } catch (err) {

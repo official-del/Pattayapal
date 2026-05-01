@@ -36,8 +36,8 @@ function WorkDetail() {
   const [replyText, setReplyText] = useState("");
   const [expandedReplies, setExpandedReplies] = useState({});
 
-  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-  const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+  const userInfo = JSON.parse(window.safeStorage.getItem('userInfo'));
+  const token = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
 
   useEffect(() => {
     const fetchAllData = async () => {

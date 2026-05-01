@@ -8,8 +8,8 @@ import { FiLoader, FiActivity, FiSearch, FiFilter, FiZap, FiTarget, FiHash, FiAl
 
 function Feed() {
   const { user, token: contextToken } = useContext(AuthContext);
-  const currentToken = contextToken || localStorage.getItem('userToken') || localStorage.getItem('token');
-  const userInfo = user || JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const currentToken = contextToken || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
+  const userInfo = user || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);

@@ -421,7 +421,7 @@ function Home() {
   let userInfo = user;
   if (!userInfo) {
     try {
-      userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      userInfo = JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
     } catch (e) {
       userInfo = {};
     }

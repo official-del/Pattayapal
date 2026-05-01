@@ -53,7 +53,7 @@ function UserWorkForm() {
         const res = await worksAPI.getById(id);
         const data = res.work || res;
 
-        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        const userInfo = JSON.parse(window.safeStorage.getItem('userInfo'));
         const creatorId = data.createdBy?._id || data.createdBy;
         const currentUserId = userInfo?._id || userInfo?.id;
         const isAdmin = userInfo?.role === 'admin';
@@ -155,7 +155,7 @@ function UserWorkForm() {
     if (!formData.mediaUrl) return toast.error('กรุณาอัปโหลดรูปภาพหลักหรืองานวิดีโอก่อนบันทึก');
     setLoading(true);
 
-    const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+    const token = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
     const submitData = new FormData();
 
     Object.keys(formData).forEach(key => submitData.append(key, formData[key]));
