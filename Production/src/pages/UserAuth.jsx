@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMail, FiLock, FiUser, FiBriefcase, FiZap, FiArrowRight, FiShield, FiCpu, FiActivity } from 'react-icons/fi';
+import { FiMail, FiLock, FiUser, FiBriefcase, FiZap, FiArrowRight, FiShield, FiCpu, FiActivity, FiPhone } from 'react-icons/fi';
 import { CONFIG } from '../utils/config';
 import { walletAPI } from '../utils/api'; // 👈 Static import to prevent silent fallback failures
 
@@ -17,6 +17,7 @@ export default function UserAuth() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     profession: 'General',
     acceptedTerms: false
@@ -94,7 +95,7 @@ export default function UserAuth() {
         const res = await axios.post(`${CONFIG.API_BASE_URL}/api/users/register`, formData);
         setIsLogin(true);
         setSuccessMsg(res.data.message || 'Registration successful! Please check your email to verify your account.');
-        setFormData({ name: '', email: '', password: '', profession: 'General' });
+        setFormData({ name: '', email: '', phone: '', password: '', profession: 'General' });
       }
     } catch (error) {
       setErrorMsg(error.response?.data?.message || 'Invalid credentials. Please try again.');
@@ -152,6 +153,13 @@ export default function UserAuth() {
                   </div>
                 </div>
                 <div style={{ marginBottom: '25px' }}>
+                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>PHONE NUMBER</label>
+                  <div style={{ position: 'relative' }}>
+                    <FiPhone size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
+                    <input type="tel" name="phone" onChange={handleChange} value={formData.phone} placeholder="เบอร์โทรศัพท์ (ไม่บังคับ)..." style={{ width: '100%', padding: '22px 22px 22px 65px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', color: '#fff', outline: 'none', fontWeight: '700' }} />
+                  </div>
+                </div>
+                <div style={{ marginBottom: '25px' }}>
                   <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>SPECIALIZATION</label>
 
                   <div style={{ position: 'relative' }}>
@@ -169,6 +177,9 @@ export default function UserAuth() {
                       <option value="AI 3D Artist">AI 3D Artist</option>
                       <option value="AI Director">AI Director</option>
                       <option value="AI Producer">AI Producer</option>
+                      <option value="KOL">KOL</option>
+                      <option value="Influencer">Influencer</option>
+                      <option value="Content Creator">Content Creator</option>
                     </select>
                   </div>
                 </div>

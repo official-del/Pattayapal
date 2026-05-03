@@ -663,6 +663,49 @@ const claimQuest = async (req, res) => {
   }
 };
 
+// Admin: Broadcast System Notification
+const broadcastNotification = async (req, res) => {
+  try {
+    const { text, link } = req.body;
+    const adminId = req.user.id || req.user._id;
+
+    if (!text) {
+      return res.status(400).json({ message: 'ข้อความแจ้งเตือนต้องไม่ว่างเปล่า' });
+    }
+
+    // Get all users except the admin sending the broadcast
+    const users = await User.find({ _id: { $ne: adminId } }).select('_id');
+    const userIds = users.map(u => u._id);
+
+    // Create notifications for all users
+    const notifications = userIds.map(userId => ({
+      recipient: userId,
+      sender: adminId,
+      type: 'system',
+      text: text,
+      link: link || '/admin-dashboard',
+      isRead: false
+    }));
+
+    await Notification.insertMany(notifications);
+
+    // Emit real-time event to all connected clients
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new_notification', {
+        type: 'system',
+        text: text,
+        link: link || '/admin-dashboard',
+        sender: { name: 'System Admin' }
+      });
+    }
+
+    res.json({ message: `ส่งแจ้งเตือนให้ผู้ใช้งาน ${users.length} คนสำเร็จ` });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export {
   getPublicProfile,
   getPublicProfileByUsername,
@@ -681,5 +724,6 @@ export {
   getLeaderboard,
   getRankProgress,
   changePassword,
-  claimQuest
+  claimQuest,
+  broadcastNotification
 };

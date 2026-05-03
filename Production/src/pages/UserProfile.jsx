@@ -191,7 +191,8 @@ function UserProfile() {
 
             const fetchedUser = data.user;
             setProfile(fetchedUser);
-            if (fetchedUser?._id) setTargetProfileId(String(fetchedUser._id));
+            const activeProfileId = fetchedUser?._id ? String(fetchedUser._id) : targetProfileId;
+            if (fetchedUser?._id) setTargetProfileId(activeProfileId);
 
             setRecentComments(data.recentComments || []);
             setBioText(data.user?.bio || '');
@@ -209,11 +210,11 @@ function UserProfile() {
             setServicePackages(data.user?.servicePackages || []);
             setWebsiteText(data.user?.website || '');
 
-            const wRes = await worksAPI.getByUser(targetProfileId);
+            const wRes = await worksAPI.getByUser(activeProfileId);
             setWorks(wRes.works || []);
 
             if (currentToken && !isMyProfile) {
-               const statusRes = await usersAPI.getFriendStatus(targetProfileId, currentToken);
+               const statusRes = await usersAPI.getFriendStatus(activeProfileId, currentToken);
                setFriendStatus(statusRes.status);
             }
 
@@ -226,7 +227,7 @@ function UserProfile() {
             const postsRes = await postsAPI.getAll();
             const allPosts = Array.isArray(postsRes) ? postsRes : (postsRes?.posts || postsRes?.data || []);
             const filteredPosts = allPosts.filter(p => 
-               (p.author?._id || p.author) === targetProfileId
+               (p.author?._id || p.author) === activeProfileId
             );
             setUserPosts(filteredPosts);
          } catch (err) { console.error('Profile fetch failed', err); }
@@ -389,7 +390,7 @@ function UserProfile() {
             {/* OpenGraph */}
             <meta property="og:title" content={`${profile?.name} | ${profile?.profession || 'Freelancer'} | Pattayapal`} />
             <meta property="og:description" content={profile?.bio || `Portfolio ของ ${profile?.name}`} />
-            {profile?.profileImage?.url && <meta property="og:image" content={getFullUrl(profile.profileImage.url)} />}
+            <meta property="og:image" content={profile?.coverImage?.url ? getFullUrl(profile.coverImage.url) : "https://pattayapal.com/og-image.jpg"} />
          </Helmet>
 
          {/* 🔮 Background Glow Effects */}

@@ -38,6 +38,24 @@ export default function AdminDashboard() {
   const [catForm, setCatForm] = useState({ name: '', icon: '', description: '' });
   const [catSaving, setCatSaving] = useState(false);
   
+   // ── Broadcast state ──
+  const [broadcastText, setBroadcastText] = useState('');
+  const [broadcastLink, setBroadcastLink] = useState('');
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
+
+  const handleBroadcast = async (e) => {
+    e.preventDefault();
+    if (!broadcastText.trim()) return toast.error('Please enter message text');
+    setBroadcastLoading(true);
+    try {
+      const res = await axios.post(`${CONFIG.API_BASE_URL}/api/users/admin/broadcast`, { text: broadcastText, link: broadcastLink }, { headers: { Authorization: `Bearer ${activeToken}` } });
+      toast.success(res.data.message || 'Broadcast sent successfully');
+      setBroadcastText('');
+      setBroadcastLink('');
+    } catch (e) { console.error(e); toast.error('Broadcast failed'); }
+    finally { setBroadcastLoading(false); }
+  };
+
    // ── Top-up state ──
   const [topups, setTopups] = useState([]);
   const [topupsLoading, setTopupsLoading] = useState(false);
@@ -234,7 +252,7 @@ export default function AdminDashboard() {
           marginBottom: '50px', position: 'sticky', top: '20px', zIndex: 100
         }}>
           <div className="admin-tabs" style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '2px' }}>
-            {['overview', 'works', 'categories', 'users', 'topups'].map(tab => (
+            {['overview', 'works', 'categories', 'users', 'topups', 'broadcast'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -429,6 +447,51 @@ export default function AdminDashboard() {
                 </div>
               </motion.div>
             )}
+            {activeTab === 'broadcast' && (
+              <motion.div key="bc" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                  <h2 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px' }}>System Broadcast</h2>
+                </div>
+                <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '600px' }}>
+                  <form onSubmit={handleBroadcast}>
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>MESSAGE TEXT *</label>
+                      <textarea 
+                        value={broadcastText} 
+                        onChange={e => setBroadcastText(e.target.value)} 
+                        placeholder="Enter system message here..." 
+                        rows="4" 
+                        style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', resize: 'none', fontSize: '0.9rem', outline: 'none' }} 
+                        required 
+                      />
+                    </div>
+                    <div style={{ marginBottom: '30px' }}>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>ACTION LINK (OPTIONAL)</label>
+                      <input 
+                        type="text" 
+                        value={broadcastLink} 
+                        onChange={e => setBroadcastLink(e.target.value)} 
+                        placeholder="e.g. /profile/123 or https://..." 
+                        style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', fontSize: '0.9rem', outline: 'none' }} 
+                      />
+                    </div>
+                    <button 
+                      type="submit" 
+                      disabled={broadcastLoading} 
+                      style={{ 
+                        width: '100%', padding: '15px', borderRadius: '12px', 
+                        background: '#ff5733', color: '#fff', border: 'none', 
+                        fontWeight: 800, cursor: broadcastLoading ? 'not-allowed' : 'pointer', 
+                        fontSize: '1rem', boxShadow: '0 10px 20px rgba(255, 87, 51, 0.2)' 
+                      }}
+                    >
+                      {broadcastLoading ? 'Sending...' : 'SEND TO ALL USERS'}
+                    </button>
+                  </form>
+                </div>
+              </motion.div>
+            )}
+
             {activeTab === 'topups' && (
               <motion.div key="tp" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>

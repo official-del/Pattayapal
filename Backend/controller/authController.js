@@ -5,7 +5,7 @@ import { sendVerificationEmail } from '../utils/sendEmail.js';
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, profession } = req.body;
+    const { name, email, password, profession, phone } = req.body;
 
     // Check if user exists
     let user = await User.findOne({ email });
@@ -18,6 +18,7 @@ export const register = async (req, res) => {
         user.name = name;
         user.password = password; 
         user.profession = profession || 'General';
+        user.phone = phone || '';
         user.verificationToken = verificationToken;
         user.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
         
@@ -41,6 +42,7 @@ export const register = async (req, res) => {
       password,
       role: 'user',
       profession: profession || 'General',
+      phone: phone || '',
       isEmailVerified: false,
       verificationToken,
       verificationTokenExpires

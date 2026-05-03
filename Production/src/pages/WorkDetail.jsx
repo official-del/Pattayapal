@@ -207,7 +207,7 @@ function WorkDetail() {
         {/* OpenGraph */}
         <meta property="og:title" content={`${work?.title} | Pattayapal Portfolio`} />
         <meta property="og:description" content={work?.description?.substring(0, 160)} />
-        <meta property="og:image" content={getMediaUrl(work)} />
+        <meta property="og:image" content={getMediaUrl(work) || "https://pattayapal.com/og-image.jpg"} />
         <meta property="og:type" content="article" />
       </Helmet>
 

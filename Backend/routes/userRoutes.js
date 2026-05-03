@@ -25,7 +25,8 @@ import {
   getLeaderboard,
   getRankProgress,
   changePassword,
-  claimQuest
+  claimQuest,
+  broadcastNotification
 } from '../controller/userController.js';
 
 const router = express.Router();
@@ -175,6 +176,7 @@ router.get('/username/:username', getPublicProfileByUsername);
 // ==========================================
 router.get('/admin/stats', protect, admin, getAdminStats);
 router.get('/admin/all', protect, admin, getAllUsersAdmin);
+router.post('/admin/broadcast', protect, admin, broadcastNotification);
 
 // ==========================================
 // 🎮 Quests
