@@ -275,11 +275,20 @@ function Quests() {
   }, []);
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
-  const isQuestClaimed = (questId) => {
+  const isQuestClaimed = (questId, taskType) => {
     const claimed = liveData.claimedQuests || [];
     if (!claimed.length) return false;
+    
+    // For daily login, check if claimed today
+    if (taskType === 'DAILY_LOGIN') {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return claimed.some(q => q.questId === questId.toString() && new Date(q.claimedAt) >= todayStart);
+    }
+
     return claimed.some(q => q.questId === questId.toString());
   };
+
 
   const isQuestAccepted = (questId) => {
     const active = liveData.activeQuests || [];
@@ -360,7 +369,8 @@ function Quests() {
   // ── Derived data ─────────────────────────────────────────────────────────────
   const enrichedQuests = quests.map(q => {
     const { checklist, isCompleted, submissionStatus } = computeCompletion(q.taskType, liveData, q._id);
-    const isClaimed = isQuestClaimed(q._id);
+    const isClaimed = isQuestClaimed(q._id, q.taskType);
+
     const isAccepted = isQuestAccepted(q._id);
     const deadline = getQuestDeadline(q._id);
 
