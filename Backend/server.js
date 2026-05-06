@@ -278,13 +278,25 @@ app.get('*', async (req, res) => {
       // 1. Check for Work Detail (/works/:id)
       const workMatch = req.url.match(/\/works\/([a-zA-Z0-9]+)/);
       if (workMatch) {
-        const work = await Work.findById(workMatch[1]).select('title description mainImage');
-        if (work) {
-          title = `${work.title} | Pattayapal Portfolio`;
-          description = work.description?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || description;
-          if (work.mainImage?.url) {
-            image = work.mainImage.url.startsWith('http') ? work.mainImage.url : `https://pattayapal.com${work.mainImage.url.startsWith('/') ? '' : '/'}${work.mainImage.url}`;
+        try {
+          const work = await Work.findById(workMatch[1])
+            .select('title description mainImage createdBy')
+            .populate('createdBy', 'name profession');
+          
+          if (work) {
+            const authorName = work.createdBy?.name || "Pattayapal Creator";
+            title = `${work.title} by ${authorName} | Pattayapal Portfolio`;
+            
+            // Construct a more descriptive share text
+            const cleanDesc = work.description?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || "";
+            description = cleanDesc ? `${cleanDesc} - ผลงานโดย ${authorName}` : `ชมผลงาน ${work.title} โดย ${authorName} บน Pattayapal`;
+            
+            if (work.mainImage?.url) {
+              image = work.mainImage.url.startsWith('http') ? work.mainImage.url : `https://pattayapal.com${work.mainImage.url.startsWith('/') ? '' : '/'}${work.mainImage.url}`;
+            }
           }
+        } catch (err) {
+          console.error("Work SEO Error:", err);
         }
       }
 
@@ -301,8 +313,8 @@ app.get('*', async (req, res) => {
           }
 
           if (user) {
-            title = `${user.name} (@${user.username}) | Pattayapal Profile`;
-            description = user.bio?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `${user.name} - ${user.profession || 'Freelancer'} on Pattayapal`;
+            title = `${user.name} (@${user.username}) | ${user.profession || 'Freelancer'} | Pattayapal`;
+            description = user.bio?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `${user.name} - ${user.profession || 'Freelancer'} on Pattayapal. View portfolio and contact for work.`;
             if (user.profileImage?.url) {
               image = user.profileImage.url.startsWith('http') ? user.profileImage.url : `https://pattayapal.com${user.profileImage.url.startsWith('/') ? '' : '/'}${user.profileImage.url}`;
             }
@@ -315,37 +327,56 @@ app.get('*', async (req, res) => {
       // 3. Check for Post Detail (/posts/:id)
       const postMatch = req.url.match(/\/posts\/([a-zA-Z0-9]+)/);
       if (postMatch) {
-        const post = await Post.findById(postMatch[1]).select('content media author').populate('author', 'name');
-        if (post) {
-          title = post.author ? `Post by ${post.author.name} | Pattayapal` : "Post | Pattayapal Portfolio";
-          description = post.content?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || description;
-          if (post.media && post.media.length > 0 && post.media[0].url) {
-            const firstMedia = post.media[0].url;
-            image = firstMedia.startsWith('http') ? firstMedia : `https://pattayapal.com${firstMedia.startsWith('/') ? '' : '/'}${firstMedia}`;
+        try {
+          const post = await Post.findById(postMatch[1]).select('content media author').populate('author', 'name profession');
+          if (post) {
+            const authorName = post.author?.name || "Pattayapal User";
+            title = `Post by ${authorName} | Pattayapal Portfolio`;
+            description = post.content?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `Check out this update from ${authorName} on Pattayapal`;
+            
+            if (post.media && post.media.length > 0 && post.media[0].url) {
+              const firstMedia = post.media[0].url;
+              image = firstMedia.startsWith('http') ? firstMedia : `https://pattayapal.com${firstMedia.startsWith('/') ? '' : '/'}${firstMedia}`;
+            }
           }
+        } catch (err) {
+          console.error("Post SEO Error:", err);
         }
       }
 
-      // Inject into HTML with flexible regex (handling newlines and multiple spaces)
-      const replaceMeta = (tagHtml, property, value, attr = 'property') => {
+      // Inject into HTML with flexible regex and adding missing tags
+      const injectMeta = (htmlContent, property, value, attr = 'property') => {
         const regex = new RegExp(`<meta\\s+${attr}="${property}"[\\s\\S]*?content=".*?"\\s*\\/>`, 'g');
-        return tagHtml.replace(regex, `<meta ${attr}="${property}" content="${value}" />`);
+        if (regex.test(htmlContent)) {
+          return htmlContent.replace(regex, `<meta ${attr}="${property}" content="${value}" />`);
+        } else {
+          // If tag doesn't exist, append it before </head>
+          return htmlContent.replace('</head>', `  <meta ${attr}="${property}" content="${value}" />\n</head>`);
+        }
       };
 
       html = html.replace(/<title>.*?<\/title>/g, `<title>${title}</title>`);
       
-      html = replaceMeta(html, 'og:title', title);
-      html = replaceMeta(html, 'twitter:title', title);
+      // Standard Meta
+      html = injectMeta(html, 'description', description, 'name');
       
-      html = replaceMeta(html, 'description', description, 'name');
-      html = replaceMeta(html, 'og:description', description);
-      html = replaceMeta(html, 'twitter:description', description);
+      // OpenGraph
+      html = injectMeta(html, 'og:title', title);
+      html = injectMeta(html, 'og:description', description);
+      html = injectMeta(html, 'og:image', image);
+      html = injectMeta(html, 'og:image:secure_url', image);
+      html = injectMeta(html, 'og:image:width', '1200');
+      html = injectMeta(html, 'og:image:height', '630');
+      html = injectMeta(html, 'og:url', url);
+      html = injectMeta(html, 'og:site_name', 'Pattayapal Portfolio');
+      html = injectMeta(html, 'og:type', workMatch || postMatch ? 'article' : 'website');
       
-      html = replaceMeta(html, 'og:image', image);
-      html = replaceMeta(html, 'twitter:image', image);
-      
-      html = replaceMeta(html, 'og:url', url);
-      html = replaceMeta(html, 'twitter:url', url);
+      // Twitter
+      html = injectMeta(html, 'twitter:card', 'summary_large_image');
+      html = injectMeta(html, 'twitter:title', title);
+      html = injectMeta(html, 'twitter:description', description);
+      html = injectMeta(html, 'twitter:image', image);
+      html = injectMeta(html, 'twitter:url', url);
 
       res.send(html);
     } catch (err) {
