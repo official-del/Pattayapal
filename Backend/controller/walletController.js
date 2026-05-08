@@ -170,7 +170,7 @@ export const requestWithdrawal = async (req, res) => {
     user.bankAccount = { bankName, accountName, accountNumber };
     await user.save();
 
-    const thbAmount = numAmount * 10; // 1 Coin = 10 THB
+    const thbAmount = numAmount / 10; // 10 Coins = 1 THB (1 Coin = 0.1 THB)
     const tx = new Transaction({
       user: userId,
       type: 'WITHDRAW',
@@ -269,7 +269,7 @@ export const updateWithdrawalStatus = async (req, res) => {
           io.to(uId).emit('balance_update', {
             coinBalance: updatedUserObj.coinBalance,
             title: status === 'completed' ? 'ถอนเงินสำเร็จ!' : 'คำขอถอนเงินถูกปฏิเสธ',
-            message: status === 'completed' ? `การถอนเงินจำนวน ฿${tx.amount * 10} ของคุณได้รับการอนุมัติแล้ว และยอดเหรียญถูกหักเรียบร้อย` : 'คำขอถอนเงินของคุณไม่ผ่านการอนุมัติ',
+            message: status === 'completed' ? `การถอนเงินจำนวน ฿${tx.amount / 10} ของคุณได้รับการอนุมัติแล้ว และยอดเหรียญถูกหักเรียบร้อย` : 'คำขอถอนเงินของคุณไม่ผ่านการอนุมัติ',
             type: 'withdraw'
           });
         }

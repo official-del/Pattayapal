@@ -136,7 +136,7 @@ function ManageWallet() {
 
       setShowSuccess({
         amount: Number(amount),
-        coins: Number(amount) / 10,
+        coins: Number(amount) * 10,
         isManual: true
       });
     } catch (err) {
@@ -289,7 +289,7 @@ function ManageWallet() {
                         style={{ width: '100%', padding: '20px 25px', borderRadius: '25px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: '1.1rem', fontWeight: '700', outline: 'none', boxSizing: 'border-box' }}
                       />
                       <div style={{ marginTop: '10px', color: 'var(--accent)', fontWeight: '700', fontSize: '0.85rem' }}>
-                        * ฿10 = 1 Coin (เติมขั้นต่ำ ฿10)
+                        * ฿1 = 10 Coins (เติมขั้นต่ำ ฿10)
                       </div>
                     </div>
 
@@ -389,7 +389,7 @@ function ManageWallet() {
                       </div>
                       {wAmount > 0 && (
                         <div style={{ marginTop: '12px', color: '#f59e0b', fontWeight: '700', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <FiCheckCircle /> ≈ ฿{(Number(wAmount) * 10).toLocaleString()} <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>(1 Coin = ฿10)</span>
+                          <FiCheckCircle /> ≈ ฿{(Number(wAmount) / 10).toLocaleString()} <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>(10 Coins = ฿1)</span>
                         </div>
                       )}
                     </div>
