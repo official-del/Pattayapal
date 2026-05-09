@@ -4,7 +4,7 @@ const auditLogSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   action: { 
     type: String, 
-    enum: ['FRAUD_ATTEMPT', 'SECURITY_ALERT', 'BALANCE_ADJUSTMENT', 'WITHDRAWAL_APPROVAL', 'SYSTEM_CONFIG_CHANGE'],
+    enum: ['FRAUD_ATTEMPT', 'SECURITY_ALERT', 'BALANCE_ADJUSTMENT', 'GAS_ADJUSTMENT', 'WITHDRAWAL_APPROVAL', 'SYSTEM_CONFIG_CHANGE'],
     required: true 
   },
   severity: { 
