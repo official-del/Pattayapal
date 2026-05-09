@@ -68,9 +68,10 @@ function DashboardOverview() {
     { label: 'ACTIVE HIRES', value: summary?.activeHiresCount || 0, icon: <FiUsers />, color: '#6366f1' },
     { label: 'TOTAL BUDGET', value: summary?.totalBudgetSpent || 0, isCoin: true, icon: <CoinIcon size={28} />, color: '#22c55e' },
   ] : [
+    { label: 'COIN BALANCE', value: summary?.coinBalance || 0, isCoin: true, icon: <CoinIcon size={28} />, color: '#f59e0b' },
+    { label: 'GAS ENERGY', value: summary?.gasBalance ?? summary?.gas ?? 0, isGas: true, icon: <FiZap />, color: '#10b981' },
     { label: 'PORTFOLIO', value: summary?.totalWorks || 0, icon: <FiPackage />, color: '#ff5733' },
     { label: 'REACH', value: summary?.totalViews || 0, icon: <FiEye />, color: '#6366f1' },
-    { label: 'COIN BALANCE', value: summary?.coinBalance || 0, isCoin: true, icon: <CoinIcon size={28} />, color: '#f59e0b' },
     { label: 'POINTS', value: (summary?.points || 0).toLocaleString(), icon: <FiAward />, color: '#c026d3' },
   ];
 
@@ -136,10 +137,12 @@ function DashboardOverview() {
               {card.icon}
             </div>
             <div className="stat-content">
-              <span className="stat-label">{card.label}</span>
+              <span className="stat-label">
+                {card.isGas && (summary?.gasBalance ?? summary?.gas ?? 100) <= 20 ? '⚠️ CRITICAL GAS' : card.label}
+              </span>
               <div className="stat-value-group">
-                <span className="stat-value">
-                  {card.isCoin ? <CoinBadge amount={card.value} size="xl" /> : card.value}
+                <span className="stat-value" style={{ color: card.isGas && (summary?.gasBalance ?? summary?.gas ?? 100) <= 20 ? '#ef4444' : 'inherit' }}>
+                  {card.isCoin ? <CoinBadge amount={card.value} size="xl" /> : (card.isGas ? `${card.value}%` : card.value)}
                 </span>
               </div>
             </div>

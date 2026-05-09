@@ -132,6 +132,7 @@ export const adminAdjustGas = async (req, res) => {
     if (io) {
       io.to(userId.toString()).emit('balance_update', {
         gasBalance: user.gas,
+        gas: user.gas,
         title: change >= 0 ? 'ได้รับ Gas เพิ่ม!' : 'Gas ถูกหัก!',
         message: `พลังงาน Gas ของคุณถูกปรับเปลี่ยนโดยแอดมิน: ${change >= 0 ? '+' : ''}${change}%`,
         type: change >= 0 ? 'topup' : 'deduct'
@@ -141,7 +142,8 @@ export const adminAdjustGas = async (req, res) => {
 
     return res.status(200).json({
       message: 'ปรับพลังงาน Gas สำเร็จแล้ว',
-      gasBalance: user.gas
+      gasBalance: user.gas,
+      gas: user.gas
     });
   } catch (err) {
     console.error('Admin adjust gas error:', err);
@@ -197,6 +199,7 @@ export const refillGas = async (req, res) => {
       io.to(userId.toString()).emit('balance_update', {
         coinBalance: user.coinBalance,
         gasBalance: user.gas,
+        gas: user.gas,
         title: 'เติมพลังงานสำเร็จ!',
         message: `คุณได้ใช้ ${cost.toLocaleString()} Coins เพื่อเติม Gas +${percent}%`,
         type: 'topup'
@@ -206,7 +209,8 @@ export const refillGas = async (req, res) => {
     return res.status(200).json({
       message: 'เติมพลังงาน Gas สำเร็จแล้ว!',
       coinBalance: user.coinBalance,
-      gasBalance: user.gas
+      gasBalance: user.gas,
+      gas: user.gas
     });
   } catch (err) {
     console.error('Refill gas error:', err);

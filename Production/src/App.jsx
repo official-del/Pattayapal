@@ -7,6 +7,7 @@ import PixelSplashIntro from './components/PixelSplashIntro';
 import { play8BitClick } from './utils/soundEffects';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
+import { HelmetProvider } from 'react-helmet-async';
 
 
 // ── Public Pages ──
@@ -134,123 +135,125 @@ function App() {
   }, [isLegalPage]);
 
   return (
-    <AuthProvider> 
-      <SocketProvider>
-      <Toaster 
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: '#111',
-            color: '#fff',
-            border: '1px solid #333',
-            padding: '16px',
-            borderRadius: '12px',
-            fontWeight: '600',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
-          },
-          success: {
+    <HelmetProvider>
+      <AuthProvider> 
+        <SocketProvider>
+        <Toaster 
+          position="top-center"
+          toastOptions={{
             style: {
-              background: '#0a0a0a',
-              border: '1px solid rgba(245,158,11,0.3)',
-              color: '#f59e0b',
+              background: '#111',
+              color: '#fff',
+              border: '1px solid #333',
+              padding: '16px',
+              borderRadius: '12px',
+              fontWeight: '600',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
             },
-            iconTheme: { primary: '#f59e0b', secondary: '#0a0a0a' },
-          },
-          error: {
-            style: {
-              background: '#0a0a0a',
-              border: '1px solid rgba(239,68,68,0.3)',
-              color: '#ef4444',
+            success: {
+              style: {
+                background: '#0a0a0a',
+                border: '1px solid rgba(245,158,11,0.3)',
+                color: '#f59e0b',
+              },
+              iconTheme: { primary: '#f59e0b', secondary: '#0a0a0a' },
             },
-            iconTheme: { primary: '#ef4444', secondary: '#0a0a0a' },
-          },
-        }}
-      />
-      <AnimatePresence>
-        {showSplash && !isLegalPage && <PixelSplashIntro onComplete={handleSplashComplete} />}
-      </AnimatePresence>
-
-
-
-      {/* ✅ ถ้าเป็นหน้าแอดมิน หน้า Public (เช่น Login) หรือไม่มี Token (Guest) จะซ่อน Sidebar */}
-      {!isAdminPage && !isPublicPage && hasToken && <Navbar />}
-
-      <Routes>
-
-        <Route path="/jobs" element={
-          <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
-            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-              <ManageJobs />
+            error: {
+              style: {
+                background: '#0a0a0a',
+                border: '1px solid rgba(239,68,68,0.3)',
+                color: '#ef4444',
+              },
+              iconTheme: { primary: '#ef4444', secondary: '#0a0a0a' },
+            },
+          }}
+        />
+        <AnimatePresence>
+          {showSplash && !isLegalPage && <PixelSplashIntro onComplete={handleSplashComplete} />}
+        </AnimatePresence>
+  
+  
+  
+        {/* ✅ ถ้าเป็นหน้าแอดมิน หน้า Public (เช่น Login) หรือไม่มี Token (Guest) จะซ่อน Sidebar */}
+        {!isAdminPage && !isPublicPage && hasToken && <Navbar />}
+  
+        <Routes>
+  
+          <Route path="/jobs" element={
+            <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
+              <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+                <ManageJobs />
+              </div>
             </div>
-          </div>
-        } />
-        <Route path="/manage-portfolio" element={
-          <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
-            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-              <ManageWorks />
+          } />
+          <Route path="/manage-portfolio" element={
+            <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
+              <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+                <ManageWorks />
+              </div>
             </div>
-          </div>
-        } />
-        {/* ── Public Routes ── */}
-        <Route path="/"           element={<Home />} />
-        <Route path="/services"   element={<Services />} />
-        <Route path="/works"      element={<Works />} />
-        <Route path="/works/:id"  element={<WorkDetail />} />
-        <Route path="/clients"    element={<Clients />} />
-        <Route path="/contact"    element={<Contact />} />
-        <Route path="/feed"       element={<Feed />} />
-        <Route path="/posts/:id"  element={<PostDetail />} />
-        <Route path="/rankings"   element={<RankingsHub />} />
-        <Route path="/rankings/roles" element={<RoleRankings />} />
-        <Route path="/leaderboard" element={<Navigate to="/rankings" replace />} />
-        <Route path="/freelancers" element={<Discovery />} />
-
-        {/* ── Profile ── */}
-        <Route path="/profile/:userId" element={<UserProfile />} />
-        <Route path="/notifications" element={
-          <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
-            <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
-              <Notifications />
+          } />
+          {/* ── Public Routes ── */}
+          <Route path="/"           element={<Home />} />
+          <Route path="/services"   element={<Services />} />
+          <Route path="/works"      element={<Works />} />
+          <Route path="/works/:id"  element={<WorkDetail />} />
+          <Route path="/clients"    element={<Clients />} />
+          <Route path="/contact"    element={<Contact />} />
+          <Route path="/feed"       element={<Feed />} />
+          <Route path="/posts/:id"  element={<PostDetail />} />
+          <Route path="/rankings"   element={<RankingsHub />} />
+          <Route path="/rankings/roles" element={<RoleRankings />} />
+          <Route path="/leaderboard" element={<Navigate to="/rankings" replace />} />
+          <Route path="/freelancers" element={<Discovery />} />
+  
+          {/* ── Profile ── */}
+          <Route path="/profile/:userId" element={<UserProfile />} />
+          <Route path="/notifications" element={
+            <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
+              <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+                <Notifications />
+              </div>
             </div>
-          </div>
-        } />
-        <Route path="/friends" element={<Friends />} />
-        <Route path="/messenger" element={<Messenger />} />
-        <Route path="/messenger/:conversationId" element={<Messenger />} />
-        <Route path="/upload-work" element={<UserWorkForm />} />
-        <Route path="/edit-work/:id" element={<UserWorkForm />} />
-
-        {/* ── Dashboard / Workspace Routes ── */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardOverview />} />
-          <Route path="hiring" element={<ManageJobs />} />
-          <Route path="works" element={<ManageWorks />} />
-          <Route path="wallet" element={<ManageWallet />} />
-          <Route path="quests" element={<Quests />} />
-        </Route>
-
-        {/* ── Login / Register ── */}
-        <Route path="/login"      element={<UserAuth />} />
-        <Route path="/auth"       element={<Navigate to="/login" replace />} />
-        <Route path="/verify-email/:token" element={<VerifyEmail />} />
-
-        {/* ── Admin Routes ── */}
-        <Route path="/admin/login"       element={<AdminLogin />} />
-        <Route path="/admin/dashboard"   element={<AdminDashboard />} />
-        <Route path="/admin/overview"    element={<AdminOverview />} /> 
-        <Route path="/admin/works/new"   element={<AdminWorkForm />} />
-        <Route path="/admin/works/:id"   element={<AdminWorkForm />} />
-        <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
-        
-        {/* ── Legal Routes ── */}
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-        
-        {/* ── Vanity URL Catch-All ── */}
-        <Route path="/:username" element={<UserProfile />} />
-      </Routes>
-      </SocketProvider>
-    </AuthProvider>
+          } />
+          <Route path="/friends" element={<Friends />} />
+          <Route path="/messenger" element={<Messenger />} />
+          <Route path="/messenger/:conversationId" element={<Messenger />} />
+          <Route path="/upload-work" element={<UserWorkForm />} />
+          <Route path="/edit-work/:id" element={<UserWorkForm />} />
+  
+          {/* ── Dashboard / Workspace Routes ── */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<DashboardOverview />} />
+            <Route path="hiring" element={<ManageJobs />} />
+            <Route path="works" element={<ManageWorks />} />
+            <Route path="wallet" element={<ManageWallet />} />
+            <Route path="quests" element={<Quests />} />
+          </Route>
+  
+          {/* ── Login / Register ── */}
+          <Route path="/login"      element={<UserAuth />} />
+          <Route path="/auth"       element={<Navigate to="/login" replace />} />
+          <Route path="/verify-email/:token" element={<VerifyEmail />} />
+  
+          {/* ── Admin Routes ── */}
+          <Route path="/admin/login"       element={<AdminLogin />} />
+          <Route path="/admin/dashboard"   element={<AdminDashboard />} />
+          <Route path="/admin/overview"    element={<AdminOverview />} /> 
+          <Route path="/admin/works/new"   element={<AdminWorkForm />} />
+          <Route path="/admin/works/:id"   element={<AdminWorkForm />} />
+          <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
+          
+          {/* ── Legal Routes ── */}
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          
+          {/* ── Vanity URL Catch-All ── */}
+          <Route path="/:username" element={<UserProfile />} />
+        </Routes>
+        </SocketProvider>
+      </AuthProvider>
+    </HelmetProvider>
   );
 }
 

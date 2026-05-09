@@ -13,6 +13,7 @@ import {
   FiActivity, FiGrid, FiSearch, FiStar, FiGift
 } from 'react-icons/fi';
 import { CoinIcon, CoinBadge } from './CoinIcon';
+import GasIcon from './GasIcon';
 import RankBadge from './RankBadge';
 import '../css/Navbar.css';
 import logo from '../assets/LOGO1.png';
@@ -93,7 +94,8 @@ function Navbar() {
           setBalanceUpdateMessage({
             title: data.title || 'เหรียญเข้าแล้ว!',
             message: data.message,
-            newBalance: data.coinBalance
+            newBalance: data.coinBalance,
+            newGas: data.gasBalance ?? data.gas
           });
           play8BitSuccess();
           if (fetchProfile) fetchProfile(); // Update global user balance
@@ -216,7 +218,15 @@ function Navbar() {
           <span>PATTAYA <span>PAL</span></span>
         </Link>
         <div className="m-actions">
-          {currentToken && <div className="m-coin"><CoinIcon size={16} /> <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span></div>}
+          {currentToken && (
+            <>
+              <div className="m-gas" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }}>
+                <GasIcon gas={user?.gas ?? userInfo?.gas ?? 0} size="20px" />
+                <span style={{ fontSize: '0.8rem', fontWeight: '800' }}>{user?.gas ?? userInfo?.gas ?? 0}%</span>
+              </div>
+              <div className="m-coin"><CoinIcon size={16} /> <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span></div>
+            </>
+          )}
           <button className="m-toggle-btn" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <FiX /> : <FiMenu />}
           </button>
@@ -226,6 +236,10 @@ function Navbar() {
       {/* 💎 Desktop Top Actions (3-Buttons Hub) */}
       {currentToken && (
         <div className="desktop-top-actions hide-mobile">
+          <div className="d-gas-box" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '8px 15px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <GasIcon gas={user?.gas ?? userInfo?.gas ?? 0} size="24px" />
+            <span style={{ fontSize: '0.9rem', fontWeight: '800' }}>{user?.gas ?? userInfo?.gas ?? 0}%</span>
+          </div>
           <div className="d-coin-box">
             <CoinIcon size={18} />
             <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span>
@@ -440,14 +454,23 @@ function Navbar() {
                 {balanceUpdateMessage.message}
               </p>
 
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '25px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '35px' }}>
-                <div style={{ color: '#888', fontSize: '0.75rem', fontWeight: '700', letterSpacing: '2px', marginBottom: '10px', textTransform: 'uppercase' }}>
-                  CURRENT BALANCE
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '25px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '35px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div>
+                  <div style={{ color: '#888', fontSize: '0.7rem', fontWeight: '700', letterSpacing: '2px', marginBottom: '5px', textTransform: 'uppercase' }}>COIN BALANCE</div>
+                  <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                    <CoinIcon size={24} />
+                    {(balanceUpdateMessage.newBalance ?? (user?.coinBalance || 0)).toLocaleString()}
+                  </div>
                 </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                  <CoinIcon size={32} />
-                  {balanceUpdateMessage.newBalance.toLocaleString()}
-                </div>
+                {balanceUpdateMessage.newGas !== undefined && (
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                    <div style={{ color: '#888', fontSize: '0.7rem', fontWeight: '700', letterSpacing: '2px', marginBottom: '5px', textTransform: 'uppercase' }}>GAS ENERGY</div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                      <GasIcon gas={balanceUpdateMessage.newGas} size="30px" />
+                      {balanceUpdateMessage.newGas}%
+                    </div>
+                  </div>
+                )}
               </div>
 
               <motion.button

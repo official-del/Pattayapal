@@ -137,7 +137,7 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
 
     setLoading(true);
     try {
-      await walletAPI.refillGas();
+      await walletAPI.refillGas({ percent: 100 });
       toast.success("เติม Gas เต็มถังแล้ว! 🔋");
       if (fetchProfile) fetchProfile();
     } catch (err) {

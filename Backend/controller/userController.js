@@ -415,7 +415,9 @@ const getDashboardSummary = async (req, res) => {
       jobsPostedCount,
       activeHiresCount,
       totalBudgetSpent,
-      coinBalance: user.coinBalance || 0
+      coinBalance: user.coinBalance || 0,
+      gas: user.gas || 0,
+      gasBalance: user.gas || 0
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
