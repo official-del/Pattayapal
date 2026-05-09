@@ -1,7 +1,7 @@
 import { toast } from 'react-hot-toast';
 import { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { jobsAPI } from '../utils/api';
+import { jobsAPI, walletAPI } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { FiAlertCircle, FiMapPin, FiX, FiSearch, FiCheck, FiZap } from 'react-icons/fi';
 import { CoinIcon, CoinBadge } from './CoinIcon';
@@ -112,8 +112,38 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
 
   const userInfo = user || JSON.parse(window.safeStorage.getItem('userInfo'));
   const coinBalance = user?.coinBalance || userInfo?.coinBalance || 0;
+  const currentGas = user?.gas !== undefined ? user.gas : (userInfo?.gas || 0);
 
-  const isInsufficient = formData.budget > coinBalance;
+  const gasCosts = {
+    'Bronze': 10,
+    'Silver': 20,
+    'Gold': 30,
+    'Platinum': 40,
+    'Diamond': 50,
+    'Conqueror': 60
+  };
+  const gasCost = gasCosts[user?.rank] || 10;
+
+  const isInsufficientCoins = formData.budget > coinBalance;
+  const isInsufficientGas = currentGas < gasCost;
+
+  const handleRefillGas = async () => {
+    if (loading) return;
+    if (coinBalance < 100) {
+      return toast.error("ยอด Coin ไม่พอสำหรับการเติม Gas (ต้องการ 100 Coins)");
+    }
+
+    setLoading(true);
+    try {
+      await walletAPI.refillGas();
+      toast.success("เติม Gas เต็มถังแล้ว! 🔋");
+      if (fetchProfile) fetchProfile();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "เติม Gas ไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -133,7 +163,7 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
       if (fetchProfile) fetchProfile();
       onClose();
     } catch (err) {
-      toast.success(err.response?.data?.message || 'จ้างงานไม่สำเร็จ');
+      toast.error(err.response?.data?.message || 'จ้างงานไม่สำเร็จ');
     } finally {
       setLoading(false);
     }
@@ -227,26 +257,45 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
-            <div style={{ color: '#888', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              Coin ของคุณ: <CoinBadge amount={coinBalance} size="sm" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ color: '#888', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Coin ของคุณ: <CoinBadge amount={coinBalance} size="sm" />
+              </div>
+              {isInsufficientCoins && (
+                <Link to="/dashboard/wallet" style={{ color: '#ff5733', fontSize: '0.85rem', fontWeight: 'bold' }}>เติม Coin เพิ่มที่นี่</Link>
+              )}
             </div>
-            {isInsufficient && (
-              <Link to="/dashboard/wallet" style={{ color: '#ff5733', fontSize: '0.85rem', fontWeight: 'bold' }}>เติม Coin เพิ่มที่นี่</Link>
-            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ color: isInsufficientGas ? '#ff5733' : '#888', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FiZap color={isInsufficientGas ? '#ff5733' : '#f59e0b'} /> 
+                Gas: <span style={{ fontWeight: '800', color: isInsufficientGas ? '#ff5733' : '#fff' }}>{currentGas}%</span> 
+                <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>(เสีย {gasCost}% ต่องาน)</span>
+              </div>
+              {isInsufficientGas && (
+                <button 
+                  type="button"
+                  onClick={handleRefillGas}
+                  style={{ background: 'none', border: 'none', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', padding: 0 }}
+                >
+                  เติม Gas (100 Coins)
+                </button>
+              )}
+            </div>
           </div>
 
           <button 
             type="submit" 
-            disabled={loading || isInsufficient}
+            disabled={loading || isInsufficientCoins || isInsufficientGas}
             style={{
-              background: isInsufficient ? '#333' : 'linear-gradient(45deg, #ff5733, #ff8c33)',
-              color: isInsufficient ? '#666' : '#fff', border: 'none', padding: '14px', borderRadius: '12px',
-              fontWeight: '700', fontSize: '1rem', cursor: isInsufficient ? 'not-allowed' : 'pointer', marginTop: '5px',
+              background: (isInsufficientCoins || isInsufficientGas) ? '#333' : 'linear-gradient(45deg, #ff5733, #ff8c33)',
+              color: (isInsufficientCoins || isInsufficientGas) ? '#666' : '#fff', border: 'none', padding: '14px', borderRadius: '12px',
+              fontWeight: '700', fontSize: '1rem', cursor: (isInsufficientCoins || isInsufficientGas) ? 'not-allowed' : 'pointer', marginTop: '5px',
               opacity: loading ? 0.6 : 1, transition: '0.3s'
             }}
           >
-            {loading ? 'กำลังส่งคำขอ...' : (isInsufficient ? 'ยอด Coin ไม่เพียงพอ' : 'ยืนยันจ้างงานและวางเงิน')}
+            {loading ? 'กำลังส่งคำขอ...' : (isInsufficientCoins ? 'ยอด Coin ไม่เพียงพอ' : (isInsufficientGas ? 'Gas ไม่เพียงพอ' : 'ยืนยันจ้างงานและวางเงิน'))}
           </button>
         </form>
       </div>

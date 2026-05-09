@@ -259,5 +259,9 @@ export const walletAPI = {
   // 🛡️ Admin: Send coins directly to user (Manual adjustment)
   adminAdjustBalance: (data) =>
     API.post('/wallet/admin/adjust-balance', data).then(res => res.data),
+
+  // 🔋 Gas Refill
+  refillGas: () =>
+    API.post('/wallet/refill-gas').then(res => res.data),
 };
 

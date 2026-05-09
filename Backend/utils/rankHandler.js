@@ -36,6 +36,21 @@ export const getRankFromPoints = (points) => {
 };
 
 /**
+ * Calculate Gas consumption based on rank
+ */
+export const getGasConsumption = (rank) => {
+  const consumptionMap = {
+    'Bronze': 10,
+    'Silver': 20,
+    'Gold': 30,
+    'Platinum': 40,
+    'Diamond': 50,
+    'Conqueror': 60
+  };
+  return consumptionMap[rank] || 10;
+};
+
+/**
  * Update user points and rank
  * @param {string} userId
  * @param {string} type - 'REVENUE', 'LIKE', 'VIEW', 'COMPLETION', 'REVIEW'

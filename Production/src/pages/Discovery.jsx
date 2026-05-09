@@ -159,9 +159,25 @@ function Discovery() {
 
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '1000px' }}>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '25px' }}>
-              <FiZap color="var(--accent)" size={20} />
-              <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem', textTransform: 'uppercase' }}>Talent Discovery</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '25px', marginBottom: '25px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FiZap color="var(--accent)" size={20} />
+                <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem', textTransform: 'uppercase' }}>Talent Discovery</span>
+              </div>
+              
+              {currentUser?.id && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '5px 15px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <FiZap color={currentUser.gas < 20 ? '#ff5733' : '#f59e0b'} size={14} />
+                  <div style={{ width: '60px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${currentUser.gas || 0}%` }}
+                      style={{ height: '100%', background: currentUser.gas < 20 ? 'linear-gradient(90deg, #ff5733, #ff8c33)' : 'linear-gradient(90deg, #f59e0b, #fbbf24)' }}
+                    />
+                  </div>
+                  <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#fff' }}>{currentUser.gas || 0}% GAS</span>
+                </div>
+              )}
             </div>
             <h1 className="discovery-title" style={{ fontWeight: '900', margin: 0, letterSpacing: '-1px', lineHeight: 1.1, textTransform: 'uppercase' }}>DISCOVER THE FUTURE OF <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 15px var(--accent-glow))' }}>CREATION</span></h1>
             <p style={{ color: '#888', marginTop: '30px', fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', fontWeight: '400', maxWidth: '700px', margin: '30px auto', lineHeight: 1.6 }}>เชื่อมต่อกับครีเอเตอร์ระดับแนวหน้าของพัทยา ค้นหาพาร์ทเนอร์ที่ใช่สำหรับโปรเจกต์ถัดไปของคุณ</p>
@@ -281,9 +297,20 @@ function Discovery() {
                 key={freelancer._id}
                 variants={itemVariants}
                 className="talent-card glass"
-                style={{ borderRadius: '35px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.03)', transition: '0.4s' }}
+                style={{ 
+                  borderRadius: '35px', 
+                  overflow: 'hidden', 
+                  border: '1px solid rgba(255,255,255,0.03)', 
+                  transition: '0.4s',
+                  position: 'relative',
+                  background: freelancer.coverImage?.url 
+                    ? `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)), url(${getFullUrl(freelancer.coverImage.url)})`
+                    : '#0a0a0a',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
               >
-                <div style={{ padding: '35px' }}>
+                <div style={{ padding: '35px', position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
                     <ProfileFrame rank={freelancer.rank} points={freelancer.points || 0} size="90px">
                       <div style={{ width: '100%', height: '100%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

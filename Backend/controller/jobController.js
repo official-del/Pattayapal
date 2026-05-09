@@ -2,7 +2,22 @@ import Job from '../models/Job.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
-import { updateUserStats } from '../utils/rankHandler.js';
+import { updateUserStats, getGasConsumption } from '../utils/rankHandler.js';
+
+// Helper to handle monthly gas refill
+const checkAndRefillGas = async (user) => {
+  const now = new Date();
+  const lastRefill = user.lastGasRefill || new Date(0);
+  
+  // If month or year changed since last refill, reset gas to 100
+  if (now.getMonth() !== lastRefill.getMonth() || now.getFullYear() !== lastRefill.getFullYear()) {
+    user.gas = 100;
+    user.lastGasRefill = now;
+    await user.save();
+    return true;
+  }
+  return false;
+};
 
 // Create Job
 export const createJob = async (req, res) => {
@@ -14,10 +29,24 @@ export const createJob = async (req, res) => {
       return res.status(400).json({ message: "ไม่สามารถจ้างตนเองได้" });
     }
 
-    // 🔒 ATOMIC TRANSACTION: Check balance and deduct in one step to prevent race conditions
+    // ⛽ GAS CHECK: Check and Deduct Gas based on Rank
+    const employer = await User.findById(employerId);
+    if (!employer) return res.status(404).json({ message: "ไม่พบผู้จ้างงาน" });
+
+    // Auto-refill if monthly period passed
+    await checkAndRefillGas(employer);
+
+    const gasCost = getGasConsumption(employer.rank);
+    if (employer.gas < gasCost) {
+      return res.status(400).json({ 
+        message: `Gas ของคุณไม่พอสำหรับการจ้างงานนี้ (ต้องการ ${gasCost}%, มีอยู่ ${employer.gas}%) กรุณารอเติมอัตโนมัติรายเดือนหรือใช้ Coin เติม` 
+      });
+    }
+
+    // 🔒 ATOMIC TRANSACTION: Check balance, deduct coins, and deduct gas
     const updatedEmployer = await User.findOneAndUpdate(
-      { _id: employerId, coinBalance: { $gte: budget } },
-      { $inc: { coinBalance: -budget } },
+      { _id: employerId, coinBalance: { $gte: budget }, gas: { $gte: gasCost } },
+      { $inc: { coinBalance: -budget, gas: -gasCost } },
       { new: true }
     );
 

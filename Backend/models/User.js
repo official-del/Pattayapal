@@ -79,6 +79,10 @@ const userSchema = new mongoose.Schema({
   lastLoginDate: { type: Date },
   canCreateQuest: { type: Boolean, default: false }, // 🌟 สิทธิ์ในการสร้างเควส (แอดมินหรือได้รับอนุญาต)
 
+  // 🔋 [NEW] Gas System (Hire Energy)
+  gas: { type: Number, default: 100, min: 0, max: 100 },
+  lastGasRefill: { type: Date, default: Date.now },
+
   // 🏆 [GAMIFICATION] Ranking System
   points: { type: Number, default: 0 },
   rank: { 

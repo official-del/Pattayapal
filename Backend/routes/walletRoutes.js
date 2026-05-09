@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { protect, admin } from '../middleware/auth.js';
-import { adminAdjustCoins, getWalletTransactions, requestWithdrawal, getAdminWithdrawals, updateWithdrawalStatus, getAuditLogs, submitManualTopup, getAdminTopups, updateTopupStatus } from '../controller/walletController.js';
+import { adminAdjustCoins, getWalletTransactions, requestWithdrawal, getAdminWithdrawals, updateWithdrawalStatus, getAuditLogs, submitManualTopup, getAdminTopups, updateTopupStatus, refillGas } from '../controller/walletController.js';
 import { topupLimiter } from '../middleware/rateLimiter.js';
 import path from 'path';
 import fs from 'fs';
@@ -24,6 +24,9 @@ router.get('/transactions', protect, getWalletTransactions);
 
 // Request Withdrawal (Freelancer)
 router.post('/withdraw', protect, requestWithdrawal);
+
+// Refill Gas
+router.post('/refill-gas', protect, refillGas);
 
 // Admin: Manage Topups
 router.get('/admin/topups', protect, admin, getAdminTopups);
