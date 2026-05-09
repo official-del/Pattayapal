@@ -171,26 +171,7 @@ function DashboardSidebar({ show, onClose }) {
         </ul>
       </nav>
 
-      <div className="glass" style={{
-        padding: '30px',
-        borderRadius: '30px',
-        border: '1px solid rgba(255,255,255,0.03)',
-        marginTop: 'auto'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FiActivity color="#22c55e" size={14} />
-            <span style={{ color: '#22c55e', fontSize: '0.65rem', fontWeight: '700' }}>CONNECTED</span>
-          </div>
-        </div>
-        <Link to="/dashboard/wallet" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ color: '#f59e0b', fontSize: '1.4rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <CoinIcon size={22} />
-            {(userInfo?.coinBalance || localUserInfo?.coinBalance || 0).toLocaleString()}
-          </div>
-          <span style={{ fontSize: '0.6rem', color: '#444', fontWeight: '700', letterSpacing: '1px' }}>COINS</span>
-        </Link>
-      </div>
+
       <style>{`
         @media (max-width: 1024px) {
           .sidebar-mobile-close { display: block !important; }

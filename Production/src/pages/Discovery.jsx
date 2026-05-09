@@ -10,6 +10,7 @@ import {
 } from 'react-icons/fi';
 import ProfileFrame from '../components/ProfileFrame';
 import HireModal from '../components/HireModal';
+import GasIcon from '../components/GasIcon';
 import { play8BitSuccess } from '../utils/soundEffects';
 import { PRODUCTION_SKILLS } from './UserProfile';
 
@@ -166,16 +167,12 @@ function Discovery() {
               </div>
               
               {currentUser?.id && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '5px 15px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <FiZap color={currentUser.gas < 20 ? '#ff5733' : '#f59e0b'} size={14} />
-                  <div style={{ width: '60px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${currentUser.gas || 0}%` }}
-                      style={{ height: '100%', background: currentUser.gas < 20 ? 'linear-gradient(90deg, #ff5733, #ff8c33)' : 'linear-gradient(90deg, #f59e0b, #fbbf24)' }}
-                    />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '8px 0' }}>
+                  <GasIcon gas={currentUser.gas || 0} size="38px" />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#555', textTransform: 'uppercase', letterSpacing: '2px' }}>ENERGY</span>
+                    <span style={{ fontSize: '1rem', fontWeight: '900', color: '#fff', lineHeight: 1 }}>{currentUser.gas || 0}%</span>
                   </div>
-                  <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#fff' }}>{currentUser.gas || 0}% GAS</span>
                 </div>
               )}
             </div>
@@ -358,7 +355,7 @@ function Discovery() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setHireModal({ show: true, freelancerId: freelancer._id, freelancerName: freelancer.name })}
+                      onClick={() => setHireModal({ show: true, freelancerId: freelancer._id, freelancerName: freelancer.name, freelancerRank: freelancer.rank })}
                       style={{
                         flex: 2, background: 'var(--accent)', color: '#fff', border: 'none', padding: '18px',
                         borderRadius: '20px', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer',
@@ -400,6 +397,7 @@ function Discovery() {
           <HireModal
             freelancerId={hireModal.freelancerId}
             freelancerName={hireModal.freelancerName}
+            freelancerRank={hireModal.freelancerRank}
             currentToken={currentToken}
             onClose={() => setHireModal({ ...hireModal, show: false })}
           />

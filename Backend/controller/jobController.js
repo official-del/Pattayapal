@@ -29,17 +29,22 @@ export const createJob = async (req, res) => {
       return res.status(400).json({ message: "ไม่สามารถจ้างตนเองได้" });
     }
 
-    // ⛽ GAS CHECK: Check and Deduct Gas based on Rank
+    // ⛽ GAS CHECK: Check and Deduct Gas based on Freelancer's Rank
     const employer = await User.findById(employerId);
     if (!employer) return res.status(404).json({ message: "ไม่พบผู้จ้างงาน" });
 
-    // Auto-refill if monthly period passed
+    // Auto-refill if monthly period passed (Retention mechanic)
     await checkAndRefillGas(employer);
 
-    const gasCost = getGasConsumption(employer.rank);
+    const freelancer = await User.findById(freelancerId);
+    if (!freelancer) return res.status(404).json({ message: "ไม่พบฟรีแลนซ์" });
+
+    // Gas Cost is based on the FREELANCER's rank
+    const gasCost = getGasConsumption(freelancer.rank);
+    
     if (employer.gas < gasCost) {
       return res.status(400).json({ 
-        message: `Gas ของคุณไม่พอสำหรับการจ้างงานนี้ (ต้องการ ${gasCost}%, มีอยู่ ${employer.gas}%) กรุณารอเติมอัตโนมัติรายเดือนหรือใช้ Coin เติม` 
+        message: `Gas ของคุณไม่พอสำหรับการจ้างงานนี้ (ต้องการ ${gasCost}% สำหรับฟรีแลนซ์แรงค์ ${freelancer.rank}, มีอยู่ ${employer.gas}%) กรุณาเติม Gas เพื่อดำเนินการต่อ` 
       });
     }
 

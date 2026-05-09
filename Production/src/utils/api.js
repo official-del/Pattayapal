@@ -260,8 +260,12 @@ export const walletAPI = {
   adminAdjustBalance: (data) =>
     API.post('/wallet/admin/adjust-balance', data).then(res => res.data),
 
+  // 🛡️ Admin: Send gas directly to user (Manual adjustment)
+  adminAdjustGas: (data) =>
+    API.post('/wallet/admin/adjust-gas', data).then(res => res.data),
+
   // 🔋 Gas Refill
-  refillGas: () =>
-    API.post('/wallet/refill-gas').then(res => res.data),
+  refillGas: (data) =>
+    API.post('/wallet/refill-gas', data).then(res => res.data),
 };
 

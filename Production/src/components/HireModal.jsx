@@ -5,10 +5,11 @@ import { jobsAPI, walletAPI } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { FiAlertCircle, FiMapPin, FiX, FiSearch, FiCheck, FiZap } from 'react-icons/fi';
 import { CoinIcon, CoinBadge } from './CoinIcon';
+import GasIcon from './GasIcon';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRef } from 'react';
 
-function HireModal({ freelancerId, freelancerName, onClose, currentToken, initialData = null }) {
+function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, currentToken, initialData = null }) {
   const { user, fetchProfile } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
@@ -122,15 +123,16 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
     'Diamond': 50,
     'Conqueror': 60
   };
-  const gasCost = gasCosts[user?.rank] || 10;
+  const gasCost = gasCosts[freelancerRank] || 10;
 
   const isInsufficientCoins = formData.budget > coinBalance;
   const isInsufficientGas = currentGas < gasCost;
 
   const handleRefillGas = async () => {
     if (loading) return;
-    if (coinBalance < 100) {
-      return toast.error("ยอด Coin ไม่พอสำหรับการเติม Gas (ต้องการ 100 Coins)");
+    const refillCost = 1000;
+    if (coinBalance < refillCost) {
+      return toast.error(`ยอด Coin ไม่พอสำหรับการเติม Gas (ต้องการ ${refillCost} Coins หรือ 100 บาท)`);
     }
 
     setLoading(true);
@@ -257,7 +259,7 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '5px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '5px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ color: '#888', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 Coin ของคุณ: <CoinBadge amount={coinBalance} size="sm" />
@@ -267,19 +269,21 @@ function HireModal({ freelancerId, freelancerName, onClose, currentToken, initia
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ color: isInsufficientGas ? '#ff5733' : '#888', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FiZap color={isInsufficientGas ? '#ff5733' : '#f59e0b'} /> 
-                Gas: <span style={{ fontWeight: '800', color: isInsufficientGas ? '#ff5733' : '#fff' }}>{currentGas}%</span> 
-                <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>(เสีย {gasCost}% ต่องาน)</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+              <div style={{ color: isInsufficientGas ? '#ff5733' : '#888', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <GasIcon gas={currentGas} size="45px" />
+                <div>
+                    <div style={{ fontWeight: '800', color: isInsufficientGas ? '#ff5733' : '#fff', fontSize: '1rem', letterSpacing: '0.5px' }}>ENERGY: {currentGas}%</div>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '2px' }}>Hire {freelancerName} ({freelancerRank}) consumes {gasCost}%</div>
+                </div>
               </div>
               {isInsufficientGas && (
                 <button 
                   type="button"
                   onClick={handleRefillGas}
-                  style={{ background: 'none', border: 'none', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', padding: 0 }}
+                  style={{ background: 'var(--accent)', border: 'none', color: '#fff', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer', padding: '6px 12px', borderRadius: '8px' }}
                 >
-                  เติม Gas (100 Coins)
+                  เติม (฿100)
                 </button>
               )}
             </div>

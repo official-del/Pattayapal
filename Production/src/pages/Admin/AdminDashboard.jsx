@@ -55,22 +55,21 @@ export default function AdminDashboard() {
     } catch (e) { console.error(e); toast.error('Broadcast failed'); }
     finally { setBroadcastLoading(false); }
   };
-
    // ── Top-up state ──
   const [topups, setTopups] = useState([]);
   const [topupsLoading, setTopupsLoading] = useState(false);
   const [topupFilter, setTopupFilter] = useState('pending'); // 'pending', 'all'
 
-  // ── Coin Adjustment state ──
+  // ── Coin & Gas Adjustment state ──
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [adjustingUser, setAdjustingUser] = useState(null);
+  const [adjustType, setAdjustType] = useState('coins'); // 'coins' | 'gas'
   const [adjustAmount, setAdjustAmount] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
   const [adjustLoading, setAdjustLoading] = useState(false);
 
   // Get token from localStorage (no need for Context)
   const activeToken = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
-
   useEffect(() => {
     // Initial Auth Check
     const rawUserInfo = window.safeStorage.getItem('userInfo');
@@ -181,15 +180,23 @@ export default function AdminDashboard() {
     fetchCategories();
   };
 
-  const handleAdjustCoins = async (e) => {
+  const handleAdjustBalance = async (e) => {
     e.preventDefault();
     setAdjustLoading(true);
     try {
-      await walletAPI.adminAdjustBalance({
-        userId: adjustingUser._id,
-        amount: parseFloat(adjustAmount),
-        reason: adjustReason
-      });
+      if (adjustType === 'coins') {
+        await walletAPI.adminAdjustBalance({
+          userId: adjustingUser._id,
+          amount: parseFloat(adjustAmount),
+          reason: adjustReason
+        });
+      } else {
+        await walletAPI.adminAdjustGas({
+          userId: adjustingUser._id,
+          amount: parseFloat(adjustAmount),
+          reason: adjustReason
+        });
+      }
       toast.success('Success!');
       setShowAdjustModal(false);
       fetchAllUsers();
@@ -562,20 +569,28 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-      {/* COIN ADJUST MODAL */}
+      {/* ADJUST MODAL (COINS & GAS) */}
       {showAdjustModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '400px', border: '1px solid rgba(255,255,255,0.05)' }}>
-             <h3 style={{ marginBottom: '30px', fontSize: '1.5rem', fontWeight: 900 }}>Adjust Coins</h3>
+             <h3 style={{ marginBottom: '20px', fontSize: '1.5rem', fontWeight: 900 }}>Adjust Balance</h3>
+             
+             <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', background: '#111', padding: '5px', borderRadius: '12px' }}>
+               <button onClick={() => setAdjustType('coins')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', background: adjustType === 'coins' ? '#f59e0b' : 'transparent', color: adjustType === 'coins' ? '#000' : '#888', transition: '0.2s' }}>COINS</button>
+               <button onClick={() => setAdjustType('gas')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', background: adjustType === 'gas' ? '#10b981' : 'transparent', color: adjustType === 'gas' ? '#000' : '#888', transition: '0.2s' }}>GAS</button>
+             </div>
+
              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>AMOUNT (+ OR -)</label>
-             <input type="number" value={adjustAmount} onChange={e => setAdjustAmount(e.target.value)} placeholder="e.g. 100 or -50" style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', marginBottom: '20px', fontSize: '1rem', outline: 'none' }} />
+             <input type="number" value={adjustAmount} onChange={e => setAdjustAmount(e.target.value)} placeholder={adjustType === 'coins' ? "e.g. 100 or -50" : "e.g. 50 or -20"} style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', marginBottom: '20px', fontSize: '1rem', outline: 'none' }} />
              
              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>REASON (OPTIONAL)</label>
              <input type="text" value={adjustReason} onChange={e => setAdjustReason(e.target.value)} placeholder="Reason for adjustment..." style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', marginBottom: '30px', fontSize: '0.9rem', outline: 'none' }} />
              
              <div style={{ display: 'flex', gap: '15px' }}>
                <button onClick={() => setShowAdjustModal(false)} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#111', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}>Cancel</button>
-               <button onClick={handleAdjustCoins} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#f59e0b', color: '#000', border: 'none', fontWeight: 900, cursor: 'pointer' }}>Confirm</button>
+               <button onClick={handleAdjustBalance} disabled={adjustLoading} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: adjustType === 'coins' ? '#f59e0b' : '#10b981', color: '#000', border: 'none', fontWeight: 900, cursor: 'pointer', opacity: adjustLoading ? 0.6 : 1 }}>
+                 {adjustLoading ? '...' : 'Confirm'}
+               </button>
              </div>
           </div>
         </div>

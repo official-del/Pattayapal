@@ -8,6 +8,8 @@ import fs from 'fs';
 import { uploadToGCS } from '../utils/gcs.js';
 const EASYSLIP_API_KEY = () => process.env.EASYSLIP_API_KEY?.trim();
 
+import Notification from '../models/Notification.js';
+
 // ──────────────────────────────────────────────
 // ADMIN: Adjust User Balance (Manual Injection)
 // ──────────────────────────────────────────────
@@ -52,6 +54,14 @@ export const adminAdjustCoins = async (req, res) => {
       }
     });
 
+    // Create Notification
+    await Notification.create({
+      user: userId,
+      type: 'SYSTEM',
+      title: change >= 0 ? '💰 ได้รับเหรียญจากระบบ' : '📉 เหรียญถูกหักโดยระบบ',
+      message: `แอดมินได้ปรับยอดเหรียญของคุณ ${change >= 0 ? '+' : ''}${change} Coins (${reason || 'ไม่ระบุเหตุผล'})`,
+    });
+
     // Notify user via Socket
     const io = req.app.get('io');
     if (io) {
@@ -61,6 +71,7 @@ export const adminAdjustCoins = async (req, res) => {
         message: `ยอดเหรียญของคุณถูกปรับเปลี่ยนโดยแอดมิน: ${change >= 0 ? '+' : ''}${change} Coins`,
         type: change >= 0 ? 'topup' : 'deduct'
       });
+      io.to(userId.toString()).emit('new_notification');
     }
 
     return res.status(200).json({
@@ -69,6 +80,136 @@ export const adminAdjustCoins = async (req, res) => {
     });
   } catch (err) {
     console.error('Admin adjust coins error:', err);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// ──────────────────────────────────────────────
+// ADMIN: Adjust User Gas Energy
+// ──────────────────────────────────────────────
+export const adminAdjustGas = async (req, res) => {
+  try {
+    const { userId, amount, reason } = req.body;
+    const adminId = req.user._id || req.user.id;
+
+    if (!userId || amount === undefined) {
+      return res.status(400).json({ message: 'Missing userId or amount' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const change = parseFloat(amount);
+    const oldGas = user.gasBalance || 0;
+    // Clamp gas between 0 and 100
+    user.gasBalance = Math.min(100, Math.max(0, oldGas + change));
+    await user.save();
+
+    // Log Audit
+    await AuditLog.create({
+      userId: adminId,
+      action: 'GAS_ADJUSTMENT',
+      severity: 'medium',
+      details: {
+        targetUser: user.email,
+        oldGas,
+        newGas: user.gasBalance,
+        change,
+        reason
+      }
+    });
+
+    // Create Notification
+    await Notification.create({
+      user: userId,
+      type: 'SYSTEM',
+      title: change >= 0 ? '🔋 พลังงาน Gas เพิ่มขึ้น!' : '⚠️ พลังงาน Gas ถูกหัก!',
+      message: `แอดมินได้ปรับพลังงาน Gas ของคุณ ${change >= 0 ? '+' : ''}${change}% (${reason || 'ไม่ระบุเหตุผล'})`,
+    });
+
+    // Notify user via Socket
+    const io = req.app.get('io');
+    if (io) {
+      io.to(userId.toString()).emit('balance_update', {
+        gasBalance: user.gasBalance,
+        title: change >= 0 ? 'ได้รับ Gas เพิ่ม!' : 'Gas ถูกหัก!',
+        message: `พลังงาน Gas ของคุณถูกปรับเปลี่ยนโดยแอดมิน: ${change >= 0 ? '+' : ''}${change}%`,
+        type: change >= 0 ? 'topup' : 'deduct'
+      });
+      io.to(userId.toString()).emit('new_notification');
+    }
+
+    return res.status(200).json({
+      message: 'ปรับพลังงาน Gas สำเร็จแล้ว',
+      gasBalance: user.gasBalance
+    });
+  } catch (err) {
+    console.error('Admin adjust gas error:', err);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// ──────────────────────────────────────────────
+// USER: Refill Gas using Coins
+// ──────────────────────────────────────────────
+export const refillGas = async (req, res) => {
+  try {
+    const { percent } = req.body; // 25, 50, 75, 100
+    const userId = req.user._id || req.user.id;
+
+    if (![25, 50, 75, 100].includes(percent)) {
+      return res.status(400).json({ message: 'ตัวเลือกการเติม Gas ไม่ถูกต้อง' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const cost = percent * 10; // 25 -> 250, 100 -> 1000
+    if (user.coinBalance < cost) {
+      return res.status(400).json({ message: `เหรียญไม่พอ (ต้องการ ${cost.toLocaleString()} Coins)` });
+    }
+
+    if (user.gasBalance >= 100) {
+      return res.status(400).json({ message: 'พลังงาน Gas ของคุณเต็มอยู่แล้ว' });
+    }
+
+    const oldBalance = user.coinBalance;
+    const oldGas = user.gasBalance;
+
+    user.coinBalance -= cost;
+    // Add gas and clamp at 100
+    user.gasBalance = Math.min(100, user.gasBalance + percent);
+    await user.save();
+
+    // Create Transaction for Coin deduction
+    const tx = new Transaction({
+      user: userId,
+      type: 'WITHDRAW',
+      amount: cost,
+      status: 'completed',
+      reference: `REFILL_GAS: เติมพลังงาน Gas +${percent}%`,
+    });
+    await tx.save();
+
+    // Notify user via Socket
+    const io = req.app.get('io');
+    if (io) {
+      io.to(userId.toString()).emit('balance_update', {
+        coinBalance: user.coinBalance,
+        gasBalance: user.gasBalance,
+        title: 'เติมพลังงานสำเร็จ!',
+        message: `คุณได้ใช้ ${cost.toLocaleString()} Coins เพื่อเติม Gas +${percent}%`,
+        type: 'topup'
+      });
+    }
+
+    return res.status(200).json({
+      message: 'เติมพลังงาน Gas สำเร็จแล้ว!',
+      coinBalance: user.coinBalance,
+      gasBalance: user.gasBalance
+    });
+  } catch (err) {
+    console.error('Refill gas error:', err);
     return res.status(500).json({ message: err.message });
   }
 };
@@ -377,58 +518,7 @@ export const updateTopupStatus = async (req, res) => {
 // ──────────────────────────────────────────────
 // POST /api/wallet/refill-gas (User refills Gas)
 // ──────────────────────────────────────────────
-export const refillGas = async (req, res) => {
-  try {
-    const userId = req.user._id || req.user.id;
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
 
-    if (user.gas >= 100) {
-      return res.status(400).json({ message: 'Gas ของคุณเต็มอยู่แล้ว' });
-    }
-
-    const cost = 100; // 100 Coins for a full refill
-    if ((user.coinBalance || 0) < cost) {
-      return res.status(400).json({ message: `ยอด Coin ไม่เพียงพอ (ต้องการ ${cost} Coins)` });
-    }
-
-    user.coinBalance -= cost;
-    user.gas = 100;
-    user.lastGasRefill = new Date();
-    await user.save();
-
-    // Create Transaction log
-    const tx = new Transaction({
-      user: userId,
-      type: 'GAS_REFILL',
-      amount: cost,
-      status: 'completed',
-      reference: 'GAS_REFILL: Full Tank',
-    });
-    await tx.save();
-
-    // Notify user via Socket
-    const io = req.app.get('io');
-    if (io) {
-      io.to(userId.toString()).emit('balance_update', {
-        coinBalance: user.coinBalance,
-        gas: user.gas,
-        title: 'เติม Gas สำเร็จ!',
-        message: 'พลังงานการจ้างงานของคุณเต็ม 100% แล้ว',
-        type: 'gas_refill'
-      });
-    }
-
-    return res.json({
-      message: 'เติม Gas เต็มถังสำเร็จ!',
-      gas: user.gas,
-      coinBalance: user.coinBalance
-    });
-  } catch (err) {
-    console.error('Gas refill error:', err);
-    return res.status(500).json({ message: err.message });
-  }
-};
 
 export const getAuditLogs = async (req, res) => {
   try {

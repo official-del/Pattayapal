@@ -45,6 +45,7 @@ const io = new Server(server, {
     credentials: true
   }
 });
+app.set('io', io);
 
 // ── Socket.io Connection Logic ──
 const userSocketMap = new Map(); // socketId -> userId
