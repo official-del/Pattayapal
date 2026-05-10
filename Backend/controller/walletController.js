@@ -18,7 +18,7 @@ export const adminAdjustCoins = async (req, res) => {
     const { userId, amount, reason } = req.body;
     const adminId = req.user._id || req.user.id;
 
-    if (!userId || amount === undefined) {
+    if (!userId || amount === undefined || amount === null) {
       return res.status(400).json({ message: 'Missing userId or amount' });
     }
 
@@ -26,8 +26,19 @@ export const adminAdjustCoins = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const change = parseFloat(amount);
+    if (isNaN(change) || !isFinite(change)) {
+      return res.status(400).json({ message: 'Invalid amount: must be a valid number' });
+    }
+    if (Math.abs(change) > 10000000) {
+      return res.status(400).json({ message: 'Coin adjustment cannot exceed ±10,000,000 per operation' });
+    }
+
     const oldBalance = user.coinBalance || 0;
-    user.coinBalance = oldBalance + change;
+    const newBalance = oldBalance + change;
+    if (newBalance < 0) {
+      return res.status(400).json({ message: `ยอดเหรียญไม่พอสำหรับการหัก (มี ${oldBalance} Coins)` });
+    }
+    user.coinBalance = newBalance;
     await user.save();
 
     // Log the transaction
@@ -92,14 +103,20 @@ export const adminAdjustGas = async (req, res) => {
     const { userId, amount, reason } = req.body;
     const adminId = req.user._id || req.user.id;
 
-    if (!userId || amount === undefined) {
+    if (!userId || amount === undefined || amount === null) {
       return res.status(400).json({ message: 'Missing userId or amount' });
+    }
+    const change = parseFloat(amount);
+    if (isNaN(change) || !isFinite(change)) {
+      return res.status(400).json({ message: 'Invalid amount: must be a valid number' });
+    }
+    if (Math.abs(change) > 100) {
+      return res.status(400).json({ message: 'Gas adjustment cannot exceed ±100% per operation' });
     }
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const change = parseFloat(amount);
     const oldGas = user.gas || 0;
     // Clamp gas between 0 and 100
     user.gas = Math.min(100, Math.max(0, oldGas + change));
@@ -113,7 +130,7 @@ export const adminAdjustGas = async (req, res) => {
       details: {
         targetUser: user.email,
         oldGas,
-        newGas: user.gasBalance,
+        newGas: user.gas,
         change,
         reason
       }
@@ -171,17 +188,23 @@ export const refillGas = async (req, res) => {
       return res.status(400).json({ message: `เหรียญไม่พอ (ต้องการ ${cost.toLocaleString()} Coins)` });
     }
 
-    if (user.gasBalance >= 100) {
+    if ((user.gas || 0) >= 100) {
       return res.status(400).json({ message: 'พลังงาน Gas ของคุณเต็มอยู่แล้ว' });
     }
 
-    const oldBalance = user.coinBalance;
-    const oldGas = user.gas;
+    // ⚡ ATOMIC: use findOneAndUpdate to prevent race condition
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId, coinBalance: { $gte: cost } },
+      { 
+        $inc: { coinBalance: -cost },
+        $set: { gas: Math.min(100, ((await User.findById(userId)).gas || 0) + percent) }
+      },
+      { new: true }
+    );
 
-    user.coinBalance -= cost;
-    // Add gas and clamp at 100
-    user.gas = Math.min(100, user.gas + percent);
-    await user.save();
+    if (!updatedUser) {
+      return res.status(400).json({ message: `เหรียญไม่พอ (ต้องการ ${cost.toLocaleString()} Coins)` });
+    }
 
     // Create Transaction for Coin deduction
     const tx = new Transaction({
@@ -197,9 +220,9 @@ export const refillGas = async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.to(userId.toString()).emit('balance_update', {
-        coinBalance: user.coinBalance,
-        gasBalance: user.gas,
-        gas: user.gas,
+        coinBalance: updatedUser.coinBalance,
+        gasBalance: updatedUser.gas,
+        gas: updatedUser.gas,
         title: 'เติมพลังงานสำเร็จ!',
         message: `คุณได้ใช้ ${cost.toLocaleString()} Coins เพื่อเติม Gas +${percent}%`,
         type: 'topup'
@@ -208,9 +231,9 @@ export const refillGas = async (req, res) => {
 
     return res.status(200).json({
       message: 'เติมพลังงาน Gas สำเร็จแล้ว!',
-      coinBalance: user.coinBalance,
-      gasBalance: user.gas,
-      gas: user.gas
+      coinBalance: updatedUser.coinBalance,
+      gasBalance: updatedUser.gas,
+      gas: updatedUser.gas
     });
   } catch (err) {
     console.error('Refill gas error:', err);
@@ -223,11 +246,16 @@ export const refillGas = async (req, res) => {
 // ──────────────────────────────────────────────
 export const submitManualTopup = async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, targetType = 'coins' } = req.body;
     const userId = req.user._id || req.user.id;
 
-    if (!amount || !req.file) {
-      return res.status(400).json({ message: 'กรุณาระบุจำนวนเงินและอัปโหลดรูปสถาพสลิป' });
+    // Validate amount
+    const numAmount = Number(amount);
+    if (!amount || isNaN(numAmount) || numAmount <= 0 || numAmount > 1000000) {
+      return res.status(400).json({ message: 'จำนวนเงินไม่ถูกต้อง (1 - 1,000,000 บาท)' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: 'กรุณาอัปโหลดรูปภาพสลิป' });
     }
 
     // Upload slip to GCS
@@ -236,10 +264,11 @@ export const submitManualTopup = async (req, res) => {
     const tx = new Transaction({
       user: userId,
       type: 'TOPUP',
-      amount: Number(amount),
+      amount: numAmount,
       status: 'pending', // Waiting for Admin to check
       slipUrl: slipUrl,
-      reference: 'MANUAL_DEPOSIT',
+      targetType: targetType,
+      reference: targetType === 'gas' ? 'MANUAL_GAS_DEPOSIT' : 'MANUAL_DEPOSIT',
     });
     await tx.save();
 
@@ -486,19 +515,55 @@ export const updateTopupStatus = async (req, res) => {
     if (status === 'completed') {
       const user = await User.findById(tx.user._id);
       if (user) {
-        user.coinBalance = (user.coinBalance || 0) + tx.amount;
+        if (tx.targetType === 'gas') {
+          // Manual Gas Topup (Amount here is probably percentage if they entered it, but usually it's cost/10)
+          // Let's assume for manual gas, amount is the percentage to add
+          user.gas = Math.min(100, (user.gas || 0) + tx.amount);
+        } else {
+          user.coinBalance = (user.coinBalance || 0) + tx.amount;
+        }
         await user.save();
 
-        // Notify user
+        // Create Notification
+        await Notification.create({
+          recipient: user._id,
+          sender: req.user._id,
+          type: 'system',
+          text: tx.targetType === 'gas' 
+            ? `✅ การเติม Gas สำเร็จ! พลังงานของคุณเพิ่มขึ้น +${tx.amount}%` 
+            : `✅ การเติมเหรียญสำเร็จ! คุณได้รับ ${tx.amount} Coins เรียบร้อยแล้ว`,
+          link: '/dashboard/wallet'
+        });
+
+        // Notify user via Socket
         const io = req.app.get('io');
         if (io) {
           io.to(user._id.toString()).emit('balance_update', {
             coinBalance: user.coinBalance,
-            title: 'เหรียญเข้าแล้ว!',
-            message: `แอดมินอนุมัติสลิปของคุณแล้ว: +${tx.amount} Coins`,
+            gasBalance: user.gas,
+            gas: user.gas,
+            title: tx.targetType === 'gas' ? 'พลังงานเข้าแล้ว!' : 'เหรียญเข้าแล้ว!',
+            message: tx.targetType === 'gas' 
+              ? `แอดมินอนุมัติการเติม Gas ของคุณแล้ว: +${tx.amount}%`
+              : `แอดมินอนุมัติสลิปของคุณแล้ว: +${tx.amount} Coins`,
             type: 'topup'
           });
+          io.to(user._id.toString()).emit('new_notification');
         }
+      }
+    } else if (status === 'failed') {
+      // Create Notification for failure
+      await Notification.create({
+        recipient: tx.user._id,
+        sender: req.user._id,
+        type: 'system',
+        text: `❌ คำขอเติม${tx.targetType === 'gas' ? ' Gas ' : 'เหรียญ'}ถูกปฏิเสธ กรุณาตรวจสอบความถูกต้องของสลิปหรือติดต่อแอดมิน`,
+        link: '/dashboard/wallet'
+      });
+
+      const io = req.app.get('io');
+      if (io) {
+        io.to(tx.user._id.toString()).emit('new_notification');
       }
     }
 

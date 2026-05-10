@@ -3,7 +3,7 @@ import { walletAPI, usersAPI } from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlusCircle, FiList, FiCheckCircle, FiUploadCloud, FiZap, FiChevronDown, FiInfo, FiArrowDownCircle, FiSend, FiBriefcase, FiCornerDownLeft, FiCopy, FiCreditCard, FiDollarSign, FiClock, FiShield } from 'react-icons/fi';
+import { FiPlusCircle, FiList, FiCheckCircle, FiUploadCloud, FiZap, FiChevronDown, FiInfo, FiArrowDownCircle, FiSend, FiBriefcase, FiCornerDownLeft, FiCopy, FiCreditCard, FiDollarSign, FiClock, FiShield, FiActivity } from 'react-icons/fi';
 import { CoinIcon, CoinBadge, CoinTag } from '../../components/CoinIcon';
 import GasIcon from '../../components/GasIcon';
 import kbankLogo from '../../assets/kasikorn-logo.jpg';
@@ -210,9 +210,10 @@ function ManageWallet() {
     }
   };
 
-  const handleRefillGas = async (e) => {
-    if (e) e.preventDefault();
-    const cost = selectedGasPercent * 10;
+  const handleRefillGas = async (e, overridePercent = null) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const targetPercent = overridePercent || selectedGasPercent;
+    const cost = targetPercent * 10;
     if (balance < cost) {
       setGasErrorMsg(`ยอดเหรียญไม่เพียงพอ (ต้องการ ${cost.toLocaleString()} Coins)`);
       return;
@@ -221,7 +222,7 @@ function ManageWallet() {
     setGasLoading(true);
     setGasErrorMsg('');
     try {
-      const res = await walletAPI.refillGas({ percent: selectedGasPercent });
+      const res = await walletAPI.refillGas({ percent: targetPercent });
       setGasBalance(res.gasBalance);
       if (fetchProfile) fetchProfile();
       fetchTransactions();
@@ -229,7 +230,7 @@ function ManageWallet() {
       setShowSuccess({
         isGas: true,
         coins: cost,
-        amount: selectedGasPercent,
+        amount: targetPercent,
         type: 'gas'
       });
     } catch (err) {
@@ -293,7 +294,9 @@ function ManageWallet() {
             </div>
             <div>
               <p style={{ color: '#222', fontSize: '0.65rem', fontWeight: '700', marginBottom: '5px', letterSpacing: '1px' }}>AVAILABLE COINS</p>
-              <CoinBadge amount={balance} size="lg" />
+              <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: '900', color: '#f59e0b' }}>
+                {Number(balance).toLocaleString('th-TH')}
+              </h2>
             </div>
           </motion.div>
 
@@ -319,6 +322,22 @@ function ManageWallet() {
                 {gasBalance}<span style={{ fontSize: '1rem' }}>%</span>
               </h2>
             </div>
+            {gasBalance < 100 && (
+              <motion.button
+                whileHover={{ scale: 1.05, background: 'rgba(16, 185, 129, 0.2)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => { e.stopPropagation(); handleRefillGas(null, 100); }}
+                disabled={gasLoading || balance < 1000}
+                style={{
+                  marginLeft: 'auto', marginRight: '25px', padding: '10px 18px', borderRadius: '15px',
+                  background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#10b981', fontSize: '0.7rem', fontWeight: '900', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '8px', transition: '0.3s'
+                }}
+              >
+                {gasLoading ? '...' : <><FiZap size={14} /> QUICK REFILL</>}
+              </motion.button>
+            )}
           </motion.div>
 
           <motion.div
@@ -407,7 +426,9 @@ function ManageWallet() {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'rgba(255,87,51,0.03)', padding: '25px', borderRadius: '24px', border: '1px solid rgba(255,87,51,0.05)' }}>
                         <span style={{ color: '#666', fontWeight: '700', fontSize: '0.8rem', marginBottom: '5px' }}>คุณจะได้รับเหรียญประมาณ</span>
-                        <span style={{ color: 'var(--accent)', fontWeight: '900', fontSize: '1.5rem' }}>{(Number(amount || 0) * 10).toLocaleString()} <span style={{ fontSize: '0.9rem', opacity: 0.7 }}>COINS</span></span>
+                        <span style={{ color: 'var(--accent)', fontWeight: '900', fontSize: '1.5rem' }}>
+                          {(Number(amount || 0) * 10).toLocaleString()} <span style={{ fontSize: '0.9rem', opacity: 0.7 }}>COINS</span>
+                        </span>
                       </div>
                     </div>
 
@@ -464,7 +485,7 @@ function ManageWallet() {
                   <div className="topup-form-right" style={{ background: 'rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ marginBottom: '45px' }}>
                       <label style={{ display: 'block', fontSize: '0.7rem', color: '#444', fontWeight: '900', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '25px' }}>บัญชีปลายทาง</label>
-                      <div className="glass bank-card-visual" style={{ borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+                      <div className="glass bank-card-visual" style={{ padding: '35px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px' }}>
                           <img src={kbankLogo} alt="KBank Logo" style={{ width: '55px', height: '55px', borderRadius: '15px', objectFit: 'cover' }} />
                           <div style={{ textAlign: 'right' }}>
@@ -504,14 +525,51 @@ function ManageWallet() {
                   </div>
                 </div>
               </div>
+
+              {/* 📊 Processing Terminal: Real-time Status */}
+              {transactions.filter(t => t.status === 'pending' && t.type === 'TOPUP').length > 0 && (
+                <div style={{ marginTop: '40px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
+                    <FiActivity color="var(--accent)" />
+                    <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '900', letterSpacing: '2px', color: '#fff' }}>PENDING VERIFICATION</h4>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {transactions.filter(t => t.status === 'pending' && t.type === 'TOPUP').map(t => (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }} 
+                        animate={{ opacity: 1, x: 0 }}
+                        key={t._id} 
+                        style={{ background: 'rgba(255,255,255,0.02)', padding: '25px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                          <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'rgba(255,87,51,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <CoinIcon size={25} />
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, color: '#fff', fontWeight: '800', fontSize: '1rem' }}>เติมเหรียญ - {t.amount * 10} Coins</p>
+                            <p style={{ margin: '4px 0 0', color: '#555', fontSize: '0.75rem', fontWeight: '700' }}>ได้รับสลิปแล้ว กำลังตรวจสอบระบบ (฿{t.amount})</p>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontSize: '0.75rem', fontWeight: '900', letterSpacing: '1px' }}>
+                            <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 2 }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
+                            IN REVIEW
+                          </div>
+                          <p style={{ margin: '8px 0 0', color: '#333', fontSize: '0.65rem', fontWeight: '700' }}>{new Date(t.createdAt).toLocaleTimeString()}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           ) : activeTab === 'withdraw' ? (
             <motion.div key="withdraw" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <div className="glass glass-panel wallet-form-container" style={{ borderRadius: '50px', border: '1px solid rgba(255,255,255,0.03)', overflow: 'visible' }}>
+              <div className="glass glass-panel wallet-form-container" style={{ padding: '50px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.03)', overflow: 'visible' }}>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '40px', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '15px' }}>แจ้งถอนเหรียญเข้าบัญชี</h3>
                 <div className="wallet-withdraw-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', padding: '20px 0' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                    <div style={{ padding: '30px', borderRadius: '35px', background: 'rgba(255,87,51,0.02)', border: '1px solid rgba(255,87,51,0.1)' }}>
+                    <div style={{ padding: '40px', borderRadius: '35px', background: 'rgba(255,87,51,0.02)', border: '1px solid rgba(255,87,51,0.1)' }}>
                       <label style={{ display: 'block', textAlign: 'center', fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '800', letterSpacing: '2px', marginBottom: '20px', textTransform: 'uppercase' }}>ถอน Coins</label>
                       <div style={{ position: 'relative' }}>
                         <input type="number" min="1" max={balance} value={wAmount} onChange={(e) => setWAmount(e.target.value)} placeholder="0.00" style={{ width: '100%', padding: '22px 22px 22px 65px', borderRadius: '25px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,87,51,0.2)', color: '#fff', fontSize: '1.6rem', fontWeight: '900', outline: 'none', boxSizing: 'border-box' }} />
@@ -538,7 +596,7 @@ function ManageWallet() {
                       </AnimatePresence>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', padding: '30px', borderRadius: '40px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', padding: '40px', borderRadius: '40px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)' }}>
                     <h4 style={{ margin: '0 0 10px 0', fontSize: '0.8rem', color: '#444', fontWeight: '800', letterSpacing: '2px', textTransform: 'uppercase', textAlign: 'center' }}>ข้อมูลบัญชีรับเงิน</h4>
                     <div>
                       <label style={{ display: 'block', textAlign: 'center', fontSize: '0.7rem', color: '#666', fontWeight: '800', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>ชื่อบัญชี</label>
@@ -572,17 +630,17 @@ function ManageWallet() {
               </div>
             </motion.div>
           ) : activeTab === 'gas' ? (
-            <motion.div key="gas" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-              <div className="glass glass-panel wallet-form-container" style={{ borderRadius: '50px', border: '1px solid rgba(16,185,129,0.2)' }}>
+            <motion.div key="gas" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, y: -20 }}>
+              <div className="glass glass-panel wallet-form-container" style={{ padding: '60px 40px', borderRadius: '50px', border: '1px solid rgba(16,185,129,0.2)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                  <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#10b981', marginBottom: '20px' }}>เติมพลังงาน Gas ให้เต็มถัง!</h3>
-                  <div style={{ width: '150px', height: '150px', marginBottom: '30px' }}><GasIcon gas={selectedGasPercent} size="100%" /></div>
+                  <h3 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#10b981', marginBottom: '30px' }}>เติมพลังงาน Gas ให้เต็มถัง!</h3>
+                  <div style={{ width: '180px', height: '180px', marginBottom: '50px' }}><GasIcon gas={selectedGasPercent} size="100%" /></div>
                   <div style={{ display: 'flex', gap: '10px', marginBottom: '35px', width: '100%', maxWidth: '400px' }}>
                     {[25, 50, 75, 100].map(p => (
                       <button key={p} onClick={() => setSelectedGasPercent(p)} style={{ flex: 1, padding: '15px 5px', borderRadius: '15px', background: selectedGasPercent === p ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.02)', color: selectedGasPercent === p ? '#10b981' : '#666', border: selectedGasPercent === p ? '2px solid #10b981' : '1px solid rgba(255,255,255,0.05)', fontWeight: '800', cursor: 'pointer' }}>{p}%</button>
                     ))}
                   </div>
-                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleRefillGas} disabled={gasLoading || balance < (selectedGasPercent * 10)} style={{ width: '100%', maxWidth: '350px', padding: '18px', borderRadius: '25px', background: '#10b981', color: '#000', border: 'none', fontSize: '1.1rem', fontWeight: '900', cursor: 'pointer' }}>
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleRefillGas} disabled={gasLoading || balance < (selectedGasPercent * 10)} style={{ width: '100%', maxWidth: '350px', padding: '20px', marginTop: '20px', borderRadius: '25px', background: '#10b981', color: '#000', border: 'none', fontSize: '1.1rem', fontWeight: '900', cursor: 'pointer' }}>
                     {gasLoading ? 'กำลังดำเนินการ...' : `ยืนยันการเติม Gas (${(selectedGasPercent * 10).toLocaleString()} Coins)`}
                   </motion.button>
                 </div>

@@ -168,38 +168,22 @@ app.use('/api/auth', apiLimiter);
 app.use('/api/upload', uploadLimiter);
 app.use('/api/works', uploadLimiter);
 
-// 🔍 [DEBUG] Route to check GCS configuration status on Live Server (Top Priority)
-app.get('/api/gcs-check', (req, res) => {
-  const hasKey = !!process.env.GCP_KEY_JSON;
-  const bucket = process.env.GCP_BUCKET_NAME;
-  const project = process.env.GCP_PROJECT_ID;
-  
-  let keyStatus = "❌ Not Found";
-  if (hasKey) {
-    let keyContent = process.env.GCP_KEY_JSON.trim();
-    // Strip surrounding quotes
-    keyContent = keyContent.replace(/^["']|["']$/g, '');
-    
-    try {
-      JSON.parse(keyContent);
-      keyStatus = "✅ Found & Valid Raw JSON";
-    } catch (e) {
-      try {
-        const decoded = Buffer.from(keyContent, 'base64').toString();
-        JSON.parse(decoded);
-        keyStatus = "✅ Found & Valid Base64 JSON";
-      } catch (b64Error) {
-        keyStatus = "⚠️ Found but Invalid format (tried JSON and Base64)";
-      }
-    }
-  }
+// 🔒 [SECURED] GCS Check - Admin only
+app.get('/api/gcs-check', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+  try {
+    const jwt = (await import('jsonwebtoken')).default;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userObj = await User.findById(decoded.id).select('role');
+    if (!userObj || userObj.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+  } catch { return res.status(401).json({ message: 'Invalid token' }); }
 
+  const isConfigured = !!(process.env.GCP_KEY_JSON || (process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY));
   res.json({
-    status: "Checking GCS...",
-    GCP_KEY_JSON: keyStatus,
-    GCP_BUCKET_NAME: bucket || "❌ Not Set",
-    GCP_PROJECT_ID: project || "❌ Not Set",
-    hint: "If Key is 'Not Found', please check Hostinger Environment Variables."
+    status: isConfigured ? '✅ GCS Configured' : '❌ GCS Not Configured',
+    GCP_BUCKET_NAME: process.env.GCP_BUCKET_NAME ? '✅ Set' : '❌ Not Set',
+    GCP_PROJECT_ID: process.env.GCP_PROJECT_ID ? '✅ Set' : '❌ Not Set',
   });
 });
 
@@ -209,8 +193,8 @@ app.use(cors({
 }));
 // ✅ ยุบรวม express.json ให้เหลือตัวเดียว และตั้ง Limit รับรูปขนาดใหญ่
 // ✅ ยุบรวม express.json ให้เหลือตัวเดียว และตั้ง Limit รับรูปขนาดใหญ่ (2GB)
-app.use(express.json({ limit: '2000mb' }));
-app.use(express.urlencoded({ limit: '2000mb', extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Attach io to app to use in controllers
 app.set('io', io);
@@ -232,16 +216,23 @@ app.use('/api/works', workRoutes);
 
 // Removed from here
 
-// 🔍 [DEBUG] Echo headers to check what Hostinger proxy passes through
-app.get('/api/debug-headers', (req, res) => {
+// 🔒 [SECURED] Debug headers - Admin only
+app.get('/api/debug-headers', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+  try {
+    const jwt = (await import('jsonwebtoken')).default;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userObj = await User.findById(decoded.id).select('role');
+    if (!userObj || userObj.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+  } catch { return res.status(401).json({ message: 'Invalid token' }); }
+
   res.json({
-    receivedHeaders: {
-      authorization: req.headers.authorization || '❌ MISSING',
-      'x-auth-token': req.headers['x-auth-token'] || '❌ MISSING',
-      host: req.headers.host,
-      origin: req.headers.origin,
-    },
-    note: 'If authorization is MISSING, Hostinger proxy is stripping it.'
+    hasAuthorization: !!req.headers.authorization,
+    hasXAuthToken: !!req.headers['x-auth-token'],
+    host: req.headers.host,
+    origin: req.headers.origin,
+    note: 'Debug endpoint secured - admin only'
   });
 });
 

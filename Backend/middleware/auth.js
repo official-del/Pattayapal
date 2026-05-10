@@ -19,20 +19,22 @@ export const protect = async (req, res, next) => {
   }
 
   try {
-    const secret = process.env.JWT_SECRET || 'pattayapal_secret_key';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('🛡️ CRITICAL: JWT_SECRET environment variable is not set!');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
     const decoded = jwt.verify(token, secret);
 
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {
-      console.error(`🛡️ Auth Middleware Error: User not found for ID ${decoded.id}`);
-      return res.status(401).json({ message: `ไม่พบผู้ใช้งานนี้ในระบบ (ID: ${decoded.id})` });
+      return res.status(401).json({ message: 'ไม่พบผู้ใช้งานนี้ในระบบ กรุณา Login ใหม่' });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    console.error('🛡️ Auth Middleware Error: JWT verify failed', error.message);
-    return res.status(401).json({ message: `Token ไม่ถูกต้องหรือหมดอายุ: ${error.message}`, tokenStart: token.substring(0, 10) });
+    return res.status(401).json({ message: 'Token ไม่ถูกต้องหรือหมดอายุ กรุณา Login ใหม่' });
   }
 };
 

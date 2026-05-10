@@ -97,9 +97,20 @@ export const createJob = async (req, res) => {
 
       const io = req.app.get('io');
       if (io) {
+        // Notify freelancer about new notification
         io.to(freelancerId.toString()).emit('new_notification', {
           ...note._doc,
           sender: { name: employer.name, profileImage: employer.profileImage }
+        });
+
+        // ⚡ Notify employer about updated balance (Coins & Gas)
+        io.to(employerId.toString()).emit('balance_update', {
+          coinBalance: updatedEmployer.coinBalance,
+          gasBalance: updatedEmployer.gas,
+          gas: updatedEmployer.gas,
+          title: 'จ้างงานสำเร็จ!',
+          message: `ยอดเหรียญและพลังงานถูกหักสำหรับการจ้างงาน: "${title}"`,
+          type: 'deduct'
         });
       }
     } catch (err) { console.error("Job Notification Error:", err); }
@@ -180,6 +191,16 @@ export const updateJobStatus = async (req, res) => {
       // Update social stats/ranking
       await updateUserStats(job.freelancer, 'REVENUE', { amount: job.budget }, io);
       await updateUserStats(job.freelancer, 'COMPLETION', {}, io);
+
+      // ⚡ Notify freelancer about updated balance (Earnings)
+      if (io && updatedFreelancer) {
+        io.to(job.freelancer.toString()).emit('balance_update', {
+          coinBalance: updatedFreelancer.coinBalance,
+          title: 'ได้รับเงินจากงาน!',
+          message: `คุณได้รับ ${job.budget} Coins จากงาน: "${job.title}"`,
+          type: 'topup'
+        });
+      }
     }
 
     // 💸 Refund if cancelled (only if not already paid out)
@@ -202,6 +223,17 @@ export const updateJobStatus = async (req, res) => {
       }
       job.paymentStatus = 'refunded';
       job.status = 'cancelled';
+
+      // ⚡ Notify employer about updated balance (Refund)
+      const io = req.app.get('io');
+      if (io && updatedEmployer) {
+        io.to(job.employer.toString()).emit('balance_update', {
+          coinBalance: updatedEmployer.coinBalance,
+          title: 'ได้รับเงินคืน!',
+          message: `คุณได้รับเงินคืน ${job.budget} Coins จากการยกเลิกงาน: "${job.title}"`,
+          type: 'topup'
+        });
+      }
     } 
     else {
       job.status = status;

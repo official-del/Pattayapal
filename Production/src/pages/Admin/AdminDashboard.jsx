@@ -509,29 +509,40 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="admin-table-container" style={{ display: 'flex', flexDirection: 'column', gap: '15px', overflowX: 'auto' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1fr 1fr 150px 100px', padding: '0 25px 10px', color: '#555', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '1px', minWidth: '800px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '80px 100px 1.5fr 1fr 1fr 150px 100px', padding: '0 25px 10px', color: '#555', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '1px', minWidth: '900px' }}>
                     <span>STATUS</span>
+                    <span>TYPE</span>
                     <span>USER</span>
                     <span>AMOUNT</span>
-                    <span>COINS</span>
+                    <span>REWARD</span>
                     <span>SLIP</span>
                     <span style={{ textAlign: 'right' }}>ACTIONS</span>
                   </div>
                   {memoTopups.map(t => (
-                    <div key={t._id} style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1fr 1fr 150px 100px', gap: '15px', padding: '20px 25px', alignItems: 'center', background: '#0a0a0a', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.03)', minWidth: '800px' }}>
+                    <div key={t._id} style={{ display: 'grid', gridTemplateColumns: '80px 100px 1.5fr 1fr 1fr 150px 100px', gap: '15px', padding: '20px 25px', alignItems: 'center', background: '#0a0a0a', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.03)', minWidth: '900px' }}>
                       <span style={{ fontSize: '0.65rem', fontWeight: 900, color: t.status === 'pending' ? '#f59e0b' : t.status === 'failed' ? '#ff4444' : '#22c55e', letterSpacing: '1px' }}>{t.status.toUpperCase()}</span>
+                      <div>
+                        <span style={{ 
+                          fontSize: '0.65rem', padding: '4px 10px', borderRadius: '6px', fontWeight: 900, 
+                          background: t.targetType === 'gas' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                          color: t.targetType === 'gas' ? '#10b981' : '#f59e0b',
+                          border: `1px solid ${t.targetType === 'gas' ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`
+                        }}>
+                          {t.targetType?.toUpperCase() || 'COINS'}
+                        </span>
+                      </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <img src={t.user?.profileImage?.url ? (t.user.profileImage.url.startsWith('http') ? t.user.profileImage.url : `${CONFIG.API_BASE_URL}/${t.user.profileImage.url}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(t.user?.name || 'User')}&background=111&color=fff`} style={{ width: 35, height: 35, borderRadius: '8px', objectFit: 'cover' }} />
                         <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{t.user?.name}</span>
                       </div>
                       <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>฿{t.amount.toLocaleString()}</span>
-                      <span style={{ fontWeight: 800, color: '#f59e0b', fontSize: '0.9rem' }}>{t.amount/10} Coins</span>
-                      <button onClick={() => window.open(t.slipUrl, '_blank')} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}><FiImage /> VIEW</button>
+                      <span style={{ fontWeight: 800, color: t.targetType === 'gas' ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>{t.amount * 10} {t.targetType === 'gas' ? '%' : 'Coins'}</span>
+                      <button onClick={() => window.open(t.slipUrl, '_blank')} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}><FiImage /> VIEW SLIP</button>
                       <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                         {t.status === 'pending' && (
                           <>
-                            <button onClick={() => handleUpdateTopupStatus(t._id, 'completed')} style={{ background: '#22c55e', border: 'none', width: 35, height: 35, borderRadius: '8px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FiCheckCircle size={16} /></button>
-                            <button onClick={() => handleUpdateTopupStatus(t._id, 'failed')} style={{ background: '#ff4444', border: 'none', width: 35, height: 35, borderRadius: '8px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FiTrash2 size={16} /></button>
+                            <button onClick={() => handleUpdateTopupStatus(t._id, 'completed')} style={{ background: '#22c55e', border: 'none', width: 35, height: 35, borderRadius: '8px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Approve"><FiCheckCircle size={16} /></button>
+                            <button onClick={() => handleUpdateTopupStatus(t._id, 'failed')} style={{ background: '#ff4444', border: 'none', width: 35, height: 35, borderRadius: '8px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Reject"><FiTrash2 size={16} /></button>
                           </>
                         )}
                       </div>
@@ -580,8 +591,21 @@ export default function AdminDashboard() {
                <button onClick={() => setAdjustType('gas')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', background: adjustType === 'gas' ? '#10b981' : 'transparent', color: adjustType === 'gas' ? '#000' : '#888', transition: '0.2s' }}>GAS</button>
              </div>
 
-             <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>AMOUNT (+ OR -)</label>
-             <input type="number" value={adjustAmount} onChange={e => setAdjustAmount(e.target.value)} placeholder={adjustType === 'coins' ? "e.g. 100 or -50" : "e.g. 50 or -20"} style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', marginBottom: '20px', fontSize: '1rem', outline: 'none' }} />
+             <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>
+               {adjustType === 'coins' ? 'AMOUNT (+ OR -)' : 'PERCENTAGE (+ OR - %)'}
+             </label>
+             <div style={{ position: 'relative' }}>
+               <input 
+                 type="number" 
+                 value={adjustAmount} 
+                 onChange={e => setAdjustAmount(e.target.value)} 
+                 placeholder={adjustType === 'coins' ? "e.g. 100 or -50" : "e.g. 10 or -20"} 
+                 style={{ width: '100%', padding: '15px 45px 15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', marginBottom: '20px', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }} 
+               />
+               {adjustType === 'gas' && (
+                 <span style={{ position: 'absolute', right: '20px', top: '15px', color: '#10b981', fontWeight: 900, fontSize: '1.1rem' }}>%</span>
+               )}
+             </div>
              
              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>REASON (OPTIONAL)</label>
              <input type="text" value={adjustReason} onChange={e => setAdjustReason(e.target.value)} placeholder="Reason for adjustment..." style={{ width: '100%', padding: '15px 20px', borderRadius: '12px', background: '#111', color: '#fff', border: '1px solid #222', marginBottom: '30px', fontSize: '0.9rem', outline: 'none' }} />

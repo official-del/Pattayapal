@@ -19,7 +19,7 @@ export function CoinIcon({ size = 20, style = {} }) {
 }
 
 // 💰 CoinBadge - แสดงยอด Coin พร้อม icon ใช้สำหรับ balance display
-export function CoinBadge({ amount = 0, size = 'md', color = '#F59E0B' }) {
+export function CoinBadge({ amount = 0, size = 'md', color = '#F59E0B', showIcon = true }) {
   const sizes = {
     sm: { icon: 14, font: '0.8rem', gap: '4px' },
     md: { icon: 20, font: '1rem', gap: '6px' },
@@ -38,7 +38,7 @@ export function CoinBadge({ amount = 0, size = 'md', color = '#F59E0B' }) {
       color,
       fontFamily: "'Outfit', 'Segoe UI', sans-serif",
     }}>
-      <CoinIcon size={s.icon} />
+      {showIcon && <CoinIcon size={s.icon} />}
       {Number(amount).toLocaleString('th-TH')}
     </span>
   );

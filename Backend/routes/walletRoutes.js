@@ -3,6 +3,7 @@ import multer from 'multer';
 import { protect, admin } from '../middleware/auth.js';
 import { adminAdjustCoins, adminAdjustGas, getWalletTransactions, requestWithdrawal, getAdminWithdrawals, updateWithdrawalStatus, getAuditLogs, submitManualTopup, getAdminTopups, updateTopupStatus, refillGas } from '../controller/walletController.js';
 import { topupLimiter } from '../middleware/rateLimiter.js';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 
@@ -25,8 +26,17 @@ router.get('/transactions', protect, getWalletTransactions);
 // Request Withdrawal (Freelancer)
 router.post('/withdraw', protect, requestWithdrawal);
 
-// Refill Gas
-router.post('/refill-gas', protect, refillGas);
+// Refill Gas (User)
+const gasRefillLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'คุณเติม Gas บ่อยเกินไป กรุณารอ 1 ชั่วโมงก่อนลองใหม่' },
+  validate: { default: false },
+  keyGenerator: (req) => req.user?.id || req.ip,
+});
+router.post('/refill-gas', protect, gasRefillLimiter, refillGas);
 
 // Admin: Manage Topups
 router.get('/admin/topups', protect, admin, getAdminTopups);

@@ -14,6 +14,7 @@ const transactionSchema = new mongoose.Schema({
     default: 'pending' 
   },
   slipUrl: { type: String }, // For TOPUP
+  targetType: { type: String, enum: ['coins', 'gas'], default: 'coins' }, // What is being topped up
   proofImage: { 
     url: { type: String },
     publicId: { type: String }
