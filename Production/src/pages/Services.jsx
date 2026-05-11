@@ -38,7 +38,7 @@ function Services() {
   const itemVariants = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } };
 
   return (
-    <div style={{ background: '#000', color: '#fff', paddingTop: '100px' }}>
+    <div style={{ background: '#000', color: '#fff', paddingTop: 'clamp(20px, 4vh, 40px)' }}>
 
       {/* 🚀 Tactical Ecosystem Header */}
       <section style={{ padding: '150px 5% 100px', textAlign: 'center' }}>

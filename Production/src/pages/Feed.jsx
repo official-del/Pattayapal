@@ -63,7 +63,7 @@ function Feed() {
   });
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', paddingTop: 'clamp(60px, 10vw, 100px)', paddingBottom: 'clamp(80px, 15vw, 150px)', color: '#fff' }}>
+    <div style={{ background: '#000', minHeight: '100vh', paddingTop: 'clamp(20px, 4vh, 40px)', paddingBottom: 'clamp(80px, 15vw, 150px)', color: '#fff' }}>
       <div style={{ maxWidth: '850px', margin: '0 auto', padding: '0 clamp(12px, 3vw, 30px)' }}>
 
         {/* 📡 Grid Transmission Header */}

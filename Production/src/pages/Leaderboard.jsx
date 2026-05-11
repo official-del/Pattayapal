@@ -40,7 +40,7 @@ const Leaderboard = () => {
   ];
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingTop: '100px', paddingBottom: '100px' }}>
+    <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingTop: 'clamp(20px, 4vh, 40px)', paddingBottom: '100px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 24px' }}>
         
         {/* Header */}

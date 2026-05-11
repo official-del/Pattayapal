@@ -101,7 +101,7 @@ export default function RankingsHub() {
   const myData = myRankIndex !== -1 ? leaderboard[myRankIndex] : null;
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', paddingTop: '150px', paddingBottom: '150px', color: '#fff' }}>
+    <div style={{ background: '#000', minHeight: '100vh', paddingTop: 'clamp(20px, 4vh, 40px)', paddingBottom: '150px', color: '#fff' }}>
       <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 5%' }}>
 
         <header style={{ textAlign: 'center', marginBottom: '100px' }}>

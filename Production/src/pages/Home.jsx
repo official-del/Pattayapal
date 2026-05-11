@@ -447,7 +447,7 @@ function Home() {
 
       <div className="home-main-container" style={{
         maxWidth: '1600px', margin: '0 auto',
-        padding: 'clamp(90px, 8vh, 120px) clamp(20px, 5vw, 60px) 60px',
+        padding: 'clamp(20px, 4vh, 40px) clamp(20px, 5vw, 60px) 60px',
         display: 'flex', gap: '30px', alignItems: 'flex-start'
       }}>
         <div className="home-left-sidebar"><LeftSidebar categories={categories} /></div>

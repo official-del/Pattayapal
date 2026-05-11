@@ -50,7 +50,7 @@ function PostDetail() {
   }
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px', color: '#fff' }}>
+    <div style={{ background: '#000', minHeight: '100vh', paddingTop: 'clamp(20px, 4vh, 40px)', paddingBottom: '100px', color: '#fff' }}>
       <div style={{ maxWidth: '850px', margin: '0 auto', padding: '0 20px' }}>
         
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', color: '#666', textDecoration: 'none', fontWeight: '700', marginBottom: '30px', transition: '0.3s' }} className="back-link">
