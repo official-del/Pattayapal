@@ -235,7 +235,7 @@ function Friends() {
 
   return (
     <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingBottom: '150px' }}>
-      <div className="friends-page-content" style={{ maxWidth: '1440px', margin: '0 auto', padding: '120px 5% 0', paddingLeft: 'max(5%, calc(240px + 3%))' }}>
+      <div className="friends-page-content" style={{ maxWidth: '1440px', margin: '0 auto', padding: '40px 5% 0', paddingLeft: 'max(5%, calc(240px + 3%))' }}>
 
         {/* 🔮 Hero Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 'clamp(40px, 8vw, 60px)' }}>

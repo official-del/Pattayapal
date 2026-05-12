@@ -180,14 +180,14 @@ function App() {
         <Routes>
   
           <Route path="/jobs" element={
-            <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
+            <div style={{ background: '#000', minHeight: '100vh', paddingTop: '20px', paddingBottom: '100px' }}>
               <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
                 <ManageJobs />
               </div>
             </div>
           } />
           <Route path="/manage-portfolio" element={
-            <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
+            <div style={{ background: '#000', minHeight: '100vh', paddingTop: '20px', paddingBottom: '100px' }}>
               <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
                 <ManageWorks />
               </div>
@@ -210,7 +210,7 @@ function App() {
           {/* ── Profile ── */}
           <Route path="/profile/:userId" element={<UserProfile />} />
           <Route path="/notifications" element={
-            <div style={{ background: '#000', minHeight: '100vh', paddingTop: '100px', paddingBottom: '100px' }}>
+            <div style={{ background: '#000', minHeight: '100vh', paddingTop: '20px', paddingBottom: '100px' }}>
               <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
                 <Notifications />
               </div>

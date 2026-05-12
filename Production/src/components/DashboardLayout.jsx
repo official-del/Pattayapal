@@ -61,7 +61,7 @@ function DashboardLayout() {
         {/* 🏛️ Dashboard Content Stage */}
 
         {/* ⚡ Content Stage */}
-        <div className="dashboard-content-stage" style={{ padding: '40px', flex: 1 }}>
+        <div className="dashboard-content-stage" style={{ padding: '20px 40px 40px', flex: 1 }}>
           <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
             
             {/* 💎 Minimalist Section Indicator */}
@@ -102,7 +102,7 @@ function DashboardLayout() {
 
         @media (max-width: 1024px) {
           .dashboard-main-area { margin-left: 0 !important; }
-          .dashboard-content-stage { padding: 30px 20px !important; }
+          .dashboard-content-stage { padding: 15px 20px !important; }
           header { padding: 15px 20px !important; }
         }
       `}</style>

@@ -7,7 +7,7 @@
 }
 
 .manage-works-container {
-    padding: 40px;
+    padding: 20px 40px;
     padding-bottom: 120px;
     max-width: 1600px;
     margin: 0 auto;
@@ -280,7 +280,7 @@
 
 @media (max-width: 768px) {
     .manage-works-container {
-        padding: 25px;
+        padding: 15px 25px;
     }
 
     .mw-grid {

@@ -67,13 +67,13 @@ function RightSidebar({ user, categories }) {
 
   return (
     <aside style={{
-      width: '320px', flexShrink: 0, position: 'sticky', top: '100px',
+      width: '320px', flexShrink: 0, position: 'sticky', top: '150px',
       paddingLeft: '10px',
       display: 'flex', flexDirection: 'column', gap: '30px'
     }}>
 
       {/* Trending Section */}
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+      <div style={{ marginTop: '80px', marginBottom: '20px', textAlign: 'center' }}>
         <div style={{ color: 'var(--accent)', fontSize: '0.8rem', fontWeight: '800', letterSpacing: '1px', marginBottom: '5px' }}>
           HEATING UP THE FEED
         </div>
