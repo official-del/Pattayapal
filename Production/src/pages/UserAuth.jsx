@@ -122,10 +122,10 @@ export default function UserAuth() {
       >
         <div style={{ textAlign: 'center', marginBottom: 'clamp(30px, 8vw, 50px)' }}>
           <h1 style={{ fontSize: 'clamp(1.8rem, 8vw, 3rem)', fontWeight: '700', margin: 0, letterSpacing: '-1.5px', color: '#fff', lineHeight: 1.1 }}>
-            {isLogin ? 'เข้าสู่ระบบ / LOGIN' : 'สมัครสมาชิก / REGISTER'}
+            <span>{isLogin ? 'เข้าสู่ระบบ / LOGIN' : 'สมัครสมาชิก / REGISTER'}</span>
           </h1>
           <p style={{ color: '#444', marginTop: '15px', fontWeight: '700', letterSpacing: '0.5px', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
-            {isLogin ? 'กรุณายืนยันตัวตนเพื่อเข้าสู่ระบบการทำงาน' : 'ลงทะเบียนเพื่อเริ่มต้นโปรเจกต์สร้างสรรค์ของคุณ'}
+            <span>{isLogin ? 'กรุณายืนยันตัวตนเพื่อเข้าสู่ระบบการทำงาน' : 'ลงทะเบียนเพื่อเริ่มต้นโปรเจกต์สร้างสรรค์ของคุณ'}</span>
           </p>
         </div>
 
@@ -142,9 +142,9 @@ export default function UserAuth() {
         )}
 
         <form onSubmit={handleSubmit}>
-          {!isLogin && (
-            <AnimatePresence>
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ overflow: 'hidden' }}>
+          <AnimatePresence mode="wait">
+            {!isLogin && (
+              <motion.div key="register-fields" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
                 <div style={{ marginBottom: '25px' }}>
                   <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>FULL NAME</label>
                   <div style={{ position: 'relative' }}>
@@ -184,8 +184,8 @@ export default function UserAuth() {
                   </div>
                 </div>
               </motion.div>
-            </AnimatePresence>
-          )}
+            )}
+          </AnimatePresence>
 
           <div style={{ marginBottom: '25px' }}>
             <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>EMAIL ADDRESS</label>
@@ -227,14 +227,14 @@ export default function UserAuth() {
             whileTap={{ scale: 0.98 }}
             style={{ width: '100%', background: 'var(--accent)', color: '#fff', border: 'none', padding: '24px', borderRadius: '25px', fontWeight: '700', fontSize: '1.1rem', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}
           >
-            {loading ? <FiCpu className="spin" /> : (isLogin ? 'LOGIN' : 'CREATE ACCOUNT')}
+            {loading ? <FiCpu className="spin" /> : <span>{isLogin ? 'LOGIN' : 'CREATE ACCOUNT'}</span>}
             <FiArrowRight />
           </motion.button>
         </form>
 
         <div style={{ marginTop: '40px', textAlign: 'center' }}>
           <p style={{ color: '#333', fontSize: '0.85rem', fontWeight: '700' }}>
-            {isLogin ? "Don't have an account?" : "Do you have an account?"}
+            <span>{isLogin ? "Don't have an account?" : "Do you have an account?"}</span>
             <span
               onClick={() => { setIsLogin(!isLogin); setErrorMsg(''); }}
               style={{ color: 'var(--accent)', cursor: 'pointer', marginLeft: '10px', textDecoration: 'underline' }}

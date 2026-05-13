@@ -345,6 +345,7 @@
   font-weight: 900;
   font-size: 0.9rem;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 .m-logo-box span span {
