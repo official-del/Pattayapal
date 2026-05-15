@@ -886,6 +886,21 @@ function UserProfile() {
                               <option value="Videographer">Videographer</option>
                               <option value="Editor">Editor</option>
                               <option value="Director">Director</option>
+                              <option value="Production Design">Production Design</option>
+                              <option value="Creative Content">Creative Content</option>
+                              <option value="Film Production">Film Production</option>
+                              <option value="Post Production">Post Production</option>
+                              <option value="Digital Artist">Digital Artist</option>
+                              <option value="AI Operations">AI Operations</option>
+                              <option value="AI Artist">AI Artist</option>
+                              <option value="AI Animator">AI Animator</option>
+                              <option value="AI Sound Designer">AI Sound Designer</option>
+                              <option value="AI 3D Artist">AI 3D Artist</option>
+                              <option value="AI Director">AI Director</option>
+                              <option value="AI Producer">AI Producer</option>
+                              <option value="KOL">KOL</option>
+                              <option value="Influencer">Influencer</option>
+                              <option value="Content Creator">Content Creator</option>\n                              <option value="Tutor">Tutor</option>
                            </select>
                         </div>
                      </div>
