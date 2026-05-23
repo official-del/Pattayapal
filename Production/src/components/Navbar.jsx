@@ -356,8 +356,13 @@ function Navbar() {
                         <div className="p-name">
                           {userInfo.name || 'ANOTHERWAY'}
                         </div>
-                        <div className="p-role">
-                          RANK: {rankName.toUpperCase()}
+                        <div className="p-role" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
+                          <span>RANK: {rankName.toUpperCase()}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', fontWeight: '800' }}>
+                            <GasIcon gas={user?.gas ?? userInfo?.gas ?? 0} size="12px" />
+                            <span>{user?.gas ?? userInfo?.gas ?? 0}%</span>
+                          </div>
                         </div>
                       </div>
                     </Link>

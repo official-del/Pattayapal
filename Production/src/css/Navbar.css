@@ -523,3 +523,9 @@
 @media (max-width: 1700px) {
   .hide-mobile { display: none !important; }
 }
+
+@media (max-width: 410px) {
+  .m-gas {
+    display: none !important;
+  }
+}
