@@ -1,5 +1,5 @@
 import express from 'express';
-import { createPost, getPosts, getPostById, likePost, commentPost, deleteComment, deletePost, replyCommentPost } from '../controller/postController.js';
+import { createPost, getPosts, getPostById, likePost, commentPost, deleteComment, deletePost, replyCommentPost, getPostsByUser } from '../controller/postController.js';
 import { protect } from '../middleware/auth.js';
 import multer from 'multer';
 
@@ -13,6 +13,9 @@ const upload = multer({ dest: tempDir });
 router.route('/')
   .get(getPosts)
   .post(protect, upload.array('media', 4), createPost);
+
+router.route('/user/:userId')
+  .get(getPostsByUser);
 
 router.route('/:id')
   .get(getPostById)

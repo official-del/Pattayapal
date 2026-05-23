@@ -18,6 +18,19 @@ export const getPosts = async (req, res) => {
   }
 };
 
+export const getPostsByUser = async (req, res) => {
+  try {
+    const posts = await Post.find({ author: req.params.userId })
+      .populate('author', 'name profileImage profession rank')
+      .populate('comments.user', 'name profileImage')
+      .populate('comments.replies.user', 'name profileImage')
+      .sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const getPostById = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)

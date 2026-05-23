@@ -194,6 +194,7 @@ export const notificationsAPI = {
 
 export const postsAPI = {
   getAll: () => API.get('/posts').then(res => res.data),
+  getByUser: (userId) => API.get(`/posts/user/${userId}`).then(res => res.data),
   getById: (id) => API.get(`/posts/${id}`).then(res => res.data),
   create: (formData) => API.post('/posts', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }

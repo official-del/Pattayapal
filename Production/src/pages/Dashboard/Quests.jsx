@@ -3,7 +3,7 @@ import { toast } from 'react-hot-toast';
 import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiTarget, FiCheckCircle, FiGift, FiPlus, FiEdit, FiTrash2, FiRefreshCw, FiAlertCircle, FiClock, FiLink, FiX, FiCheck, FiImage, FiZap } from 'react-icons/fi';
+import { FiTarget, FiCheckCircle, FiGift, FiPlus, FiEdit, FiTrash2, FiRefreshCw, FiAlertCircle, FiClock, FiLink, FiX, FiCheck, FiImage, FiZap, FiChevronDown } from 'react-icons/fi';
 import { play8BitSuccess } from '../../utils/soundEffects';
 import { questsAPI, questSubmissionsAPI, API } from '../../utils/api';
 import CreateQuestModal from '../../components/CreateQuestModal';
@@ -551,17 +551,36 @@ function Quests() {
 }
 
 // ─── Section Wrapper ──────────────────────────────────────────────────────────
-function QuestSection({ title, emoji, color, borderColor, children }) {
+function QuestSection({ title, emoji, color, borderColor, children, defaultOpen = true }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', cursor: 'pointer', userSelect: 'none' }}
+      >
         <span style={{ fontSize: '1.1rem' }}>{emoji}</span>
         <h2 style={{ fontSize: '0.95rem', fontWeight: '800', margin: 0, color, textTransform: 'uppercase', letterSpacing: '2px' }}>{title}</h2>
         <div style={{ flex: 1, height: '1px', background: borderColor }} />
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} style={{ color: '#888', display: 'flex', alignItems: 'center' }}>
+          <FiChevronDown size={20} />
+        </motion.div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {children}
-      </div>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

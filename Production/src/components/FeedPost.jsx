@@ -11,6 +11,75 @@ import HoverVideoPlayer from './HoverVideoPlayer';
 import OptimizedImage from './OptimizedImage';
 import React from 'react';
 import { createPortal } from 'react-dom';
+// ── URL Auto-Linker Helper ──
+const URL_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+
+function renderContentWithLinks(text) {
+  if (!text) return null;
+  const parts = text.split(URL_REGEX);
+  return parts.map((part, i) => {
+    if (URL_REGEX.test(part)) {
+      URL_REGEX.lastIndex = 0; // Reset regex state
+      const href = part.startsWith('http') ? part : `https://${part}`;
+      // Detect internal links (same hostname)
+      let isInternal = false;
+      try {
+        const url = new URL(href);
+        isInternal = url.hostname === window.location.hostname;
+      } catch {}
+      
+      if (isInternal) {
+        try {
+          const url = new URL(href);
+          const internalPath = url.pathname + url.search + url.hash;
+          return (
+            <Link
+              key={i}
+              to={internalPath}
+              style={{
+                color: 'var(--accent)',
+                textDecoration: 'underline',
+                textDecorationColor: 'rgba(255,87,51,0.4)',
+                textUnderlineOffset: '3px',
+                fontWeight: '600',
+                wordBreak: 'break-all',
+                transition: '0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.textDecorationColor = 'var(--accent)'}
+              onMouseLeave={e => e.currentTarget.style.textDecorationColor = 'rgba(255,87,51,0.4)'}
+            >
+              {part}
+            </Link>
+          );
+        } catch {}
+      }
+
+      return (
+        <a
+          key={i}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: '#6366f1',
+            textDecoration: 'underline',
+            textDecorationColor: 'rgba(99,102,241,0.4)',
+            textUnderlineOffset: '3px',
+            fontWeight: '600',
+            wordBreak: 'break-all',
+            transition: '0.2s'
+          }}
+          onMouseEnter={e => e.currentTarget.style.textDecorationColor = '#6366f1'}
+          onMouseLeave={e => e.currentTarget.style.textDecorationColor = 'rgba(99,102,241,0.4)'}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part ? <React.Fragment key={i}>{part}</React.Fragment> : null;
+  });
+}
+
 const FeedPost = React.memo(({ post, onPostDeleted }) => {
   const { user, token: contextToken, profileUpdateTag } = useContext(AuthContext);
   let currentToken = contextToken;
@@ -193,7 +262,7 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
 
       {/* Intelligence Payload */}
       <div style={{ fontSize: 'clamp(0.9rem, 2vw, 1.25rem)', lineHeight: 1.7, color: '#aaa', marginBottom: 'clamp(20px, 4vw, 30px)', fontWeight: '500', whiteSpace: 'pre-line', padding: '0 clamp(0px, 1vw, 5px)', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-        {post.content}
+        {renderContentWithLinks(post.content)}
       </div>
 
       {/* Media Stream */}
