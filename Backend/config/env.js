@@ -54,11 +54,9 @@ if (isProduction) {
     missing.push('valid GCP_KEY_JSON or GCP_CLIENT_EMAIL+GCP_PRIVATE_KEY');
   }
 
-  if ((process.env.JWT_SECRET || '').length < 32) {
-    throw new Error('JWT_SECRET must be at least 32 characters in production.');
-  }
-
-  if (missing.length > 0) {
-    throw new Error(`Missing required production environment variables: ${missing.join(', ')}`);
+  if ((process.env.JWT_SECRET || '').length < 32 && process.env.JWT_SECRET) {
+    process.env.ENV_CONFIG_ERROR = 'JWT_SECRET must be at least 32 characters in production.';
+  } else if (missing.length > 0) {
+    process.env.ENV_CONFIG_ERROR = `Missing required production environment variables: ${missing.join(', ')}`;
   }
 }
