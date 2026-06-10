@@ -40,7 +40,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 const isProduction = process.env.NODE_ENV === 'production';
-const PORT = Number(process.env.PORT || 5000);
+const PORT = process.env.PORT || 5000;
 const shutdownTimeoutMs = Number(process.env.SHUTDOWN_TIMEOUT_MS || 10000);
 
 app.disable('x-powered-by');
