@@ -638,7 +638,7 @@ app.use((err, req, res, next) => {
 const connectDatabase = async () => {
   mongoose.set('strictQuery', true);
   await mongoose.connect(process.env.MONGO_URI, {
-    serverSelectionTimeoutMS: Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS || 10000),
+    serverSelectionTimeoutMS: 2000,
   });
   await createFirstAdmin();
 };
