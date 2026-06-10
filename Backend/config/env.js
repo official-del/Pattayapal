@@ -26,19 +26,10 @@ const parseGcsKeyJson = (value) => {
 };
 
 if (isProduction) {
-  [
-    'MONGO_URI',
-    'JWT_SECRET',
-    'ALLOWED_ORIGINS',
-    'FRONTEND_URL',
-    'GCP_BUCKET_NAME',
-    'GCP_PROJECT_ID',
-    'SMTP_HOST',
-    'SMTP_PORT',
-    'SMTP_USER',
-    'SMTP_PASS',
-  ].forEach(requireEnv);
+  // ✅ Critical vars - server cannot run without these
+  ['MONGO_URI', 'JWT_SECRET', 'ALLOWED_ORIGINS', 'FRONTEND_URL'].forEach(requireEnv);
 
+  // ✅ GCS credentials check
   let hasGcsJson = false;
   if (process.env.GCP_KEY_JSON) {
     try {
@@ -48,15 +39,24 @@ if (isProduction) {
       hasGcsJson = false;
     }
   }
-
   const hasGcsPair = !!(process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY);
-  if (!hasGcsJson && !hasGcsPair) {
-    missing.push('valid GCP_KEY_JSON or GCP_CLIENT_EMAIL+GCP_PRIVATE_KEY');
+  if (!hasGcsJson && !hasGcsPair && !process.env.GCP_BUCKET_NAME) {
+    console.warn('[ENV] WARNING: GCS not configured - file uploads will fail.');
   }
 
-  if ((process.env.JWT_SECRET || '').length < 32 && process.env.JWT_SECRET) {
-    process.env.ENV_CONFIG_ERROR = 'JWT_SECRET must be at least 32 characters in production.';
-  } else if (missing.length > 0) {
-    process.env.ENV_CONFIG_ERROR = `Missing required production environment variables: ${missing.join(', ')}`;
+  // ✅ SMTP is optional - warn but don't crash
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn('[ENV] WARNING: SMTP not configured - email features will be disabled.');
+  }
+
+  // ❌ Only crash for truly critical missing vars
+  if ((process.env.JWT_SECRET || '').length < 32) {
+    console.error('[ENV] FATAL: JWT_SECRET must be at least 32 characters.');
+    process.exit(1);
+  }
+
+  if (missing.length > 0) {
+    console.error(`[ENV] FATAL: Missing critical environment variables: ${missing.join(', ')}`);
+    process.exit(1);
   }
 }

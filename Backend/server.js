@@ -610,6 +610,9 @@ const createFirstAdmin = async () => {
 };
 
 
+
+
+
 // ==========================================
 // 4. ERROR HANDLING (ตัวดักจับ Error สุดท้าย)
 // ==========================================
@@ -645,48 +648,13 @@ const connectDatabase = async () => {
 
 const startServer = async () => {
   try {
-    if (process.env.ENV_CONFIG_ERROR) {
-      throw new Error(`Environment Config Error: ${process.env.ENV_CONFIG_ERROR}`);
-    }
     await connectDatabase();
     server.listen(PORT, () => {
       console.log(`Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
     });
   } catch (err) {
     console.error('Backend startup failed:', err.message);
-    const fallbackApp = express();
-    fallbackApp.all('*', (req, res) => {
-      res.status(503).send(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>503 Server Error</title>
-            <style>
-              body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; line-height: 1.6; color: #333; }
-              .error-box { background: #fee2e2; border: 1px solid #ef4444; padding: 1.5rem; border-radius: 8px; color: #991b1b; margin-bottom: 2rem; }
-            </style>
-          </head>
-          <body>
-            <h1>🚨 Server Startup Error</h1>
-            <p>Your Node.js backend failed to start. This is usually caused by missing environment variables or database connection issues.</p>
-            <div class="error-box">
-              <strong>Error Details:</strong><br/>
-              <code>${err.message}</code>
-            </div>
-            <h3>How to fix (Hostinger / cPanel):</h3>
-            <ul>
-              <li>Make sure your <code>.env</code> file is created in the Backend folder and contains all required variables.</li>
-              <li>Make sure your <code>MONGO_URI</code> is correct and your server IP is whitelisted in MongoDB Atlas.</li>
-              <li>Make sure you clicked <strong>NPM Install</strong> in your Node.js app dashboard.</li>
-              <li>After fixing the issue, click <strong>Restart</strong> on your Node.js app to apply changes.</li>
-            </ul>
-          </body>
-        </html>
-      `);
-    });
-    fallbackApp.listen(PORT, () => {
-      console.log(\`Fallback server running on port \${PORT} to show startup error.\`);
-    });
+    process.exit(1);
   }
 };
 
