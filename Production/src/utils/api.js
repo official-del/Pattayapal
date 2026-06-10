@@ -144,8 +144,15 @@ export const chatAPI = {
   getOrCreateConversation: (receiverId) =>
     API.post('/chat/conversation', { receiverId }).then(res => res.data),
 
-  getMyConversations: (filter = null) =>
-    API.get(`/chat/conversations${filter ? `?filter=${filter}` : ''}`).then(res => res.data),
+  getMyConversations: (filter = null) => {
+    const normalizedFilter = filter === 'archive'
+      ? 'archived'
+      : filter === 'all' || filter === 'group'
+        ? null
+        : filter;
+
+    return API.get(`/chat/conversations${normalizedFilter ? `?filter=${normalizedFilter}` : ''}`).then(res => res.data);
+  },
     
   getConversation: (conversationId) =>
     API.get(`/chat/${conversationId}`).then(res => res.data),

@@ -1,30 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { worksAPI } from '../../utils/api';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
+import { FiArrowLeft, FiBarChart2, FiEye, FiFolder, FiImage, FiVideo } from 'react-icons/fi';
+import PremiumLoader from '../../components/PremiumLoader';
+import { worksAPI } from '../../utils/api';
 
 function AdminOverview() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({ total: 0, published: 0, drafts: 0, totalViews: 0, videos: 0, images: 0 });
-  const [topWorksData, setTopWorksData] = useState([]); // สำหรับแสดงในตาราง (เรียงตามวิว)
-  const [topViewedChart, setTopViewedChart] = useState([]); // สำหรับแสดงในกราฟ
+  const [topWorksData, setTopWorksData] = useState([]);
+  const [topViewedChart, setTopViewedChart] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const COLORS = {
-    primary: '#ff6b35',
-    primaryGlow: 'rgba(255, 107, 53, 0.4)',
-    bg: '#050505',
-    cardBg: 'rgba(18, 18, 18, 0.7)',
-    border: 'rgba(255, 255, 255, 0.08)',
-    textMain: '#ffffff',
-    textSub: '#888888',
-    success: '#00e676',
-    warning: '#ffea00',
-    info: '#00b0ff'
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,336 +30,189 @@ function AdminOverview() {
         const res = await worksAPI.getAll();
         const allWorks = res.works || res || [];
 
-        let viewsCount = 0; let videoCount = 0; let imageCount = 0; let publishedCount = 0;
+        let viewsCount = 0;
+        let videoCount = 0;
+        let imageCount = 0;
+        let publishedCount = 0;
 
-        allWorks.forEach(work => {
-          viewsCount += (work.views || 0);
-          if (work.status === 'published') publishedCount++;
-          const isVideo = work.type === 'video' || /\.(mp4|webm|ogg|mov)$/i.test(work.mediaUrl || "");
-          if (isVideo) videoCount++; else imageCount++;
+        allWorks.forEach((work) => {
+          viewsCount += work.views || 0;
+          if (work.status === 'published') publishedCount += 1;
+
+          const isVideo = work.type === 'video' || /\.(mp4|webm|ogg|mov)$/i.test(work.mediaUrl || '');
+          if (isVideo) videoCount += 1;
+          else imageCount += 1;
         });
 
-        setStats({ total: allWorks.length, published: publishedCount, drafts: allWorks.length - publishedCount, totalViews: viewsCount, videos: videoCount, images: imageCount });
+        setStats({
+          total: allWorks.length,
+          published: publishedCount,
+          drafts: allWorks.length - publishedCount,
+          totalViews: viewsCount,
+          videos: videoCount,
+          images: imageCount,
+        });
 
-        // ✅ แก้ไข: เรียงลำดับจากยอดวิว (Views) มากไปน้อย 10 อันดับแรก
-        const sortedByViews = [...allWorks]
-          .sort((a, b) => (b.views || 0) - (a.views || 0))
-          .slice(0, 10);
-
+        const sortedByViews = [...allWorks].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
         setTopWorksData(sortedByViews);
-
-        // ✅ เตรียมข้อมูลสำหรับกราฟจากชุดข้อมูลที่เรียงแล้ว
-        setTopViewedChart(sortedByViews.map(w => ({
-          name: w.title.length > 12 ? w.title.substring(0, 12) + '..' : w.title,
-          views: w.views || 0,
-          fullName: w.title
-        })));
-
-      } catch (err) { console.error("Error fetching overview data:", err); }
-      finally { setLoading(false); }
+        setTopViewedChart(
+          sortedByViews.map((work) => ({
+            name: work.title?.length > 12 ? `${work.title.substring(0, 12)}..` : work.title,
+            views: work.views || 0,
+            fullName: work.title,
+          })),
+        );
+      } catch (err) {
+        console.error('Error fetching overview data:', err);
+      } finally {
+        setLoading(false);
+      }
     };
+
     fetchData();
   }, []);
 
-  const glassCard = {
-    background: COLORS.cardBg,
-    backdropFilter: 'blur(20px)',
-    border: `1px solid ${COLORS.border}`,
-    borderRadius: '24px',
-    padding: '32px',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-  };
+  if (loading) {
+    return <PremiumLoader fullScreen={false} text="LOADING ADMIN OVERVIEW" subtext="Preparing content metrics..." />;
+  }
 
-  if (loading) return (
-    <div style={{ background: COLORS.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="loader-orbit">
-        <div className="inner-orbit"></div>
-        <p style={{ color: COLORS.primary, marginTop: '20px', letterSpacing: '4px', fontWeight: '900' }}>PATTAYA PAL</p>
-      </div>
-    </div>
-  );
+  const metricCards = [
+    { icon: FiFolder, label: 'Total assets', value: stats.total, tone: 'orange', helper: `${stats.published} published` },
+    { icon: FiEye, label: 'Lifetime views', value: stats.totalViews.toLocaleString(), tone: 'green', helper: 'Across all works' },
+    { icon: FiVideo, label: 'Video items', value: stats.videos, tone: 'blue', helper: `${stats.images} image items` },
+    { icon: FiImage, label: 'Drafts', value: stats.drafts, tone: 'yellow', helper: 'Pending publish' },
+  ];
 
   return (
-    <div style={{ padding: 'clamp(16px, 5vw, 60px)', color: COLORS.textMain, background: COLORS.bg, minHeight: '100vh', fontFamily: "'Inter', sans-serif" }}>
-
-      {/* ── HEADER ── */}
-      <header style={{ display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'clamp(20px, 5vw, 40px)' }} className="admin-header">
+    <section className="admin-overview-page">
+      <header className="admin-overview-hero">
         <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: '900', letterSpacing: '-1.5px' }}>Performance <span style={{ color: COLORS.primary }}>Analytics</span></h1>
-          <p style={{ margin: '5px 0 0 0', color: COLORS.textSub, fontWeight: '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)' }}>TOP 10 PERFORMANCE LEADERS & INSIGHTS</p>
+          <p className="admin-overview-kicker">
+            <FiBarChart2 />
+            Performance analytics
+          </p>
+          <h1>Admin Overview</h1>
+          <p>Track portfolio content, media mix, and the highest viewed works in one compact console.</p>
         </div>
-        <button onClick={() => navigate('/admin/dashboard')} className="btn-modern-back">
-          ← BACK TO MANAGER
+
+        <button type="button" className="admin-pixel-button admin-pixel-button-muted" onClick={() => navigate('/admin/dashboard')}>
+          <FiArrowLeft />
+          <span>Back to manager</span>
         </button>
       </header>
 
-      <div className="bento-grid">
+      <div className="admin-overview-metrics">
+        {metricCards.map((card) => {
+          const Icon = card.icon;
 
-        {/* 🏆 1. TOP 10 CHART (FULL WIDTH TOP) */}
-        <div style={{ ...glassCard, gridArea: 'chart' }}>
-          <div style={{ marginBottom: '30px', display: 'flex', flexDirection: 'column', gap: '15px', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          return (
+            <article className={`admin-overview-metric is-${card.tone}`} key={card.label}>
+              <div className="admin-overview-metric-icon">
+                <Icon />
+              </div>
+              <div>
+                <span>{card.label}</span>
+                <strong>{card.value}</strong>
+                <p>{card.helper}</p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="admin-overview-grid">
+        <article className="admin-overview-panel admin-overview-chart">
+          <div className="admin-overview-panel-head">
             <div>
-              <h3 style={{ margin: 0, fontSize: 'clamp(1rem, 3vw, 1.4rem)', fontWeight: '900' }}><span style={{ color: COLORS.primary }}>🏆</span> Top 10 Performance Chart</h3>
-              <p style={{ color: COLORS.textSub, fontSize: 'clamp(0.65rem, 2vw, 0.8rem)' }}>RANKED BY VIEWS ENGAGEMENT</p>
+              <span>Top 10 chart</span>
+              <h2>Views by project</h2>
             </div>
-            <div className="live-indicator">REAL-TIME DATA</div>
+            <small>Live content data</small>
           </div>
-          <div style={{ width: '100%', height: 'clamp(200px, 50vw, 350px)' }}>
+
+          <div className="admin-overview-chart-box">
             <ResponsiveContainer>
-              <BarChart data={topViewedChart} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={COLORS.primary} stopOpacity={1} />
-                    <stop offset="100%" stopColor="#80361b" stopOpacity={0.8} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                <XAxis dataKey="name" stroke={COLORS.textSub} fontSize={11} axisLine={false} tickLine={false} dy={15} />
+              <BarChart data={topViewedChart} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" fontSize={11} axisLine={false} tickLine={false} dy={12} />
                 <YAxis hide />
                 <Tooltip
-                  cursor={{ fill: 'rgba(255,255,255,0.02)' }}
-                  labelFormatter={(label, payload) => payload && payload.length > 0 ? payload[0].payload.fullName : label}
-                  contentStyle={{ backgroundColor: '#000', border: `1px solid ${COLORS.primary}`, borderRadius: '12px', padding: '15px' }}
-                  itemStyle={{ color: COLORS.primary, fontWeight: '900', fontSize: '1.1rem' }}
+                  cursor={{ fill: 'rgba(255,87,51,0.08)' }}
+                  labelFormatter={(label, payload) => (payload && payload.length > 0 ? payload[0].payload.fullName : label)}
+                  contentStyle={{ backgroundColor: '#080808', border: '1px solid rgba(255,87,51,0.5)', borderRadius: 8, padding: 12 }}
+                  itemStyle={{ color: '#ff5733', fontWeight: 800 }}
                 />
-                <Bar dataKey="views" radius={[8, 8, 0, 0]} barSize={50} fill="url(#barGradient)" />
+                <Bar dataKey="views" radius={[6, 6, 0, 0]} barSize={42} fill="#ff5733" />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </article>
 
-        {/* 📊 2. STATS CARDS */}
-        <div style={{ ...glassCard, gridArea: 'stat1' }}>
-          <p style={{ color: COLORS.textSub, fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)', fontWeight: 'bold', letterSpacing: '1px' }}>TOTAL ASSETS</p>
-          <div style={{ fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: '900', margin: '10px 0' }}>{stats.total}</div>
-          <div style={{ fontSize: 'clamp(0.75rem, 2vw, 0.85rem)', color: COLORS.success }}>● {stats.published} Active</div>
-        </div>
-
-        <div style={{ ...glassCard, gridArea: 'stat2' }}>
-          <p style={{ color: COLORS.textSub, fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)', fontWeight: 'bold', letterSpacing: '1px' }}>LIFETIME VIEWS</p>
-          <div style={{ fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: '900', color: COLORS.success, margin: '10px 0' }}>{stats.totalViews.toLocaleString()}</div>
-          <div className="stat-progress-bg"><div className="stat-progress-fill" style={{ width: '100%' }}></div></div>
-        </div>
-
-        <div style={{ ...glassCard, gridArea: 'stat3' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '150px' }}>
-              <p style={{ color: COLORS.textSub, fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)', fontWeight: 'bold', letterSpacing: '1px' }}>MEDIA MIX</p>
-              <div style={{ marginTop: '15px' }}>
-                <div style={{ fontSize: 'clamp(0.9rem, 2.5vw, 1.2rem)', fontWeight: '800' }}>🎬 {stats.videos} <span style={{ fontSize: 'clamp(0.6rem, 1.5vw, 0.7rem)', color: COLORS.info }}>VIDEOS</span></div>
-                <div style={{ fontSize: 'clamp(0.9rem, 2.5vw, 1.2rem)', fontWeight: '800', marginTop: '5px' }}>📷 {stats.images} <span style={{ fontSize: 'clamp(0.6rem, 1.5vw, 0.7rem)', color: COLORS.primary }}>IMAGES</span></div>
-              </div>
-            </div>
-            <div style={{ width: 'clamp(60px, 15vw, 80px)', height: 'clamp(60px, 15vw, 80px)' }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie data={[{ v: stats.videos }, { v: stats.images }]} innerRadius={28} outerRadius={38} dataKey="v" stroke="none">
-                    <Cell fill={COLORS.info} /><Cell fill={COLORS.primary} />
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
+        <article className="admin-overview-panel admin-overview-mix">
+          <div className="admin-overview-panel-head">
+            <div>
+              <span>Media mix</span>
+              <h2>Asset types</h2>
             </div>
           </div>
-        </div>
 
-        {/* 🏆 3. TOP LEADERBOARD TABLE (เรียงตามวิวจากมากไปน้อย) */}
-        <div style={{ ...glassCard, gridArea: 'table' }} className="table-container">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'clamp(15px, 3vw, 25px)' }}>
-            <h3 style={{ margin: 0, fontSize: 'clamp(1rem, 3vw, 1.3rem)', fontWeight: '900' }}>Top 10 Performance Leaderboard</h3>
-            <div style={{ fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)', color: COLORS.textSub, letterSpacing: '1px', fontWeight: 'bold' }}>RANKED BY VIEWS</div>
+          <div className="admin-overview-pie">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={[{ name: 'Videos', value: stats.videos }, { name: 'Images', value: stats.images }]} innerRadius={54} outerRadius={78} dataKey="value" stroke="none">
+                  <Cell fill="#38bdf8" />
+                  <Cell fill="#ff5733" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }} className="leaderboard-table">
+
+          <div className="admin-overview-legend">
+            <span><i className="is-blue" /> Videos</span>
+            <span><i className="is-orange" /> Images</span>
+          </div>
+        </article>
+
+        <article className="admin-overview-panel admin-overview-table">
+          <div className="admin-overview-panel-head">
+            <div>
+              <span>Leaderboard</span>
+              <h2>Top viewed works</h2>
+            </div>
+          </div>
+
+          <div className="admin-overview-table-scroll">
+            <table>
               <thead>
-                <tr style={{ textAlign: 'left', color: COLORS.textSub, fontSize: 'clamp(0.6rem, 1.2vw, 0.7rem)', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                  <th style={{ padding: 'clamp(10px, 2vw, 15px)', borderBottom: `1px solid ${COLORS.border}`, minWidth: '120px' }}>Rank & Project</th>
-                  <th style={{ padding: 'clamp(10px, 2vw, 15px)', borderBottom: `1px solid ${COLORS.border}`, minWidth: '100px' }} className="hide-mobile">Category</th>
-                  <th style={{ padding: 'clamp(10px, 2vw, 15px)', borderBottom: `1px solid ${COLORS.border}`, minWidth: '80px' }} className="hide-tablet">Status</th>
-                  <th style={{ padding: 'clamp(10px, 2vw, 15px)', borderBottom: `1px solid ${COLORS.border}`, textAlign: 'right', minWidth: '120px' }}>Engagement</th>
+                <tr>
+                  <th>Rank</th>
+                  <th>Project</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Views</th>
                 </tr>
               </thead>
               <tbody>
                 {topWorksData.map((work, index) => (
-                  <tr key={work._id} className="table-row">
-                    <td style={{ padding: 'clamp(12px, 2vw, 18px)', fontWeight: '700', fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)' }}>
-                      <span style={{ color: index < 3 ? COLORS.primary : COLORS.textSub, marginRight: '10px' }}>{index + 1}</span>
-                      <span className="project-title">{work.title}</span>
-                    </td>
-                    <td style={{ padding: 'clamp(12px, 2vw, 18px)' }} className="hide-mobile">
-                      <span className="cat-badge">{work.category?.name || 'GENERIC'}</span>
-                    </td>
-                    <td style={{ padding: 'clamp(12px, 2vw, 18px)' }} className="hide-tablet">
-                      <div className="status-indicator">
-                        <span className={`dot ${work.status}`}></span>
-                        <span className={`txt ${work.status}`}>{work.status}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: 'clamp(12px, 2vw, 18px)', textAlign: 'right', fontWeight: '900', color: COLORS.primary, fontSize: 'clamp(0.85rem, 2vw, 1.2rem)' }}>
-                      {work.views?.toLocaleString() || 0}
-                    </td>
+                  <tr key={work._id}>
+                    <td>#{index + 1}</td>
+                    <td>{work.title}</td>
+                    <td>{work.category?.name || 'General'}</td>
+                    <td><span className={`admin-status-pill is-${work.status}`}>{work.status || 'draft'}</span></td>
+                    <td>{(work.views || 0).toLocaleString()}</td>
                   </tr>
                 ))}
                 {topWorksData.length === 0 && (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 'clamp(20px, 5vw, 40px)', color: COLORS.textSub }}>No project data available.</td></tr>
+                  <tr>
+                    <td colSpan="5">No project data available.</td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
+        </article>
       </div>
-
-      <style>{`
-        .bento-grid {
-          display: grid;
-          grid-template-areas: 
-            "chart chart chart"
-            "stat1 stat2 stat3"
-            "table table table";
-          grid-template-columns: 1fr 1.2fr 1fr;
-          gap: clamp(15px, 3vw, 25px);
-        }
-
-        .admin-header {
-          flex-direction: row;
-          align-items: center;
-        }
-
-        .admin-header > button {
-          align-self: flex-end;
-        }
-
-        .live-indicator {
-          background: rgba(0, 230, 118, 0.1);
-          color: ${COLORS.success};
-          padding: 6px 15px;
-          border-radius: 50px;
-          font-size: 0.7rem;
-          font-weight: 800;
-          border: 1px solid ${COLORS.success};
-          animation: pulse 2s infinite;
-          white-space: nowrap;
-        }
-
-        .btn-modern-back {
-          background: #fff; color: #000; border: none; padding: clamp(8px, 2vw, 12px) clamp(15px, 3vw, 25px); border-radius: 12px; 
-          font-weight: 900; font-size: clamp(0.65rem, 1.5vw, 0.75rem); cursor: pointer; transition: 0.3s;
-        }
-        .btn-modern-back:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255,255,255,0.2); }
-
-        .cat-badge { background: #151515; padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; color: #888; border: 1px solid #252525; white-space: nowrap; }
-
-        .status-indicator { display: flex; align-items: center; gap: 8px; }
-        .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-        .dot.published { background: ${COLORS.success}; box-shadow: 0 0 10px ${COLORS.success}; }
-        .dot.draft { background: ${COLORS.warning}; }
-        .txt { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
-        .txt.published { color: ${COLORS.success}; }
-        .txt.draft { color: ${COLORS.warning}; }
-
-        .table-row { border-bottom: 1px solid rgba(255,255,255,0.02); transition: 0.2s; }
-        .table-row:hover { background: rgba(255, 255, 255, 0.015); }
-
-        .table-container { overflow: hidden; }
-        .leaderboard-table { min-width: 100%; }
-        .project-title { display: inline-block; max-width: 100%; }
-        .hide-mobile { display: table-cell; }
-        .hide-tablet { display: table-cell; }
-
-        .stat-progress-bg { background: #222; height: 4px; border-radius: 10px; margin-top: 15px; }
-        .stat-progress-fill { background: ${COLORS.success}; height: 100%; border-radius: 10px; }
-
-        @keyframes pulse {
-          0% { opacity: 0.5; }
-          50% { opacity: 1; }
-          100% { opacity: 0.5; }
-        }
-
-        .loader-orbit { text-align: center; }
-        .inner-orbit { 
-          width: 40px; height: 40px; border: 2px solid #222; border-top: 2px solid ${COLORS.primary}; 
-          border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* ── TABLET & DESKTOP (1100px+) ── */
-        @media (max-width: 1100px) {
-          .bento-grid { 
-            grid-template-areas: 
-              "chart chart"
-              "stat1 stat2"
-              "stat3 stat3"
-              "table table"; 
-            grid-template-columns: 1fr 1fr; 
-          }
-        }
-
-        /* ── TABLET (768px - 1024px) ── */
-        @media (max-width: 1024px) {
-          .bento-grid {
-            grid-template-areas:
-              "chart"
-              "stat1"
-              "stat2"
-              "stat3"
-              "table";
-            grid-template-columns: 1fr;
-          }
-          .admin-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 20px;
-          }
-          .admin-header > button {
-            align-self: flex-start;
-            width: 100%;
-          }
-        }
-
-        /* ── SMALL TABLETS (600px - 768px) ── */
-        @media (max-width: 768px) {
-          .hide-tablet { display: none; }
-          .hide-mobile { display: none; }
-          .leaderboard-table thead tr {
-            display: none;
-          }
-          .leaderboard-table tbody tr {
-            display: block;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 15px;
-            background: rgba(255,255,255,0.01);
-          }
-          .leaderboard-table td {
-            display: block;
-            padding: 8px 0 !important;
-            border-bottom: none !important;
-            text-align: left !important;
-          }
-          .leaderboard-table td:before {
-            content: attr(data-label);
-            font-weight: 800;
-            color: ${COLORS.primary};
-            display: inline-block;
-            width: 100px;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-          }
-        }
-
-        /* ── MOBILE (480px - 600px) ── */
-        @media (max-width: 600px) {
-          .live-indicator { font-size: 0.65rem; padding: 4px 12px; }
-          .project-title { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
-        }
-
-        /* ── SMALL MOBILE (320px - 480px) ── */
-        @media (max-width: 480px) {
-          .live-indicator { font-size: 0.6rem; padding: 3px 10px; }
-          .project-title { max-width: 120px; }
-        }
-      `}</style>
-    </div>
+    </section>
   );
 }
 

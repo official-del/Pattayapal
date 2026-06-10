@@ -15,18 +15,23 @@ const __dirname = path.dirname(__filename);
 
 const bucketName = process.env.GCP_BUCKET_NAME;
 const projectId = process.env.GCP_PROJECT_ID;
+const isProduction = process.env.NODE_ENV === 'production';
+const logInfo = (...args) => {
+    if (!isProduction) console.log(...args);
+};
 
 let credentials = null;
 let credentialSource = 'none';
 
 // Helper to ensure private key is formatted correctly
-const formatKey = (key) => key.replace(/\\n/g, '\n').replace(/"/g, '').trim();
+const formatKey = (key = '') => String(key).replace(/\\n/g, '\n').replace(/"/g, '').trim();
 
 // Priority 1: Full JSON string (Base64)
 if (process.env.GCP_KEY_JSON) {
     let keyContent = process.env.GCP_KEY_JSON.trim().replace(/^["']|["']$/g, '');
     try {
         const raw = JSON.parse(keyContent);
+        if (!raw.client_email || !raw.private_key) throw new Error('Missing client_email or private_key');
         credentials = {
             client_email: raw.client_email,
             private_key: formatKey(raw.private_key)
@@ -35,6 +40,7 @@ if (process.env.GCP_KEY_JSON) {
     } catch {
         try {
             const raw = JSON.parse(Buffer.from(keyContent, 'base64').toString('utf8'));
+            if (!raw.client_email || !raw.private_key) throw new Error('Missing client_email or private_key');
             credentials = {
                 client_email: raw.client_email,
                 private_key: formatKey(raw.private_key)
@@ -78,7 +84,7 @@ if (!isConfigured) {
     console.error('🔥 [GCS] CRITICAL: No valid credentials found! All uploads will fail to reach GCS.');
     console.error('    → Set GCP_CLIENT_EMAIL and GCP_PRIVATE_KEY in your environment variables.');
 } else {
-    console.log(`✅ [GCS] Initialized via [${credentialSource}] → Bucket: ${bucketName}`);
+    logInfo(`✅ [GCS] Initialized via [${credentialSource}] → Bucket: ${bucketName}`);
 }
 
 const storage = new Storage({
@@ -120,7 +126,7 @@ export const uploadToGCS = async (file) => {
         }
 
         const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
-        console.log(`✅ [GCS] Uploaded: ${publicUrl}`);
+        logInfo(`✅ [GCS] Uploaded: ${publicUrl}`);
 
         // Clean up temp file
         if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
@@ -160,7 +166,7 @@ export const deleteFromGCS = async (fileUrl) => {
         }
 
         await file.delete();
-        console.log(`✅ [GCS] Deleted: ${fileName}`);
+        logInfo(`✅ [GCS] Deleted: ${fileName}`);
         return true;
     } catch (error) {
         console.error('🔥 [GCS] Delete error:', error.message);

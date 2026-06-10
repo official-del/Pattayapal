@@ -1,6 +1,8 @@
-import { useState, useContext } from 'react';
+import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FiArrowRight, FiLock, FiMail, FiShield } from 'react-icons/fi';
 import { AuthContext } from '../../context/AuthContext';
+import PremiumLoader from '../../components/PremiumLoader';
 import '../../css/AdminLogin.css';
 
 export default function AdminLogin() {
@@ -11,8 +13,8 @@ export default function AdminLogin() {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError('');
     setLoading(true);
 
@@ -26,46 +28,62 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="admin-login-container">
-      <div className="login-box">
-        <h1>Admin Login</h1>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email:</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@pattayapal.com"
-              required
-            />
+    <main className="admin-login-shell">
+      <section className="admin-login-card" aria-label="Admin login">
+        <div className="admin-login-brand">
+          <div className="admin-login-mark">
+            <FiShield />
           </div>
+          <p>Admin Console</p>
+          <h1>PattayaPal Control Room</h1>
+          <span>Secure access for platform operations, creator records, content, wallet, and payout review.</span>
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password:</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
+        <form className="admin-login-form" onSubmit={handleSubmit}>
+          {error && <div className="admin-login-error">{error}</div>}
 
-          <button type="submit" disabled={loading} className="login-btn">
-            {loading ? 'Signing in...' : 'Sign In'}
+          <label>
+            <span>Email address</span>
+            <div className="admin-login-input">
+              <FiMail />
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="admin@pattayapal.com"
+                required
+              />
+            </div>
+          </label>
+
+          <label>
+            <span>Password</span>
+            <div className="admin-login-input">
+              <FiLock />
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+          </label>
+
+          <button type="submit" disabled={loading} className="admin-login-submit">
+            {loading ? (
+              <PremiumLoader bare size="tiny" />
+            ) : (
+              <>
+                <span>Sign in</span>
+                <FiArrowRight />
+              </>
+            )}
           </button>
-        </form>
 
-        <p className="info-text">
-          📝 ใช้ email และ password ที่คุณสร้างไว้ในระบบ
-        </p>
-      </div>
-    </div>
+          <p className="admin-login-note">Use an admin account created in PattayaPal system only.</p>
+        </form>
+      </section>
+    </main>
   );
 }

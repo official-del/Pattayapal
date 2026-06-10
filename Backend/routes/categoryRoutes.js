@@ -1,5 +1,6 @@
 import express from 'express';
 import Category from '../models/Category.js';
+import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/categories
-router.post('/', async (req, res) => {
+router.post('/', protect, admin, async (req, res) => {
   try {
     const category = await Category.create(req.body);
     res.status(201).json(category);
@@ -24,7 +25,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/categories/:id
-router.put('/:id', async (req, res) => {
+router.put('/:id', protect, admin, async (req, res) => {
   try {
     const category = await Category.findByIdAndUpdate(
       req.params.id, req.body, { new: true }
@@ -37,7 +38,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/categories/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', protect, admin, async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
     if (!category) return res.status(404).json({ message: 'ไม่พบหมวดหมู่' });

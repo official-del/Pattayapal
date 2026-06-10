@@ -248,37 +248,26 @@ export default function AdminDashboard() {
   }, [topups, topupFilter]);
 
   return (
-    <div className="admin-page-root" style={{ fontFamily: "'Inter', 'Prompt', sans-serif", background: '#050505', minHeight: '100vh', color: '#fff' }}>
-      <main className="admin-main-viewport" style={{ width: '100%', maxWidth: '1440px', margin: '0 auto', padding: '30px 5%' }}>
+    <div className="admin-page-root">
+      <main className="admin-main-viewport">
         
         {/* TOP NAV */}
-        <header style={{ 
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-          background: '#0a0a0a', 
-          padding: '12px 25px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)',
-          marginBottom: '50px', position: 'sticky', top: '20px', zIndex: 100
-        }}>
-          <div className="admin-tabs" style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '2px' }}>
+        <header className="admin-console-nav">
+          <div className="admin-tabs admin-console-tabs">
             {['overview', 'works', 'categories', 'users', 'topups', 'broadcast'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                style={{ 
-                  background: activeTab === tab ? '#ff5733' : 'transparent',
-                  color: activeTab === tab ? '#fff' : 'rgba(255,255,255,0.4)',
-                  border: 'none', padding: '10px 22px', borderRadius: '12px', 
-                  fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.3s ease',
-                  textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap'
-                }}
+                className={`admin-console-tab ${activeTab === tab ? 'is-active' : ''}`}
               >
                 {tab}
               </button>
             ))}
-            <button onClick={() => navigate('/admin/withdrawals')} style={{ background: 'transparent', color: '#ff5733', border: 'none', padding: '10px 22px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>PAYOUTS</button>
+            <button onClick={() => navigate('/admin/withdrawals')} className="admin-console-tab is-link">Payouts</button>
           </div>
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-             <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '1px' }}>PREVIEW</Link>
-             <button onClick={() => { window.safeStorage.clear(); window.location.href='/'; }} style={{ background: 'none', border: 'none', color: '#ff4444', fontWeight: 800, cursor: 'pointer', fontSize: '0.75rem', letterSpacing: '1px' }}>LOGOUT</button>
+          <div className="admin-console-actions">
+             <Link to="/">Preview site</Link>
+             <button onClick={() => { window.safeStorage.clear(); window.location.href='/'; }}>Logout</button>
           </div>
         </header>
 
@@ -378,11 +367,13 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                  <h2 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px' }}>Workspace Pro</h2>
-                  <button onClick={() => navigate('/admin/works/new')} style={{ background: '#ff5733', border: 'none', padding: '12px 25px', borderRadius: '12px', color: '#fff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.8rem', letterSpacing: '1px' }}>
-                    <FiPlus /> NEW PROJECT
-                  </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
+                  <div>
+                    <h2 style={{ fontSize: '2rem', fontWeight: 850, letterSpacing: '0', margin: 0 }}>Work Moderation</h2>
+                    <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,0.58)', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                      Review creator projects, traffic, media type, and remove content when needed. New work uploads stay in creator workflows.
+                    </p>
+                  </div>
                 </div>
 
                 {memoWorks.map((group, idx) => (
@@ -410,7 +401,7 @@ export default function AdminDashboard() {
                               <td style={{ textAlign: 'center', color: '#888', fontSize: '0.85rem', fontWeight: 700 }}>{work.type.toUpperCase()}</td>
                               <td style={{ textAlign: 'center', fontWeight: 800 }}>{work.views || 0}</td>
                               <td style={{ textAlign: 'right', padding: '20px 25px' }}>
-                                <button onClick={() => navigate(`/admin/works/${work._id}`)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', marginRight: '15px' }}><FiEdit3 size={18} /></button>
+                                <button onClick={() => navigate(`/works/${work._id}`)} title="View project" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', marginRight: '15px' }}><FiEye size={18} /></button>
                                 <button onClick={() => handleDeleteWork(work)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}><FiTrash2 size={18} /></button>
                               </td>
                             </tr>

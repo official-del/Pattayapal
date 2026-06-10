@@ -5,6 +5,18 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
+const signUserToken = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+
+  return jwt.sign(
+    { id: user._id, role: user.role, tokenVersion: user.tokenVersion || 0 },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '30d' }
+  );
+};
+
 // 📝 1. API สมัครสมาชิก (Register)
 router.post('/register', async (req, res) => {
   try {
@@ -43,12 +55,7 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'รหัสผ่านไม่ถูกต้อง!' });
 
-    // สร้าง Token (บัตรผ่านประตู)
-    const token = jwt.sign(
-      { id: user._id, role: user.role, tokenVersion: user.tokenVersion || 0 }, 
-      process.env.JWT_SECRET || 'pattayapal_secret_key', 
-      { expiresIn: '3650d' } // 👈 อยู่ยาวๆ 10 ปี จนกว่าจะกด Logout เอง
-    );
+    const token = signUserToken(user);
 
     res.status(200).json({
       message: 'เข้าสู่ระบบสำเร็จ',

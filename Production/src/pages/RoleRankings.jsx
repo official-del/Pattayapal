@@ -1,17 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiArrowLeft, FiCamera, FiVideo, FiEdit, FiLayers, FiEye, FiAward, FiZap, FiActivity } from 'react-icons/fi';
+import { FiArrowLeft, FiCamera, FiVideo, FiEdit, FiLayers, FiEye } from 'react-icons/fi';
 import { usersAPI } from '../utils/api';
 import { getFullUrl } from '../utils/mediaUtils';
 import { AuthContext } from '../context/AuthContext';
 import RankBadge from '../components/RankBadge';
 import ProfileFrame from '../components/ProfileFrame';
 import { CoinIcon, CoinBadge } from '../components/CoinIcon';
+import PremiumLoader from '../components/PremiumLoader';
+import Footer from '../components/Footer';
+import '../css/RoleRankings.css';
+
+const MotionDiv = motion.div;
+
+const ROLES = [
+  { name: 'Photographer', icon: <FiCamera />, label: 'Photography', display: 'Photographer' },
+  { name: 'Videographer', icon: <FiVideo />, label: 'Video production', display: 'Videographer' },
+  { name: 'Editor', icon: <FiEdit />, label: 'Editing and post', display: 'Editor' },
+  { name: 'Director', icon: <FiLayers />, label: 'Creative direction', display: 'Director' },
+];
+
+function RoleAvatar({ user, profileUpdateTag }) {
+  const myId = user?._id || user?.id;
+  const imageUrl = user?.profileImage?.url
+    ? `${getFullUrl(user.profileImage.url)}${myId ? `?t=${profileUpdateTag}` : ''}`
+    : 'https://via.placeholder.com/55';
+
+  return <img className="role-avatar-img" src={imageUrl} alt={user?.name || 'Creator'} />;
+}
+
+function Score({ user, category }) {
+  if (category === 'earnings') return <CoinBadge amount={user.totalEarnings || 0} size="sm" />;
+  return <>{(user.totalViews || 0).toLocaleString()}</>;
+}
 
 const RoleRankings = () => {
-  const { user: currentUser, profileUpdateTag } = React.useContext(AuthContext);
-  const [category, setCategory] = useState('views'); // 'views' | 'earnings'
+  const { user: currentUser, profileUpdateTag } = useContext(AuthContext);
+  const [category, setCategory] = useState('views');
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,223 +48,134 @@ const RoleRankings = () => {
         const data = await usersAPI.getLeaderboard(category);
         setLeaderboard(data || []);
       } catch (err) {
-        console.error("Fetch leaderboard failed", err);
+        console.error('Fetch leaderboard failed', err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchLeaderboard();
   }, [category]);
 
-  const roles = [
-    { name: 'Photographer', icon: <FiCamera />, color: '#6366f1', label: 'ช่างภาพมือโปร / PROFESSIONAL PHOTOGRAPHER', display: 'ช่างภาพ' },
-    { name: 'Videographer', icon: <FiVideo />, color: '#10b981', label: 'มือผลิตวิดีโอ / VIDEO PRODUCTION', display: 'ช่างวิดีโอ' },
-    { name: 'Editor', icon: <FiEdit />, color: '#ec4899', label: 'ช่างตัดต่อระดับเทพ / MASTER EDITOR', display: 'ตัดต่อ' },
-    { name: 'Director', icon: <FiLayers />, color: '#f59e0b', label: 'ผู้กำกับวิสัยทัศน์ / VISIONARY DIRECTOR', display: 'ผู้กำกับ' }
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.04 } },
+  };
 
-  ];
-
-  const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const itemVariants = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } };
+  const itemVariants = {
+    hidden: { y: 12, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] } },
+  };
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingBottom: '150px' }}>
-      
-      {/* 🚀 Tactical Header */}
-      <section style={{ padding: '150px 5% 80px', textAlign: 'center' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-           <Link to="/rankings" style={{ 
-              display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#444', textDecoration: 'none', fontWeight: '700', fontSize: '0.9rem', marginBottom: '35px', letterSpacing: '2px', background: 'rgba(255,255,255,0.02)', padding: '12px 24px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.05)'
-           }}>
-             <FiArrowLeft /> กลับไปที่ศูนย์รวมอันดับ
-           </Link>
-           <h1 style={{ fontSize: 'clamp(2.5rem, 10vw, 5rem)', fontWeight: '700', margin: 0, letterSpacing: '-3px', lineHeight: 1 }}>
-             อันดับ <span style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 15px var(--accent-glow))' }}>สายอาชีพ</span>
-           </h1>
+    <>
+      <main className="role-rankings-page">
+        <section className="role-rankings-shell">
+        <header className="role-rankings-hero">
+          <MotionDiv
+            className="role-rankings-copy"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Link to="/rankings" className="role-back-link">
+              <FiArrowLeft />
+              <span>Back to rankings hub</span>
+            </Link>
+            <div className="role-kicker">
+              <FiEye />
+              <span>Role Leaderboards</span>
+            </div>
+            <h1>Rankings by profession</h1>
+            <p>
+              Compare creators by role and see who is standing out by views or coin earnings.
+            </p>
+          </MotionDiv>
 
-           <p style={{ color: '#444', marginTop: '20px', fontSize: 'clamp(0.9rem, 4vw, 1.2rem)', fontWeight: '700', padding: '0 10%' }}>
-             เฟ้นหาผู้เล่นที่โดดเด่นที่สุดในแต่ละด้าน วัดผลจาก {category === 'views' ? 'ยอดการเข้าชม' : 'จำนวนเหรียญสะสม'}
-           </p>
-
-           {/* 🧬 Category Signal Toggle */}
-           <div style={{ 
-              marginTop: '40px', display: 'inline-flex', background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap', justifyContent: 'center', gap: '5px'
-           }}>
-             <button
-               onClick={() => setCategory('views')}
-               style={{
-                 display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 25px', borderRadius: '35px',
-                 background: category === 'views' ? 'var(--accent)' : 'transparent', color: category === 'views' ? '#fff' : '#444', border: 'none',
-                 cursor: 'pointer', fontWeight: '700', fontSize: '0.85rem', transition: '0.3s',
-                 boxShadow: category === 'views' ? '0 10px 25px var(--accent-glow)' : 'none'
-               }}
-             >
-               <FiEye /> ยอดเข้าชม
-             </button>
-             <button
-               onClick={() => setCategory('earnings')}
-               style={{
-                 display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 25px', borderRadius: '35px',
-                 background: category === 'earnings' ? 'var(--accent)' : 'transparent', color: category === 'earnings' ? '#fff' : '#444', border: 'none',
-                 cursor: 'pointer', fontWeight: '700', fontSize: '0.85rem', transition: '0.3s',
-                 boxShadow: category === 'earnings' ? '0 10px 25px var(--accent-glow)' : 'none'
-               }}
-             >
-               <CoinIcon size={16} /> รายได้สูงสุด
-             </button>
-           </div>
-        </motion.div>
-      </section>
-
-      {/* 🔮 Dynamic Legends Grid */}
-      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 5%' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '100px' }}>
-             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '40px', height: '40px', border: '3px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto' }} />
+          <div className="role-tabs" role="tablist" aria-label="Role ranking category">
+            <button
+              type="button"
+              className={category === 'views' ? 'is-active' : ''}
+              onClick={() => setCategory('views')}
+            >
+              <FiEye />
+              <span>Views</span>
+            </button>
+            <button
+              type="button"
+              className={category === 'earnings' ? 'is-active' : ''}
+              onClick={() => setCategory('earnings')}
+            >
+              <CoinIcon size={16} />
+              <span>Coins</span>
+            </button>
           </div>
-        ) : (
-          <motion.div variants={containerVariants} initial="hidden" animate="show" className="role-rank-grid" style={{ gap: '40px' }}>
-            {roles.map(role => {
-              const roleUsers = leaderboard.filter(u => u.profession === role.name).slice(0, 5);
-              return (
-                <motion.div 
-                  variants={itemVariants}
-                  key={role.name} 
-                  className="glass role-rank-card"
-                  style={{ 
-                    borderRadius: '40px', 
-                    padding: '35px',
-                    border: '1px solid rgba(255,255,255,0.03)',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                >
-                  <div style={{ position: 'absolute', top: '-100px', right: '-100px', width: '300px', height: '300px', background: `radial-gradient(circle, ${role.color}15 0%, transparent 70%)` }}></div>
+        </header>
 
-                  <div className="role-card-header" style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '35px', position: 'relative', zIndex: 1 }}>
-                     <div className="role-icon-box" style={{ 
-                        background: `linear-gradient(135deg, ${role.color}, ${role.color}aa)`, 
-                        color: '#fff', width: '55px', height: '55px', borderRadius: '18px', 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', 
-                        boxShadow: `0 10px 25px ${role.color}44`,
-                        transform: 'rotate(-5deg)', flexShrink: 0
-                     }}>
-                       {role.icon}
-                     </div>
-                     <div style={{ minWidth: 0 }}>
-                       <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: '700', letterSpacing: '-1px' }}>{role.display}</h2>
-                       <div style={{ fontSize: '0.65rem', color: role.color, fontWeight: '700', letterSpacing: '2px', textTransform: 'uppercase', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{role.label}</div>
-                     </div>
-                  </div>
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <PremiumLoader key="loader" fullScreen={false} text="Loading Role Rankings..." subtext="กำลังจัดอันดับตามสายงาน..." />
+          ) : (
+            <MotionDiv
+              key={category}
+              className="role-rank-grid"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              exit={{ opacity: 0 }}
+            >
+              {ROLES.map(role => {
+                const roleUsers = leaderboard.filter(u => u.profession === role.name).slice(0, 5);
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative', zIndex: 1 }}>
-                    {roleUsers.length === 0 ? (
-                      <div style={{ padding: '60px', textAlign: 'center', color: '#111', border: '2px dashed rgba(255,255,255,0.02)', borderRadius: '35px', fontWeight: '700', letterSpacing: '4px' }}>
-                        ยังไม่มีอันดับในสายอาชีพนี้
+                return (
+                  <MotionDiv variants={itemVariants} key={role.name} className="role-rank-card">
+                    <div className="role-card-header">
+                      <div className="role-icon-box">
+                        {role.icon}
                       </div>
-                    ) : (
-                      roleUsers.map((user, idx) => (
-                        <Link 
-                          key={user._id} 
-                          to={`/profile/${user._id}`} 
-                          className="rank-item"
-                          style={{ 
-                            display: 'flex', alignItems: 'center', gap: '15px', padding: '15px 20px', background: idx === 0 ? 'rgba(255,255,255,0.03)' : 'transparent', borderRadius: '20px', textDecoration: 'none', border: idx === 0 ? `1px solid ${role.color}44` : '1px solid transparent', transition: '0.3s'
-                          }}
+                      <div className="role-card-title">
+                        <span>{role.label}</span>
+                        <h2>{role.display}</h2>
+                      </div>
+                    </div>
 
-                        >
-                           <div className="rank-num-role" style={{ width: '30px', fontWeight: '900', fontSize: '1.1rem', color: idx === 0 ? role.color : '#111', textAlign: 'center' }}>
-                             #{idx + 1}
-                           </div>
-                           <div className="avatar-role-wrap">
-                             <ProfileFrame rank={user.rank} points={user.points || 0} size="45px" showBadge={false}>
-                               <img 
-                                 src={user.profileImage?.url ? (getFullUrl(user.profileImage.url) + (user._id === (currentUser?._id || currentUser?.id) ? `?t=${profileUpdateTag}` : '')) : 'https://via.placeholder.com/55'} 
-                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                               />
-                             </ProfileFrame>
-                           </div>
-                           <div style={{ flex: 1, minWidth: 0 }}>
-                             <div className="user-name-role" style={{ color: '#fff', fontWeight: '700', fontSize: '1rem', letterSpacing: '-0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
-                             <div style={{ color: '#333', fontSize: '0.65rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
-                               <RankBadge rank={user.rank} size="xs" /> <span className="hide-mobile">{user.rank.toUpperCase()}</span>
-                             </div>
-                           </div>
-                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                              <div style={{ color: category === 'earnings' ? '#f59e0b' : 'var(--accent)', fontWeight: '700', fontSize: '1rem' }}>
-                                {category === 'earnings' ? <CoinBadge amount={user.totalEarnings || 0} size="sm" /> : (user.totalViews || 0).toLocaleString()}
-                              </div>
-                              <div style={{ fontSize: '0.6rem', color: '#111', fontWeight: '700', letterSpacing: '1px' }}>
-                                {category === 'earnings' ? 'COINS' : 'VIEWS'}
-                              </div>
-                           </div>
-                        </Link>
-                      ))
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        )}
-      </div>
-
-      <style>{`
-        .role-rank-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(min(100%, 600px), 1fr));
-        }
-        @media (max-width: 992px) {
-           .role-rank-grid {
-             grid-template-columns: 1fr;
-           }
-        }
-        @media (max-width: 768px) {
-          .role-rank-card {
-            padding: 25px !important;
-            border-radius: 30px !important;
-          }
-          .role-card-header {
-             margin-bottom: 30px !important;
-          }
-          .hide-mobile {
-            display: none !important;
-          }
-        }
-        @media (max-width: 480px) {
-          .role-rank-card {
-            padding: 20px !important;
-          }
-          .role-icon-box {
-            width: 45px !important;
-            height: 45px !important;
-            font-size: 1.4rem !important;
-          }
-          .role-card-header h2 {
-            font-size: 1.3rem !important;
-          }
-          .rank-item {
-            padding: 12px 15px !important;
-            gap: 10px !important;
-          }
-          .rank-num-role {
-            width: 25px !important;
-            font-size: 1rem !important;
-          }
-          .user-name-role {
-            font-size: 0.9rem !important;
-          }
-          .avatar-role-wrap {
-            transform: scale(0.9);
-          }
-        }
-        .rank-item:hover {
-          background: rgba(255,255,255,0.05) !important;
-          transform: translateX(10px);
-        }
-      `}</style>
-
-    </div>
+                    <div className="role-rank-list">
+                      {roleUsers.length === 0 ? (
+                        <div className="role-empty-state">
+                          No creators ranked in this role yet
+                        </div>
+                      ) : (
+                        roleUsers.map((user, idx) => (
+                          <Link key={user._id} to={`/profile/${user._id}`} className={`role-rank-row ${idx === 0 ? 'is-top' : ''}`}>
+                            <div className="role-rank-number">#{idx + 1}</div>
+                            <ProfileFrame rank={user.rank} points={user.points || 0} size="48px" showBadge={false} showXpRing={false}>
+                              <RoleAvatar user={user} profileUpdateTag={user._id === (currentUser?._id || currentUser?.id) ? profileUpdateTag : ''} />
+                            </ProfileFrame>
+                            <div className="role-user-copy">
+                              <strong>{user.name}</strong>
+                              <span>
+                                <RankBadge rank={user.rank} size="xs" />
+                                {user.rank || 'Bronze'}
+                              </span>
+                            </div>
+                            <div className="role-score">
+                              <strong><Score user={user} category={category} /></strong>
+                              <span>{category === 'earnings' ? 'Coins' : 'Views'}</span>
+                            </div>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </MotionDiv>
+                );
+              })}
+            </MotionDiv>
+          )}
+        </AnimatePresence>
+        </section>
+      </main>
+      <Footer />
+    </>
   );
 };
 

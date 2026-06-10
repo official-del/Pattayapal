@@ -103,7 +103,6 @@ export const AuthProvider = ({ children }) => {
         // 🔄 Global Fallback on Login
         if (balance === 0) {
             try {
-              const { walletAPI } = await import('../utils/api.js');
               const txs = await walletAPI.getTransactions();
               if (txs && txs.length > 0) {
                  balance = txs.reduce((acc, tx) => {

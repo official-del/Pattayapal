@@ -1,10 +1,77 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiMail, FiLock, FiUser, FiBriefcase, FiZap, FiArrowRight, FiShield, FiCpu, FiActivity, FiPhone } from 'react-icons/fi';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  FiActivity,
+  FiArrowRight,
+  FiBriefcase,
+  FiLock,
+  FiMail,
+  FiPhone,
+  FiShield,
+  FiUser,
+  FiZap,
+  FiChevronDown,
+  FiCheck,
+} from 'react-icons/fi';
+import PremiumLoader from '../components/PremiumLoader';
 import { CONFIG } from '../utils/config';
-import { walletAPI } from '../utils/api'; // 👈 Static import to prevent silent fallback failures
+import { walletAPI } from '../utils/api';
+import pattayaPalLogo from '../assets/LOGO1.png';
+import '../css/UserAuth.css';
+
+const professionOptions = [
+  'General',
+  'Photographer',
+  'Videographer',
+  'Editor',
+  'Director',
+  'Production Design',
+  'Creative Content',
+  'Film Production',
+  'Post Production',
+  'Digital Artist',
+  'AI Operations',
+  'AI Artist',
+  'AI Animator',
+  'AI Sound Designer',
+  'AI 3D Artist',
+  'AI Director',
+  'AI Producer',
+  'KOL',
+  'Influencer',
+  'Content Creator',
+  'Tutor',
+];
+
+const emptyForm = {
+  name: '',
+  email: '',
+  phone: '',
+  password: '',
+  profession: 'General',
+  acceptedTerms: false,
+};
+
+function readSavedUser() {
+  try {
+    const raw = window.safeStorage?.getItem('userInfo');
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn('Could not read stored user info:', error);
+    return null;
+  }
+}
+
+function getToken() {
+  try {
+    return window.safeStorage?.getItem('userToken') || window.safeStorage?.getItem('token');
+  } catch (error) {
+    console.warn('Could not read stored token:', error);
+    return null;
+  }
+}
 
 export default function UserAuth() {
   const navigate = useNavigate();
@@ -13,36 +80,90 @@ export default function UserAuth() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    profession: 'General',
-    acceptedTerms: false
-  });
+  const [formData, setFormData] = useState(emptyForm);
+  const [rolePickerOpen, setRolePickerOpen] = useState(false);
+  const rolePickerRef = useRef(null);
 
   useEffect(() => {
-    const token = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
-    const userInfo = JSON.parse(window.safeStorage.getItem('userInfo'));
+    const token = getToken();
+    const userInfo = readSavedUser();
 
-    if (token && userInfo) {
-      if (userInfo.role?.toLowerCase() === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate(`/profile/${userInfo._id || userInfo.id}`);
-      }
+    if (!token || !userInfo) return;
+
+    if (userInfo.role?.toLowerCase() === 'admin') {
+      navigate('/admin/dashboard');
+    } else {
+      navigate(`/profile/${userInfo._id || userInfo.id}`);
     }
   }, [navigate]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+  useEffect(() => {
+    if (!rolePickerOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!rolePickerRef.current?.contains(event.target)) {
+        setRolePickerOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setRolePickerOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [rolePickerOpen]);
+
+  const switchMode = (nextMode) => {
+    setIsLogin(nextMode === 'login');
+    setErrorMsg('');
+    setSuccessMsg('');
+    setRolePickerOpen(false);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setFormData((current) => ({
+      ...current,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const selectProfession = (profession) => {
+    setFormData((current) => ({
+      ...current,
+      profession,
+    }));
+    setRolePickerOpen(false);
+  };
+
+  const calculateFallbackBalance = async (token) => {
+    try {
+      const txs = await walletAPI.getTransactions(token);
+      if (!txs || txs.length === 0) return 0;
+
+      return txs.reduce((acc, tx) => {
+        const amount = Number(tx.amount) || 0;
+        const isPositive = ['TOPUP', 'EARN_JOB', 'REFUND'].includes(tx.type);
+        const isNegative = ['PAY_JOB', 'WITHDRAW'].includes(tx.type);
+
+        if (isPositive) return acc + amount;
+        if (isNegative) return acc - amount;
+        return acc;
+      }, 0);
+    } catch (error) {
+      console.warn('Could not calculate fallback balance on login:', error);
+      return 0;
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
@@ -53,33 +174,22 @@ export default function UserAuth() {
         setLoading(false);
         return;
       }
+
       if (isLogin) {
         const res = await axios.post(`${CONFIG.API_BASE_URL}/api/users/login`, {
           email: formData.email,
-          password: formData.password
+          password: formData.password,
         });
+
         let finalBalance = res.data.user.coinBalance ?? res.data.user.balance ?? res.data.user.coins ?? 0;
 
-        // 🔄 Fallback calculation since old users might not have coinBalance in DB yet
         if (finalBalance === 0) {
-          try {
-            const txs = await walletAPI.getTransactions(res.data.token);
-            if (txs && txs.length > 0) {
-              finalBalance = txs.reduce((acc, tx) => {
-                const amt = Number(tx.amount) || 0;
-                const isPositive = ['TOPUP', 'EARN_JOB', 'REFUND'].includes(tx.type);
-                const isNegative = ['PAY_JOB', 'WITHDRAW'].includes(tx.type);
-                return isPositive ? acc + amt : (isNegative ? acc - amt : acc);
-              }, 0);
-            }
-          } catch (e) {
-            console.warn("Could not calculate fallback balance on login:", e);
-          }
+          finalBalance = await calculateFallbackBalance(res.data.token);
         }
 
         const userDataToSave = {
           ...res.data.user,
-          coinBalance: finalBalance > 0 ? finalBalance : 0
+          coinBalance: finalBalance > 0 ? finalBalance : 0,
         };
 
         window.safeStorage.setItem('userToken', res.data.token);
@@ -94,168 +204,281 @@ export default function UserAuth() {
       } else {
         const res = await axios.post(`${CONFIG.API_BASE_URL}/api/users/register`, formData);
         setIsLogin(true);
-        setSuccessMsg(res.data.message || 'Registration successful! Please check your email to verify your account.');
-        setFormData({ name: '', email: '', phone: '', password: '', profession: 'General' });
+        setSuccessMsg(res.data.message || 'สมัครสมาชิกสำเร็จ กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชี');
+        setFormData(emptyForm);
       }
     } catch (error) {
-      setErrorMsg(error.response?.data?.message || 'Invalid credentials. Please try again.');
+      setErrorMsg(error.response?.data?.message || 'ข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '50px 20px', position: 'relative', overflow: 'hidden' }}>
+    <main className="auth-shell">
+      <section className="auth-layout" aria-label="PattayaPal account access">
+        <motion.aside
+          className="auth-brand-panel"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="auth-brand-top">
+            <div className="auth-brand-logo">
+              <img src={pattayaPalLogo} alt="PattayaPal" />
+            </div>
+            <div className="auth-brand-status" aria-label="PattayaPal community status">
+              <span>Community hub</span>
+              <strong>Creator access</strong>
+            </div>
+          </div>
 
-      {/* 🚀 Background Cyber Signals */}
-      <div style={{ position: 'absolute', top: '-100px', left: '-100px', width: '500px', height: '500px', background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)', opacity: 0.05, filter: 'blur(50px)' }}></div>
-      <div style={{ position: 'absolute', bottom: '-100px', right: '-100px', width: '500px', height: '500px', background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)', opacity: 0.05, filter: 'blur(50px)' }}></div>
+          <div className="auth-brand-main">
+            <p className="auth-kicker">Creator Gateway</p>
+            <h1>PattayaPal Community</h1>
+            <p className="auth-brand-copy">
+              เข้าสู่ระบบเพื่อจัดการโปรไฟล์ งานจ้าง ผลงาน และ Coin flow ของคุณใน community เดียว.
+            </p>
+            <div className="auth-brand-meter" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
 
-      {/* 🧬 Authentication Port Terminal */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="glass auth-card"
-        style={{
-          maxWidth: '550px', width: '100%', borderRadius: 'clamp(30px, 5vw, 50px)', border: '1px solid rgba(255,255,255,0.03)', padding: 'clamp(30px, 8vw, 60px)', position: 'relative', zIndex: 10, overflow: 'hidden'
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 'clamp(30px, 8vw, 50px)' }}>
-          <h1 style={{ fontSize: 'clamp(1.8rem, 8vw, 3rem)', fontWeight: '700', margin: 0, letterSpacing: '-1.5px', color: '#fff', lineHeight: 1.1 }}>
-            <span>{isLogin ? 'เข้าสู่ระบบ / LOGIN' : 'สมัครสมาชิก / REGISTER'}</span>
-          </h1>
-          <p style={{ color: '#444', marginTop: '15px', fontWeight: '700', letterSpacing: '0.5px', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
-            <span>{isLogin ? 'กรุณายืนยันตัวตนเพื่อเข้าสู่ระบบการทำงาน' : 'ลงทะเบียนเพื่อเริ่มต้นโปรเจกต์สร้างสรรค์ของคุณ'}</span>
-          </p>
-        </div>
+          <div className="auth-hud-grid" aria-label="Platform highlights">
+            <div className="auth-hud-card">
+              <FiShield />
+              <span>Verified creator access</span>
+            </div>
+            <div className="auth-hud-card">
+              <FiZap />
+              <span>Quest and hire workflow</span>
+            </div>
+            <div className="auth-hud-card">
+              <FiActivity />
+              <span>Portfolio, rank, wallet</span>
+            </div>
+          </div>
+        </motion.aside>
 
-        {errorMsg && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', padding: '15px 25px', borderRadius: '20px', border: '1px solid rgba(239,68,68,0.1)', marginBottom: '35px', fontSize: '0.85rem', fontWeight: '700', textAlign: 'center' }}>
-            {errorMsg}
-          </motion.div>
-        )}
+        <motion.section
+          className="auth-form-panel"
+          initial={{ opacity: 0, y: 22 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.48, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="auth-form-heading">
+            <div>
+              <p className="auth-kicker">{isLogin ? 'Welcome back' : 'Join the guild'}</p>
+              <h2>{isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}</h2>
+              <p>{isLogin ? 'เปิด dashboard และ community feed ของคุณ' : 'สร้างบัญชีสำหรับ creator หรือผู้จ้างงาน'}</p>
+            </div>
 
-        {successMsg && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(34, 197, 94, 0.05)', color: '#22c55e', padding: '15px 25px', borderRadius: '20px', border: '1px solid rgba(34,197,94,0.1)', marginBottom: '35px', fontSize: '0.85rem', fontWeight: '700', textAlign: 'center' }}>
-            {successMsg}
-          </motion.div>
-        )}
+            <div className="auth-mode-switch" role="tablist" aria-label="Authentication mode">
+              <button
+                type="button"
+                className={isLogin ? 'is-active' : ''}
+                onClick={() => switchMode('login')}
+                aria-selected={isLogin}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                className={!isLogin ? 'is-active' : ''}
+                onClick={() => switchMode('register')}
+                aria-selected={!isLogin}
+              >
+                Register
+              </button>
+            </div>
+          </div>
 
-        <form onSubmit={handleSubmit}>
           <AnimatePresence mode="wait">
-            {!isLogin && (
-              <motion.div key="register-fields" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
-                <div style={{ marginBottom: '25px' }}>
-                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>FULL NAME</label>
-                  <div style={{ position: 'relative' }}>
-                    <FiUser size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
-                    <input type="text" name="name" required onChange={handleChange} value={formData.name} placeholder="กรอกชื่อและนามสกุล..." style={{ width: '100%', padding: '22px 22px 22px 65px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', color: '#fff', outline: 'none', fontWeight: '700' }} />
-                  </div>
-                </div>
-                <div style={{ marginBottom: '25px' }}>
-                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>PHONE NUMBER</label>
-                  <div style={{ position: 'relative' }}>
-                    <FiPhone size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
-                    <input type="tel" name="phone" onChange={handleChange} value={formData.phone} placeholder="เบอร์โทรศัพท์ (ไม่บังคับ)..." style={{ width: '100%', padding: '22px 22px 22px 65px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', color: '#fff', outline: 'none', fontWeight: '700' }} />
-                  </div>
-                </div>
-                <div style={{ marginBottom: '25px' }}>
-                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>SPECIALIZATION</label>
-
-                  <div style={{ position: 'relative' }}>
-                    <FiBriefcase size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
-                    <select name="profession" onChange={handleChange} value={formData.profession} style={{ width: '100%', padding: '22px 22px 22px 65px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', borderRadius: '20px', outline: 'none', fontWeight: '700', appearance: 'none' }}>
-                      <option value="General">Client / General User</option>
-                      <option value="Photographer">Photographer</option>
-                      <option value="Videographer">Videographer</option>
-                      <option value="Editor">Editor</option>
-                      <option value="Director">Director</option>
-                      <option value="Production Design">Production Design</option>
-                      <option value="Creative Content">Creative Content</option>
-                      <option value="Film Production">Film Production</option>
-                      <option value="Post Production">Post Production</option>
-                      <option value="Digital Artist">Digital Artist</option>
-                      <option value="AI Operations">AI Operations</option>
-                      <option value="AI Artist">AI Artist</option>
-                      <option value="AI Animator">AI Animator</option>
-                      <option value="AI Sound Designer">AI Sound Designer</option>
-                      <option value="AI 3D Artist">AI 3D Artist</option>
-                      <option value="AI Director">AI Director</option>
-                      <option value="AI Producer">AI Producer</option>
-                      <option value="KOL">KOL</option>
-                      <option value="Influencer">Influencer</option>
-                      <option value="Content Creator">Content Creator</option>
-                      <option value="Tutor">Tutor</option>
-                    </select>
-                  </div>
-                </div>
+            {(errorMsg || successMsg) && (
+              <motion.div
+                key={errorMsg ? 'error' : 'success'}
+                className={`auth-alert ${errorMsg ? 'is-error' : 'is-success'}`}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+              >
+                {errorMsg || successMsg}
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div style={{ marginBottom: '25px' }}>
-            <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>EMAIL ADDRESS</label>
-            <div style={{ position: 'relative' }}>
-              <FiMail size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
-              <input type="email" name="email" required onChange={handleChange} value={formData.email} placeholder="ระบุอีเมลของคุณ / contact@example.com" style={{ width: '100%', padding: '22px 22px 22px 65px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', color: '#fff', outline: 'none', fontWeight: '700' }} />
-            </div>
-          </div>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <AnimatePresence mode="wait">
+              {!isLogin && (
+                <motion.div
+                  className="auth-register-fields"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <label className="auth-field">
+                    <span>Full name</span>
+                    <div className="auth-input-shell">
+                      <FiUser />
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="ชื่อที่ใช้ใน PattayaPal"
+                        required
+                      />
+                    </div>
+                  </label>
 
-          {!isLogin && (
-            <div style={{ marginBottom: '35px', display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-              <input
-                type="checkbox"
-                id="acceptedTerms"
-                name="acceptedTerms"
-                checked={formData.acceptedTerms}
-                onChange={handleChange}
-                style={{ width: '20px', height: '20px', accentColor: 'var(--accent)', cursor: 'pointer', marginTop: '3px' }}
-              />
-              <label htmlFor="acceptedTerms" style={{ color: '#444', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', lineHeight: 1.5 }}>
-                ฉันยอมรับ <Link to="/terms" target="_blank" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>ข้อกำหนดการใช้งาน</Link> และ <Link to="/privacy" target="_blank" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>นโยบายความเป็นส่วนตัว</Link>
+                  <label className="auth-field">
+                    <span>Phone number</span>
+                    <div className="auth-input-shell">
+                      <FiPhone />
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="เบอร์โทร (ไม่บังคับ)"
+                      />
+                    </div>
+                  </label>
+
+                  <label className="auth-field">
+                    <span>Professional role</span>
+                    <div className="auth-role-picker-wrap" ref={rolePickerRef}>
+                      <button
+                        type="button"
+                        className={`auth-input-shell auth-role-trigger ${rolePickerOpen ? 'is-open' : ''}`}
+                        onClick={() => setRolePickerOpen((current) => !current)}
+                        aria-haspopup="listbox"
+                        aria-expanded={rolePickerOpen}
+                      >
+                        <FiBriefcase />
+                        <span>{formData.profession === 'General' ? 'Client / General User' : formData.profession}</span>
+                        <FiChevronDown className="auth-role-chevron" />
+                      </button>
+
+                      <AnimatePresence>
+                        {rolePickerOpen && (
+                          <motion.div
+                            className="auth-role-menu"
+                            role="listbox"
+                            aria-label="Professional role"
+                            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                          >
+                            {professionOptions.map((profession) => {
+                              const selected = formData.profession === profession;
+                              const label = profession === 'General' ? 'Client / General User' : profession;
+
+                              return (
+                                <button
+                                  type="button"
+                                  key={profession}
+                                  role="option"
+                                  aria-selected={selected}
+                                  className={`auth-role-option ${selected ? 'is-selected' : ''}`}
+                                  onClick={() => selectProfession(profession)}
+                                >
+                                  <span>{label}</span>
+                                  {selected && <FiCheck />}
+                                </button>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </label>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <label className="auth-field">
+              <span>Email address</span>
+              <div className="auth-input-shell">
+                <FiMail />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="contact@example.com"
+                  required
+                />
+              </div>
+            </label>
+
+            <label className="auth-field">
+              <span>Password</span>
+              <div className="auth-input-shell">
+                <FiLock />
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="อย่างน้อย 6 ตัวอักษร"
+                  minLength="6"
+                  required
+                />
+              </div>
+            </label>
+
+            {!isLogin && (
+              <label className="auth-terms-row">
+                <input
+                  type="checkbox"
+                  id="acceptedTerms"
+                  name="acceptedTerms"
+                  checked={formData.acceptedTerms}
+                  onChange={handleChange}
+                />
+                <span>
+                  ฉันยอมรับ{' '}
+                  <Link to="/terms" target="_blank" rel="noreferrer">
+                    Terms
+                  </Link>{' '}
+                  และ{' '}
+                  <Link to="/privacy" target="_blank" rel="noreferrer">
+                    Privacy Policy
+                  </Link>
+                </span>
               </label>
-            </div>
-          )}
+            )}
 
-
-          <div style={{ marginBottom: '40px' }}>
-            <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '700', color: '#222', marginBottom: '12px', letterSpacing: '2px' }}>ACCESS PASSWORD</label>
-            <div style={{ position: 'relative' }}>
-              <FiLock size={20} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#222' }} />
-              <input type="password" name="password" required onChange={handleChange} value={formData.password} placeholder="••••••••" minLength="6" style={{ width: '100%', padding: '22px 22px 22px 65px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', color: '#fff', outline: 'none', fontWeight: '700' }} />
-            </div>
-          </div>
-
-
-          <motion.button
-            type="submit" disabled={loading}
-            whileHover={{ scale: 1.02, boxShadow: '0 15px 40px var(--accent-glow)' }}
-            whileTap={{ scale: 0.98 }}
-            style={{ width: '100%', background: 'var(--accent)', color: '#fff', border: 'none', padding: '24px', borderRadius: '25px', fontWeight: '700', fontSize: '1.1rem', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}
-          >
-            {loading ? <FiCpu className="spin" /> : <span>{isLogin ? 'LOGIN' : 'CREATE ACCOUNT'}</span>}
-            <FiArrowRight />
-          </motion.button>
-        </form>
-
-        <div style={{ marginTop: '40px', textAlign: 'center' }}>
-          <p style={{ color: '#333', fontSize: '0.85rem', fontWeight: '700' }}>
-            <span>{isLogin ? "Don't have an account?" : "Do you have an account?"}</span>
-            <span
-              onClick={() => { setIsLogin(!isLogin); setErrorMsg(''); }}
-              style={{ color: 'var(--accent)', cursor: 'pointer', marginLeft: '10px', textDecoration: 'underline' }}
+            <motion.button
+              type="submit"
+              className="auth-submit"
+              disabled={loading}
+              whileTap={{ scale: 0.98 }}
             >
-              {isLogin ? 'REGISTER' : 'LOGIN'}
-            </span>
+              {loading ? (
+                <PremiumLoader bare size="tiny" />
+              ) : (
+                <>
+                  <span>{isLogin ? 'เข้าสู่ระบบ' : 'สร้างบัญชี'}</span>
+                  <FiArrowRight />
+                </>
+              )}
+            </motion.button>
+          </form>
+
+          <p className="auth-footer-note">
+            {isLogin ? 'ยังไม่มีบัญชี?' : 'มีบัญชีอยู่แล้ว?'}
+            <button type="button" onClick={() => switchMode(isLogin ? 'register' : 'login')}>
+              {isLogin ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
+            </button>
           </p>
-
-        </div>
-      </motion.div>
-
-      <style>{`
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
-    </div>
+        </motion.section>
+      </section>
+    </main>
   );
 }

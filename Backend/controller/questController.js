@@ -115,6 +115,47 @@ export const acceptQuest = async (req, res) => {
 
     // Add to activeQuests
     const deadline = quest.durationDays > 0 ? new Date(Date.now() + quest.durationDays * 24 * 60 * 60 * 1000) : null;
+    const acceptedUser = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        'activeQuests.questId': { $ne: quest._id },
+        'claimedQuests.questId': { $ne: quest._id.toString() }
+      },
+      {
+        $push: {
+          activeQuests: {
+            questId: quest._id,
+            acceptedAt: new Date(),
+            deadline
+          }
+        }
+      },
+      { new: true }
+    );
+    if (!acceptedUser) {
+      return res.status(409).json({ message: 'Quest has already been accepted or claimed' });
+    }
+
+    const questFilter = {
+      _id: quest._id,
+      isActive: true,
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }]
+    };
+    if (quest.maxParticipants > 0) {
+      questFilter.participantCount = { $lt: quest.maxParticipants };
+    }
+
+    const acceptedQuest = await Quest.findOneAndUpdate(
+      questFilter,
+      { $inc: { participantCount: 1 } },
+      { new: true }
+    );
+    if (!acceptedQuest) {
+      await User.findByIdAndUpdate(userId, { $pull: { activeQuests: { questId: quest._id } } });
+      return res.status(409).json({ message: 'Quest is no longer available' });
+    }
+
+    return res.json({ message: 'Quest accepted successfully', deadline });
     
     if (!user.activeQuests) user.activeQuests = [];
     user.activeQuests.push({
@@ -215,6 +256,53 @@ export const claimQuest = async (req, res) => {
       const sub = await QuestSubmission.findOne({ questId: quest._id, userId: user._id, status: 'APPROVED' });
       if (!sub) return res.status(400).json({ message: 'กรุณาส่งหลักฐานและรอการตรวจสอบก่อนรับรางวัล' });
     }
+
+    // Grant rewards atomically so the same quest cannot be claimed twice in parallel.
+    const claimedAt = new Date();
+    const claimFilter = { _id: userId };
+    if (quest.taskType === 'DAILY_LOGIN') {
+      claimFilter.claimedQuests = {
+        $not: {
+          $elemMatch: {
+            questId: quest._id.toString(),
+            claimedAt: { $gte: todayStart }
+          }
+        }
+      };
+    } else {
+      claimFilter['claimedQuests.questId'] = { $ne: quest._id.toString() };
+    }
+
+    const rewardInc = {};
+    if (quest.coinReward > 0) rewardInc.coinBalance = quest.coinReward;
+    if (quest.xpReward > 0) rewardInc.points = quest.xpReward;
+
+    const rewardUpdate = {
+      $push: { claimedQuests: { questId: quest._id.toString(), claimedAt } }
+    };
+    if (Object.keys(rewardInc).length > 0) rewardUpdate.$inc = rewardInc;
+    if (activeEntry) rewardUpdate.$pull = { activeQuests: { questId: quest._id } };
+
+    const updatedUser = await User.findOneAndUpdate(claimFilter, rewardUpdate, { new: true });
+    if (!updatedUser) {
+      return res.status(409).json({ message: 'Quest reward has already been claimed' });
+    }
+
+    if (quest.coinReward > 0) {
+      await Transaction.create({
+        user: userId,
+        type: 'TOPUP',
+        amount: quest.coinReward,
+        status: 'completed',
+        reference: `QUEST: ${quest.title}`,
+      });
+    }
+
+    return res.json({
+      message: 'Quest reward claimed successfully',
+      coinBalance: updatedUser.coinBalance,
+      points: updatedUser.points,
+    });
 
     // Grant Rewards
     if (quest.coinReward > 0) {

@@ -8,9 +8,6 @@ export default defineConfig({
     allowedHosts: true,
   },
   build: {
-    chunkSizeWarningLimit: 2000, // Optional: increase limit since the project is large
-  },
-  esbuild: {
-    drop: ['console', 'debugger'],
+    chunkSizeWarningLimit: 2000,
   },
 })

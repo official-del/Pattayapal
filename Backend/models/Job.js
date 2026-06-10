@@ -36,7 +36,7 @@ const jobSchema = new mongoose.Schema({
   escrowAmount: { type: Number, default: 0 },
   paymentStatus: { 
     type: String, 
-    enum: ['unpaid', 'escrow_held', 'released', 'refunded'], 
+    enum: ['unpaid', 'escrow_held', 'releasing', 'refunding', 'released', 'refunded'], 
     default: 'unpaid' 
   },
   location: {

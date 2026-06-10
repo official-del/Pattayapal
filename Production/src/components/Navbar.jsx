@@ -1,31 +1,30 @@
 import { customConfirm } from '../utils/customConfirm';
-import { useState, useContext, useEffect, useRef, useMemo } from 'react';
+import { useState, useContext, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFullUrl } from '../utils/mediaUtils';
 import { notificationsAPI } from '../utils/api';
 import {
-  FiMenu, FiX, FiBell, FiUser, FiMessageCircle, FiTrendingUp, FiLogOut, FiHome,
-  FiBriefcase, FiZap, FiBox, FiUsers, FiLayers, FiMail, FiBookOpen, FiSettings, FiCamera, FiDollarSign, FiGlobe,
-  FiActivity, FiGrid, FiSearch, FiStar, FiGift
+  FiMenu, FiX, FiBell, FiUser, FiMessageCircle, FiLogOut, FiHome,
+  FiZap, FiUsers, FiSettings, FiDollarSign,
+  FiActivity, FiGrid, FiSearch, FiLayers
 } from 'react-icons/fi';
-import { CoinIcon, CoinBadge } from './CoinIcon';
+import { CoinIcon } from './CoinIcon';
 import GasIcon from './GasIcon';
 import RankBadge from './RankBadge';
-import '../css/Navbar.css';
 import logo from '../assets/LOGO1.png';
-import { CONFIG } from '../utils/config';
+import '../css/Navbar.css';
+import { PATHS } from '../routes/paths';
 import { play8BitSuccess } from '../utils/soundEffects';
 
-const API_BASE_URL = CONFIG.API_BASE_URL;
+const MotionDiv = motion.div;
+const MotionAside = motion.aside;
+const MotionButton = motion.button;
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const { user, token, logout, profileUpdateTag, fetchProfile } = useContext(AuthContext);
   const userInfo = useMemo(() => {
     if (user) return user;
@@ -34,46 +33,30 @@ function Navbar() {
   const { socket } = useSocket();
   const location = useLocation();
   const navigate = useNavigate();
+  const isMessengerRoute = location.pathname === '/messenger' || location.pathname.startsWith('/messenger/');
 
-  const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [balanceUpdateMessage, setBalanceUpdateMessage] = useState(null);
-  const audioRef = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"));
 
   let currentToken = token;
   if (!currentToken) {
     try {
       currentToken = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
-    } catch (e) {}
+    } catch {
+      currentToken = null;
+    }
   }
-
-  useEffect(() => {
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          setScrolled(window.scrollY > 20);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     if (!currentToken || !userInfo) return;
     const fetchNotifs = async () => {
       try {
         const data = await notificationsAPI.getMine(currentToken);
-        setNotifications(data);
         setUnreadCount(data.filter(n => !n.isRead).length);
       } catch (err) { console.error("Notif error", err); }
     };
     fetchNotifs();
-    const handleNewNotification = (newNote) => {
-      setNotifications(prev => [newNote, ...prev].slice(0, 50));
+    const handleNewNotification = () => {
       setUnreadCount(prev => prev + 1);
       play8BitSuccess();
     };
@@ -81,10 +64,8 @@ function Navbar() {
     const handleNotificationsRead = (data) => {
       if (data.all) {
         setUnreadCount(0);
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       } else if (data.id) {
         setUnreadCount(prev => Math.max(0, prev - 1));
-        setNotifications(prev => prev.map(n => n._id === data.id ? { ...n, isRead: true } : n));
       }
     };
 
@@ -111,14 +92,7 @@ function Navbar() {
         socket.off('balance_update', handleBalanceUpdate);
       };
     }
-  }, [currentToken, userInfo?._id, socket, fetchProfile]);
-
-  // Reset badge when navigating to Notifications page
-  useEffect(() => {
-    if (location.pathname === '/notifications') {
-      setUnreadCount(0);
-    }
-  }, [location.pathname]);
+  }, [currentToken, userInfo, socket, fetchProfile]);
 
   // Dispatch event when mobile menu opens/closes and toggle body scroll
   useEffect(() => {
@@ -141,7 +115,7 @@ function Navbar() {
       if (logout) logout();
       window.safeStorage.clear();
       window.safeSessionStorage.clear();
-      window.location.href = '/';
+      navigate(PATHS.home);
     }
   };
 
@@ -154,55 +128,21 @@ function Navbar() {
     { name: 'Admin Panel', href: '/admin/dashboard', icon: <FiSettings /> },
     { name: 'Insights', href: '/admin/overview', icon: <FiActivity /> },
     { name: 'Withdrawals', href: '/admin/withdrawals', icon: <FiDollarSign /> },
-    { name: 'Daily Quests', href: '/dashboard/quests', icon: <FiGift /> },
     { name: 'System Notifications', href: '/notifications', icon: <FiBell /> },
-    { name: 'Global Feed', href: '/feed', icon: <FiGlobe /> },
   ] : isFreelancer ? [
     { name: 'Creator Hub', href: '/dashboard', icon: <FiHome /> },
     { name: 'Manage Portfolio', href: '/manage-portfolio', icon: <FiGrid /> },
-    { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
-    { name: 'My Coin', href: '/dashboard/wallet', icon: <FiDollarSign /> },
-    { name: 'Daily Quests', href: '/dashboard/quests', icon: <FiGift /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
-    // { name: 'Social', href: '/feed', icon: <FiGlobe /> },
   ] : isClient ? [
     { name: 'Client Center', href: '/dashboard', icon: <FiHome /> },
-    { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
-    { name: 'My Wallet', href: '/dashboard/wallet', icon: <FiDollarSign /> },
-    { name: 'Daily Quests', href: '/dashboard/quests', icon: <FiGift /> },
-    // { name: 'Social', href: '/feed', icon: <FiGlobe /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
   ] : [
     { name: 'Client Center', href: '/dashboard', icon: <FiHome /> },
-    { name: 'Manage Job', href: '/jobs', icon: <FiBriefcase /> },
-    { name: 'My Wallet', href: '/dashboard/wallet', icon: <FiDollarSign /> },
-    { name: 'Daily Quests', href: '/dashboard/quests', icon: <FiGift /> },
-    // { name: 'Social', href: '/feed', icon: <FiGlobe /> },
     { name: 'Notifications', href: '/notifications', icon: <FiBell /> },
   ];
 
-  const handleNotificationClick = async (notif) => {
-    if (!notif.isRead) {
-      try { await notificationsAPI.markAsRead(notif._id); } catch (e) { }
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    }
-
-    const type = notif.type?.toLowerCase() || '';
-    if (type.includes('message') || type.includes('messenger')) {
-      const convId = notif.relatedId || (notif.link && notif.link.includes('messenger/') ? notif.link.split('/').pop() : null);
-      navigate(convId ? `/messenger/${convId}` : '/messenger');
-    } else if (type.includes('job')) {
-      navigate('/dashboard/hiring');
-    } else if (type.includes('friend')) {
-      navigate('/friends');
-    } else if (type.includes('payment') || type.includes('wallet')) {
-      navigate('/dashboard/wallet');
-    } else if (notif.link) {
-      navigate(notif.link);
-    }
-  };
-
   const otherLinks = [
+    { name: 'User Creations', href: '/works', icon: <FiLayers /> },
     { name: 'Find Freelancers', href: '/freelancers', icon: <FiSearch /> },
     { name: 'Messenger', href: '/messenger', icon: <FiMessageCircle /> },
     { name: 'Friends', href: '/friends', icon: <FiUsers /> },
@@ -234,7 +174,7 @@ function Navbar() {
       </div>
 
       {/* 💎 Desktop Top Actions (3-Buttons Hub) */}
-      {currentToken && (
+      {currentToken && !isMessengerRoute && (
         <div className="desktop-top-actions hide-mobile">
           <div className="d-gas-box" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap' }}>
             <GasIcon gas={user?.gas ?? userInfo?.gas ?? 0} size="20px" />
@@ -247,7 +187,7 @@ function Navbar() {
           <div className="d-btn-group">
             <Link to="/notifications" className="d-action-btn" title="Notifications">
               <FiBell />
-              {unreadCount > 0 && <span className="d-badge">{unreadCount}</span>}
+              {location.pathname !== '/notifications' && unreadCount > 0 && <span className="d-badge">{unreadCount}</span>}
             </Link>
             <Link to="/messenger" className="d-action-btn" title="Messages">
               <FiMessageCircle />
@@ -261,10 +201,10 @@ function Navbar() {
 
       {/* 🛸 Neo-Cyber Premium Sidebar */}
       <AnimatePresence>
-        {(isOpen || window.innerWidth > 1700) && (
+        {(isOpen || window.innerWidth > 1180) && (
           <>
-            {isOpen && window.innerWidth <= 1700 && (
-              <motion.div
+            {isOpen && window.innerWidth <= 1180 && (
+              <MotionDiv
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -273,10 +213,10 @@ function Navbar() {
               />
             )}
 
-            <motion.aside
-              initial={window.innerWidth <= 1700 ? { x: '-100%' } : { x: 0 }}
+            <MotionAside
+              initial={window.innerWidth <= 1180 ? { x: '-100%' } : { x: 0 }}
               animate={{ x: 0 }}
-              exit={window.innerWidth <= 1700 ? { x: '-100%' } : { x: 0 }}
+              exit={window.innerWidth <= 1180 ? { x: '-100%' } : { x: 0 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className={`premium-sidebar-container ${isOpen ? 'm-open' : ''}`}
             >
@@ -304,13 +244,8 @@ function Navbar() {
                   Conqueror: { min: 500001, max: 1000000 },
                 };
 
-                const rankLevels = {
-                  Bronze: 1, Silver: 2, Gold: 3, Platinum: 4, Diamond: 5, Conqueror: 6
-                };
-
                 const thresh = thresholds[rankName] || thresholds.Bronze;
                 const progress = Math.min(100, Math.max(0, ((points - thresh.min) / (thresh.max - thresh.min)) * 100));
-                const level = rankLevels[rankName] || 1;
 
                 return (
                   <div className="p-user-section">
@@ -379,12 +314,13 @@ function Navbar() {
                       key={idx}
                       to={link.href}
                       className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
+                      title={link.name}
+                      data-label={link.name}
                       onClick={() => setIsOpen(false)}
-                      style={{ padding: '12px 20px', gap: '15px' }}
                     >
-                      <div className="p-item-icon" style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                      <div className="p-item-icon">
                         {link.icon}
-                        {link.name.includes('Notifications') && unreadCount > 0 && (
+                        {link.name.includes('Notifications') && location.pathname !== '/notifications' && unreadCount > 0 && (
                           <span className="p-nav-badge" style={{ position: 'absolute', top: '-5px', right: '-5px' }}>{unreadCount}</span>
                         )}
                       </div>
@@ -400,10 +336,11 @@ function Navbar() {
                       key={idx}
                       to={link.href}
                       className={`p-nav-item ${location.pathname === link.href ? 'p-active' : ''}`}
+                      title={link.name}
+                      data-label={link.name}
                       onClick={() => setIsOpen(false)}
-                      style={{ padding: '12px 20px', gap: '15px' }}
                     >
-                      <div className="p-item-icon" style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>{link.icon}</div>
+                      <div className="p-item-icon">{link.icon}</div>
                       <span className="p-item-label" style={{ fontSize: '0.9rem', fontWeight: '500' }}>{link.name}</span>
                     </Link>
                   ))}
@@ -424,7 +361,7 @@ function Navbar() {
                   </Link>
                 )}
               </div>
-            </motion.aside>
+            </MotionAside>
           </>
         )}
       </AnimatePresence>
@@ -433,7 +370,7 @@ function Navbar() {
       <AnimatePresence>
         {balanceUpdateMessage && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '20px' }}>
-            <motion.div
+            <MotionDiv
               initial={{ scale: 0.5, y: 50, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.5, y: 50, opacity: 0 }}
@@ -478,15 +415,15 @@ function Navbar() {
                 )}
               </div>
 
-              <motion.button
+              <MotionButton
                 whileHover={{ scale: 1.05, boxShadow: '0 10px 20px rgba(245, 158, 11, 0.2)' }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setBalanceUpdateMessage(null)}
                 style={{ width: '100%', padding: '20px', borderRadius: '20px', background: '#f59e0b', border: 'none', color: '#111', fontWeight: '800', fontSize: '1.1rem', cursor: 'pointer' }}
               >
                 รับทราบ
-              </motion.button>
-            </motion.div>
+              </MotionButton>
+            </MotionDiv>
           </div>
         )}
       </AnimatePresence>

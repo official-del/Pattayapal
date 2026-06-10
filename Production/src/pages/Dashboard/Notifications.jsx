@@ -7,28 +7,54 @@ import { notificationsAPI } from '../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFullUrl } from '../../utils/mediaUtils';
 import {
-  FiBell, FiBriefcase, FiDollarSign, FiInfo, FiCheck, FiTrash2,
-  FiCheckCircle, FiZap, FiMessageCircle, FiMessageSquare, FiCalendar
+  FiBell,
+  FiBriefcase,
+  FiCheck,
+  FiCheckCircle,
+  FiDollarSign,
+  FiInfo,
+  FiMessageCircle,
+  FiMessageSquare,
+  FiTrash2,
+  FiUsers,
+  FiZap,
 } from 'react-icons/fi';
+import PremiumLoader from '../../components/PremiumLoader';
 import '../../css/Notifications.css';
 
 const TABS = [
-  { key: 'all', label: 'ทั้งหมด', icon: <FiBell /> },
-  { key: 'job', label: 'งาน', icon: <FiBriefcase /> },
-  { key: 'payment', label: 'การเงิน', icon: <FiDollarSign /> },
-  { key: 'system', label: 'ระบบ', icon: <FiInfo /> },
+  { key: 'all', label: 'All', icon: <FiBell /> },
+  { key: 'job', label: 'Jobs', icon: <FiBriefcase /> },
+  { key: 'payment', label: 'Payments', icon: <FiDollarSign /> },
+  { key: 'system', label: 'System', icon: <FiInfo /> },
 ];
 
 const TYPE_MAP = {
-  job: { color: '#6366f1', bg: 'rgba(99,102,241,0.08)', icon: <FiBriefcase size={16} /> },
-  payment: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', icon: <FiDollarSign size={16} /> },
-  system: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiInfo size={16} /> },
-  friend: { color: '#ec4899', bg: 'rgba(236,72,153,0.08)', icon: <FiZap size={16} /> },
-  message: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiMessageCircle size={16} /> },
-  messenger: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiMessageCircle size={16} /> },
-  comment: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiMessageSquare size={16} /> },
-  reply: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: <FiMessageSquare size={16} /> },
+  job: { label: 'Job', tone: 'is-blue', icon: <FiBriefcase size={16} /> },
+  payment: { label: 'Payment', tone: 'is-coin', icon: <FiDollarSign size={16} /> },
+  wallet: { label: 'Wallet', tone: 'is-coin', icon: <FiDollarSign size={16} /> },
+  system: { label: 'System', tone: 'is-green', icon: <FiInfo size={16} /> },
+  friend: { label: 'Friend', tone: 'is-pink', icon: <FiUsers size={16} /> },
+  message: { label: 'Message', tone: 'is-green', icon: <FiMessageCircle size={16} /> },
+  messenger: { label: 'Message', tone: 'is-green', icon: <FiMessageCircle size={16} /> },
+  comment: { label: 'Comment', tone: 'is-orange', icon: <FiMessageSquare size={16} /> },
+  reply: { label: 'Reply', tone: 'is-orange', icon: <FiMessageSquare size={16} /> },
 };
+
+function getNotificationType(type) {
+  const key = type?.toLowerCase?.() || 'system';
+  return TYPE_MAP[key] || TYPE_MAP.system;
+}
+
+function formatTime(dateValue) {
+  if (!dateValue) return 'Unknown time';
+  return new Date(dateValue).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 function Notifications() {
   const navigate = useNavigate();
@@ -39,14 +65,14 @@ function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
-  const [newCount, setNewCount] = useState(0); // pulse counter for real-time arrivals
+  const [newCount, setNewCount] = useState(0);
 
   const fetchNotifications = useCallback(async () => {
     if (!currentToken) return;
     try {
       setLoading(true);
       const data = await notificationsAPI.getMine();
-      setNotifications(data);
+      setNotifications(data || []);
     } catch (err) {
       console.error('Fetch notifications error:', err);
     } finally {
@@ -54,59 +80,71 @@ function Notifications() {
     }
   }, [currentToken]);
 
-  // 🔌 Real-time: Listen for new notifications via Socket
   useEffect(() => {
     if (!socket) return;
     const handleNew = (newNote) => {
-      setNotifications(prev => {
-        // Avoid duplicates
-        if (prev.some(n => n._id === newNote._id)) return prev;
+      setNotifications((prev) => {
+        if (prev.some((note) => note._id === newNote._id)) return prev;
         return [newNote, ...prev];
       });
-      setNewCount(c => c + 1);
+      setNewCount((count) => count + 1);
     };
     socket.on('new_notification', handleNew);
     return () => socket.off('new_notification', handleNew);
   }, [socket]);
 
-  useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
-
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const handleMarkAllRead = async () => {
     try {
       await notificationsAPI.markAllRead();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    } catch (err) { console.error(err); }
+      setNotifications((prev) => prev.map((note) => ({ ...note, isRead: true })));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleMarkOne = async (e, id) => {
     e.stopPropagation();
     try {
       await notificationsAPI.markAsRead(id);
-      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
-    } catch (err) { console.error(err); }
+      setNotifications((prev) => prev.map((note) => (note._id === id ? { ...note, isRead: true } : note)));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();
-    if (!await customConfirm('ลบการแจ้งเตือนนี้?')) return;
+    if (!await customConfirm('Delete this notification?')) return;
     try {
       await notificationsAPI.delete(id);
-      setNotifications(prev => prev.filter(n => n._id !== id));
-    } catch (err) { console.error(err); }
+      setNotifications((prev) => prev.filter((note) => note._id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDeleteAll = async () => {
-    if (!await customConfirm('คุณต้องการลบการแจ้งเตือนทั้งหมดใช่หรือไม่?')) return;
+    if (!await customConfirm('Delete all notifications?')) return;
     try {
       await notificationsAPI.deleteAll();
       setNotifications([]);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleNotificationClick = async (notif) => {
     if (!notif.isRead) {
-      try { await notificationsAPI.markAsRead(notif._id); } catch(e){}
+      try {
+        await notificationsAPI.markAsRead(notif._id);
+        setNotifications((prev) => prev.map((note) => (note._id === notif._id ? { ...note, isRead: true } : note)));
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     const type = notif.type?.toLowerCase() || '';
@@ -128,126 +166,131 @@ function Notifications() {
 
   const filtered = activeTab === 'all'
     ? notifications
-    : notifications.filter(n => n.type === activeTab);
+    : notifications.filter((note) => note.type?.toLowerCase() === activeTab);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((note) => !note.isRead).length;
+  const readCount = notifications.length - unreadCount;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="notifications-container">
-      {/* Header */}
+    <motion.main initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="notifications-container">
       <header className="nt-header">
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px' }}>
-            <FiZap color="var(--nt-accent)" size={18} />
-            <span style={{ color: 'var(--nt-accent)', fontSize: '1rem', fontWeight: '900', letterSpacing: '2px' }}>Notifications Center</span>
-          </div>
-          <h1 className="nt-main-title">ศูนย์แจ้งเตือน</h1>
-          <p style={{ color: '#444', marginTop: '20px', fontWeight: '700', fontSize: '1rem' }}>
-            {unreadCount > 0 ? `มี ${unreadCount} รายการใหม่ที่กำลังรอคุณอยู่` : 'คุณจัดการข้อมูลทั้งหมดเรียบร้อยแล้ว'}
-          </p>
+        <div className="nt-title-group">
+          <div className="nt-kicker"><FiZap size={16} /><span>Signal Center</span></div>
+          <h1>Notifications</h1>
+          <p>{unreadCount > 0 ? `${unreadCount} unread updates need your attention.` : 'All updates are read. Your creator hub is clear.'}</p>
         </div>
 
         <div className="nt-action-group">
           {unreadCount > 0 && (
-            <motion.button whileHover={{ scale: 1.05 }} onClick={handleMarkAllRead} className="btn-header btn-read-all">
-              <FiCheckCircle /> Read All
-            </motion.button>
+            <button type="button" onClick={handleMarkAllRead} className="nt-primary-btn">
+              <FiCheckCircle size={16} /> Mark all read
+            </button>
           )}
           {notifications.length > 0 && (
-            <motion.button whileHover={{ scale: 1.05 }} onClick={handleDeleteAll} className="btn-header btn-delete-all">
-              <FiTrash2 /> Clear All
-            </motion.button>
+            <button type="button" onClick={handleDeleteAll} className="nt-secondary-btn is-danger">
+              <FiTrash2 size={16} /> Clear all
+            </button>
           )}
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="nt-tabs">
-        {TABS.map(tab => {
-          const count = tab.key === 'all'
-            ? notifications.length
-            : notifications.filter(n => n.type === tab.key).length;
-          const isActive = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`nt-tab-btn ${isActive ? 'active' : ''}`}
-            >
-              {tab.icon} {tab.label}
-              {count > 0 && <span className="nt-badge">{count}</span>}
-            </button>
-          );
-        })}
-      </div>
+      <section className="nt-stats-grid" aria-label="Notification summary">
+        <div className="nt-stat-card"><span>Total</span><strong>{notifications.length}</strong></div>
+        <div className="nt-stat-card is-orange"><span>Unread</span><strong>{unreadCount}</strong></div>
+        <div className="nt-stat-card is-green"><span>Read</span><strong>{readCount}</strong></div>
+        <div className="nt-stat-card is-blue"><span>Live signals</span><strong>{newCount}</strong></div>
+      </section>
 
-      {/* Notifications List */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '100px' }}>
-          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}
-            style={{ width: '50px', height: '50px', border: '3px solid var(--nt-accent)', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 30px' }} />
-          <p style={{ color: '#333', fontWeight: '800', letterSpacing: '5px', fontSize: '0.8rem' }}>FETCHING DATA...</p>
+      <section className="nt-board">
+        <div className="nt-board-header">
+          <div>
+            <div className="nt-kicker"><FiBell size={15} /><span>Inbox Board</span></div>
+            <h2>Activity feed</h2>
+          </div>
+          <span>{filtered.length} showing</span>
         </div>
-      ) : filtered.length === 0 ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', padding: '120px 40px', background: 'rgba(255,255,255,0.01)', borderRadius: '50px', border: '1px dashed rgba(255,255,255,0.05)' }}>
-          <FiBell size={60} color="#111" style={{ marginBottom: '30px' }} />
-          <h3 style={{ margin: 0, fontSize: '2rem', fontWeight: '900', letterSpacing: '-1px' }}>SILENCE</h3>
-          <p style={{ color: '#444', marginTop: '15px', fontWeight: '700' }}>ยังไม่มีรายการแจ้งเตือนในขณะนี้</p>
-        </motion.div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <AnimatePresence>
-            {filtered.map((notif) => {
-              const typeStyle = TYPE_MAP[notif.type] || TYPE_MAP['system'];
-              return (
-                <motion.div
-                  key={notif._id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 50, scale: 0.9 }}
-                  className={`nt-card ${!notif.isRead ? 'unread' : ''}`}
-                  onClick={() => handleNotificationClick(notif)}
-                >
-                  {!notif.isRead && <div className="unread-indicator" />}
 
-                  <div className="nt-media">
-                    {notif.sender?.profileImage?.url ? (
-                      <img src={getFullUrl(notif.sender.profileImage.url)} className="nt-avatar" alt="" />
-                    ) : (
-                      <div style={{ color: typeStyle.color }}>{typeStyle.icon}</div>
-                    )}
-                  </div>
+        <div className="nt-tabs" role="tablist" aria-label="Notification filters">
+          {TABS.map((tab) => {
+            const count = tab.key === 'all'
+              ? notifications.length
+              : notifications.filter((note) => note.type?.toLowerCase() === tab.key).length;
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`nt-tab-btn ${isActive ? 'active' : ''}`}
+              >
+                {tab.icon}<span>{tab.label}</span>
+                {count > 0 && <strong>{count}</strong>}
+              </button>
+            );
+          })}
+        </div>
 
-                  <div className="nt-body">
-                    <p className="nt-text">{notif.text}</p>
-                    <div className="nt-meta">
-                      <span className="nt-time">
-                        <FiCalendar size={12} style={{ marginRight: '5px' }} />
-                        {new Date(notif.createdAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}
-                      </span>
-                      <span className="nt-type-tag" style={{ background: typeStyle.bg, color: typeStyle.color }}>
-                        {notif.type?.toUpperCase()}
-                      </span>
+        {loading ? (
+          <div className="nt-loader">
+            <PremiumLoader bare size="small" />
+            <p>Fetching notifications...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="nt-empty-state">
+            <FiBell size={34} />
+            <h2>No notifications here</h2>
+            <p>This filter is clear. New updates will appear here when clients, jobs, payments, or system events arrive.</p>
+          </motion.div>
+        ) : (
+          <div className="nt-list">
+            <AnimatePresence>
+              {filtered.map((notif, index) => {
+                const typeStyle = getNotificationType(notif.type);
+                return (
+                  <motion.article
+                    key={notif._id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: 24, scale: 0.96 }}
+                    transition={{ delay: index * 0.025, duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className={`nt-card ${!notif.isRead ? 'unread' : ''}`}
+                    onClick={() => handleNotificationClick(notif)}
+                  >
+                    <div className={`nt-media ${typeStyle.tone}`}>
+                      {notif.sender?.profileImage?.url ? (
+                        <img src={getFullUrl(notif.sender.profileImage.url)} className="nt-avatar" alt={notif.sender?.username || 'Sender'} />
+                      ) : (
+                        typeStyle.icon
+                      )}
                     </div>
-                  </div>
 
-                  <div className="nt-actions">
-                    {!notif.isRead && (
-                      <button className="nt-btn nt-btn-check" onClick={(e) => handleMarkOne(e, notif._id)} title="Read">
-                        <FiCheck />
+                    <div className="nt-body">
+                      <div className="nt-card-top">
+                        <span className={`nt-type-tag ${typeStyle.tone}`}>{typeStyle.label}</span>
+                        {!notif.isRead && <em>New</em>}
+                      </div>
+                      <p className="nt-text">{notif.text || 'You have a new update.'}</p>
+                      <span className="nt-time">{formatTime(notif.createdAt)}</span>
+                    </div>
+
+                    <div className="nt-actions">
+                      {!notif.isRead && (
+                        <button type="button" className="nt-btn nt-btn-check" onClick={(e) => handleMarkOne(e, notif._id)} title="Mark as read">
+                          <FiCheck size={15} />
+                        </button>
+                      )}
+                      <button type="button" className="nt-btn nt-btn-delete" onClick={(e) => handleDelete(e, notif._id)} title="Delete">
+                        <FiTrash2 size={15} />
                       </button>
-                    )}
-                    <button className="nt-btn nt-btn-delete" onClick={(e) => handleDelete(e, notif._id)} title="Delete">
-                      <FiTrash2 />
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      )}
-    </motion.div>
+                    </div>
+                  </motion.article>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
+      </section>
+    </motion.main>
   );
 }
 

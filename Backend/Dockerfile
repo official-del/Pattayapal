@@ -17,18 +17,21 @@ RUN npm ci --omit=dev
 # --- Stage 2: Production Image ---
 FROM node:20-alpine AS runner
 WORKDIR /app
+ENV NODE_ENV=production
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
 
 # Copy installed dependencies from previous stage
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 
 # Copy all backend source code
-COPY . .
+COPY --chown=node:node . .
 
 # Create uploads directory (for local fallback)
-RUN mkdir -p uploads
+RUN mkdir -p uploads && chown -R node:node /app
+
+USER node
 
 # Do NOT expose secrets here — pass via docker-compose or cloud env vars
 # PORT ตั้งไว้ที่ 5000 เพื่อให้ตรงกับ .env

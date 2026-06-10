@@ -1,6 +1,6 @@
 import { customConfirm } from '../utils/customConfirm';
 import { toast } from 'react-hot-toast';
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { postsAPI } from '../utils/api';
 import { FiHeart, FiMessageSquare, FiMoreHorizontal, FiSend, FiClock, FiBriefcase, FiUserCheck, FiTrash2, FiActivity, FiShare2, FiZap, FiX } from 'react-icons/fi';
@@ -80,7 +80,7 @@ function renderContentWithLinks(text) {
   });
 }
 
-const FeedPost = React.memo(({ post, onPostDeleted }) => {
+const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onToggleComments }) => {
   const { user, token: contextToken, profileUpdateTag } = useContext(AuthContext);
   let currentToken = contextToken;
   let userInfo = user;
@@ -96,7 +96,6 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
   const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
   const [isLiked, setIsLiked] = useState(userInfo?._id || userInfo?.id ? post.likes?.includes(userInfo._id || userInfo.id) : false);
   const [comments, setComments] = useState(post.comments || []);
-  const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
 
   const [replyingTo, setReplyingTo] = useState(null);
@@ -109,6 +108,14 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
   const displayAuthor = isAuthor ? userInfo : post.author;
   const isHiring = post.postType === 'hiring';
   const accentColor = isHiring ? '#3b82f6' : '#22c55e';
+
+  useEffect(() => {
+    if (!isCommentsOpen) {
+      setReplyingTo(null);
+      setReplyText('');
+      setExpandedReplies({});
+    }
+  }, [isCommentsOpen]);
 
   const handleLike = async () => {
     if (!currentToken) return;
@@ -169,18 +176,18 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="glass"
+      className="feed-post-card"
       style={{
         position: 'relative', overflow: 'hidden', padding: 'clamp(16px, 4vw, 40px)', borderRadius: 'clamp(24px, 5vw, 50px)',
         marginBottom: 'clamp(10px, 2vw, 15px)', border: '1px solid rgba(255,255,255,0.03)', background: 'rgba(255,255,255,0.01)', boxSizing: 'border-box'
       }}
     >
       {/* 🚀 Signal Category Beam */}
-      <div style={{ position: 'absolute', left: 0, top: '15%', bottom: '15%', width: '4px', background: accentColor, boxShadow: `0 0 20px ${accentColor}`, borderRadius: '0 4px 4px 0' }} />
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '3px', background: 'var(--accent)', opacity: 0.9, borderRadius: '10px 10px 0 0' }} />
 
       {/* Operative Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(20px, 4vw, 30px)', gap: 'clamp(12px, 2vw, 20px)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 2vw, 20px)', minWidth: 0 }}>
+      <div className="feed-post-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(20px, 4vw, 30px)', gap: 'clamp(12px, 2vw, 20px)' }}>
+        <div className="feed-post-author-block" style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 2vw, 20px)', minWidth: 0 }}>
           <Link to={`/profile/${post.author?._id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
             <OptimizedImage 
               src={displayAuthor?.profileImage?.url ? (getFullUrl(displayAuthor.profileImage.url) + (isAuthor ? `?t=${profileUpdateTag}` : '')) : 'https://via.placeholder.com/60'} 
@@ -190,7 +197,7 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
           </Link>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)', flexWrap: 'wrap' }}>
-              <Link to={`/profile/${post.author?._id}`} style={{ textDecoration: 'none', color: '#fff', fontWeight: '700', fontSize: 'clamp(0.9rem, 2vw, 1.2rem)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <Link className="feed-post-author-name" to={`/profile/${post.author?._id}`} style={{ textDecoration: 'none', color: '#fff', fontWeight: '700', fontSize: 'clamp(0.9rem, 2vw, 1.2rem)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {post.author?.name || 'Unknown Operative'}
               </Link>
             </div>
@@ -200,7 +207,7 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)' }}>
+        <div className="feed-post-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)' }}>
           <motion.button 
             whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.1)' }}
             whileTap={{ scale: 0.9 }}
@@ -285,11 +292,11 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
       )}
 
       {/* Tactical Interaction Nodes */}
-      <div style={{ display: 'flex', gap: 'clamp(10px, 2vw, 15px)', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+      <div className="feed-post-actions" style={{ display: 'flex', gap: 'clamp(10px, 2vw, 15px)', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={handleLike}
-          className="glass"
+          className={`feed-post-action ${isLiked ? 'is-active' : ''}`}
           style={{
             height: 'clamp(45px, 10vw, 60px)', borderRadius: '30px', border: `1px solid ${isLiked ? 'var(--accent)' : 'rgba(255,255,255,0.03)'}`,
             display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)', cursor: 'pointer', padding: '0 clamp(15px, 3vw, 30px)',
@@ -302,12 +309,12 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
 
         <motion.button
           whileTap={{ scale: 0.95 }}
-          onClick={() => setShowComments(!showComments)}
-          className="glass"
+          onClick={() => onToggleComments?.(post._id)}
+          className={`feed-post-action ${isCommentsOpen ? 'is-active' : ''}`}
           style={{
             height: 'clamp(45px, 10vw, 60px)', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)',
             display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)', cursor: 'pointer', padding: '0 clamp(15px, 3vw, 30px)',
-            color: showComments ? 'var(--accent)' : '#fff', fontWeight: '700', fontSize: 'clamp(0.75rem, 1.3vw, 0.95rem)', transition: '0.3s', whiteSpace: 'nowrap'
+            color: isCommentsOpen ? 'var(--accent)' : '#fff', fontWeight: '700', fontSize: 'clamp(0.75rem, 1.3vw, 0.95rem)', transition: '0.3s', whiteSpace: 'nowrap'
           }}
         >
           <FiMessageSquare style={{ width: '20px', height: '20px', flexShrink: 0 }} />
@@ -318,13 +325,13 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
 
       {/* 🧬 Responses Feed Sub-System */}
       <AnimatePresence>
-        {showComments && (
+        {isCommentsOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            style={{ marginTop: 'clamp(20px, 4vw, 35px)', overflow: 'hidden' }}
+            className="feed-comments-panel"
           >
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 'clamp(20px, 4vw, 35px)' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(12px, 2vw, 20px)', marginBottom: 'clamp(20px, 4vw, 30px)' }}>
+            <div className="feed-comments-inner">
+              <div className="feed-comments-list">
                 {comments.map((c, i) => {
                   const uId = userInfo?._id || userInfo?.id;
                   const isCommentOwner = c.user?._id === uId || c.user === uId;
@@ -333,17 +340,17 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
                   const toggleReplies = (cId) => setExpandedReplies(prev => ({ ...prev, [cId]: !prev[cId] }));
 
                   return (
-                    <motion.div layout key={c._id || i} style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', gap: 'clamp(10px, 2vw, 18px)', alignItems: 'flex-start', minWidth: 0 }}>
-                        <div style={{ width: 'clamp(32px, 8vw, 40px)', height: 'clamp(32px, 8vw, 40px)', borderRadius: '50%', background: '#000', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
-                          <img src={c.user?.profileImage?.url ? getFullUrl(c.user.profileImage.url) : 'https://via.placeholder.com/40'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                    <motion.div layout key={c._id || i} className="feed-comment-thread">
+                      <div className="feed-comment-row">
+                        <div className="feed-comment-avatar">
+                          <img src={c.user?.profileImage?.url ? getFullUrl(c.user.profileImage.url) : 'https://via.placeholder.com/40'} alt="" />
                         </div>
-                        <div className="glass" style={{ padding: 'clamp(12px, 2vw, 20px) clamp(15px, 3vw, 25px)', borderRadius: 'clamp(18px, 3vw, 30px)', borderTopLeftRadius: '0', flex: 1, border: '1px solid rgba(255,255,255,0.02)', minWidth: 0, boxSizing: 'border-box' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '10px', flexWrap: 'wrap' }}>
-                            <span style={{ fontWeight: '700', fontSize: 'clamp(0.65rem, 1.2vw, 0.8rem)', color: 'var(--accent)', letterSpacing: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{c.user?.name?.toUpperCase() || 'ANON USER'}</span>
-                            {canDelete && <button onClick={() => handleDeleteComment(c._id)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', flexShrink: 0 }}><FiTrash2 style={{ width: '14px', height: '14px' }} /></button>}
+                        <div className="feed-comment-bubble">
+                          <div className="feed-comment-head">
+                            <span>@{c.user?.name?.toUpperCase() || 'ANON USER'}</span>
+                            {canDelete && <button className="feed-comment-delete" onClick={() => handleDeleteComment(c._id)}><FiTrash2 style={{ width: '14px', height: '14px' }} /></button>}
                           </div>
-                          <div style={{ fontSize: 'clamp(0.8rem, 1.5vw, 1rem)', color: '#666', fontWeight: '500', lineHeight: 1.5, wordBreak: 'break-word', overflowWrap: 'break-word' }}>{c.text}</div>
+                          <div className="feed-comment-text">{c.text}</div>
 
                           {/* Reply Actions */}
                           <div style={{ display: 'flex', gap: 'clamp(10px, 2vw, 15px)', marginTop: '10px', flexWrap: 'wrap' }}>
@@ -396,17 +403,16 @@ const FeedPost = React.memo(({ post, onPostDeleted }) => {
 
               {/* Add Response Form */}
               {currentToken && (
-                <form onSubmit={handleComment} style={{ display: 'flex', gap: 'clamp(10px, 2vw, 15px)', alignItems: 'center', minWidth: 0 }}>
-                  <div style={{ width: 'clamp(36px, 8vw, 45px)', height: 'clamp(36px, 8vw, 45px)', borderRadius: '50%', background: '#000', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
-                    <img src={userInfo?.profileImage?.url ? (getFullUrl(userInfo.profileImage.url) + `?t=${profileUpdateTag}`) : 'https://via.placeholder.com/45'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                <form onSubmit={handleComment} className="feed-comment-composer">
+                  <div className="feed-comment-composer-avatar">
+                    <img src={userInfo?.profileImage?.url ? (getFullUrl(userInfo.profileImage.url) + `?t=${profileUpdateTag}`) : 'https://via.placeholder.com/45'} alt="" />
                   </div>
-                  <div className="glass" style={{ flex: 1, borderRadius: 'clamp(25px, 4vw, 40px)', display: 'flex', alignItems: 'center', padding: 'clamp(5px, 1.5vw, 8px) clamp(18px, 3vw, 25px)', border: '1px solid rgba(255,255,255,0.05)', minWidth: 0, boxSizing: 'border-box' }}>
+                  <div className="feed-comment-input-shell">
                     <input
                       value={commentText} onChange={(e) => setCommentText(e.target.value)}
                       placeholder="ตอบกลับคอมเม้นท์..."
-                      style={{ flex: 1, background: 'transparent', border: 'none', color: '#fff', outline: 'none', padding: 'clamp(12px, 2vw, 18px) 0', fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)', fontWeight: '700', minWidth: 0 }}
                     />
-                    <motion.button whileTap={{ scale: 0.9 }} type="submit" disabled={!commentText.trim()} style={{ background: 'none', border: 'none', color: commentText.trim() ? 'var(--accent)' : '#0a0a0a', cursor: 'pointer', transition: '0.3s', flexShrink: 0, marginLeft: '8px' }}>
+                    <motion.button whileTap={{ scale: 0.9 }} type="submit" disabled={!commentText.trim()}>
                       <FiSend style={{ width: '22px', height: '22px' }} />
                     </motion.button>
                   </div>

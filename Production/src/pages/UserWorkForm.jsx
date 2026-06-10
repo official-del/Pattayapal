@@ -1,23 +1,32 @@
 import { toast } from 'react-hot-toast';
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { worksAPI, categoriesAPI } from '../utils/api';
 import { CONFIG } from '../utils/config';
-import VideoUploadForm from './Admin/VideoUploadForm';
-import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { getFullUrl } from '../utils/mediaUtils';
 import {
-  FiArrowLeft, FiImage, FiVideo, FiPlus, FiCheckCircle,
-  FiLoader, FiX, FiCheck, FiUploadCloud, FiTrash2, FiFileText, FiTag, FiZap, FiActivity
+  FiArrowLeft,
+  FiImage,
+  FiVideo,
+  FiPlus,
+  FiCheckCircle,
+  FiX,
+  FiUploadCloud,
+  FiFileText,
+  FiTag,
+  FiZap,
+  FiLayers,
 } from 'react-icons/fi';
+import PremiumLoader from '../components/PremiumLoader';
+import CustomSelect from '../components/CustomSelect';
+import '../css/WorkForm.css';
 
 function UserWorkForm() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user: currentUser } = useContext(AuthContext);
   const isEdit = Boolean(id);
 
   const mainImageInputRef = useRef(null);
@@ -39,7 +48,6 @@ function UserWorkForm() {
   });
 
   const [albumImages, setAlbumImages] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     loadInitialData();
@@ -49,6 +57,7 @@ function UserWorkForm() {
     try {
       const cats = await categoriesAPI.getAll();
       setCategories(cats || []);
+
       if (isEdit) {
         const res = await worksAPI.getById(id);
         const data = res.work || res;
@@ -59,7 +68,7 @@ function UserWorkForm() {
         const isAdmin = userInfo?.role === 'admin';
 
         if (creatorId !== currentUserId && !isAdmin) {
-          toast.error("คุณไม่มีสิทธิ์แก้ไขผลงานนี้");
+          toast.error('You do not have permission to edit this work.');
           return navigate(-1);
         }
 
@@ -71,10 +80,17 @@ function UserWorkForm() {
           mediaUrl: data.mainImage?.url || data.mediaUrl || '',
           status: data.status || 'published',
         });
-        if (data.album) setAlbumImages(data.album.map(img => ({ ...img, isNew: false })));
+
+        if (data.album) {
+          setAlbumImages(data.album.map((img) => ({ ...img, isNew: false })));
+        }
       }
-    } catch (err) { console.error('Load failed', err); }
-    finally { setPageLoading(false); }
+    } catch (err) {
+      console.error('Load failed', err);
+      toast.error('Unable to prepare the work form.');
+    } finally {
+      setPageLoading(false);
+    }
   };
 
   const handleMainImageUpload = async (e) => {
@@ -86,12 +102,17 @@ function UserWorkForm() {
     uploadData.append('file', file);
 
     try {
+      const token = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
       const res = await axios.post(`${CONFIG.API_BASE_URL}/api/upload/single`, uploadData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+          'x-auth-token': token,
+        },
       });
-      setFormData(prev => ({ ...prev, mediaUrl: res.data.url }));
+      setFormData((prev) => ({ ...prev, mediaUrl: res.data.url }));
     } catch (err) {
-      toast.error('อัปโหลดล้มเหลว: ' + (err.response?.data?.message || err.message));
+      toast.error(`Image upload failed: ${err.response?.data?.message || err.message}`);
     } finally {
       setImgUploading(false);
       e.target.value = null;
@@ -101,7 +122,6 @@ function UserWorkForm() {
   const handleVideoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    // Removed 500MB limit for unlimited uploads
 
     setVideoUploading(true);
     setUploadProgress(0);
@@ -109,16 +129,21 @@ function UserWorkForm() {
     uploadData.append('file', file);
 
     try {
+      const token = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
       const res = await axios.post(`${CONFIG.API_BASE_URL}/api/upload/single`, uploadData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (e) => {
-          const pct = Math.round((e.loaded * 100) / e.total);
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+          'x-auth-token': token,
+        },
+        onUploadProgress: (event) => {
+          const pct = Math.round((event.loaded * 100) / event.total);
           setUploadProgress(pct);
-        }
+        },
       });
-      setFormData(prev => ({ ...prev, mediaUrl: res.data.url }));
+      setFormData((prev) => ({ ...prev, mediaUrl: res.data.url }));
     } catch (err) {
-      toast.error('อัปโหลดวิดีโอล้มเหลว: ' + (err.response?.data?.message || err.message));
+      toast.error(`Video upload failed: ${err.response?.data?.message || err.message}`);
     } finally {
       setVideoUploading(false);
       e.target.value = null;
@@ -127,269 +152,278 @@ function UserWorkForm() {
 
   const handleAlbumChange = (e) => {
     const files = Array.from(e.target.files);
-    
-    // Check limit
+
     if (albumImages.length + files.length > 10) {
-      toast.error('คุณสามารถอัปโหลดไฟล์ในอัลบั้มได้สูงสุด 10 ไฟล์เท่านั้น');
-      // Slice the new files to fit the remaining slots
+      toast.error('You can upload up to 10 album assets.');
       const availableSlots = 10 - albumImages.length;
       if (availableSlots <= 0) return;
       files.splice(availableSlots);
     }
 
-    const newFiles = files.map(file => ({
+    const newFiles = files.map((file) => ({
       previewUrl: URL.createObjectURL(file),
-      file: file,
+      file,
       type: file.type.startsWith('video') ? 'video' : 'image',
-      isNew: true
+      isNew: true,
     }));
-    setAlbumImages(prev => [...prev, ...newFiles]);
+
+    setAlbumImages((prev) => [...prev, ...newFiles]);
+    e.target.value = null;
   };
 
   const removeAlbumItem = (index) => {
-    setAlbumImages(prev => prev.filter((_, i) => i !== index));
+    setAlbumImages((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   };
 
   const handleSave = async (e) => {
     if (e) e.preventDefault();
-    if (!formData.mediaUrl) return toast.error('กรุณาอัปโหลดรูปภาพหลักหรืองานวิดีโอก่อนบันทึก');
+    if (!formData.category) return toast.error('Choose a portfolio category before saving.');
+    if (!formData.mediaUrl) return toast.error('Upload a cover image or video before saving.');
     setLoading(true);
 
     const token = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
     const submitData = new FormData();
 
-    Object.keys(formData).forEach(key => submitData.append(key, formData[key]));
+    Object.keys(formData).forEach((key) => submitData.append(key, formData[key]));
     submitData.append('mainImageUrl', formData.mediaUrl);
 
-    const existingAlbum = albumImages.filter(img => !img.isNew);
+    const existingAlbum = albumImages.filter((img) => !img.isNew);
     submitData.append('existingAlbum', JSON.stringify(existingAlbum));
 
-    albumImages.forEach(img => {
+    albumImages.forEach((img) => {
       if (img.isNew && img.file) submitData.append('album', img.file);
     });
 
     try {
       if (isEdit) await worksAPI.update(id, submitData, token);
       else await worksAPI.create(submitData, token);
-      navigate(`/dashboard/works`);
+      toast.success(isEdit ? 'Work updated.' : 'Work published.');
+      navigate('/dashboard/works');
     } catch (err) {
-      toast.success('บันทึกไม่สำเร็จ: ' + (err.response?.data?.message || 'API Error'));
-    } finally { setLoading(false); }
+      toast.error(`Save failed: ${err.response?.data?.message || 'API Error'}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (pageLoading) return (
-    <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexFlow: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', gap: '20px' }}>
-      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '50px', height: '50px', border: '3px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }} />
-      <span style={{ fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem' }}>กำลังเตรียมข้อมูลแบบฟอร์ม...</span>
-    </div>
-  );
+  if (pageLoading) {
+    return (
+      <PremiumLoader
+        text="Preparing Form..."
+        subtext="Loading creator work data..."
+      />
+    );
+  }
+
+  const isBusy = loading || imgUploading || videoUploading;
+  const isVideo = formData.type === 'video';
+  const canSubmit = Boolean(formData.mediaUrl) && !isBusy;
+  const categoryOptions = categories.map((category) => ({
+    value: category._id,
+    label: category.name,
+  }));
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingBottom: '150px' }}>
-
-      {/* 🔮 Strategic Header */}
-      <section className="form-header-section" style={{ padding: '120px 5% 60px' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <button onClick={() => navigate(-1)} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', width: '50px', height: '50px', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
-            <FiArrowLeft size={20} />
+    <main className="work-form-page">
+      <section className="work-form-shell">
+        <motion.header
+          className="work-form-header"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <button type="button" className="work-form-back" onClick={() => navigate(-1)}>
+            <FiArrowLeft />
+            <span>Back</span>
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
-            <FiZap color="var(--accent)" size={18} />
-            <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '5px', fontSize: '0.8rem' }}>UPLOAD DATA</span>
+
+          <div className="work-form-title-row">
+            <div>
+              <div className="work-form-kicker">
+                <FiZap />
+                <span>{isEdit ? 'Edit Work' : 'Upload Work'}</span>
+              </div>
+              <h1>{isEdit ? 'Edit creator work' : 'Publish creator work'}</h1>
+              <p>
+                {isEdit
+                  ? 'Update the title, category, story, cover media, and supporting assets for this portfolio item.'
+                  : 'Create a polished portfolio item with a clear title, category, story, cover media, and optional album assets.'}
+              </p>
+            </div>
+            <div className="work-form-hud">
+              <span>Status</span>
+              <strong>{formData.status}</strong>
+            </div>
           </div>
-          <h1 className="fluid-h1" style={{ fontSize: 'clamp(2rem, 8vw, 3.5rem)', fontWeight: '700', margin: 0, letterSpacing: '-2px' }}>
-            {isEdit ? 'แก้ไขผลงาน' : 'เพิ่มผลงานใหม่'}
-          </h1>
-          <p style={{ color: '#444', marginTop: '10px', fontWeight: '700' }}>แชร์ผลงานของคุณให้โลกเห็นในคลังข้อมูลอัจฉริยะ</p>
-        </motion.div>
-      </section>
+        </motion.header>
 
-      <form className="work-form-grid" onSubmit={handleSave} style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 5%', gap: '50px', alignItems: 'start' }}>
-
-        {/* 🧬 Metadata Section */}
-        <motion.section initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass form-card" style={{ padding: 'clamp(20px, 5vw, 50px)', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '40px', color: '#333' }}>
-            <FiFileText size={20} />
-            <span style={{ fontWeight: '700', letterSpacing: '2px', fontSize: '0.75rem' }}>ข้อมูลพื้นฐาน</span>
-          </div>
-
-          <div style={{ marginBottom: '35px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#444', marginBottom: '15px', letterSpacing: '1px' }}>ชื่อผลงาน / PROJECT TITLE</label>
-            <input
-              type="text" value={formData.title} required onChange={e => setFormData({ ...formData, title: e.target.value })}
-              placeholder="ระบุชื่อเรียกผลงานของคุณ"
-              style={{ width: '100%', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', padding: '20px', borderRadius: '20px', outline: 'none', fontWeight: '700' }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '35px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#444', marginBottom: '15px', letterSpacing: '1px' }}>หมวดหมู่ / CATEGORY</label>
-            <select
-              value={formData.category} required onChange={e => setFormData({ ...formData, category: e.target.value })}
-              style={{ width: '100%', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', padding: '20px', borderRadius: '20px', outline: 'none', fontWeight: '700', appearance: 'none' }}
-            >
-              <option value="">เลือกประเภทพอร์ตโฟลิโอ...</option>
-              {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
-          </div>
-
-          <div style={{ marginBottom: '10px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#444', marginBottom: '15px', letterSpacing: '1px' }}>คำอธิบายงาน / STORIES</label>
-            <textarea
-              rows="10" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
-              placeholder="เล่าเรื่องราวหรือเทคนิคที่คุณใช้ในโปรเจกต์นี้..."
-              style={{ width: '100%', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', padding: '20px', borderRadius: '20px', outline: 'none', fontWeight: '500', lineHeight: 1.6, resize: 'none' }}
-            />
-          </div>
-        </motion.section>
-
-        {/* 🎬 Media Assets Section */}
-        <motion.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass form-card" style={{ padding: 'clamp(20px, 5vw, 50px)', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)' }}>
-          <div className="media-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#333' }}>
-              <FiUploadCloud size={20} />
-              <span style={{ fontWeight: '700', letterSpacing: '2px', fontSize: '0.75rem' }}>ไฟล์มัลติมีเดีย</span>
+        <form className="work-form-grid" onSubmit={handleSave}>
+          <motion.section
+            initial={{ opacity: 0, x: -18 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="work-form-card"
+          >
+            <div className="work-form-card-head">
+              <FiFileText />
+              <div>
+                <span>Basic Data</span>
+                <h2>Project information</h2>
+              </div>
             </div>
 
-            {/* 🔀 Media Type Toggle */}
-            {!isEdit && (
-              <div style={{ display: 'inline-flex', background: 'rgba(255,255,255,0.03)', borderRadius: '20px', padding: '5px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                {[
-                  { type: 'image', label: 'รูปภาพ', icon: <FiImage size={14} /> },
-                  { type: 'video', label: 'วิดีโอ', icon: <FiVideo size={14} /> },
-                ].map(opt => (
-                  <button
-                    key={opt.type}
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, type: opt.type, mediaUrl: '' }))}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      padding: '10px 22px', borderRadius: '15px', border: 'none', cursor: 'pointer',
-                      fontWeight: '700', fontSize: '0.8rem', transition: '0.3s',
-                      background: formData.type === opt.type ? 'var(--accent)' : 'transparent',
-                      color: formData.type === opt.type ? '#fff' : '#555',
-                      boxShadow: formData.type === opt.type ? '0 4px 15px var(--accent-glow)' : 'none'
-                    }}
-                  >
-                    {opt.icon} {opt.label}
-                  </button>
-                ))}
+            <label className="work-field">
+              <span>Project title</span>
+              <input
+                type="text"
+                value={formData.title}
+                required
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Name this work"
+              />
+            </label>
+
+            <div className="work-field">
+              <span>Category</span>
+              <CustomSelect
+                className="work-category-select"
+                value={formData.category}
+                onChange={(nextCategory) => setFormData({ ...formData, category: nextCategory })}
+                options={categoryOptions}
+                placeholder="Choose a portfolio category..."
+              />
+            </div>
+
+            <label className="work-field">
+              <span>Work story</span>
+              <textarea
+                rows="9"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Describe the concept, technique, tools, or result..."
+              />
+            </label>
+          </motion.section>
+
+          <motion.section
+            initial={{ opacity: 0, x: 18 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="work-form-card is-media"
+          >
+            <div className="work-form-card-head is-between">
+              <div>
+                <FiUploadCloud />
+                <div>
+                  <span>Media Assets</span>
+                  <h2>Cover and album</h2>
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* UI สำหรับอัปโหลด */}
-          <div style={{ marginBottom: '40px' }}>
-            {formData.type === 'video' ? (
-              formData.mediaUrl ? (
-                <div style={{ borderRadius: '30px', overflow: 'hidden', position: 'relative' }}>
-                  <video src={getFullUrl(formData.mediaUrl)} controls style={{ width: '100%', display: 'block' }} />
-                  <button type="button" onClick={() => setFormData({ ...formData, mediaUrl: '' })} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: '30px', cursor: 'pointer', fontWeight: '700', fontSize: '0.75rem', backdropFilter: 'blur(10px)' }}>เปลี่ยนวิดีโอ</button>
+              {!isEdit && (
+                <div className="media-type-toggle" role="group" aria-label="Media type">
+                  {[
+                    { type: 'image', label: 'Image', icon: <FiImage /> },
+                    { type: 'video', label: 'Video', icon: <FiVideo /> },
+                  ].map((option) => (
+                    <button
+                      key={option.type}
+                      type="button"
+                      className={formData.type === option.type ? 'is-active' : ''}
+                      onClick={() => setFormData((prev) => ({ ...prev, type: option.type, mediaUrl: '' }))}
+                    >
+                      {option.icon}
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
-              ) : videoUploading ? (
-                <div style={{ border: '2px dashed rgba(255,87,51,0.3)', borderRadius: '30px', padding: '80px 40px', textAlign: 'center' }}>
-                  <FiLoader className="spin" size={40} color="var(--accent)" />
-                  <p style={{ marginTop: '20px', fontWeight: '700', color: '#fff' }}>กำลังอัปโหลด... {uploadProgress}%</p>
-                  <div style={{ marginTop: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', height: '6px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${uploadProgress}%`, background: 'var(--accent)', borderRadius: '10px', transition: 'width 0.3s' }} />
-                  </div>
-                </div>
-              ) : (
-                <div
-                  onClick={() => videoInputRef.current.click()}
-                  style={{ border: '2px dashed rgba(255,255,255,0.05)', borderRadius: '30px', padding: '80px 40px', textAlign: 'center', cursor: 'pointer', transition: '0.3s' }}
-                  onMouseOver={e => e.currentTarget.style.borderColor = 'var(--accent)'}
-                  onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
-                >
-                  <input type="file" ref={videoInputRef} accept="video/*" onChange={handleVideoUpload} hidden />
-                  <FiVideo size={40} color="#222" />
-                  <p style={{ marginTop: '20px', fontWeight: '700', color: '#fff' }}>อัปโหลดไฟล์วิดีโอ</p>
-                  <span style={{ fontSize: '0.8rem', color: '#444' }}>MP4, MOV, WebM (ขนาดไม่เกิน 500MB)</span>
-                </div>
-              )
-            ) : (
-              formData.mediaUrl ? (
-                <div style={{ borderRadius: '30px', overflow: 'hidden', position: 'relative' }}>
-                  <img src={getFullUrl(formData.mediaUrl)} alt="Main" style={{ width: '100%', display: 'block' }} />
-                  <button type="button" onClick={() => setFormData({ ...formData, mediaUrl: '' })} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: '30px', cursor: 'pointer', fontWeight: '700', fontSize: '0.75rem', backdropFilter: 'blur(10px)' }}>เปลี่ยนรูปภาพ</button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => !imgUploading && mainImageInputRef.current.click()}
-                  style={{ border: '2px dashed rgba(255,255,255,0.05)', borderRadius: '30px', padding: '80px 40px', textAlign: 'center', cursor: 'pointer', transition: '0.3s' }}
-                  onMouseOver={e => e.currentTarget.style.borderColor = 'var(--accent)'}
-                  onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
-                >
-                  <input type="file" ref={mainImageInputRef} accept="image/*" onChange={handleMainImageUpload} hidden />
-                  {imgUploading ? <FiLoader className="spin" size={40} color="var(--accent)" /> : <FiImage size={40} color="#222" />}
-                  <p style={{ marginTop: '20px', fontWeight: '700', color: '#fff' }}>อัปโหลดรูปภาพหลัก</p>
-                  <span style={{ fontSize: '0.8rem', color: '#444' }}>JPG, PNG หรือ WebP (ขนาดไม่เกิน 10MB)</span>
-                </div>
-              )
-            )}
-          </div>
-
-          {/* อัลบั้มสื่อเพิ่มเติม (รองรับทั้งรูปภาพและวิดีโอ) */}
-          <div style={{ marginTop: '40px', padding: '40px', background: 'rgba(255,255,255,0.01)', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.03)' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#444', marginBottom: '10px', letterSpacing: '1px' }}>อัลบั้มสื่อเพิ่มเติม / ALBUM ASSETS</label>
-            <p style={{ color: '#666', fontSize: '0.8rem', marginBottom: '25px', fontWeight: '500' }}>รองรับรูปภาพและวิดีโอ (อัปโหลดได้สูงสุด 10 ไฟล์)</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '15px' }}>
-              {albumImages.map((item, i) => {
-                const isVid = item.type === 'video' || (item.url && (item.url.endsWith('.mp4') || item.url.endsWith('.mov') || item.url.endsWith('.webm')));
-                return (
-                  <div key={i} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '15px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', background: '#080808' }}>
-                    {isVid ? (
-                      <video src={item.previewUrl || getFullUrl(item.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <img src={item.previewUrl || getFullUrl(item.url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    )}
-                    {isVid && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', pointerEvents: 'none' }}><FiVideo size={20} color="#fff" /></div>}
-                    <button type="button" onClick={() => removeAlbumItem(i)} style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(239,68,68,0.9)', border: 'none', color: '#fff', width: '25px', height: '25px', borderRadius: '5px', cursor: 'pointer', zIndex: 10 }}><FiX /></button>
-                  </div>
-                );
-              })}
-              {albumImages.length < 10 && (
-                <label style={{ aspectRatio: '1/1', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }} onMouseOver={e => e.currentTarget.style.borderColor='var(--accent)'} onMouseOut={e => e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}>
-                  <input type="file" multiple hidden accept="image/*,video/*" onChange={handleAlbumChange} />
-                  <FiPlus color="#222" size={24} />
-                </label>
               )}
             </div>
-          </div>
 
-          {/* บุ่มบันทึก */}
-          <motion.button
-            type="submit"
-            whileHover={{ scale: 1.02, boxShadow: '0 0 40px var(--accent-glow)' }}
-            disabled={loading || imgUploading || videoUploading || !formData.mediaUrl}
-            style={{ width: '100%', marginTop: '60px', background: 'var(--accent)', color: '#fff', border: 'none', padding: '22px', borderRadius: '25px', fontWeight: '700', fontSize: '1.1rem', cursor: (loading || imgUploading || videoUploading || !formData.mediaUrl) ? 'not-allowed' : 'pointer', opacity: (loading || imgUploading || videoUploading || !formData.mediaUrl) ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}
-          >
-            {loading ? <FiLoader className="spin" /> : <FiCheckCircle />}
-            <span>{isEdit ? 'บันทึกการแก้ไข' : 'ยืนยันและเผยแพร่ผลงาน'}</span>
-          </motion.button>
+            <section className="cover-upload-area">
+              {isVideo ? (
+                formData.mediaUrl ? (
+                  <div className="cover-preview">
+                    <video src={getFullUrl(formData.mediaUrl)} controls />
+                    <button type="button" onClick={() => setFormData({ ...formData, mediaUrl: '' })}>Change video</button>
+                  </div>
+                ) : videoUploading ? (
+                  <div className="upload-dropzone is-loading">
+                    <PremiumLoader bare size="small" />
+                    <p>Uploading video... {uploadProgress}%</p>
+                    <div className="upload-progress"><span style={{ transform: `scaleX(${uploadProgress / 100})` }} /></div>
+                  </div>
+                ) : (
+                  <button type="button" className="upload-dropzone" onClick={() => videoInputRef.current.click()}>
+                    <input type="file" ref={videoInputRef} accept="video/*" onChange={handleVideoUpload} hidden />
+                    <FiVideo />
+                    <strong>Upload video file</strong>
+                    <span>MP4, MOV, or WebM</span>
+                  </button>
+                )
+              ) : (
+                formData.mediaUrl ? (
+                  <div className="cover-preview">
+                    <img src={getFullUrl(formData.mediaUrl)} alt="Main work cover" />
+                    <button type="button" onClick={() => setFormData({ ...formData, mediaUrl: '' })}>Change image</button>
+                  </div>
+                ) : (
+                  <button type="button" className="upload-dropzone" onClick={() => !imgUploading && mainImageInputRef.current.click()}>
+                    <input type="file" ref={mainImageInputRef} accept="image/*" onChange={handleMainImageUpload} hidden />
+                    {imgUploading ? <PremiumLoader bare size="small" /> : <FiImage />}
+                    <strong>{imgUploading ? 'Uploading image...' : 'Upload cover image'}</strong>
+                    <span>JPG, PNG, or WebP</span>
+                  </button>
+                )
+              )}
+            </section>
 
-        </motion.section>
+            <section className="album-panel">
+              <div className="album-head">
+                <div>
+                  <span><FiLayers /> Album Assets</span>
+                  <p>Optional supporting images or videos. Maximum 10 files.</p>
+                </div>
+                <strong>{albumImages.length}/10</strong>
+              </div>
 
-      </form>
+              <div className="album-grid">
+                {albumImages.map((item, index) => {
+                  const isAlbumVideo = item.type === 'video' || (item.url && /\.(mp4|mov|webm)$/i.test(item.url));
+                  return (
+                    <div key={item.url || item.previewUrl || index} className="album-tile">
+                      {isAlbumVideo ? (
+                        <video src={item.previewUrl || getFullUrl(item.url)} />
+                      ) : (
+                        <img src={item.previewUrl || getFullUrl(item.url)} alt="" />
+                      )}
+                      {isAlbumVideo && <span className="album-video-mark"><FiVideo /></span>}
+                      <button type="button" onClick={() => removeAlbumItem(index)} aria-label="Remove asset">
+                        <FiX />
+                      </button>
+                    </div>
+                  );
+                })}
 
-      <style>{`
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        select option { background: #000; color: #fff; }
-        .work-form-grid {
-          display: grid;
-          grid-template-columns: 1fr 1.2fr;
-        }
-        @media (max-width: 1200px) {
-          .work-form-grid { grid-template-columns: 1fr; }
-          .form-header-section { padding-top: 80px !important; }
-        }
-        @media (max-width: 600px) {
-          .media-section-header { flex-direction: column; align-items: flex-start !important; }
-          .glass.form-card { border-radius: 20px !important; }
-        }
-      `}</style>
-    </div>
+                {albumImages.length < 10 && (
+                  <label className="album-add-tile">
+                    <input type="file" multiple hidden accept="image/*,video/*" onChange={handleAlbumChange} />
+                    <FiPlus />
+                  </label>
+                )}
+              </div>
+            </section>
+
+            <motion.button
+              type="submit"
+              whileTap={{ scale: 0.98 }}
+              disabled={!canSubmit}
+              className="work-submit-btn"
+            >
+              {loading ? <PremiumLoader bare size="tiny" /> : <FiCheckCircle />}
+              <span>{isEdit ? 'Save changes' : 'Publish work'}</span>
+            </motion.button>
+          </motion.section>
+        </form>
+      </section>
+    </main>
   );
 }
 

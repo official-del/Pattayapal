@@ -1,18 +1,22 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { postsAPI, worksAPI, usersAPI, categoriesAPI } from '../utils/api';
 import CreatePostBox from '../components/CreatePostBox';
 import FeedPost from '../components/FeedPost';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
+import { getFullUrl, getMediaUrl, getWorkPosterUrl, getWorkVideoUrl, workIsVideo } from '../utils/mediaUtils';
 import {
-  FiActivity, FiZap, FiHash, FiAlertTriangle,
-  FiTrendingUp, FiUsers, FiCompass, FiMessageSquare, FiCamera, FiVideo, FiSliders, FiFilm, FiLayout, FiPenTool,
-  FiMaximize, FiCpu, FiBriefcase, FiStar, FiEye, FiChevronRight, FiLoader
+  FiZap, FiAlertTriangle,
+  FiUsers, FiCamera, FiVideo, FiSliders, FiFilm, FiLayout, FiPenTool,
+  FiMaximize, FiCpu, FiBriefcase, FiStar, FiEye, FiChevronRight, FiLogIn, FiUserPlus
 } from 'react-icons/fi';
-import ProfileFrame from '../components/ProfileFrame';
 import OptimizedImage from '../components/OptimizedImage';
+import PremiumLoader from '../components/PremiumLoader';
+import Footer from '../components/Footer';
+import '../css/Home.css';
+
+const MotionDiv = motion.div;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 const getCategoryIcon = (name) => {
@@ -30,7 +34,8 @@ const getCategoryIcon = (name) => {
 };
 
 // ─── Right Sidebar: Trending & Leaderboard ───────────────────────────────────
-function RightSidebar({ user, categories }) {
+function RightSidebar() {
+  const navigate = useNavigate();
   const [trending, setTrending] = useState([]);
   const [topFreelancers, setTopFreelancers] = useState([]);
   const [loadingTrending, setLoadingTrending] = useState(true);
@@ -66,38 +71,33 @@ function RightSidebar({ user, categories }) {
   }, [trending.length]);
 
   return (
-    <aside style={{
-      width: '320px', flexShrink: 0, position: 'sticky', top: '150px',
-      paddingLeft: '10px',
-      display: 'flex', flexDirection: 'column', gap: '30px'
-    }}>
+    <aside className="home-right-rail">
 
       {/* Trending Section */}
-      <div style={{ marginTop: '80px', marginBottom: '20px', textAlign: 'center' }}>
-        <div style={{ color: 'var(--accent)', fontSize: '0.8rem', fontWeight: '800', letterSpacing: '1px', marginBottom: '5px' }}>
+      <div className="home-sidebar-panel home-support-panel">
+        <div className="home-panel-label">
           HEATING UP THE FEED
         </div>
-        <div style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '900', textTransform: 'uppercase', marginBottom: '20px', letterSpacing: '1px' }}>
-          TRENDING CREATIONS
+        <div className="home-panel-heading">
+          Trending creations
         </div>
 
         {loadingTrending ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-            <FiLoader className="spin" size={24} color="var(--accent)" />
-          </div>
+          <PremiumLoader fullScreen={false} size="small" text="Loading Trends..." />
         ) : trending.length > 0 ? (
-          <div style={{ position: 'relative', height: '240px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="home-trending-frame">
             {trending.map((item, index) => {
               const diff = index - currentTrendingIndex;
               const isActive = index === currentTrendingIndex;
 
               return (
-                <motion.div
+                <MotionDiv
                   key={item._id}
+                  className={`home-trending-card ${isActive ? 'is-active' : ''}`}
                   animate={{
-                    x: diff * 20,
-                    scale: isActive ? 1 : 0.85,
-                    opacity: isActive ? 1 : 0.3,
+                    x: diff * 14,
+                    scale: isActive ? 1 : 0.78,
+                    opacity: isActive ? 1 : 0.18,
                     zIndex: isActive ? 10 : 1,
                   }}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -108,7 +108,7 @@ function RightSidebar({ user, categories }) {
                     border: isActive ? '1px solid rgba(255,255,255,0.1)' : 'none',
                     willChange: 'transform, opacity'
                   }}
-                  onClick={() => window.location.href = `/works/${item._id}`}
+                  onClick={() => navigate(`/works/${item._id}`)}
                 >
                   {/* Author Avatar at Top-Left */}
                   <div style={{ position: 'absolute', top: '15px', left: '15px', zIndex: 11 }}>
@@ -133,8 +133,8 @@ function RightSidebar({ user, categories }) {
 
                   {workIsVideo(item) ? (
                     <video
-                      src={getMediaUrl(item)}
-                      poster={item.coverImage?.url ? getFullUrl(item.coverImage.url) : (typeof item.coverImage === 'string' ? getFullUrl(item.coverImage) : undefined)}
+                      src={getWorkVideoUrl(item)}
+                      poster={getWorkPosterUrl(item)}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onLoadedMetadata={(e) => e.target.currentTime = 0.1}
                       muted
@@ -160,11 +160,11 @@ function RightSidebar({ user, categories }) {
                       </div>
                     </div>
                   )}
-                </motion.div>
+                </MotionDiv>
               );
             })}
 
-            <div style={{ position: 'absolute', bottom: '-20px', display: 'flex', gap: '6px' }}>
+            <div className="home-trending-dots">
               {trending.map((_, i) => (
                 <div key={i} style={{
                   width: i === currentTrendingIndex ? '16px' : '6px',
@@ -179,31 +179,26 @@ function RightSidebar({ user, categories }) {
       </div>
 
       {/* Rankings Section */}
-      <div className="glass" style={{
-        padding: '30px 20px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)',
-        textAlign: 'center', background: 'rgba(255,255,255,0.01)'
-      }}>
-        <div style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '10px' }}>
+      <div className="home-sidebar-panel home-support-panel">
+        <div className="home-panel-label">
           <FiStar size={14} />
-          <span style={{ fontSize: '0.7rem', fontWeight: '800', letterSpacing: '2px' }}>RANKING HUBS</span>
+          <span>RANKING HUBS</span>
         </div>
-        <div style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '900', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '1px' }}>
-          RANKINGS OF COMMUNITY
+        <div className="home-panel-heading">
+          Community rankings
         </div>
 
         {loadingFreelancers ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-            <FiLoader className="spin" size={24} color="var(--accent)" />
-          </div>
+          <PremiumLoader fullScreen={false} size="small" text="Loading Creators..." />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center' }}>
+          <div className="home-ranking-list">
             {topFreelancers.map((freelancer, index) => {
               const rank = index + 1;
               const isRank1 = rank === 1;
               return (
-                <div key={freelancer._id || index} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                <div key={freelancer._id || index} className={`home-ranking-card ${isRank1 ? 'is-rank-one' : ''}`}>
                   <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div style={{
+                    <div className="home-ranking-number" style={{
                       position: 'absolute', top: '-15px', zIndex: 10,
                       width: '30px', height: '30px', borderRadius: '50%',
                       background: isRank1 ? 'var(--accent)' : '#666',
@@ -214,7 +209,8 @@ function RightSidebar({ user, categories }) {
                       {rank}
                     </div>
                     <div
-                      onClick={() => window.location.href = `/profile/${freelancer._id}`}
+                      onClick={() => navigate(`/profile/${freelancer._id}`)}
+                      className="home-ranking-avatar"
                       style={{
                         width: isRank1 ? '120px' : '90px', height: isRank1 ? '120px' : '90px',
                         borderRadius: '50%', background: '#111',
@@ -234,9 +230,9 @@ function RightSidebar({ user, categories }) {
                       </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: '#fff', fontWeight: '900', fontSize: '1.2rem', textTransform: 'uppercase' }}>{freelancer.name}</div>
-                    <div style={{ color: '#666', fontSize: '0.65rem', fontWeight: '800', letterSpacing: '2px' }}>{freelancer.profession || 'CREATOR'}</div>
+                  <div className="home-ranking-copy">
+                    <div className="home-ranking-name">{freelancer.name}</div>
+                    <div className="home-ranking-role">{freelancer.profession || 'CREATOR'}</div>
                   </div>
                 </div>
               );
@@ -258,49 +254,32 @@ function RightSidebar({ user, categories }) {
           { name: 'Digital Artist', icon: <FiCpu /> },
         ];
         return (
-          <div className="glass" style={{
-            padding: '30px 20px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.03)',
-            background: 'rgba(255,255,255,0.01)', marginTop: '30px'
-          }}>
-            <div style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+          <div className="home-sidebar-panel home-support-panel">
+            <div className="home-panel-label">
               <FiZap size={14} />
-              <span style={{ fontSize: '0.7rem', fontWeight: '800', letterSpacing: '2px' }}>CORE SERVICES</span>
+              <span>CORE SERVICES</span>
             </div>
-            <div style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '900', textTransform: 'uppercase', marginBottom: '20px', letterSpacing: '1px' }}>
-              EXPLORE SERVICES
+            <div className="home-panel-heading">
+              Explore services
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+            <div className="home-service-list">
               {PROFESSIONS.map((prof, i) => (
-                <motion.div
+                <MotionDiv
                   key={i}
-                  whileHover={{ x: 6, background: 'rgba(255,255,255,0.05)' }}
-                  onClick={() => window.location.href = `/freelancers?profession=${encodeURIComponent(prof.name)}`}
-                  style={{
-                    padding: '16px 18px',
-                    borderRadius: '18px',
-                    background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                    transition: 'background 0.2s'
-                  }}
+                  onClick={() => navigate(`/freelancers?profession=${encodeURIComponent(prof.name)}`)}
+                  className="home-service-item"
+                  whileTap={{ scale: 0.985 }}
                 >
-                  <div style={{
-                    width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,87,51,0.05)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)',
-                    fontSize: '1.1rem', border: '1px solid rgba(255,87,51,0.1)', flexShrink: 0
-                  }}>
+                  <div className="home-service-icon">
                     {prof.icon}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{prof.name}</div>
-                    <div style={{ color: 'var(--accent)', fontSize: '0.6rem', fontWeight: '800', letterSpacing: '1px', marginTop: '3px' }}>FIND FREELANCERS</div>
+                  <div className="home-service-copy">
+                    <div className="home-service-name">{prof.name}</div>
+                    <div className="home-service-cta">Find freelancers</div>
                   </div>
-                  <FiChevronRight size={14} color="#333" />
-                </motion.div>
+                  <FiChevronRight className="home-service-chevron" size={14} />
+                </MotionDiv>
               ))}
             </div>
           </div>
@@ -316,6 +295,7 @@ function CenterFeed({ user }) {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [activeCommentPostId, setActiveCommentPostId] = useState(null);
   const userId = user?.id || user?._id;
 
   useEffect(() => {
@@ -337,7 +317,14 @@ function CenterFeed({ user }) {
   };
 
   const handlePostCreated = (newPost) => setPosts(prev => [newPost, ...prev]);
-  const handlePostDeleted = (id) => setPosts(prev => prev.filter(p => p._id !== id));
+  const handlePostDeleted = (id) => {
+    setPosts(prev => prev.filter(p => p._id !== id));
+    setActiveCommentPostId(prev => (prev === id ? null : prev));
+  };
+
+  const handleToggleComments = (postId) => {
+    setActiveCommentPostId(prev => (prev === postId ? null : postId));
+  };
 
   const filteredPosts = posts.filter(p => {
     if (activeFilter === 'all') return true;
@@ -346,18 +333,45 @@ function CenterFeed({ user }) {
     return true;
   });
 
-  const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
-  const itemVariants = { hidden: { y: 15, opacity: 0 }, show: { y: 0, opacity: 1 } };
+  const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { delayChildren: 0.04, staggerChildren: 0.035 } } };
+  const itemVariants = {
+    hidden: { y: 12, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] } }
+  };
+  const toolbarVariants = {
+    hidden: { y: -8, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] } }
+  };
 
   return (
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ marginBottom: '25px' }}>
+    <div className="home-feed-column">
+      <MotionDiv className="home-feed-toolbar" variants={toolbarVariants} initial="hidden" animate="show">
+        <div className="home-feed-toolbar-copy">
+          <div className="ui-kicker">PattayaPal Feed</div>
+          <div className="home-feed-toolbar-title">Live community board</div>
+        </div>
+        <div className="home-feed-filters" role="tablist" aria-label="Feed filters">
+          {[
+            ['all', 'All posts'],
+            ['hiring', 'Hiring'],
+            ['work', 'Looking for work']
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`home-filter-btn ${activeFilter === value ? 'is-active' : ''}`}
+              onClick={() => setActiveFilter(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </MotionDiv>
+      <div>
         {userId && <CreatePostBox onPostCreated={handlePostCreated} />}
       </div>
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
-          <FiLoader className="spin" size={40} color="var(--accent)" />
-        </div>
+        <PremiumLoader fullScreen={false} size="small" text="Loading Feed..." />
       ) : fetchError ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(255,0,0,0.05)', borderRadius: '20px' }}>
           <FiAlertTriangle size={40} color="var(--accent)" style={{ marginBottom: '16px' }} />
@@ -365,15 +379,20 @@ function CenterFeed({ user }) {
           <button onClick={loadPosts} style={{ marginTop: '16px', padding: '12px 30px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '800', cursor: 'pointer' }}>RETRY CONNECTION</button>
         </div>
       ) : (
-        <motion.div variants={containerVariants} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <MotionDiv variants={containerVariants} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <AnimatePresence mode="popLayout">
             {filteredPosts.map(post => (
-              <motion.div layout key={post._id} variants={itemVariants} transition={{ duration: 0.3 }} style={{ willChange: 'transform, opacity' }}>
-                <FeedPost post={post} onPostDeleted={handlePostDeleted} />
-              </motion.div>
+              <MotionDiv layout key={post._id} variants={itemVariants} style={{ willChange: 'transform, opacity' }}>
+                <FeedPost
+                  post={post}
+                  onPostDeleted={handlePostDeleted}
+                  isCommentsOpen={activeCommentPostId === post._id}
+                  onToggleComments={handleToggleComments}
+                />
+              </MotionDiv>
             ))}
           </AnimatePresence>
-        </motion.div>
+        </MotionDiv>
       )}
     </div>
   );
@@ -384,45 +403,63 @@ function LeftSidebar({ categories }) {
   const navigate = useNavigate();
 
   return (
-    <aside style={{
-      width: '260px', flexShrink: 0, position: 'sticky', top: '100px',
-      height: 'calc(100vh - 120px)', overflowY: 'auto', paddingRight: '10px',
-      scrollbarWidth: 'none', display: 'flex', flexDirection: 'column', gap: '12px'
-    }}>
-      <div style={{ padding: '0 10px 10px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '10px' }}>
-        <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#fff', letterSpacing: '1px' }}>WORK CATEGORIES</h3>
+    <aside className="home-category-sidebar">
+      <div className="home-category-heading">
+        <div className="ui-kicker">Browse by role</div>
+        <h3 className="home-sidebar-title">Work categories</h3>
       </div>
+      <div className="home-category-list">
       {(Array.isArray(categories) ? categories : []).map((cat, i) => (
-        <motion.div
+        <MotionDiv
           key={cat?._id || i}
-          whileHover={{ x: 8 }}
           onClick={() => navigate(`/works?category=${encodeURIComponent(cat?.name || 'General')}`)}
-          style={{
-            padding: '12px 18px', borderRadius: '14px', background: 'rgba(255,255,255,0.02)',
-            border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px',
-            cursor: 'pointer', transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            willChange: 'transform, background-color, border-color'
-          }}
-          className="category-item"
+          className="home-category-item"
+          whileTap={{ scale: 0.985 }}
         >
-          <div style={{ color: 'var(--accent)', fontSize: '1.1rem', display: 'flex', transition: '0.3s' }}>
+          <div className="home-category-icon">
             {getCategoryIcon(cat?.name)}
           </div>
-          <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#ccc', transition: '0.3s' }}>{cat?.name || 'General'}</span>
-        </motion.div>
+          <span className="home-category-name">{cat?.name || 'General'}</span>
+        </MotionDiv>
       ))}
+      </div>
     </aside>
   );
 }
 
 // ─── Main Home Page ───────────────────────────────────────────────────────────
+function GuestAuthBar() {
+  return (
+    <div className="home-guest-auth-wrap">
+      <div className="home-guest-auth">
+        <div className="home-guest-auth-copy">
+          <div className="ui-kicker">PattayaPal Guild Access</div>
+          <p>เข้าสู่ระบบหรือสมัครสมาชิกเพื่อโพสต์งาน คอมเมนต์ และจัดการโปรไฟล์ creator ของคุณ</p>
+        </div>
+        <div className="home-guest-auth-actions" aria-label="Account actions">
+          <Link to="/login" className="home-guest-login">
+            <FiLogIn />
+            <span>Login now</span>
+          </Link>
+          <Link to="/login" state={{ isRegister: true }} className="home-guest-register">
+            <FiUserPlus />
+            <span>Register now</span>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Home() {
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
   let userInfo = user;
+  let activeToken = token;
   if (!userInfo) {
     try {
+      activeToken = activeToken || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
       userInfo = JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
-    } catch (e) {
+    } catch {
       userInfo = {};
     }
   }
@@ -439,51 +476,17 @@ function Home() {
   }, []);
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: '#fff', overflowX: 'hidden' }}>
-
-      {/* Optimized Background Glows */}
-      <div style={{ position: 'fixed', top: '-10%', left: '20%', width: '600px', height: '600px', background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)', opacity: 0.05, pointerEvents: 'none' }} />
-      <div style={{ position: 'fixed', bottom: '0', right: '10%', width: '500px', height: '500px', background: 'radial-gradient(circle, var(--indigo) 0%, transparent 70%)', opacity: 0.05, pointerEvents: 'none' }} />
-
-      <div className="home-main-container" style={{
-        maxWidth: '1600px', margin: '0 auto',
-        padding: 'clamp(20px, 4vh, 40px) clamp(20px, 5vw, 60px) 60px',
-        display: 'flex', gap: '30px', alignItems: 'flex-start'
-      }}>
-        <div className="home-left-sidebar"><LeftSidebar categories={categories} /></div>
-        <CenterFeed user={userInfo} />
-        <div className="home-right-sidebar"><RightSidebar user={userInfo} categories={categories} /></div>
+    <>
+      <div className="home-page">
+        {!activeToken && <GuestAuthBar />}
+        <div className="home-main-container">
+          <div className="home-left-sidebar"><LeftSidebar categories={categories} /></div>
+          <CenterFeed user={userInfo} />
+          <div className="home-right-sidebar"><RightSidebar /></div>
+        </div>
       </div>
-
-      <style>{`
-        .home-main-container {
-          transition: padding-left 0.4s ease;
-        }
-        @media (min-width: 1101px) {
-          .home-main-container {
-            padding-left: 110px !important;
-          }
-        }
-        @media (min-width: 1500px) {
-          .home-main-container {
-            padding-left: 140px !important;
-          }
-        }
-        .home-left-sidebar, .home-right-sidebar { display: block; }
-        @media (max-width: 1400px) { .home-left-sidebar { display: none; } }
-        @media (max-width: 1100px) { .home-right-sidebar { display: none; } }
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        * { scroll-behavior: smooth; }
-        .category-item:hover {
-          background: rgba(255, 87, 51, 0.1) !important;
-          border-color: rgba(255, 87, 51, 0.3) !important;
-        }
-        .category-item:hover span {
-          color: #fff !important;
-        }
-      `}</style>
-    </div>
+      <Footer />
+    </>
   );
 }
 

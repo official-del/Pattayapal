@@ -252,3 +252,102 @@
   font-weight: 700;
   letter-spacing: 1px;
 }
+
+@media (max-width: 760px) {
+  .custom-upload-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .upload-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .upload-header h3 {
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+  }
+
+  .status-text {
+    max-width: 100%;
+    font-size: 0.6rem;
+    letter-spacing: 1.2px;
+    overflow-wrap: anywhere;
+  }
+
+  .dropzone {
+    min-height: 210px;
+    aspect-ratio: 4 / 3;
+  }
+
+  .upload-label {
+    gap: 8px;
+    padding: 16px;
+  }
+
+  .upload-icon {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 4px;
+  }
+
+  .upload-label p {
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    line-height: 1.35;
+  }
+
+  .upload-label small {
+    max-width: 26ch;
+    line-height: 1.4;
+  }
+
+  .btn-remove {
+    right: 10px;
+    bottom: 10px;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 0.64rem;
+    letter-spacing: 1px;
+  }
+
+  .progress-container,
+  .upload-actions {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .upload-header,
+  .progress-container,
+  .upload-actions,
+  .success-msg {
+    padding-inline: 10px;
+  }
+
+  .dropzone {
+    min-height: 190px;
+  }
+
+  .progress-info {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn-submit-upload {
+    min-height: 46px;
+    padding: 10px;
+    font-size: 0.98rem;
+    letter-spacing: 2px;
+  }
+
+  .success-msg {
+    align-items: flex-start;
+    text-align: left;
+    line-height: 1.4;
+  }
+}

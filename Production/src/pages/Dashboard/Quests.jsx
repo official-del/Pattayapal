@@ -1,15 +1,33 @@
 import { customConfirm } from '../../utils/customConfirm';
-import { toast } from 'react-hot-toast';
+import { toast as hotToast } from 'react-hot-toast';
 import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiTarget, FiCheckCircle, FiGift, FiPlus, FiEdit, FiTrash2, FiRefreshCw, FiAlertCircle, FiClock, FiLink, FiX, FiCheck, FiImage, FiZap, FiChevronDown } from 'react-icons/fi';
+import {
+  FiAlertCircle,
+  FiCheck,
+  FiCheckCircle,
+  FiChevronDown,
+  FiEdit,
+  FiGift,
+  FiImage,
+  FiLink,
+  FiPlus,
+  FiRefreshCw,
+  FiTarget,
+  FiTrash2,
+  FiUploadCloud,
+  FiX,
+  FiZap,
+  FiClock,
+} from 'react-icons/fi';
 import { play8BitSuccess } from '../../utils/soundEffects';
 import { questsAPI, questSubmissionsAPI, API } from '../../utils/api';
 import CreateQuestModal from '../../components/CreateQuestModal';
 import { CoinIcon } from '../../components/CoinIcon';
+import PremiumLoader from '../../components/PremiumLoader';
+import '../../css/Quests.css';
 
-// ─── Countdown helper ─────────────────────────────────────────────────────────
 function useCountdown(expiresAt) {
   const calc = () => {
     if (!expiresAt) return null;
@@ -19,70 +37,79 @@ function useCountdown(expiresAt) {
     const h = Math.floor((diff % 86400000) / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
-    if (d > 0) return `${d}ว ${h}ช`;
-    if (h > 0) return `${h}ช ${m}น`;
-    return `${m}น ${s}ว`;
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m ${s}s`;
   };
+
   const [label, setLabel] = useState(calc);
+
   useEffect(() => {
     if (!expiresAt) return;
     const id = setInterval(() => setLabel(calc()), 1000);
     return () => clearInterval(id);
   }, [expiresAt]);
+
   return label;
 }
 
-// ─── Helper: compute per-quest completion state from live user data ───────────
 function computeCompletion(taskType, liveData, questId) {
   switch (taskType) {
     case 'PROFILE_FULL':
       return {
         checklist: [
-          { label: 'เขียนข้อมูลแนะนำตัว (Bio)', done: !!liveData.bio },
-          { label: 'อัปโหลดรูปโปรไฟล์', done: !!liveData.profileImageUrl },
-          { label: 'อัปโหลดรูปหน้าปก', done: !!liveData.coverImageUrl },
+          { label: 'Add a profile bio', done: !!liveData.bio },
+          { label: 'Upload a profile image', done: !!liveData.profileImageUrl },
+          { label: 'Upload a cover image', done: !!liveData.coverImageUrl },
         ],
         isCompleted: !!(liveData.bio && liveData.profileImageUrl && liveData.coverImageUrl),
       };
     case 'POST_WORK':
       return {
-        checklist: [{ label: `อัปโหลดผลงานอย่างน้อย 1 ชิ้น (มีอยู่ ${liveData.worksCount} ชิ้น)`, done: liveData.worksCount > 0 }],
+        checklist: [{ label: `Upload at least 1 work item (${liveData.worksCount || 0} uploaded)`, done: liveData.worksCount > 0 }],
         isCompleted: liveData.worksCount > 0,
       };
     case 'DAILY_LOGIN':
       return {
-        checklist: [{ label: 'ล็อกอินเข้าสู่ระบบวันนี้', done: true }],
+        checklist: [{ label: 'Log in today', done: true }],
         isCompleted: true,
       };
     case 'PROOF_SUBMISSION': {
-      const sub = liveData.submissions?.find(s => s.questId === questId);
+      const sub = liveData.submissions?.find((s) => s.questId === questId);
+      const label = sub
+        ? sub.status === 'PENDING'
+          ? 'Proof is under review'
+          : sub.status === 'REJECTED'
+            ? 'Proof was rejected, submit again'
+            : 'Proof approved'
+        : 'Proof has not been submitted';
+
       return {
-        checklist: [{
-          label: sub ? (sub.status === 'PENDING' ? 'กำลังตรวจสอบหลักฐาน...' : sub.status === 'REJECTED' ? 'หลักฐานถูกปฏิเสธ (ลองส่งใหม่)' : 'หลักฐานผ่านการตรวจสอบ') : 'ยังไม่ได้ส่งหลักฐาน',
-          done: sub?.status === 'APPROVED'
-        }],
+        checklist: [{ label, done: sub?.status === 'APPROVED' }],
         isCompleted: sub?.status === 'APPROVED',
-        submissionStatus: sub?.status || null
+        submissionStatus: sub?.status || null,
       };
     }
-    default: // MANUAL
+    default:
       return { checklist: [], isCompleted: true };
   }
 }
 
-// ─── Proof Submission Modal ──────────────────────────────────────────────────
 function ProofModal({ isOpen, onClose, quest, onSuccess }) {
   const [proofUrl, setProofUrl] = useState('');
   const [proofImage, setProofImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (!isOpen) return null;
+  if (!isOpen || !quest) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!proofUrl.trim() && !proofImage) return setError('กรุณาระบุลิงก์หลักฐาน หรืออัปโหลดรูปภาพ');
-    
+    if (!proofUrl.trim() && !proofImage) {
+      setError('Add a proof URL or upload a screenshot.');
+      return;
+    }
+
     try {
       setLoading(true);
       const formData = new FormData();
@@ -94,42 +121,54 @@ function ProofModal({ isOpen, onClose, quest, onSuccess }) {
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการส่งหลักฐาน');
+      setError(err.response?.data?.message || 'Unable to submit proof.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)', padding: '20px' }}>
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ background: '#0a0a0a', width: '100%', maxWidth: '450px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', padding: '30px', position: 'relative' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#888', cursor: 'pointer' }}><FiX size={24} /></button>
-        <h2 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', fontWeight: '800' }}>ส่งหลักฐานการทำเควส</h2>
-        <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '20px' }}>{quest.title}</p>
-
-        {error && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px', borderRadius: '10px', fontSize: '0.85rem', marginBottom: '15px', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: '0.85rem', fontWeight: '700' }}>ลิงก์โพสต์ หรือ หลักฐาน (URL)</label>
-            <input type="url" value={proofUrl} onChange={e => setProofUrl(e.target.value)} placeholder="https://..." style={{ width: '100%', background: '#111', border: '1px solid #333', color: '#fff', padding: '12px', borderRadius: '12px', outline: 'none' }} />
+    <div className="quest-modal-layer">
+      <motion.form
+        onSubmit={handleSubmit}
+        className="quest-proof-modal"
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.94 }}
+      >
+        <button type="button" className="quest-modal-close" onClick={onClose} aria-label="Close proof modal">
+          <FiX size={22} />
+        </button>
+        <div className="quest-panel-heading">
+          <div className="quest-section-icon"><FiUploadCloud size={22} /></div>
+          <div>
+            <h2>Submit quest proof</h2>
+            <p>{quest.title}</p>
           </div>
+        </div>
 
-          <div style={{ marginBottom: '25px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: '0.85rem', fontWeight: '700' }}>หรือ อัปโหลดรูปภาพหลักฐาน (Screenshot)</label>
-            <input type="file" accept="image/*" onChange={e => setProofImage(e.target.files[0])} style={{ width: '100%', color: '#888', fontSize: '0.85rem' }} />
-          </div>
+        {error && <div className="quest-alert is-error"><FiAlertCircle size={17} /> {error}</div>}
 
-          <button type="submit" disabled={loading} style={{ width: '100%', background: 'var(--accent, #f59e0b)', color: '#000', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', transition: '0.2s' }}>
-            {loading ? 'กำลังส่ง...' : 'ยืนยันการส่งหลักฐาน'}
-          </button>
-        </form>
-      </motion.div>
+        <label className="quest-field">
+          <span>Proof URL</span>
+          <input type="url" value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} placeholder="https://..." />
+        </label>
+
+        <label className={`quest-upload ${proofImage ? 'has-file' : ''}`}>
+          <input type="file" accept="image/*" hidden onChange={(e) => setProofImage(e.target.files[0])} />
+          <FiImage size={28} />
+          <strong>{proofImage ? proofImage.name : 'Upload screenshot'}</strong>
+          <span>{proofImage ? 'Screenshot attached. Click to replace.' : 'Optional image proof for manual review.'}</span>
+        </label>
+
+        <button type="submit" className="quest-primary-btn" disabled={loading}>
+          {loading ? 'Submitting...' : 'Submit proof'}
+        </button>
+      </motion.form>
     </div>
   );
 }
 
-// ─── Admin Review Section ────────────────────────────────────────────────────
 function AdminReviewQueue({ onUpdate }) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +178,7 @@ function AdminReviewQueue({ onUpdate }) {
     try {
       setLoading(true);
       const data = await questSubmissionsAPI.getAll('PENDING');
-      setSubmissions(data);
+      setSubmissions(data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -158,65 +197,49 @@ function AdminReviewQueue({ onUpdate }) {
       await fetchSubmissions();
       onUpdate();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error reviewing submission');
+      hotToast.error(err.response?.data?.message || 'Error reviewing submission');
     } finally {
       setReviewingId(null);
     }
   };
 
-  if (loading && submissions.length === 0) return null;
-  if (!loading && submissions.length === 0) return null;
+  if ((loading && submissions.length === 0) || (!loading && submissions.length === 0)) return null;
 
   return (
-    <div style={{ marginBottom: '50px', background: 'rgba(245,158,11,0.03)', border: '1px dashed rgba(245,158,11,0.2)', borderRadius: '24px', padding: '25px' }}>
-      <h3 style={{ margin: '0 0 20px 0', fontSize: '1.1rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <FiAlertCircle /> Pending Proof Reviews ({submissions.length})
-      </h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {submissions.map(sub => {
+    <section className="quest-review-panel">
+      <div className="quest-section-title">
+        <div className="quest-kicker"><FiAlertCircle size={15} /><span>Admin Review</span></div>
+        <h2>Pending proof reviews</h2>
+        <span>{submissions.length} pending</span>
+      </div>
+      <div className="quest-review-list">
+        {submissions.map((sub) => {
           const isReviewing = reviewingId === sub._id;
           return (
-            <div key={sub._id} style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '16px', padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', opacity: isReviewing ? 0.6 : 1 }}>
-              <div style={{ flex: 1, minWidth: '250px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <img src={sub.userId?.profileImage?.url || 'https://via.placeholder.com/40'} style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
-                  <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{sub.userId?.username}</span>
-                  <span style={{ color: '#555' }}>→</span>
-                  <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#fff' }}>{sub.questId?.title}</span>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                  {sub.proofUrl && (
-                    <a href={sub.proofUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#ff5733', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', background: 'rgba(255,87,51,0.1)', padding: '5px 12px', borderRadius: '8px' }}>
-                      <FiLink size={12} /> View Link
-                    </a>
-                  )}
-                  {sub.proofImage && (
-                    <a href={sub.proofImage} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', background: 'rgba(245,158,11,0.1)', padding: '5px 12px', borderRadius: '8px' }}>
-                      <FiImage size={12} /> View Screenshot
-                    </a>
-                  )}
-                </div>
-
-                {sub.proofImage && (
-                  <div style={{ marginTop: '10px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #222', maxWidth: '150px' }}>
-                    <img src={sub.proofImage} style={{ width: '100%', height: 'auto', display: 'block' }} />
-                  </div>
-                )}
+            <article key={sub._id} className={`quest-review-row ${isReviewing ? 'is-loading' : ''}`}>
+              <div className="quest-review-avatar">
+                <img src={sub.userId?.profileImage?.url || 'https://via.placeholder.com/40'} alt={sub.userId?.username || 'Creator'} />
               </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button disabled={isReviewing} onClick={() => handleReview(sub._id, 'APPROVED')} style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b', padding: '8px 15px', borderRadius: '10px', cursor: isReviewing ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: '800' }}>{isReviewing ? '...' : 'Approve'}</button>
-                <button disabled={isReviewing} onClick={() => handleReview(sub._id, 'REJECTED')} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 15px', borderRadius: '10px', cursor: isReviewing ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: '800' }}>{isReviewing ? '...' : 'Reject'}</button>
+              <div className="quest-review-copy">
+                <strong>{sub.userId?.username || 'Unknown creator'}</strong>
+                <span>{sub.questId?.title || 'Quest submission'}</span>
+                <div className="quest-proof-links">
+                  {sub.proofUrl && <a href={sub.proofUrl} target="_blank" rel="noopener noreferrer"><FiLink size={13} /> View link</a>}
+                  {sub.proofImage && <a href={sub.proofImage} target="_blank" rel="noopener noreferrer"><FiImage size={13} /> View screenshot</a>}
+                </div>
               </div>
-            </div>
+              <div className="quest-review-actions">
+                <button type="button" onClick={() => handleReview(sub._id, 'APPROVED')} disabled={isReviewing}>Approve</button>
+                <button type="button" className="is-danger" onClick={() => handleReview(sub._id, 'REJECTED')} disabled={isReviewing}>Reject</button>
+              </div>
+            </article>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
 function Quests() {
   const { user, fetchProfile } = useContext(AuthContext);
   const userInfo = user || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
@@ -229,19 +252,16 @@ function Quests() {
   const [claimingId, setClaimingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editQuest, setEditQuest] = useState(null);
-  const [toast, setToast] = useState(null); // { type: 'success'|'error', msg }
-
+  const [toast, setToast] = useState(null);
   const [showProofModal, setShowProofModal] = useState(false);
   const [activeProofQuest, setActiveProofQuest] = useState(null);
 
-  // ── Fetch live user data (bio, profile images, worksCount) ──────────────────
   const fetchLiveData = useCallback(async () => {
     try {
       setLoadingLive(true);
       const res = await API.get('/users/me/live-quest-data');
       setLiveData(res.data);
     } catch {
-      // Fallback from context
       setLiveData({
         bio: userInfo?.bio || '',
         profileImageUrl: userInfo?.profileImage?.url || '',
@@ -256,12 +276,11 @@ function Quests() {
     }
   }, []);
 
-  // ── Fetch quests ─────────────────────────────────────────────────────────────
   const fetchQuests = useCallback(async () => {
     try {
       setLoadingQuests(true);
       const data = await questsAPI.getActive();
-      setQuests(data);
+      setQuests(data || []);
     } catch (err) {
       console.error('fetchQuests error:', err);
     } finally {
@@ -274,48 +293,53 @@ function Quests() {
     fetchLiveData();
   }, []);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
   const isQuestClaimed = (questId, taskType) => {
     const claimed = liveData.claimedQuests || [];
     if (!claimed.length) return false;
-    
-    // For daily login, check if claimed today
     if (taskType === 'DAILY_LOGIN') {
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      return claimed.some(q => q.questId === questId.toString() && new Date(q.claimedAt) >= todayStart);
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      return claimed.some((q) => q.questId === questId.toString() && new Date(q.claimedAt) >= todayStart);
     }
-
-    return claimed.some(q => q.questId === questId.toString());
+    return claimed.some((q) => q.questId === questId.toString());
   };
-
 
   const isQuestAccepted = (questId) => {
     const active = liveData.activeQuests || [];
-    if (!active.length) return false;
-    return active.some(q => q.questId === questId.toString());
+    return active.some((q) => q.questId === questId.toString());
   };
 
   const getQuestDeadline = (questId) => {
     const active = liveData.activeQuests || [];
-    const entry = active.find(q => q.questId === questId.toString());
+    const entry = active.find((q) => q.questId === questId.toString());
     return entry?.deadline;
   };
 
-  const showToast = (type, msg) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 4000);
+  const showToast = ({ type = 'success', title, text, rewards = [] }) => {
+    setToast({ type, title, text, rewards });
+    setTimeout(() => setToast(null), 3200);
   };
 
-  // ── Handlers ─────────────────────────────────────────────────────────────────
-  const handleAccept = async (questId) => {
-    setClaimingId(questId);
+  const refreshAll = () => {
+    fetchQuests();
+    fetchLiveData();
+  };
+
+  const handleAccept = async (quest) => {
+    setClaimingId(quest._id);
     try {
-      await questsAPI.accept(questId);
-      showToast('success', '✨ รับเควสสำเร็จ! อย่าลืมทำภายในเวลาที่กำหนดนะครับ');
+      await questsAPI.accept(quest._id);
+      play8BitSuccess();
+      showToast({
+        type: 'success',
+        title: 'Quest accepted',
+        text: quest.title,
+        rewards: [{ label: 'Now active', icon: <FiTarget size={14} /> }],
+      });
       await fetchLiveData();
+      if (fetchProfile) fetchProfile();
     } catch (err) {
-      showToast('error', err.response?.data?.message || 'เกิดข้อผิดพลาดในการรับเควส');
+      showToast({ type: 'error', title: 'Quest failed', text: err.response?.data?.message || 'Unable to accept quest.' });
     } finally {
       setClaimingId(null);
     }
@@ -323,35 +347,44 @@ function Quests() {
 
   const handleClaim = async (quest) => {
     if (quest.taskType === 'PROOF_SUBMISSION' && !quest.isCompleted) {
-      const sub = liveData.submissions?.find(s => s.questId === quest._id);
+      const sub = liveData.submissions?.find((s) => s.questId === quest._id);
       if (!sub || sub.status === 'REJECTED') {
         setActiveProofQuest(quest);
         setShowProofModal(true);
-        return;
       }
+      return;
     }
 
     setClaimingId(quest._id);
     try {
       await questsAPI.claim(quest._id);
       play8BitSuccess();
-      showToast('success', `🎉 รับรางวัล "${quest.title}" สำเร็จ!`);
-      await Promise.all([fetchLiveData(), fetchProfile?.()]);
+      showToast({
+        type: 'success',
+        title: 'Reward claimed',
+        text: quest.title,
+        rewards: [
+          ...(quest.coinReward > 0 ? [{ label: `+${quest.coinReward} Coins`, icon: <CoinIcon size={15} /> }] : []),
+          ...(quest.xpReward > 0 ? [{ label: `+${quest.xpReward} XP`, icon: <FiZap size={14} /> }] : []),
+        ],
+      });
+      await fetchLiveData();
+      if (fetchProfile) fetchProfile();
     } catch (err) {
-      showToast('error', err.response?.data?.message || 'เกิดข้อผิดพลาดในการรับรางวัล');
+      showToast({ type: 'error', title: 'Claim failed', text: err.response?.data?.message || 'Unable to claim reward.' });
     } finally {
       setClaimingId(null);
     }
   };
 
   const handleDelete = async (questId) => {
-    if (!await customConfirm('ต้องการลบเควสนี้หรือไม่?')) return;
+    if (!await customConfirm('Delete this quest?')) return;
     try {
       await questsAPI.delete(questId);
-      showToast('success', 'ลบเควสสำเร็จ');
       fetchQuests();
+      showToast({ type: 'success', title: 'Quest deleted', text: 'The quest was removed from the board.' });
     } catch (err) {
-      showToast('error', err.response?.data?.message || 'ลบเควสไม่สำเร็จ');
+      showToast({ type: 'error', title: 'Delete failed', text: err.response?.data?.message || 'Unable to delete quest.' });
     }
   };
 
@@ -366,393 +399,241 @@ function Quests() {
     setEditQuest(null);
   };
 
-  // ── Derived data ─────────────────────────────────────────────────────────────
-  const enrichedQuests = quests.map(q => {
-    const { checklist, isCompleted, submissionStatus } = computeCompletion(q.taskType, liveData, q._id);
-    const isClaimed = isQuestClaimed(q._id, q.taskType);
+  const handleAdminQueueUpdate = () => {
+    fetchLiveData();
+    fetchQuests();
+  };
 
+  const enrichedQuests = quests.map((q) => {
+    const completion = computeCompletion(q.taskType, liveData, q._id);
+    const isClaimed = isQuestClaimed(q._id, q.taskType);
     const isAccepted = isQuestAccepted(q._id);
     const deadline = getQuestDeadline(q._id);
-
-    return {
-      ...q,
-      checklist,
-      isCompleted,
-      submissionStatus,
-      isClaimed,
-      isAccepted,
-      deadline
-    };
+    return { ...q, ...completion, isClaimed, isAccepted, deadline };
   });
 
   const now = new Date();
-  const activeQuests = enrichedQuests.filter(q => !q.expiresAt || new Date(q.expiresAt) > now);
-  const coinQuests = activeQuests.filter(q => q.coinReward > 0);
-  const xpQuests = activeQuests.filter(q => q.xpReward > 0);
-
+  const activeQuests = enrichedQuests.filter((q) => !q.expiresAt || new Date(q.expiresAt) > now);
+  const coinQuests = activeQuests.filter((q) => q.coinReward > 0);
+  const xpQuests = activeQuests.filter((q) => q.xpReward > 0);
   const loading = loadingQuests || loadingLive;
+  const completedCount = activeQuests.filter((q) => q.isClaimed).length;
+  const readyCount = activeQuests.filter((q) => q.isCompleted && !q.isClaimed).length;
 
-  const handleAdminQueueUpdate = () => {
-    fetchQuests();
-    fetchLiveData();
-  };
-
-  // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ background: '#000', minHeight: '100vh', padding: 'clamp(60px,10vw,100px) clamp(20px,5vw,40px)', color: '#fff' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', gap: '20px', flexWrap: 'wrap' }}>
-          <div>
-            <h1 style={{ fontSize: 'clamp(2rem, 8vw, 2.8rem)', fontWeight: '900', letterSpacing: '-1.5px', margin: 0, lineHeight: 1.1 }}>
-              Daily <span style={{ color: 'var(--accent, #f59e0b)' }}>Quests</span>
-            </h1>
-            <p style={{ color: '#888', fontSize: 'clamp(0.85rem, 3vw, 0.95rem)', marginTop: '8px', margin: '8px 0 0 0', maxWidth: '400px' }}>
-              ทำภารกิจสะสมความสำเร็จเพื่อรับรางวัลพิเศษ
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button
-              onClick={() => { fetchQuests(); fetchLiveData(); }}
-              title="Refresh"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#aaa', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-            >
-              <FiRefreshCw size={16} />
-            </button>
-
-            {isAdmin && (
-              <button
-                onClick={() => { setEditQuest(null); setShowModal(true); }}
-                style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#000', border: 'none', padding: '12px 22px', borderRadius: '14px', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', boxShadow: '0 8px 20px rgba(245,158,11,0.25)', transition: 'transform 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                <FiPlus size={18} /> New Quest
-              </button>
-            )}
-          </div>
+    <main className="quests-page">
+      <header className="quests-hero">
+        <div className="quests-hero-copy">
+          <div className="quest-kicker"><FiTarget size={16} /><span>Quest Board</span></div>
+          <h1>Daily Quests</h1>
+          <p>Complete creator tasks, submit proof when needed, and claim coin or XP rewards from one focused quest board.</p>
         </div>
-
-        {/* Admin Review Queue */}
-        {isAdmin && <AdminReviewQueue onUpdate={handleAdminQueueUpdate} />}
-
-        {/* Toast */}
-        <AnimatePresence>
-          {toast && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-              style={{ marginBottom: '20px', padding: '14px 20px', borderRadius: '14px', background: toast.type === 'success' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${toast.type === 'success' ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)'}`, color: toast.type === 'success' ? '#f59e0b' : '#ef4444', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 10001, position: 'relative' }}
-            >
-              {toast.type === 'success' ? <FiCheckCircle size={18} /> : <FiAlertCircle size={18} />}
-              {toast.msg}
-            </motion.div>
+        <div className="quests-hero-actions">
+          <button type="button" className="quest-secondary-btn" onClick={refreshAll}><FiRefreshCw size={16} /> Refresh</button>
+          {isAdmin && (
+            <button type="button" className="quest-primary-btn" onClick={() => { setEditQuest(null); setShowModal(true); }}>
+              <FiPlus size={17} /> New Quest
+            </button>
           )}
-        </AnimatePresence>
+        </div>
+      </header>
 
-        {/* Loading */}
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: '#555' }}>
-            <div style={{ width: '40px', height: '40px', border: '3px solid #333', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 15px' }} />
-            <p style={{ fontWeight: '600' }}>กำลังโหลด...</p>
-          </div>
-        )}
+      <section className="quests-stats-grid" aria-label="Quest summary">
+        <div className="quest-stat-card"><span>Available</span><strong>{activeQuests.length}</strong></div>
+        <div className="quest-stat-card"><span>Ready to claim</span><strong>{readyCount}</strong></div>
+        <div className="quest-stat-card"><span>Completed</span><strong>{completedCount}</strong></div>
+      </section>
 
-        {/* Quest Sections */}
-        {!loading && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '35px' }}>
+      {isAdmin && <AdminReviewQueue onUpdate={handleAdminQueueUpdate} />}
 
-            {coinQuests.length > 0 && (
-              <QuestSection title="Coin Quests" emoji={<CoinIcon size={22} />} color="#f59e0b" borderColor="rgba(245,158,11,0.1)">
-                {coinQuests.map((q, i) => (
-                  <QuestCard key={q._id} quest={q} index={i} isAdmin={isAdmin}
-                    claimingId={claimingId} onClaim={handleClaim} onAccept={handleAccept}
-                    onEdit={handleEdit} onDelete={handleDelete} />
-                ))}
-              </QuestSection>
-            )}
-
-            {xpQuests.length > 0 && (
-              <QuestSection title="Experience Quests" emoji={<FiZap size={20} color="#ff5733" />} color="#ff5733" borderColor="rgba(255,87,51,0.1)">
-                {xpQuests.map((q, i) => (
-                  <QuestCard key={q._id} quest={q} index={i} isAdmin={isAdmin}
-                    claimingId={claimingId} onClaim={handleClaim} onAccept={handleAccept}
-                    onEdit={handleEdit} onDelete={handleDelete} />
-                ))}
-              </QuestSection>
-            )}
-
-            {coinQuests.length === 0 && xpQuests.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '100px 0', background: 'rgba(255,255,255,0.02)', borderRadius: '30px', border: '1px dashed rgba(255,255,255,0.08)' }}>
-                <FiTarget size={40} color="#333" style={{ marginBottom: '15px' }} />
-                <p style={{ color: '#555', fontWeight: '600' }}>ไม่มีเควสในขณะนี้</p>
-                {isAdmin && <p style={{ color: '#444', fontSize: '0.85rem', marginTop: '6px' }}>กดปุ่ม "New Quest" เพื่อสร้างเควสแรก</p>}
-              </div>
-            )}
-
-          </div>
-        )}
-      </div>
-
-      {/* Modals */}
-      <CreateQuestModal
-        isOpen={showModal}
-        onClose={() => { setShowModal(false); setEditQuest(null); }}
-        onSuccess={handleModalSuccess}
-        isAdmin={isAdmin}
-        editData={editQuest}
-      />
-
-      <ProofModal
-        isOpen={showProofModal}
-        onClose={() => { setShowProofModal(false); setActiveProofQuest(null); }}
-        quest={activeProofQuest}
-        onSuccess={() => { showToast('success', 'ส่งหลักฐานสำเร็จ! กรุณารอแอดมินตรวจสอบ'); fetchLiveData(); }}
-      />
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .quest-card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; }
-        .quest-card-hover:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.15) !important; background: rgba(255,255,255,0.02) !important; }
-        .quest-card-hover:hover .quest-card-icon { transform: scale(1.1) rotate(5deg); }
-        
-        @media (max-width: 640px) {
-          .quest-card-container {
-            padding: 20px !important;
-            gap: 16px !important;
-          }
-          .quest-card-icon {
-            width: 48px !important;
-            height: 48px !important;
-          }
-          .quest-card-content {
-            min-width: 100% !important;
-            order: 2;
-          }
-          .quest-card-right {
-            width: 100% !important;
-            flex-direction: row !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            order: 3;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-          }
-          .quest-card-rewards {
-            align-items: flex-start !important;
-            flex-direction: row !important;
-            gap: 12px !important;
-          }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ─── Section Wrapper ──────────────────────────────────────────────────────────
-function QuestSection({ title, emoji, color, borderColor, children, defaultOpen = true }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  return (
-    <div>
-      <div 
-        onClick={() => setIsOpen(!isOpen)}
-        style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', cursor: 'pointer', userSelect: 'none' }}
-      >
-        <span style={{ fontSize: '1.1rem' }}>{emoji}</span>
-        <h2 style={{ fontSize: '0.95rem', fontWeight: '800', margin: 0, color, textTransform: 'uppercase', letterSpacing: '2px' }}>{title}</h2>
-        <div style={{ flex: 1, height: '1px', background: borderColor }} />
-        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} style={{ color: '#888', display: 'flex', alignItems: 'center' }}>
-          <FiChevronDown size={20} />
-        </motion.div>
-      </div>
-      <AnimatePresence initial={false}>
-        {isOpen && (
+      <AnimatePresence>
+        {toast && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            style={{ overflow: 'hidden' }}
+            className={`quest-toast is-${toast.type}`}
+            initial={{ opacity: 0, x: 24, y: 10, scale: 0.96 }}
+            animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 24, y: 8, scale: 0.96 }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {children}
+            <div className="quest-toast-icon">
+              {toast.type === 'success' ? <FiCheckCircle size={18} /> : <FiAlertCircle size={18} />}
+            </div>
+            <div className="quest-toast-copy">
+              <strong>{toast.title}</strong>
+              {toast.text && <span>{toast.text}</span>}
+              {toast.rewards?.length > 0 && (
+                <div className="quest-toast-rewards">
+                  {toast.rewards.map((reward, index) => (
+                    <em key={`${reward.label}-${index}`}>{reward.icon}{reward.label}</em>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+
+      {loading ? (
+        <div className="quests-loader">
+          <PremiumLoader bare size="small" />
+          <p>Loading quests...</p>
+        </div>
+      ) : (
+        <div className="quests-stack">
+          {coinQuests.length > 0 && (
+            <QuestSection title="Coin Quests" icon={<CoinIcon size={20} />} tone="coin">
+              {coinQuests.map((quest, index) => (
+                <QuestCard key={quest._id} quest={quest} index={index} isAdmin={isAdmin} claimingId={claimingId} onClaim={handleClaim} onAccept={handleAccept} onEdit={handleEdit} onDelete={handleDelete} />
+              ))}
+            </QuestSection>
+          )}
+
+          {xpQuests.length > 0 && (
+            <QuestSection title="Experience Quests" icon={<FiZap size={18} />} tone="xp">
+              {xpQuests.map((quest, index) => (
+                <QuestCard key={quest._id} quest={quest} index={index} isAdmin={isAdmin} claimingId={claimingId} onClaim={handleClaim} onAccept={handleAccept} onEdit={handleEdit} onDelete={handleDelete} />
+              ))}
+            </QuestSection>
+          )}
+
+          {coinQuests.length === 0 && xpQuests.length === 0 && (
+            <div className="quests-empty">
+              <FiTarget size={34} />
+              <h2>No quests available</h2>
+              <p>{isAdmin ? 'Create the first quest to populate the board.' : 'Check back later for new creator quests.'}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <CreateQuestModal isOpen={showModal} onClose={() => { setShowModal(false); setEditQuest(null); }} onSuccess={handleModalSuccess} isAdmin={isAdmin} editData={editQuest} />
+
+      <AnimatePresence>
+        {showProofModal && (
+          <ProofModal
+            isOpen={showProofModal}
+            onClose={() => { setShowProofModal(false); setActiveProofQuest(null); }}
+            quest={activeProofQuest}
+            onSuccess={() => {
+              showToast({
+                type: 'success',
+                title: 'Proof submitted',
+                text: 'Waiting for admin review.',
+                rewards: [{ label: 'Pending review', icon: <FiClock size={14} /> }],
+              });
+              fetchLiveData();
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </main>
   );
 }
 
-// ─── Quest Card ───────────────────────────────────────────────────────────────
+function QuestSection({ title, icon, tone, children, defaultOpen = true }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <section className={`quest-section is-${tone}`}>
+      <button type="button" className="quest-section-header" onClick={() => setIsOpen(!isOpen)}>
+        <span className="quest-section-icon-small">{icon}</span>
+        <strong>{title}</strong>
+        <em>{React.Children.count(children)} quests</em>
+        <motion.span animate={{ rotate: isOpen ? 180 : 0 }}><FiChevronDown size={19} /></motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div className="quest-section-list" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
+
 function QuestCard({ quest, index, isAdmin, claimingId, onClaim, onAccept, onEdit, onDelete }) {
   const isClaiming = claimingId === quest._id;
-  const color = quest.coinReward > 0 ? '#f59e0b' : '#ff5733';
-  
-  // Expiry of the quest itself
+  const rewardTone = quest.coinReward > 0 ? 'coin' : 'xp';
   const expiryCountdown = useCountdown(quest.expiresAt);
-  
-  // Personal deadline after accepting
   const deadlineCountdown = useCountdown(quest.deadline);
-
   const isExpiringSoon = quest.expiresAt && (new Date(quest.expiresAt) - new Date()) < 3600000;
   const isDeadlineSoon = quest.deadline && (new Date(quest.deadline) - new Date()) < 3600000;
-
   const requiresAcceptance = quest.maxParticipants > 0 || quest.durationDays > 0;
-  
+  const slotsLeft = quest.maxParticipants > 0 ? quest.maxParticipants - quest.participantCount : null;
+
   let buttonText = 'Claim Reward';
   if (quest.isClaimed) buttonText = 'Claimed';
   else if (!quest.isAccepted && requiresAcceptance) buttonText = 'Accept Quest';
-  else if (quest.taskType === 'PROOF_SUBMISSION' && !quest.isCompleted) {
-    buttonText = quest.submissionStatus === 'PENDING' ? 'Pending Review' : 'Submit Proof';
-  }
-
-  const slotsLeft = quest.maxParticipants > 0 ? quest.maxParticipants - quest.participantCount : null;
+  else if (quest.taskType === 'PROOF_SUBMISSION' && !quest.isCompleted) buttonText = quest.submissionStatus === 'PENDING' ? 'Pending Review' : 'Submit Proof';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
+    <motion.article
+      className={`quest-card is-${rewardTone} ${quest.isClaimed ? 'is-claimed' : ''} ${quest.isAccepted ? 'is-accepted' : ''}`}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.07 }}
-      className="quest-card-hover quest-card-container"
-      style={{
-        background: quest.isClaimed ? 'rgba(255,255,255,0.02)' : (quest.isAccepted ? 'rgba(245,158,11,0.03)' : '#0a0a0a'),
-        border: `1px solid ${quest.isClaimed ? 'rgba(255,255,255,0.05)' : (quest.isAccepted ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.06)')}`,
-        borderRadius: '24px',
-        padding: '24px 30px',
-        display: 'flex',
-        gap: '24px',
-        alignItems: 'flex-start',
-        flexWrap: 'wrap',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
+      transition={{ delay: index * 0.035, duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Badges */}
-      <div style={{ position: 'absolute', top: 0, right: 0, display: 'flex' }}>
-        {quest.isAccepted && !quest.isClaimed && (
-          <div style={{ background: 'var(--accent, #f59e0b)', color: '#000', padding: '4px 16px', borderBottomLeftRadius: '12px', fontSize: '0.65rem', fontWeight: '900', letterSpacing: '1px' }}>
-            ACCEPTED
-          </div>
-        )}
-        {quest.isClaimed && (
-          <div style={{ background: '#111', color: '#888', borderLeft: '1px solid #333', borderBottom: '1px solid #333', padding: '4px 16px', borderBottomLeftRadius: '12px', fontSize: '0.65rem', fontWeight: '900', letterSpacing: '1px' }}>
-            CLAIMED
-          </div>
-        )}
-      </div>
+      <div className="quest-card-icon"><FiGift size={22} /></div>
 
-      {/* Icon */}
-      <div className="quest-card-icon" style={{ width: '56px', height: '56px', borderRadius: '18px', background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${color}30`, flexShrink: 0, transition: '0.3s' }}>
-        <FiGift size={24} color={color} />
-      </div>
-
-      {/* Content */}
-      <div className="quest-card-content" style={{ flex: 1, minWidth: '220px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: '800', margin: 0, color: '#fff' }}>{quest.title}</h3>
-          {quest.requiredRank && quest.requiredRank !== 'All' && (
-            <span style={{ background: 'rgba(255,255,255,0.05)', color: '#888', padding: '2px 8px', borderRadius: '6px', fontSize: '0.65rem' }}>
-              {quest.requiredRank}+
-            </span>
-          )}
+      <div className="quest-card-copy">
+        <div className="quest-card-title-row">
+          <h3>{quest.title}</h3>
+          {quest.requiredRank && quest.requiredRank !== 'All' && <span>{quest.requiredRank}+</span>}
+          {quest.isAccepted && !quest.isClaimed && <span className="is-active">Accepted</span>}
+          {quest.isClaimed && <span>Claimed</span>}
         </div>
 
-        {/* Status Pills (Slots, Expiry, Deadline) */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
-          {slotsLeft !== null && !quest.isClaimed && !quest.isAccepted && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: slotsLeft <= 3 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${slotsLeft <= 3 ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.2)'}`, borderRadius: '8px', padding: '3px 10px', fontSize: '0.7rem', color: slotsLeft <= 3 ? '#ef4444' : '#f59e0b', fontWeight: '800' }}>
-               เหลือ {slotsLeft} ที่นั่ง
-            </div>
-          )}
-
-          {expiryCountdown && expiryCountdown !== 'expired' && !quest.isAccepted && !quest.isClaimed && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: isExpiringSoon ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.04)', border: `1px solid ${isExpiringSoon ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '8px', padding: '3px 10px', fontSize: '0.7rem', color: isExpiringSoon ? '#ef4444' : '#888', fontWeight: '700' }}>
-              <FiClock size={11} /> หมดอายุใน {expiryCountdown}
-            </div>
-          )}
-
-          {deadlineCountdown && deadlineCountdown !== 'expired' && quest.isAccepted && !quest.isClaimed && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: isDeadlineSoon ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.15)', border: `1px solid ${isDeadlineSoon ? '#ef4444' : '#f59e0b'}`, borderRadius: '8px', padding: '3px 10px', fontSize: '0.75rem', color: isDeadlineSoon ? '#ef4444' : '#f59e0b', fontWeight: '900' }}>
-              <FiClock size={11} /> ส่งภายใน {deadlineCountdown}
-            </div>
-          )}
+        <div className="quest-card-meta">
+          {slotsLeft !== null && !quest.isClaimed && !quest.isAccepted && <span className={slotsLeft <= 3 ? 'is-danger' : ''}>{slotsLeft} slots left</span>}
+          {expiryCountdown && expiryCountdown !== 'expired' && !quest.isAccepted && !quest.isClaimed && <span className={isExpiringSoon ? 'is-danger' : ''}><FiClock size={12} /> Expires in {expiryCountdown}</span>}
+          {deadlineCountdown && deadlineCountdown !== 'expired' && quest.isAccepted && !quest.isClaimed && <span className={isDeadlineSoon ? 'is-danger' : 'is-warning'}><FiClock size={12} /> Due in {deadlineCountdown}</span>}
         </div>
 
-        <p style={{ color: '#777', fontSize: '0.875rem', margin: '0 0 12px 0', lineHeight: 1.55 }}>{quest.description}</p>
+        {quest.description && <p>{quest.description}</p>}
 
-        {/* Checklist */}
         {(quest.isAccepted || !requiresAcceptance) && quest.checklist?.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {quest.checklist.map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: item.done ? '#f59e0b' : '#555' }}>
-                <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `1.5px solid ${item.done ? '#f59e0b' : '#333'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', background: item.done ? 'rgba(245,158,11,0.15)' : 'transparent', flexShrink: 0 }}>
-                  {item.done && <FiCheckCircle size={10} color="#f59e0b" />}
-                </div>
-                <span style={{ fontWeight: item.done ? '700' : '400' }}>{item.label}</span>
+          <div className="quest-checklist">
+            {quest.checklist.map((item, idx) => (
+              <div key={`${quest._id}-${idx}`} className={item.done ? 'is-done' : ''}>
+                <i>{item.done && <FiCheck size={11} />}</i>
+                <span>{item.label}</span>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Right Column: reward + action */}
-      <div className="quest-card-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '15px', minWidth: '130px' }}>
-        {/* Rewards */}
-        <div className="quest-card-rewards" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-          {quest.coinReward > 0 && (
-            <div style={{ color: '#f59e0b', fontWeight: '900', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '6px' }}>+{quest.coinReward} <CoinIcon size={20} /></div>
-          )}
-          {quest.xpReward > 0 && (
-            <div style={{ color: '#ff5733', fontWeight: '900', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>+{quest.xpReward} <FiZap size={16} /></div>
-          )}
+      <aside className="quest-card-side">
+        <div className="quest-rewards">
+          {quest.coinReward > 0 && <strong className="is-coin">+{quest.coinReward} <CoinIcon size={20} /></strong>}
+          {quest.xpReward > 0 && <strong className="is-xp">+{quest.xpReward} <FiZap size={16} /></strong>}
         </div>
 
-        {/* Action */}
         {isAdmin ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
-            <span style={{ color: '#555', fontSize: '0.7rem', fontWeight: '700', textAlign: 'center', padding: '6px', border: '1px solid #222', borderRadius: '8px' }}>Admin View</span>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button onClick={() => onEdit(quest)} title="Edit" style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#aaa', padding: '8px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <FiEdit size={13} />
-              </button>
-              <button onClick={() => onDelete(quest._id)} title="Delete" style={{ flex: 1, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '8px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <FiTrash2 size={13} />
-              </button>
+          <div className="quest-admin-actions">
+            <span>Admin view</span>
+            <div>
+              <button type="button" onClick={() => onEdit(quest)} title="Edit"><FiEdit size={14} /></button>
+              <button type="button" onClick={() => onDelete(quest._id)} title="Delete" className="is-danger"><FiTrash2 size={14} /></button>
             </div>
           </div>
         ) : quest.isClaimed ? (
-          <button disabled style={{ background: '#111', border: '1px solid #333', color: '#666', padding: '10px 18px', borderRadius: '10px', fontWeight: '800', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.7 }}>
-            <FiCheckCircle size={14} /> Claimed
-          </button>
+          <button type="button" className="quest-action-btn is-disabled" disabled><FiCheckCircle size={14} /> Claimed</button>
         ) : (!quest.isAccepted && requiresAcceptance) ? (
-           <button
-            onClick={() => onAccept(quest._id)}
-            disabled={isClaiming || (slotsLeft !== null && slotsLeft <= 0)}
-            style={{ background: 'var(--accent, #f59e0b)', border: 'none', color: '#000', padding: '10px 18px', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '0.85rem', boxShadow: `0 4px 15px rgba(245,158,11,0.2)`, transition: 'all 0.2s', opacity: (isClaiming || (slotsLeft !== null && slotsLeft <= 0)) ? 0.7 : 1 }}
-          >
-            {isClaiming ? 'รอสักครู่...' : 'Accept Quest'}
+          <button type="button" className="quest-action-btn" onClick={() => onAccept(quest)} disabled={isClaiming || (slotsLeft !== null && slotsLeft <= 0)}>
+            {isClaiming ? 'Please wait...' : 'Accept Quest'}
           </button>
         ) : (quest.isCompleted || (quest.taskType === 'PROOF_SUBMISSION' && quest.submissionStatus !== 'PENDING')) ? (
-          <button
-            onClick={() => onClaim(quest)}
-            disabled={isClaiming || (quest.taskType === 'PROOF_SUBMISSION' && quest.submissionStatus === 'PENDING')}
-            style={{ background: color, border: 'none', color: '#fff', padding: '10px 18px', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '0.85rem', boxShadow: `0 4px 15px ${color}40`, transition: 'all 0.2s', opacity: (isClaiming || quest.submissionStatus === 'PENDING') ? 0.7 : 1 }}
-          >
-            {isClaiming ? 'รอสักครู่...' : buttonText}
+          <button type="button" className="quest-action-btn" onClick={() => onClaim(quest)} disabled={isClaiming || quest.submissionStatus === 'PENDING'}>
+            {isClaiming ? 'Please wait...' : buttonText}
           </button>
         ) : quest.submissionStatus === 'PENDING' ? (
-          <button disabled style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #222', color: '#666', padding: '10px 18px', borderRadius: '10px', fontWeight: '700', fontSize: '0.8rem', cursor: 'not-allowed' }}>
-            Pending Review
-          </button>
+          <button type="button" className="quest-action-btn is-disabled" disabled>Pending Review</button>
         ) : (
-          <button disabled style={{ background: 'transparent', border: '1px solid #222', color: '#444', padding: '10px 18px', borderRadius: '10px', fontWeight: '700', fontSize: '0.8rem', cursor: 'not-allowed' }}>
-            Incomplete
-          </button>
+          <button type="button" className="quest-action-btn is-disabled" disabled>Incomplete</button>
         )}
-      </div>
-    </motion.div>
+      </aside>
+    </motion.article>
   );
 }
 

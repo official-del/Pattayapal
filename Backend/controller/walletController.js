@@ -10,6 +10,16 @@ const EASYSLIP_API_KEY = () => process.env.EASYSLIP_API_KEY?.trim();
 
 import Notification from '../models/Notification.js';
 
+const isDuplicateKeyError = (err) => err?.code === 11000 || err?.name === 'MongoServerError' && err?.code === 11000;
+
+const toPositiveNumber = (value, max) => {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0 || amount > max) return null;
+  return amount;
+};
+
+const getRequesterId = (req) => req.user?._id || req.user?.id;
+
 // ──────────────────────────────────────────────
 // ADMIN: Adjust User Balance (Manual Injection)
 // ──────────────────────────────────────────────
@@ -173,8 +183,8 @@ export const adminAdjustGas = async (req, res) => {
 // ──────────────────────────────────────────────
 export const refillGas = async (req, res) => {
   try {
-    const { percent } = req.body; // 25, 50, 75, 100
-    const userId = req.user._id || req.user.id;
+    const percent = Number(req.body.percent); // 25, 50, 75, 100
+    const userId = getRequesterId(req);
 
     if (![25, 50, 75, 100].includes(percent)) {
       return res.status(400).json({ message: 'ตัวเลือกการเติม Gas ไม่ถูกต้อง' });
@@ -194,11 +204,20 @@ export const refillGas = async (req, res) => {
 
     // ⚡ ATOMIC: use findOneAndUpdate to prevent race condition
     const updatedUser = await User.findOneAndUpdate(
-      { _id: userId, coinBalance: { $gte: cost } },
-      { 
-        $inc: { coinBalance: -cost },
-        $set: { gas: Math.min(100, ((await User.findById(userId)).gas || 0) + percent) }
+      {
+        _id: userId,
+        coinBalance: { $gte: cost },
+        $expr: { $lt: [{ $ifNull: ['$gas', 0] }, 100] }
       },
+      [
+        {
+          $set: {
+            coinBalance: { $subtract: [{ $ifNull: ['$coinBalance', 0] }, cost] },
+            gas: { $min: [100, { $add: [{ $ifNull: ['$gas', 0] }, percent] }] },
+            lastGasRefill: new Date()
+          }
+        }
+      ],
       { new: true }
     );
 
@@ -209,12 +228,22 @@ export const refillGas = async (req, res) => {
     // Create Transaction for Coin deduction
     const tx = new Transaction({
       user: userId,
-      type: 'WITHDRAW',
+      type: 'GAS_REFILL',
       amount: cost,
       status: 'completed',
       reference: `REFILL_GAS: เติมพลังงาน Gas +${percent}%`,
+      metadata: { percent, coinCost: cost },
     });
     await tx.save();
+
+    await AuditLog.create({
+      userId,
+      action: 'GAS_REFILL',
+      severity: 'low',
+      details: { percent, coinCost: cost, gasAfter: updatedUser.gas },
+      ip: req.ip,
+      userAgent: req.headers['user-agent']
+    });
 
     // Notify user via Socket
     const io = req.app.get('io');
@@ -247,11 +276,12 @@ export const refillGas = async (req, res) => {
 export const submitManualTopup = async (req, res) => {
   try {
     const { amount, targetType = 'coins' } = req.body;
-    const userId = req.user._id || req.user.id;
+    const userId = getRequesterId(req);
+    const safeTargetType = targetType === 'gas' ? 'gas' : 'coins';
 
     // Validate amount
-    const numAmount = Number(amount);
-    if (!amount || isNaN(numAmount) || numAmount <= 0 || numAmount > 1000000) {
+    const numAmount = toPositiveNumber(amount, 1000000);
+    if (!numAmount) {
       return res.status(400).json({ message: 'จำนวนเงินไม่ถูกต้อง (1 - 1,000,000 บาท)' });
     }
     if (!req.file) {
@@ -267,8 +297,13 @@ export const submitManualTopup = async (req, res) => {
       amount: numAmount,
       status: 'pending', // Waiting for Admin to check
       slipUrl: slipUrl,
-      targetType: targetType,
-      reference: targetType === 'gas' ? 'MANUAL_GAS_DEPOSIT' : 'MANUAL_DEPOSIT',
+      targetType: safeTargetType,
+      reference: safeTargetType === 'gas' ? 'MANUAL_GAS_DEPOSIT' : 'MANUAL_DEPOSIT',
+      metadata: {
+        sourceAmount: numAmount,
+        sourceCurrency: 'THB',
+        rewardAmount: numAmount * 10,
+      },
     });
     await tx.save();
 
@@ -301,17 +336,20 @@ export const getWalletTransactions = async (req, res) => {
 export const requestWithdrawal = async (req, res) => {
   try {
     const { amount, bankName, accountName, accountNumber } = req.body;
-    const userId = req.user._id || req.user.id;
-    const numAmount = Number(amount);
+    const userId = getRequesterId(req);
+    const numAmount = toPositiveNumber(amount, 10000000);
+    const normalizedBankName = String(bankName || '').trim();
+    const normalizedAccountName = String(accountName || '').trim();
+    const normalizedAccountNumber = String(accountNumber || '').replace(/\s+/g, '');
 
-    if (!numAmount || numAmount <= 0) {
+    if (!numAmount) {
       return res.status(400).json({
         status: 'ANOMALY',
         code: 'INVALID_AMOUNT',
         message: 'กรุณาระบุจำนวนเหรียญที่ต้องการถอนที่ถูกต้อง'
       });
     }
-    if (!bankName || !accountName || !accountNumber) {
+    if (!normalizedBankName || !normalizedAccountName || !normalizedAccountNumber) {
       return res.status(400).json({
         status: 'ANOMALY',
         code: 'MISSING_BANK_INFO',
@@ -323,7 +361,11 @@ export const requestWithdrawal = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
 
     // 🔒 [SECURITY] Check for existing pending withdrawal to prevent spamming
-    const existingPending = await Transaction.findOne({ user: userId, type: 'WITHDRAW', status: 'pending' });
+    const existingPending = await Transaction.findOne({
+      user: userId,
+      type: 'WITHDRAW',
+      status: { $in: ['pending', 'processing'] }
+    });
     if (existingPending) {
       return res.status(400).json({
         status: 'ANOMALY',
@@ -341,7 +383,11 @@ export const requestWithdrawal = async (req, res) => {
     }
 
     // Save bank account info for future use
-    user.bankAccount = { bankName, accountName, accountNumber };
+    user.bankAccount = {
+      bankName: normalizedBankName,
+      accountName: normalizedAccountName,
+      accountNumber: normalizedAccountNumber
+    };
     await user.save();
 
     const thbAmount = numAmount / 10; // 10 Coins = 1 THB (1 Coin = 0.1 THB)
@@ -350,9 +396,24 @@ export const requestWithdrawal = async (req, res) => {
       type: 'WITHDRAW',
       amount: numAmount,
       status: 'pending',
-      reference: `BANK:${bankName}|${accountNumber}|${accountName}|THB:${thbAmount}`,
+      reference: `BANK:${normalizedBankName}|${normalizedAccountNumber}|${normalizedAccountName}|THB:${thbAmount}`,
+      metadata: {
+        bankName: normalizedBankName,
+        accountName: normalizedAccountName,
+        accountNumber: normalizedAccountNumber,
+        thbAmount
+      }
     });
     await tx.save();
+
+    await AuditLog.create({
+      userId,
+      action: 'WITHDRAWAL_REQUEST',
+      severity: 'low',
+      details: { txId: tx._id, amount: numAmount, thbAmount },
+      ip: req.ip,
+      userAgent: req.headers['user-agent']
+    });
 
     return res.status(201).json({
       message: `ส่งคำขอถอนเงิน ${numAmount} Coins (฿${thbAmount}) สำเร็จแล้ว กรุณารอการอนุมัติจากผู้ดูแลระบบ`,
@@ -360,6 +421,13 @@ export const requestWithdrawal = async (req, res) => {
     });
   } catch (err) {
     console.error('Withdrawal request error:', err);
+    if (isDuplicateKeyError(err)) {
+      return res.status(409).json({
+        status: 'ANOMALY',
+        code: 'PENDING_EXISTS',
+        message: 'A pending withdrawal already exists for this user'
+      });
+    }
     return res.status(500).json({ message: err.message });
   }
 };
@@ -390,19 +458,24 @@ export const updateWithdrawalStatus = async (req, res) => {
       return res.status(400).json({ message: 'สถานะไม่ถูกต้อง ใช้ completed หรือ failed' });
     }
 
-    const tx = await Transaction.findById(id).populate('user');
+    const tx = await Transaction.findOneAndUpdate(
+      { _id: id, type: 'WITHDRAW', status: 'pending' },
+      {
+        $set: {
+          status: 'processing',
+          reviewedBy: getRequesterId(req),
+          reviewedAt: new Date()
+        }
+      },
+      { new: true }
+    ).populate('user');
     if (!tx) return res.status(404).json({ message: 'ไม่พบรายการนี้' });
-    if (tx.status !== 'pending') {
+    if (tx.status !== 'processing') {
       return res.status(400).json({ message: 'รายการนี้ถูกจัดการไปแล้ว' });
     }
 
-    // Start Session for Atomicity
-    const mongoose = (await import('mongoose')).default;
+    // The processing status above is the concurrency lock for this approval.
     let session = null;
-    try {
-      session = await mongoose.startSession();
-      session.startTransaction();
-    } catch (sErr) { session = null; }
 
     try {
       // Only deduct coins when actually approving
@@ -428,6 +501,8 @@ export const updateWithdrawalStatus = async (req, res) => {
       }
 
       tx.status = status;
+      tx.reviewedBy = getRequesterId(req);
+      tx.reviewedAt = new Date();
       await tx.save({ session });
 
       if (session) {
@@ -450,6 +525,7 @@ export const updateWithdrawalStatus = async (req, res) => {
       }
 
       await AuditLog.create({
+        userId: getRequesterId(req),
         action: 'WITHDRAWAL_APPROVAL',
         severity: 'low',
         details: { txId: tx._id, status, amount: tx.amount },
@@ -466,6 +542,21 @@ export const updateWithdrawalStatus = async (req, res) => {
       if (session) {
         await session.abortTransaction();
         session.endSession();
+      }
+      if (tx?._id) {
+        await Transaction.findByIdAndUpdate(tx._id, {
+          $set: {
+            status: 'failed',
+            reviewedBy: getRequesterId(req),
+            reviewedAt: new Date(),
+            metadata: {
+              ...(tx.metadata || {}),
+              failureReason: dbErr.message
+            }
+          }
+        }).catch((rollbackErr) => {
+          console.error('Withdrawal rollback status update failed:', rollbackErr);
+        });
       }
       return res.status(400).json({
         message: dbErr.message === 'INSUFFICIENT_BALANCE_DURING_APPROVAL'
@@ -506,24 +597,53 @@ export const updateTopupStatus = async (req, res) => {
       return res.status(400).json({ message: 'สถานะไม่ถูกต้อง' });
     }
 
-    const tx = await Transaction.findById(id).populate('user');
+    const tx = await Transaction.findOneAndUpdate(
+      { _id: id, type: 'TOPUP', status: 'pending' },
+      {
+        $set: {
+          status: 'processing',
+          reviewedBy: getRequesterId(req),
+          reviewedAt: new Date()
+        }
+      },
+      { new: true }
+    ).populate('user');
     if (!tx) return res.status(404).json({ message: 'ไม่พบรายการนี้' });
-    if (tx.status !== 'pending') {
+    if (tx.status !== 'processing') {
       return res.status(400).json({ message: 'รายการนี้ถูกจัดการไปแล้ว' });
     }
 
     if (status === 'completed') {
-      const user = await User.findById(tx.user._id);
+      const rewardAmount = Number(tx.metadata?.rewardAmount || tx.amount * 10);
+      const user = tx.targetType === 'gas'
+        ? await User.findOneAndUpdate(
+          { _id: tx.user._id },
+          [
+            {
+              $set: {
+                gas: { $min: [100, { $add: [{ $ifNull: ['$gas', 0] }, rewardAmount] }] }
+              }
+            }
+          ],
+          { new: true }
+        )
+        : await User.findByIdAndUpdate(
+          tx.user._id,
+          { $inc: { coinBalance: rewardAmount } },
+          { new: true }
+        );
+      if (!user) {
+        tx.status = 'failed';
+        tx.reviewedBy = getRequesterId(req);
+        tx.reviewedAt = new Date();
+        tx.metadata = {
+          ...(tx.metadata || {}),
+          failureReason: 'TOPUP_USER_NOT_FOUND'
+        };
+        await tx.save();
+        return res.status(404).json({ message: 'Topup user not found' });
+      }
       if (user) {
-        if (tx.targetType === 'gas') {
-          // Manual Gas Topup (Amount here is probably percentage if they entered it, but usually it's cost/10)
-          // Let's assume for manual gas, amount is the percentage to add
-          user.gas = Math.min(100, (user.gas || 0) + tx.amount);
-        } else {
-          user.coinBalance = (user.coinBalance || 0) + tx.amount;
-        }
-        await user.save();
-
         // Create Notification
         await Notification.create({
           recipient: user._id,
@@ -568,10 +688,13 @@ export const updateTopupStatus = async (req, res) => {
     }
 
     tx.status = status;
+    tx.reviewedBy = getRequesterId(req);
+    tx.reviewedAt = new Date();
     await tx.save();
 
     await AuditLog.create({
-      action: 'BALANCE_ADJUSTMENT',
+      userId: getRequesterId(req),
+      action: 'TOPUP_APPROVAL',
       severity: 'low',
       details: { txId: tx._id, type: 'TOPUP_MANUAL', status, targetUser: tx.user?.email },
       ip: req.ip

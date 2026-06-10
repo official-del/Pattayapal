@@ -5,38 +5,58 @@ import { jobsAPI } from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
 import { getFullUrl } from '../../utils/mediaUtils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBriefcase, FiCheckCircle, FiXCircle, FiTruck, FiMail, FiSend, FiCalendar, FiShield, FiActivity, FiZap, FiLayers, FiMapPin } from 'react-icons/fi';
-import { CoinIcon, CoinBadge } from '../../components/CoinIcon';
+import {
+  FiActivity,
+  FiBriefcase,
+  FiCalendar,
+  FiCheckCircle,
+  FiMapPin,
+  FiShield,
+  FiZap,
+} from 'react-icons/fi';
+import { CoinBadge } from '../../components/CoinIcon';
+import PremiumLoader from '../../components/PremiumLoader';
 import '../../css/ManageJobs.css';
 
 const PROGRESS_STAGES = ['AWAITING_START', 'IN_PROGRESS', 'SUBMITTED', 'REVISING', 'COMPLETED'];
 const STAGE_LABELS = {
-  'AWAITING_START': 'รอเริ่มงาน',
-  'IN_PROGRESS': 'กำลังดำเนินการ',
-  'SUBMITTED': 'ส่งมอบงาน',
-  'REVISING': 'แก้ไขงาน',
-  'COMPLETED': 'เสร็จสิ้น'
+  AWAITING_START: 'Awaiting start',
+  IN_PROGRESS: 'In progress',
+  SUBMITTED: 'Submitted',
+  REVISING: 'Revising',
+  COMPLETED: 'Completed',
 };
 
-const ProgressChecklist = ({ currentStage, onUpdate, isInteractive }) => {
-  const currentIndex = PROGRESS_STAGES.indexOf(currentStage || 'AWAITING_START');
+const STATUS_META = {
+  pending: { tone: 'info', text: 'Pending' },
+  accepted: { tone: 'success', text: 'In process' },
+  completed: { tone: 'complete', text: 'Completed' },
+  cancelled: { tone: 'danger', text: 'Cancelled' },
+};
+
+function ProgressChecklist({ currentStage, onUpdate, isInteractive }) {
+  const currentIndex = Math.max(0, PROGRESS_STAGES.indexOf(currentStage || 'AWAITING_START'));
+  const percent = Math.round((currentIndex / (PROGRESS_STAGES.length - 1)) * 100);
 
   return (
     <div className="milestones-card">
-      <div className="milestones-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <FiActivity color="var(--mj-accent)" size={14} />
-          <span style={{ color: 'var(--mj-accent)', fontWeight: '800', letterSpacing: '4px', fontSize: '0.65rem' }}>ไทม์ไลน์ / MILESTONES</span>
+      <div className="milestones-header">
+        <div className="milestones-kicker">
+          <FiActivity size={14} />
+          <span>Timeline / Milestones</span>
         </div>
-        <span style={{ color: '#22c55e', fontSize: '0.75rem', fontWeight: '800', background: 'rgba(34, 197, 94, 0.05)', padding: '6px 15px', borderRadius: '40px', border: '1px solid rgba(34,197,94,0.1)' }}>
-          {Math.round((currentIndex / 4) * 100)}% COMPLETE
-        </span>
+        <span className="milestones-percent">{percent}% complete</span>
       </div>
 
-      <div className="job-progress-wrapper" style={{ overflowX: 'auto', paddingBottom: '10px' }}>
-        <div className="job-progress-container" style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', padding: '0 10px', minWidth: '450px' }}>
-          <div className="progress-line" style={{ position: 'absolute', top: '15px', left: '40px', right: '40px', height: '2px', background: 'rgba(255,255,255,0.03)' }}>
-            <motion.div initial={{ width: 0 }} animate={{ width: `${(currentIndex / 4) * 100}%` }} transition={{ duration: 1 }} style={{ height: '100%', background: 'var(--mj-accent)', boxShadow: '0 0 10px var(--mj-accent)' }}></motion.div>
+      <div className="job-progress-wrapper">
+        <div className="job-progress-container">
+          <div className="progress-line">
+            <motion.div
+              className="progress-line-fill"
+              initial={{ width: 0 }}
+              animate={{ width: `${percent}%` }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            />
           </div>
 
           {PROGRESS_STAGES.map((stage, idx) => {
@@ -44,39 +64,36 @@ const ProgressChecklist = ({ currentStage, onUpdate, isInteractive }) => {
             const isActive = idx === currentIndex;
 
             return (
-              <div
+              <button
                 key={stage}
+                type="button"
+                className={`progress-step ${isCompleted ? 'is-completed' : ''} ${isActive ? 'is-active' : ''}`}
                 onClick={() => isInteractive && onUpdate(stage)}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: isInteractive ? 'pointer' : 'default', zIndex: 2, width: '70px' }}
+                disabled={!isInteractive}
               >
-                <motion.div
-                  whileHover={isInteractive ? { scale: 1.1 } : {}}
-                  style={{
-                    width: '32px', height: '32px', borderRadius: '50%',
-                    background: isCompleted ? 'var(--mj-accent)' : '#000',
-                    border: `2px solid ${isActive || isCompleted ? 'var(--mj-accent)' : 'rgba(255,255,255,0.05)'}`,
-                    color: isCompleted ? '#fff' : (isActive ? 'var(--mj-accent)' : '#222'),
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.3s'
-                  }}
-                >
-                  {isCompleted ? <FiCheckCircle size={16} /> : (isActive ? <div style={{ width: '8px', height: '8px', background: 'var(--mj-accent)', borderRadius: '50%' }}></div> : <div style={{ width: '6px', height: '6px', background: '#222', borderRadius: '50%' }}></div>)}
-                </motion.div>
-                <span style={{ color: isActive ? '#fff' : (isCompleted ? '#666' : '#222'), fontWeight: isActive ? '800' : '500', fontSize: '0.6rem', textAlign: 'center', lineHeight: '1.4' }}>
-                  {STAGE_LABELS[stage] || stage}
-                </span>
-              </div>
+                <motion.span whileHover={isInteractive ? { scale: 1.08 } : {}} className="progress-dot">
+                  {isCompleted ? <FiCheckCircle size={15} /> : <span />}
+                </motion.span>
+                <span className="progress-label">{STAGE_LABELS[stage] || stage}</span>
+              </button>
             );
           })}
         </div>
       </div>
     </div>
   );
-};
+}
+
+function StatusBadge({ status }) {
+  const meta = STATUS_META[status] || { tone: 'neutral', text: status?.replace(/_/g, ' ') || 'Unknown' };
+
+  return <span className={`mj-status-badge is-${meta.tone}`}>{meta.text}</span>;
+}
 
 function ManageJobs() {
   const { user, token: contextToken } = useContext(AuthContext);
   const currentToken = contextToken || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
-  const userInfo = user || JSON.parse(window.safeStorage.getItem('userInfo'));
+  const userInfo = user || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
   const isGeneral = userInfo?.profession === 'General';
 
   const [sentJobs, setSentJobs] = useState([]);
@@ -93,16 +110,17 @@ function ManageJobs() {
       setLoading(false);
       return;
     }
+
     try {
       setLoading(true);
       const [sent, received] = await Promise.all([
         jobsAPI.getMySentJobs(currentToken),
-        jobsAPI.getMyReceivedJobs(currentToken)
+        jobsAPI.getMyReceivedJobs(currentToken),
       ]);
-      setSentJobs(sent);
-      setReceivedJobs(received);
+      setSentJobs(sent || []);
+      setReceivedJobs(received || []);
     } catch (err) {
-      console.error("Fetch jobs error:", err);
+      console.error('Fetch jobs error:', err);
     } finally {
       setLoading(false);
     }
@@ -117,262 +135,234 @@ function ManageJobs() {
       await jobsAPI.updateStatus(jobId, newStatus, currentToken);
       fetchJobs();
     } catch (err) {
-      console.error("Status update error:", err);
+      console.error('Status update error:', err);
       const errMsg = err.response?.data?.message || 'Update failed';
-      toast.error(`ไม่สามารถอัปเดตสถานะได้: ${errMsg}`);
+      toast.error(`Unable to update job status: ${errMsg}`);
     }
   };
 
   const handleUpdateProgress = async (jobId, newProgress) => {
     try {
-      if (!await customConfirm(`ยืนยันการตั้งค่าสถานะเป็น ${STAGE_LABELS[newProgress] || newProgress}?`)) return;
+      if (!await customConfirm(`Confirm milestone update to ${STAGE_LABELS[newProgress] || newProgress}?`)) return;
       await jobsAPI.updateProgress(jobId, newProgress, currentToken);
       fetchJobs();
     } catch (err) {
-      console.error("Progress update error:", err);
+      console.error('Progress update error:', err);
       const errMsg = err.response?.data?.message || 'Failed to update progress';
-      toast.error(`ไม่สามารถอัปเดตความคืบหน้าได้: ${errMsg}`);
+      toast.error(`Unable to update progress: ${errMsg}`);
     }
   };
 
-  const StatusBadge = ({ status }) => {
-    const colors = {
-      pending: { bg: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', text: 'PENDING' },
-      accepted: { bg: 'rgba(34, 197, 94, 0.05)', color: '#22c55e', text: 'IN PROCESS' },
-      completed: { bg: 'rgba(168, 85, 247, 0.05)', color: '#a855f7', text: 'COMPLETED' },
-      cancelled: { bg: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', text: 'CANCELLED' }
-    };
-    const s = colors[status] || { bg: '#111', color: '#555', text: status?.replace(/_/g, ' ').toUpperCase() };
-    return (
-      <span style={{
-        background: s.bg, color: s.color, padding: '6px 15px', borderRadius: '40px', fontSize: '0.7rem', fontWeight: '700', border: `1px solid ${s.color}22`, letterSpacing: '1px'
-      }}>
-        {s.text}
-      </span>
-    );
-  };
-
-  if (loading) return (
-    <div style={{ padding: '150px 20px', textAlign: 'center', background: 'var(--mj-bg-dark)', minHeight: '100vh' }}>
-      <motion.div 
-        animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
-        transition={{ repeat: Infinity, duration: 2, ease: "linear" }} 
-        style={{ width: '60px', height: '60px', border: '3px solid var(--mj-accent)', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 30px', boxShadow: '0 0 30px var(--mj-accent-glow' }} 
-      />
-      <p style={{ color: 'var(--mj-accent)', fontWeight: '900', letterSpacing: '8px', fontSize: '0.9rem', textTransform: 'uppercase' }}>Synchronizing Manage Jobs...</p>
-    </div>
-  );
+  if (loading) {
+    return <PremiumLoader text="Synchronizing Jobs..." subtext="Loading your job workspace..." />;
+  }
 
   const jobsToShow = activeTab === 'sent' ? sentJobs : receivedJobs;
+  const coinBalance = user?.coinBalance || userInfo?.coinBalance || 0;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="manage-jobs-container">
-
-      {/* 🚀 Hyper Header Section */}
+    <motion.div
+      className="manage-jobs-container"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+    >
       <header className="mj-header">
-        <motion.div 
-          initial={{ opacity: 0, x: -30 }} 
-          animate={{ opacity: 1, x: 0 }} 
-          transition={{ delay: 0.2 }}
+        <motion.div
           className="mj-title-group"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-            <FiZap color="var(--mj-accent)" size={20} className="glow-icon" />
-            <span style={{ color: 'var(--mj-accent)', fontSize: '0.9rem', fontWeight: '900', letterSpacing: '2px', textTransform: 'uppercase' }}>Manage Jobs</span>
+          <div className="mj-kicker">
+            <FiZap size={16} />
+            <span>Manage Jobs</span>
           </div>
-          <h2 className="mj-main-title">จัดการโปรเจกต์</h2>
-          <p style={{ color: '#555', marginTop: '25px', fontWeight: '700', fontSize: '1.1rem', maxWidth: '600px', lineHeight: '1.6' }}>
-            บริหารจัดการภารกิจและติดตามความคืบหน้าของทุกโครงการในมือคุณผ่านระบบอัจฉริยะ
+          <h2 className="mj-main-title">Job Command Center</h2>
+          <p className="mj-subtitle">
+            Track received and hired projects in one place, with escrow status, milestone progress, and the next action clearly surfaced.
           </p>
         </motion.div>
-        
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }} 
-          animate={{ opacity: 1, scale: 1 }} 
-          className="budget-display"
-        >
-          <p style={{ margin: '0 0 15px', fontSize: '0.75rem', color: '#444', fontWeight: '900', letterSpacing: '4px' }}>AVAILABLE BALANCE</p>
-          <CoinBadge amount={user?.coinBalance || userInfo?.coinBalance || 0} size="lg" />
+
+        <motion.div className="budget-display" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <span className="budget-display-label">Available balance</span>
+          <CoinBadge amount={coinBalance} size="lg" />
         </motion.div>
       </header>
 
-      {/* 🧬 Neo Tabs */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        transition={{ delay: 0.4 }}
-        className="mj-tabs"
-      >
+      <motion.div className="mj-tabs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         {!isGeneral && (
           <button
+            type="button"
             onClick={() => setActiveTab('received')}
             className={`mj-tab-btn ${activeTab === 'received' ? 'active' : ''}`}
           >
-            งานที่ได้รับ ({receivedJobs.length})
+            <span>Received jobs</span>
+            <strong>{receivedJobs.length}</strong>
           </button>
         )}
         <button
+          type="button"
           onClick={() => setActiveTab('sent')}
           className={`mj-tab-btn ${activeTab === 'sent' ? 'active' : ''}`}
         >
-          งานที่จ้างงาน ({sentJobs.length})
+          <span>Hired jobs</span>
+          <strong>{sentJobs.length}</strong>
         </button>
       </motion.div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+      <div className="mj-job-list">
         <AnimatePresence mode="wait">
           {jobsToShow.length === 0 ? (
-            <motion.div 
+            <motion.div
               key="empty"
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              style={{ textAlign: 'center', padding: '140px 40px', background: 'rgba(255,255,255,0.01)', borderRadius: '60px', border: '1px dashed rgba(255,255,255,0.05)' }}
+              className="mj-empty-state"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
             >
-              <FiBriefcase size={80} color="#111" style={{ marginBottom: '30px' }} />
-              <h3 style={{ margin: 0, fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>NO ACTIVE MISSIONS</h3>
-              <p style={{ color: '#444', marginTop: '15px', fontWeight: '700', fontSize: '1.1rem' }}>ยังไม่มีรายการโครงการที่กำลังดำเนินการในขณะนี้</p>
+              <div className="mj-empty-icon"><FiBriefcase size={28} /></div>
+              <h3>No active missions</h3>
+              <p>No projects in this view yet. New jobs will appear here with status, budget, milestones, and the next action to take.</p>
             </motion.div>
           ) : (
-            <motion.div 
-              key={activeTab}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              {jobsToShow.map((job, index) => (
-                <motion.div 
-                  initial={{ opacity: 0, y: 30 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  transition={{ delay: index * 0.1, duration: 0.6 }}
-                  key={job._id} 
-                  className="job-card"
-                >
-                  <div className="job-main-info">
-                    <div className="mj-meta-row" style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                      <StatusBadge status={job.status} />
-                      <span className="job-id">#{job._id.slice(-8).toUpperCase()}</span>
-                      <span className="job-date" style={{ color: '#444', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}><FiCalendar /> {new Date(job.createdAt).toLocaleDateString()}</span>
-                    </div>
+            <motion.div key={activeTab} className="mj-list-stack" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {jobsToShow.map((job, index) => {
+                const person = activeTab === 'sent' ? job.freelancer : job.employer;
+                const personRole = activeTab === 'sent' ? 'Assigned freelancer' : 'Client commander';
+                const avatarUrl = person?.profileImage?.url ? getFullUrl(person.profileImage.url) : null;
 
-                    <h3 className="mj-title">{job.title}</h3>
-
-                    <div className="mj-info-grid">
-                      <div className="info-tile">
-                        <span className="tile-label">SERVICE CATEGORY</span>
-                        <div className="tile-value">{job.work?.category?.name || 'General Service'}</div>
+                return (
+                  <motion.article
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.035, duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    key={job._id}
+                    className="job-card"
+                  >
+                    <div className="job-main-info">
+                      <div className="mj-meta-row">
+                        <StatusBadge status={job.status} />
+                        <span className="job-id">#{job._id.slice(-8).toUpperCase()}</span>
+                        <span className="job-date"><FiCalendar size={14} /> {new Date(job.createdAt).toLocaleDateString()}</span>
                       </div>
 
-                      <div className="info-tile">
-                        <span className="tile-label">SECURITY & ESCROW</span>
-                        <div className="payment-status" style={{ color: job.paymentStatus === 'released' ? '#22c55e' : '#f59e0b', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <FiShield size={18} />
-                          <span style={{ fontWeight: '800', fontSize: '1rem' }}>{job.paymentStatus === 'escrow_held' ? 'Coins Held in Escrow' : 'Payment Released'}</span>
+                      <h3 className="mj-title">{job.title}</h3>
+
+                      <div className="mj-info-grid">
+                        <div className="info-tile">
+                          <span className="tile-label">Service category</span>
+                          <div className="tile-value">{job.work?.category?.name || 'General Service'}</div>
+                        </div>
+
+                        <div className="info-tile">
+                          <span className="tile-label">Security & escrow</span>
+                          <div className={`payment-status ${job.paymentStatus === 'released' ? 'is-released' : 'is-held'}`}>
+                            <FiShield size={17} />
+                            <span>{job.paymentStatus === 'escrow_held' ? 'Coins held in escrow' : 'Payment released'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {job.description && <p className="job-description">{job.description}</p>}
+
+                      {job.location?.address && (
+                        <div className="mj-location-box">
+                          <FiMapPin size={17} />
+                          <span className="location-text">{job.location.address}</span>
+                          {job.location.lat && job.location.lng && (
+                            <a
+                              href={`https://www.google.com/maps?q=${job.location.lat},${job.location.lng}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="map-link"
+                            >
+                              Open maps
+                            </a>
+                          )}
+                        </div>
+                      )}
+
+                      {job.status === 'accepted' && (
+                        <ProgressChecklist
+                          currentStage={job.progressStage}
+                          onUpdate={(val) => handleUpdateProgress(job._id, val)}
+                          isInteractive={activeTab === 'received'}
+                        />
+                      )}
+
+                      <div className="user-info-row">
+                        <div className="user-avatar">
+                          {avatarUrl ? <img src={avatarUrl} alt={person?.name || personRole} /> : <span>{person?.name?.slice(0, 2) || 'PP'}</span>}
+                        </div>
+                        <div className="user-copy">
+                          <span>{personRole}</span>
+                          <strong>{person?.name || 'Unknown creator'}</strong>
                         </div>
                       </div>
                     </div>
 
-                    <p style={{ color: '#777', fontSize: '1.05rem', lineHeight: '1.8', marginBottom: '45px', fontWeight: '500', maxWidth: '850px' }}>{job.description}</p>
+                    <aside className="action-panel">
+                      <div className="budget-section">
+                        <span className="budget-label">Mission budget</span>
+                        <CoinBadge amount={job.budget} size="lg" />
+                      </div>
 
-                    {job.location && job.location.address && (
-                      <div className="mj-location-box">
-                        <FiMapPin color="var(--mj-accent)" size={18} />
-                        <span className="location-text">{job.location.address}</span>
-                        {job.location.lat && job.location.lng && (
-                          <a 
-                            href={`https://www.google.com/maps?q=${job.location.lat},${job.location.lng}`} 
-                            target="_blank" rel="noreferrer" className="map-link"
-                          >
-                            OPEN MAPS
-                          </a>
+                      <div className="mj-actions">
+                        {activeTab === 'received' && job.status === 'pending' && (
+                          <>
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => handleUpdateStatus(job._id, 'accepted')}
+                              className="btn-primary"
+                            >
+                              <FiCheckCircle size={19} /> Accept project
+                            </motion.button>
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => handleUpdateStatus(job._id, 'cancelled')}
+                              className="btn-secondary is-danger"
+                            >
+                              Reject request
+                            </motion.button>
+                          </>
                         )}
-                      </div>
-                    )}
 
-                    {job.status === 'accepted' && (
-                      <ProgressChecklist
-                        currentStage={job.progressStage}
-                        onUpdate={(val) => handleUpdateProgress(job._id, val)}
-                        isInteractive={activeTab === 'received'}
-                      />
-                    )}
-
-                    <div className="user-info-row">
-                      <div className="user-avatar">
-                        {activeTab === 'sent' ? (
-                          job.freelancer?.profileImage?.url && <img src={getFullUrl(job.freelancer.profileImage.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          job.employer?.profileImage?.url && <img src={getFullUrl(job.employer.profileImage.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {job.status === 'accepted' && activeTab === 'received' && (
+                          <div className="job-action-note">
+                            <strong>Mission in progress</strong>
+                            <span>Keep updating milestones</span>
+                          </div>
                         )}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.7rem', color: '#444', fontWeight: '900', letterSpacing: '1px', marginBottom: '5px' }}>{activeTab === 'sent' ? 'ASSIGNED FREELANCER' : 'CLIENT COMMANDER'}</div>
-                        <div style={{ fontWeight: '900', fontSize: '1.2rem', color: '#fff' }}>{activeTab === 'sent' ? job.freelancer?.name : job.employer?.name}</div>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="action-panel">
-                    <div className="budget-section">
-                      <span className="budget-label">MISSION BUDGET</span>
-                      <CoinBadge amount={job.budget} size="lg" />
-                    </div>
-
-                    <div className="mj-actions" style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
-                      {activeTab === 'received' && job.status === 'pending' && (
-                        <>
+                        {job.status === 'accepted' && activeTab === 'sent' && (
                           <motion.button
-                            whileHover={{ scale: 1.02 }}
+                            type="button"
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => handleUpdateStatus(job._id, 'accepted')}
                             className="btn-primary"
+                            onClick={async () => {
+                              if (await customConfirm('Confirm the delivered work and release coins to the freelancer?')) {
+                                handleUpdateStatus(job._id, 'completed');
+                              }
+                            }}
                           >
-                            <FiCheckCircle size={20} /> ACCEPT PROJECT
+                            <FiCheckCircle size={19} />
+                            {job.progressStage === 'SUBMITTED' ? 'Verify & pay' : 'Mark as completed'}
                           </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => handleUpdateStatus(job._id, 'cancelled')}
-                            className="btn-secondary"
-                            style={{ background: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.1)' }}
-                          >
-                            REJECT REQUEST
-                          </motion.button>
-                        </>
-                      )}
+                        )}
 
-                      {job.status === 'accepted' && activeTab === 'received' && (
-                        <div style={{ padding: '25px', borderRadius: '30px', background: 'rgba(255,255,255,0.02)', color: '#666', fontSize: '0.9rem', fontWeight: '800', textAlign: 'center', border: '1px solid rgba(255,255,255,0.03)', lineHeight: '1.6' }}>
-                          MISSION IN PROGRESS <br />
-                          <span style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '1px' }}>KEEP UPDATING MILESTONES</span>
-                        </div>
-                      )}
-
-                      {job.status === 'accepted' && activeTab === 'sent' && (
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="btn-primary"
-                          onClick={async () => {
-                            if (await customConfirm('คุณต้องการยืนยันการรับมอบงานและโอนเหรียญให้ฟรีแลนซ์ใช่หรือไม่?')) {
-                              handleUpdateStatus(job._id, 'completed')
-                            }
-                          }}
-                        >
-                          <FiCheckCircle size={22} />
-                          {job.progressStage === 'SUBMITTED' ? 'VERIFY & PAY' : 'MARK AS COMPLETED'}
-                        </motion.button>
-                      )}
-
-                      {job.status === 'completed' && (
-                        <div className="status-completed-pill">
-                          <FiCheckCircle size={24} /> MISSION COMPLETED
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                        {job.status === 'completed' && (
+                          <div className="status-completed-pill">
+                            <FiCheckCircle size={20} /> Mission completed
+                          </div>
+                        )}
+                      </div>
+                    </aside>
+                  </motion.article>
+                );
+              })}
             </motion.div>
           )}
         </AnimatePresence>

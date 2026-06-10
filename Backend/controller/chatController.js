@@ -3,6 +3,12 @@ import Message from '../models/Message.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { uploadToGCS } from '../utils/gcs.js';
+import mongoose from 'mongoose';
+
+const findConversationForUser = (conversationId, userId) => Conversation.findOne({
+  _id: conversationId,
+  'participants.user': userId,
+});
 
 // ── เริ่มต้นห้องแชท หรือ ดึงห้องแชทที่มีอยู่แล้ว (1:1) ──
 export const getOrCreateConversation = async (req, res) => {
@@ -10,8 +16,17 @@ export const getOrCreateConversation = async (req, res) => {
     const { receiverId } = req.body;
     const senderId = req.user.id;
 
+    if (!receiverId) {
+      return res.status(400).json({ message: 'receiverId is required' });
+    }
+
     if (senderId === receiverId) {
       return res.status(400).json({ message: "ไม่สามารถคุยกับตัวเองได้" });
+    }
+
+    const receiver = await User.exists({ _id: receiverId });
+    if (!receiver) {
+      return res.status(404).json({ message: 'Receiver not found' });
     }
 
     // ค้นหาห้องแชทที่มีทั้ง sender และ receiver (เฉพาะแบบ 1:1)
@@ -42,6 +57,7 @@ export const getMyConversations = async (req, res) => {
   try {
     const userId = req.user.id;
     const { filter } = req.query; // 'archived', 'unread', or null (default: all non-archived)
+    const normalizedFilter = filter === 'archive' ? 'archived' : filter;
 
     let query = { "participants.user": userId };
 
@@ -56,11 +72,11 @@ export const getMyConversations = async (req, res) => {
       return { ...c._doc, myState };
     });
 
-    if (filter === 'archived') {
+    if (normalizedFilter === 'archived') {
       filtered = filtered.filter(c => c.myState?.isArchived);
     } else {
       filtered = filtered.filter(c => !c.myState?.isArchived);
-      if (filter === 'unread') {
+      if (normalizedFilter === 'unread') {
         filtered = filtered.filter(c => 
           c.lastMessage && 
           !c.lastMessage.isRead && 
@@ -80,6 +96,11 @@ export const getMessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const userId = req.user.id;
+
+    const conversation = await findConversationForUser(conversationId, userId);
+    if (!conversation) {
+      return res.status(403).json({ message: 'You do not have access to this conversation' });
+    }
 
     // ค้นหาข้อความ
     const messages = await Message.find({ conversationId })
@@ -103,6 +124,11 @@ export const markMessagesAsRead = async (req, res) => {
     const { conversationId } = req.params;
     const userId = req.user.id;
 
+    const conversation = await findConversationForUser(conversationId, userId);
+    if (!conversation) {
+      return res.status(403).json({ message: 'You do not have access to this conversation' });
+    }
+
     await Message.updateMany(
       { conversationId, sender: { $ne: userId }, isRead: false },
       { $set: { isRead: true } }
@@ -110,10 +136,11 @@ export const markMessagesAsRead = async (req, res) => {
 
     // แจ้งเตือนผ่าน Socket ว่าอ่านแล้ว
     const io = req.app.get('io');
-    const conversation = await Conversation.findById(conversationId);
     if (conversation && io) {
-      const recipientId = conversation.participants.find(p => p.toString() !== userId.toString());
-      io.to(recipientId.toString()).emit('messages_read', { conversationId, readerId: userId });
+      const recipient = conversation.participants.find(p => p.user?.toString() !== userId.toString());
+      if (recipient?.user) {
+        io.to(recipient.user.toString()).emit('messages_read', { conversationId, readerId: userId });
+      }
     }
 
     res.status(200).json({ message: 'Messages marked as read' });
@@ -128,6 +155,16 @@ export const sendMessage = async (req, res) => {
     const { conversationId, text, messageType } = req.body;
     const senderId = req.user.id;
     let attachments = [];
+    const safeText = String(text || '').trim();
+
+    if (!conversationId) {
+      return res.status(400).json({ message: 'conversationId is required' });
+    }
+
+    const conversation = await findConversationForUser(conversationId, senderId);
+    if (!conversation) {
+      return res.status(403).json({ message: 'You do not have access to this conversation' });
+    }
 
     // 🔥 จัดการไฟล์แนบ (ถ้ามีผ่าน Multer)
     if (req.files && req.files.length > 0) {
@@ -147,6 +184,9 @@ export const sendMessage = async (req, res) => {
       });
       attachments = await Promise.all(uploadPromises);
     }
+    if (!safeText && attachments.length === 0) {
+      return res.status(400).json({ message: 'Message text or attachment is required' });
+    }
 
     // Determine message type smartly
     let detectedType = 'text';
@@ -161,7 +201,7 @@ export const sendMessage = async (req, res) => {
     const newMessage = new Message({
       conversationId,
       sender: senderId,
-      text,
+      text: safeText,
       messageType: messageType || detectedType,
       attachments
     });
@@ -169,11 +209,11 @@ export const sendMessage = async (req, res) => {
     await newMessage.save();
 
     // อัปเดตข้อความล่าสุดใน Conversation
-    const conversation = await Conversation.findByIdAndUpdate(conversationId, {
+    const updatedConversation = await Conversation.findByIdAndUpdate(conversationId, {
       lastMessage: newMessage._id
     }, { new: true });
 
-    if (!conversation) {
+    if (!updatedConversation) {
       console.error("Conversation not found after update:", conversationId);
       return res.status(404).json({ message: "ไม่พบห้องสนทนา" });
     }
@@ -191,18 +231,27 @@ export const sendMessage = async (req, res) => {
     // Emit to the conversation room (all connected participants see it)
     if (io) {
       io.to(conversationId).emit('receive_message', messagePayload);
+      updatedConversation.participants.forEach((participant) => {
+        const participantId = participant.user?.toString();
+        if (participantId) {
+          io.to(participantId).emit('conversation_updated', {
+            conversationId,
+            message: messagePayload
+          });
+        }
+      });
     }
 
     // 🔔 สร้างการแจ้งเตือน (Notification) สำหรับทุกคนในกลุ่มยกเว้นตัวเอง
-    const recipients = conversation.participants.filter(p => p.user && p.user.toString() !== senderId.toString());
+    const recipients = updatedConversation.participants.filter(p => p.user && p.user.toString() !== senderId.toString());
 
     if (sender) {
-      recipients.forEach(async (r) => {
+      await Promise.all(recipients.map(async (r) => {
         try {
           if (!r.user) return;
           
-          const noteText = text 
-            ? (text.length > 20 ? text.substring(0, 20) + '...' : text) 
+          const noteText = safeText 
+            ? (safeText.length > 20 ? safeText.substring(0, 20) + '...' : safeText) 
             : (attachments.length > 0 ? `[${attachments[0].fileType.split('/')[0]}]` : '[Message]');
 
           const note = new Notification({
@@ -222,7 +271,7 @@ export const sendMessage = async (req, res) => {
             });
           }
         } catch (err) { console.error("Chat Notification Error:", err); }
-      });
+      }));
     }
 
     res.status(201).json(newMessage);
@@ -232,7 +281,7 @@ export const sendMessage = async (req, res) => {
       const fs = await import('fs');
       const path = await import('path');
       const errorDetails = `[${new Date().toISOString()}] FATAL Error in sendMessage:\n${err.stack}\n\n`;
-      fs.appendFileSync(path.resolve('./error_log.txt'), errorDetails);
+      await fs.promises.appendFile(path.resolve('./error_log.txt'), errorDetails);
     } catch (logErr) {
       console.error("Failed to log fatal error to file", logErr);
     }
@@ -247,10 +296,14 @@ export const toggleArchiveConversation = async (req, res) => {
     const { archived } = req.body;
     const userId = req.user.id;
 
-    await Conversation.updateOne(
+    const result = await Conversation.updateOne(
       { _id: conversationId, "participants.user": userId },
       { $set: { "participants.$.isArchived": archived } }
     );
+
+    if (result.matchedCount === 0) {
+      return res.status(403).json({ message: 'You do not have access to this conversation' });
+    }
 
     res.status(200).json({ message: archived ? 'Archived' : 'Unarchived' });
   } catch (err) {
@@ -263,18 +316,58 @@ export const createGroup = async (req, res) => {
   try {
     const { name, members } = req.body; // members = array of user IDs
     const creatorId = req.user.id;
+    const groupName = String(name || '').trim();
 
-    const participants = [creatorId, ...members].map(id => ({ user: id }));
+    if (!groupName) {
+      return res.status(400).json({ message: 'Group name is required' });
+    }
 
-    const conversation = new Conversation({
+    if (!Array.isArray(members) || members.length === 0) {
+      return res.status(400).json({ message: 'Group members are required' });
+    }
+
+    const uniqueMemberIds = [...new Set([creatorId, ...members].map(id => String(id)).filter(Boolean))];
+
+    if (uniqueMemberIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
+      return res.status(400).json({ message: 'Invalid group member id' });
+    }
+
+    if (uniqueMemberIds.length < 2) {
+      return res.status(400).json({ message: 'Select at least one member' });
+    }
+
+    const existingUsers = await User.find({ _id: { $in: uniqueMemberIds } }).select('_id');
+    if (existingUsers.length !== uniqueMemberIds.length) {
+      return res.status(400).json({ message: 'One or more group members were not found' });
+    }
+
+    const participants = uniqueMemberIds.map(id => ({ user: id }));
+
+    let conversation = new Conversation({
       participants,
       isGroup: true,
-      groupName: name,
+      groupName,
       admins: [creatorId]
     });
 
     await conversation.save();
-    res.status(201).json(conversation);
+
+    conversation = await Conversation.findById(conversation._id)
+      .populate('participants.user', 'name profileImage profession isOnline lastSeen')
+      .populate('lastMessage');
+
+    const myState = conversation.participants.find(p => p.user._id.toString() === creatorId);
+
+    const io = req.app.get('io');
+    if (io) {
+      uniqueMemberIds.forEach(userId => {
+        io.to(userId).emit('conversation_updated', {
+          conversationId: conversation._id.toString()
+        });
+      });
+    }
+
+    res.status(201).json({ ...conversation._doc, myState });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

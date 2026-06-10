@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import PremiumLoader from './PremiumLoader';
 
 /**
  * HoverVideoPlayer component
@@ -10,6 +11,12 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
   const containerRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isInView, setIsInView] = useState(false);
+  const [posterReady, setPosterReady] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const shouldLoadVideo = isHovered && isInView;
+  const shouldShowVideoFrame = shouldLoadVideo || (!poster && isInView);
+  const showPoster = poster && (!shouldLoadVideo || !videoReady);
+  const showLoader = (poster && !posterReady) || (shouldShowVideoFrame && !videoReady);
 
   // Lazy loading using Intersection Observer
   useEffect(() => {
@@ -36,7 +43,7 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
   useEffect(() => {
     if (!videoRef.current) return;
 
-    if (isHovered && isInView) {
+    if (shouldLoadVideo) {
       videoRef.current.currentTime = 0;
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
@@ -48,7 +55,13 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
         videoRef.current.currentTime = 0.1;
       }
     }
-  }, [isHovered, isInView]);
+  }, [shouldLoadVideo, shouldShowVideoFrame]);
+
+  const handleLoadedMetadata = (e) => {
+    if (!poster && !isHovered && e.currentTarget.readyState >= 1) {
+      e.currentTarget.currentTime = 0.1;
+    }
+  };
 
   const handleTimeUpdate = (e) => {
     if (isHovered && e.target.currentTime >= 5) {
@@ -74,16 +87,27 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
     >
-      {isInView && (
-        <video
-          ref={videoRef}
-          src={src}
-          poster={poster}
-          muted
-          playsInline
-          preload="metadata"
-          onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={(e) => { if (!isHovered) e.target.currentTime = 0.1; }}
+      {showLoader && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 2,
+          display: 'grid',
+          placeItems: 'center',
+          background: 'linear-gradient(135deg, rgba(0,0,0,0.82), rgba(20,8,4,0.76))',
+          pointerEvents: 'none'
+        }}>
+          <PremiumLoader bare size="tiny" text="Loading cover" />
+        </div>
+      )}
+
+      {showPoster && (
+        <img
+          src={poster}
+          alt=""
+          loading="lazy"
+          onLoad={() => setPosterReady(true)}
+          onError={() => setPosterReady(true)}
           style={{
             width: '100%',
             height: '100%',
@@ -91,13 +115,40 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
             display: 'block',
             position: 'absolute',
             inset: 0,
-            transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+            zIndex: 1,
+            opacity: posterReady ? 1 : 0,
+            transition: 'opacity 0.18s ease-out',
+          }}
+        />
+      )}
+
+      {shouldShowVideoFrame && (
+        <video
+          ref={videoRef}
+          src={src}
+          poster={poster}
+          muted
+          playsInline
+          preload={poster && !shouldLoadVideo ? "none" : "metadata"}
+          onLoadedMetadata={handleLoadedMetadata}
+          onLoadedData={() => setVideoReady(true)}
+          onCanPlay={() => setVideoReady(true)}
+          onTimeUpdate={handleTimeUpdate}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+            position: 'absolute',
+            inset: 0,
+            opacity: videoReady ? 1 : 0,
+            transition: 'opacity 0.18s ease-out, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         />
       )}
 
       {/* Play Icon Indicator */}
-      {!isHovered && (
+      {!isHovered && !showLoader && (
         <div style={{
           position: 'absolute',
           inset: 0,

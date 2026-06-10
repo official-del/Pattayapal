@@ -6,6 +6,7 @@ import { CoinIcon, CoinBadge } from '../../components/CoinIcon';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import RankBadge from '../../components/RankBadge';
+import PremiumLoader from '../../components/PremiumLoader';
 import { CONFIG } from '../../utils/config';
 import '../../css/DashboardOverview.css';
 
@@ -49,14 +50,7 @@ function DashboardOverview() {
   }, []);
 
   if (loading) return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '20px' }}>
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-        style={{ width: '40px', height: '40px', border: '3px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }}
-      />
-      <p style={{ marginTop: '20px', color: '#444', fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem' }}>Syncing Data...</p>
-    </div>
+    <PremiumLoader text="Syncing Data..." subtext="กำลังดึงข้อมูลแดชบอร์ด..." />
   );
 
   const isFreelancer = summary?.profession && summary.profession !== 'General';
@@ -169,10 +163,10 @@ function DashboardOverview() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="name" stroke="#444" tick={{ fill: '#444', fontSize: 10, fontWeight: 900 }} axisLine={false} tickLine={false} />
-                  <YAxis stroke="#444" tick={{ fill: '#444', fontSize: 10, fontWeight: 900 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" stroke="rgba(255,255,255,0.28)" tick={{ fill: 'rgba(255,255,255,0.42)', fontSize: 10, fontWeight: 800 }} axisLine={false} tickLine={false} />
+                  <YAxis stroke="rgba(255,255,255,0.28)" tick={{ fill: 'rgba(255,255,255,0.42)', fontSize: 10, fontWeight: 800 }} axisLine={false} tickLine={false} />
                   <RechartsTooltip
-                    contentStyle={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '15px' }}
+                    contentStyle={{ background: '#0a0a0a', border: '1px solid rgba(255,87,51,0.28)', borderRadius: '8px' }}
                     itemStyle={{ color: '#fff', fontWeight: 'bold' }}
                   />
                   <Area type="monotone" dataKey="views" stroke="var(--p-accent)" strokeWidth={4} fillOpacity={1} fill="url(#colorViews)" />
@@ -199,7 +193,7 @@ function DashboardOverview() {
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    contentStyle={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '15px' }}
+                    contentStyle={{ background: '#0a0a0a', border: '1px solid rgba(255,87,51,0.28)', borderRadius: '8px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>

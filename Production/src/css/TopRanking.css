@@ -255,3 +255,40 @@
         font-size: 8px;
     }
 }
+
+@media (max-width: 380px) {
+    .ranking-3d-section {
+        padding: 44px 0;
+    }
+
+    .carousel-3d-wrapper {
+        height: 420px;
+        overflow: hidden;
+    }
+
+    .card-3d-item {
+        width: min(210px, calc(100vw - 72px));
+        height: 315px;
+    }
+
+    .poster-3d-frame {
+        border-radius: 16px;
+    }
+
+    .poster-3d-overlay {
+        padding: 18px;
+    }
+
+    .num-3d-bg {
+        left: -28px;
+    }
+
+    .num-3d-text {
+        font-size: 6.5rem;
+    }
+
+    .p3d-title {
+        font-size: 1.05rem;
+        overflow-wrap: anywhere;
+    }
+}

@@ -6,6 +6,7 @@ import { CONFIG } from './config';
 const API_BASE_URL = CONFIG.API_BASE_URL;  // e.g. http://localhost:5000 or https://pattayapal.com
 
 const VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
+const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
 
 // normalize path ให้เป็น full URL
 export const getFullUrl = (path, bustCache = false) => {
@@ -45,6 +46,21 @@ export const isVideoUrl = (url = "") => {
 };
 
 // ดึง URL สื่อหลัก
+export const isImageUrl = (url = "") => {
+  const lower = String(url).toLowerCase().split("?")[0];
+  return IMAGE_EXTS.some(ext => lower.endsWith(ext));
+};
+
+const readMediaField = (value) => {
+  if (!value) return "";
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'object') {
+    const raw = value.url || value.secure_url || value.path || value.src || value.thumbnailUrl || value.posterUrl || "";
+    return typeof raw === 'string' ? raw.trim() : "";
+  }
+  return "";
+};
+
 export const getMediaUrl = (work) => {
   if (!work) return "";
   
@@ -65,6 +81,57 @@ export const getMediaUrl = (work) => {
 
 // ตัดสินใจว่า work นี้ควรแสดงเป็น video หรือ image
 // ใช้ทั้ง work.type และ extension ของ URL จริงๆ
+export const getWorkPosterUrl = (work) => {
+  if (!work) return "";
+
+  const candidates = [
+    work.thumbnail,
+    work.thumbnailUrl,
+    work.poster,
+    work.posterUrl,
+    work.cover,
+    work.coverUrl,
+    work.coverImage,
+    work.previewImage,
+    work.previewUrl,
+    work.image,
+    work.imageUrl,
+  ];
+
+  for (const candidate of candidates) {
+    const raw = readMediaField(candidate);
+    if (raw && !isVideoUrl(raw)) return getFullUrl(raw);
+  }
+
+  const mainImage = readMediaField(work.mainImage);
+  if (mainImage && !isVideoUrl(mainImage)) return getFullUrl(mainImage);
+
+  const mediaItems = Array.isArray(work.media) ? work.media : [];
+  const imageItem = mediaItems.find((item) => {
+    const raw = readMediaField(item);
+    return raw && !isVideoUrl(raw);
+  });
+  const imageRaw = readMediaField(imageItem);
+  if (imageRaw) return getFullUrl(imageRaw);
+
+  return "";
+};
+
+export const getWorkVideoUrl = (work) => {
+  if (!work) return "";
+
+  const primaryCandidates = [work.videoUrl, work.mediaUrl];
+  for (const candidate of primaryCandidates) {
+    const raw = readMediaField(candidate);
+    if (raw && (work.type === 'video' || isVideoUrl(raw))) return getFullUrl(raw);
+  }
+
+  const mainImage = readMediaField(work.mainImage);
+  if (mainImage && isVideoUrl(mainImage)) return getFullUrl(mainImage);
+
+  return getMediaUrl(work);
+};
+
 export const workIsVideo = (work) => {
   if (work.type === "video") return true;
   const url = work.mainImage?.url || work.videoUrl || work.mediaUrl || "";

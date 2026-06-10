@@ -2,9 +2,10 @@ import { customConfirm } from '../utils/customConfirm';
 import { toast } from 'react-hot-toast';
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { usersAPI, chatAPI, worksAPI, postsAPI } from '../utils/api';
 import FeedPost from '../components/FeedPost';
-import { getFullUrl, isVideoUrl } from '../utils/mediaUtils';
+import { getFullUrl, getMediaUrl, getWorkPosterUrl, getWorkVideoUrl, isVideoUrl, workIsVideo } from '../utils/mediaUtils';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import HireModal from '../components/HireModal';
@@ -24,6 +25,9 @@ import SharePackageModal from '../components/SharePackageModal';
 import RankBadge from '../components/RankBadge';
 import ProfileFrame from '../components/ProfileFrame';
 import { CoinIcon, CoinBadge } from '../components/CoinIcon';
+import PremiumLoader from '../components/PremiumLoader';
+import Footer from '../components/Footer';
+import '../css/UserProfile.css';
 
 import { CONFIG } from '../utils/config';
 
@@ -101,6 +105,8 @@ function UserProfile() {
 
    const fileInputRef = useRef(null);
    const coverInputRef = useRef(null);
+   const editIdentityButtonRef = useRef(null);
+   const sharePackageButtonRefs = useRef([]);
    const [coverLoading, setCoverLoading] = useState(false);
    const [avatarLoading, setAvatarLoading] = useState(false);
    const [imageToCrop, setImageToCrop] = useState(null);
@@ -109,6 +115,65 @@ function UserProfile() {
    const { socket } = useSocket();
    const [isOnline, setIsOnline] = useState(false);
    const [lastSeen, setLastSeen] = useState(null);
+
+   const openIdentityEditor = (e) => {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      setEditingProfile(true);
+   };
+
+   const openPackageShare = (e, pkg) => {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      setSharePackage(pkg);
+   };
+
+   const handleProfileActionCapture = (e) => {
+      const actionTarget = e.target.closest?.('[data-profile-action]');
+      if (!actionTarget) return;
+
+      const action = actionTarget.dataset.profileAction;
+      if (action === 'edit-identity') {
+         openIdentityEditor(e);
+      }
+
+      if (action === 'share-package') {
+         const packageIndex = Number(actionTarget.dataset.packageIndex);
+         const pkg = profile?.servicePackages?.[packageIndex];
+         if (pkg) openPackageShare(e, pkg);
+      }
+   };
+
+   const pointHitsElement = (event, element) => {
+      if (!element || typeof event.clientX !== 'number' || typeof event.clientY !== 'number') return false;
+      const rect = element.getBoundingClientRect();
+      return (
+         event.clientX >= rect.left &&
+         event.clientX <= rect.right &&
+         event.clientY >= rect.top &&
+         event.clientY <= rect.bottom
+      );
+   };
+
+   useEffect(() => {
+      const handleNativeProfileAction = (event) => {
+         if (editingProfile || sharePackage) return;
+
+         if (isMyProfile && pointHitsElement(event, editIdentityButtonRef.current)) {
+            openIdentityEditor(event);
+            return;
+         }
+
+         const packageIndex = sharePackageButtonRefs.current.findIndex((button) => pointHitsElement(event, button));
+         if (packageIndex >= 0) {
+            const pkg = profile?.servicePackages?.[packageIndex];
+            if (pkg) openPackageShare(event, pkg);
+         }
+      };
+
+      document.addEventListener('pointerdown', handleNativeProfileAction, true);
+      return () => document.removeEventListener('pointerdown', handleNativeProfileAction, true);
+   }, [editingProfile, isMyProfile, profile?.servicePackages, sharePackage]);
 
    useEffect(() => {
       if (profile) {
@@ -335,10 +400,7 @@ function UserProfile() {
    };
 
    if (loading) return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', gap: '20px' }}>
-         <motion.div animate={{ rotate: 360, borderColor: ['#ff5733', '#6366f1', '#ff5733'] }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} style={{ width: '50px', height: '50px', border: '4px solid #ff5733', borderTopColor: 'transparent', borderRadius: '50%' }} />
-         <span style={{ color: '#fff', fontWeight: '700', letterSpacing: '2px', fontSize: '0.85rem' }}>SYNCING IDENTITY DATA...</span>
-      </div>
+      <PremiumLoader text="Syncing Identity..." subtext="กำลังโหลดข้อมูลโปรไฟล์..." />
    );
 
    if (!profile) return (
@@ -352,7 +414,7 @@ function UserProfile() {
    const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 
    return (
-      <motion.div variants={containerVariants} initial="hidden" animate="show" style={{ minHeight: '100vh', background: '#050505', color: '#fff', position: 'relative', overflowX: 'hidden' }}>
+      <motion.div className="profile-page" onPointerDownCapture={handleProfileActionCapture} onClickCapture={handleProfileActionCapture} variants={containerVariants} initial="hidden" animate="show" style={{ minHeight: '100vh', background: '#050505', color: '#fff', position: 'relative', overflowX: 'hidden' }}>
          <Helmet>
             <title>{profile?.name} | {profile?.profession || 'Freelancer'} | Pattayapal Portfolio</title>
          </Helmet>
@@ -360,22 +422,22 @@ function UserProfile() {
          <div style={{ position: 'fixed', top: '10%', left: '5%', width: '400px', height: '400px', background: 'var(--accent)', filter: 'blur(150px)', opacity: 0.05, pointerEvents: 'none' }} />
          <div style={{ position: 'fixed', bottom: '10%', right: '5%', width: '500px', height: '500px', background: 'var(--indigo)', filter: 'blur(180px)', opacity: 0.05, pointerEvents: 'none' }} />
 
-         <div style={{ width: '100%', height: '400px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, background: profile.coverImage?.url ? `url(${getFullUrl(profile.coverImage.url) + (isMyProfile ? `?t=${profileUpdateTag}` : '')}) center/cover` : 'linear-gradient(45deg, #111, #222)', filter: 'brightness(0.7)' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, #050505 100%)' }} />
+         <div className="profile-cover-stage" style={{ width: '100%', height: '400px', position: 'relative', overflow: 'hidden' }}>
+            <div className="profile-cover-media" style={{ position: 'absolute', inset: 0, background: profile.coverImage?.url ? `url(${getFullUrl(profile.coverImage.url) + (isMyProfile ? `?t=${profileUpdateTag}` : '')}) center/cover` : 'linear-gradient(45deg, #111, #222)', filter: 'brightness(0.7)' }} />
+            <div className="profile-cover-scrim" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, #050505 100%)' }} />
          </div>
 
-         <div className="profile-main-container" style={{ position: 'relative', zIndex: 2 }}>
-            <div className="profile-header-wrap" style={{ marginBottom: '50px' }}>
-               <div className="profile-main-flex" style={{ display: 'flex', gap: '30px', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+         <div className="profile-main-container" style={{ position: 'relative', zIndex: 10 }}>
+            <div className="profile-header-wrap" style={{ marginBottom: '50px', position: 'relative', zIndex: 11 }}>
+               <div className="profile-main-flex" style={{ display: 'flex', gap: '30px', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', position: 'relative', zIndex: 12 }}>
                   <div className="profile-left-group" style={{ display: 'flex', gap: '30px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                     <div style={{ position: 'relative', flexShrink: 0 }}>
-                        <ProfileFrame rank={profile.rank} points={profile.points || 0} size="clamp(130px, 25vw, 220px)" isOnline={profile.isOnline}>
+                     <div className="profile-avatar-plate" style={{ position: 'relative', flexShrink: 0 }}>
+                        <ProfileFrame rank={profile.rank} points={profile.points || 0} size="140px" isOnline={profile.isOnline}>
                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#222' }}>
                               {profile.profileImage?.url || (typeof profile.profileImage === 'string' && profile.profileImage) ? (
                                  <img src={getFullUrl(profile.profileImage.url || profile.profileImage) + (isMyProfile ? `?t=${profileUpdateTag}` : '')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
                               ) : null}
-                              <div style={{ display: (profile.profileImage?.url || typeof profile.profileImage === 'string') ? 'none' : 'flex', fontSize: '5rem', fontWeight: '700', color: '#444' }}>{(profile.name || 'U')[0]}</div>
+                              <div style={{ display: (profile.profileImage?.url || typeof profile.profileImage === 'string') ? 'none' : 'flex', fontSize: '3rem', fontWeight: '700', color: '#444' }}>{(profile.name || 'U')[0]}</div>
                               {isMyProfile && (
                                  <div onClick={() => fileInputRef.current.click()} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', opacity: 0, cursor: 'pointer', transition: '0.3s', zIndex: 10 }} className="av-up"><FiCamera size={40} /></div>
                               )}
@@ -384,15 +446,20 @@ function UserProfile() {
                      </div>
                      <div className="profile-info-text" style={{ paddingBottom: '20px' }}>
                         <h1 style={{ fontSize: 'clamp(2rem, 5vw, 4rem)', fontWeight: '900', margin: 0, color: '#fff', letterSpacing: '2px', textTransform: 'uppercase', lineHeight: 1 }}>{profile.name}</h1>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
+                        <div className="profile-identity-meta" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
                            <span style={{ color: '#555', fontWeight: '700', fontSize: '1.1rem' }}>@{profile.username}</span>
-                           <div style={{ background: 'rgba(255, 87, 51, 0.1)', padding: '6px 15px', borderRadius: '12px', border: '1px solid rgba(255, 87, 51, 0.1)' }}>
+                           <div className="profile-role-badge" style={{ background: 'rgba(255, 87, 51, 0.1)', padding: '6px 15px', borderRadius: '12px', border: '1px solid rgba(255, 87, 51, 0.1)' }}>
                               <span style={{ color: 'var(--accent)', fontWeight: '800', fontSize: '0.8rem', letterSpacing: '1px' }}>{profile.profession || 'GENERAL'}</span>
                            </div>
                         </div>
+                        <div className="profile-hero-stats">
+                           <span><FiActivity /> {isOnline ? 'Online now' : formatLastSeen(lastSeen) || 'Offline'}</span>
+                           <span><FiLayers /> {works.length} Creations</span>
+                           <span><FiAward /> {profile.rank || 'Bronze'} Rank</span>
+                        </div>
                      </div>
                   </div>
-                  <div className="profile-right-group" style={{ display: 'flex', gap: '15px', paddingBottom: '20px', flexWrap: 'wrap' }}>
+                  <div className="profile-right-group" style={{ display: 'flex', gap: '15px', paddingBottom: '20px', flexWrap: 'wrap', position: 'relative', zIndex: 13 }}>
                      {!isMyProfile ? (
                         <>
                            <button onClick={handleStartChat} className="glass" style={{ background: '#fff', color: '#000', border: 'none', padding: '14px 25px', borderRadius: '15px', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer' }}>SEND MESSAGE</button>
@@ -402,8 +469,8 @@ function UserProfile() {
                         </>
                      ) : (
                         <>
-                           <button onClick={() => coverInputRef.current.click()} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 25px', borderRadius: '15px', color: '#fff', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', backdropFilter: 'blur(10px)' }}><FiCamera style={{ marginRight: '8px' }} /> BACKGROUND</button>
-                           <button onClick={() => setEditingProfile(true)} className="glass" style={{ padding: '14px 30px', borderRadius: '15px', color: '#fff', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: '0.9rem' }}>EDIT IDENTITY</button>
+                           <button type="button" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); coverInputRef.current.click(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); coverInputRef.current.click(); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 25px', borderRadius: '15px', color: '#fff', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', backdropFilter: 'blur(10px)' }}><FiCamera style={{ marginRight: '8px' }} /> BACKGROUND</button>
+                           <button ref={editIdentityButtonRef} type="button" data-profile-action="edit-identity" onMouseDown={openIdentityEditor} onTouchStart={openIdentityEditor} onPointerDown={openIdentityEditor} onClick={openIdentityEditor} className="profile-edit-identity-btn" style={{ padding: '14px 30px', borderRadius: '15px', color: '#fff', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: '0.9rem', position: 'relative', zIndex: 14 }}>EDIT IDENTITY</button>
                         </>
                      )}
                   </div>
@@ -422,10 +489,10 @@ function UserProfile() {
                         <div><h4 style={{ margin: 0, fontSize: '1.6rem', fontWeight: '700', color: '#fff', letterSpacing: '-0.5px' }}>{profile.rank}</h4></div>
                      </div>
                      {rankProgress && (
-                        <div style={{ marginTop: '30px' }}>
-                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', fontWeight: '700', color: '#444', marginBottom: '10px' }}>
-                              <span>NEXT: {rankProgress.nextRank?.toUpperCase() || 'MAX'}</span>
-                              <span>{rankProgress.currentPoints} / {rankProgress.currentPoints + rankProgress.pointsToNext} XP ({Math.round(rankProgress.progress || 0)}%)</span>
+                        <div style={{ marginTop: '30px', minWidth: 0, overflow: 'hidden' }}>
+                           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '4px', fontSize: '0.65rem', fontWeight: '700', color: '#444', marginBottom: '10px', minWidth: 0, overflow: 'hidden' }}>
+                              <span style={{ flexShrink: 0 }}>NEXT: {rankProgress.nextRank?.toUpperCase() || 'MAX'}</span>
+                              <span style={{ textAlign: 'right', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{rankProgress.currentPoints} / {rankProgress.currentPoints + rankProgress.pointsToNext} XP ({Math.round(rankProgress.progress || 0)}%)</span>
                            </div>
                            <div style={{ height: '8px', width: '100%', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
                               <motion.div initial={{ width: 0 }} animate={{ width: `${rankProgress.progress || 0}%` }} transition={{ duration: 1, ease: "easeOut" }} style={{ height: '100%', background: ['Conqueror', 'Commander', 'Master'].includes(profile.rank) ? '#00d2ff' : 'var(--accent)', boxShadow: `0 0 15px ${['Conqueror', 'Commander', 'Master'].includes(profile.rank) ? '#00d2ff' : 'var(--accent)'}` }} />
@@ -443,12 +510,12 @@ function UserProfile() {
                      <h4 style={{ fontSize: '0.7rem', fontWeight: '700', color: '#555', letterSpacing: '2px', marginBottom: '25px' }}>DETAILS & ADDRESS</h4>
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                           <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}><FiMapPin /></div>
-                           <div><div style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700' }}>ADDRESS</div><div style={{ fontSize: '1rem', fontWeight: '600' }}>{profile.address || 'Unknown'}</div></div>
+                           <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flexShrink: 0 }}><FiMapPin /></div>
+                           <div style={{ minWidth: 0 }}><div style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700' }}>ADDRESS</div><div style={{ fontSize: '1rem', fontWeight: '600', wordBreak: 'break-word' }}>{profile.address || 'Unknown'}</div></div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                           <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--indigo)' }}><FiCalendar /></div>
-                           <div><div style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700' }}>MEMBER SINCE</div><div style={{ fontSize: '1rem', fontWeight: '600' }}>{new Date(profile.createdAt).toLocaleDateString()}</div></div>
+                           <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--indigo)', flexShrink: 0 }}><FiCalendar /></div>
+                           <div style={{ minWidth: 0 }}><div style={{ fontSize: '0.65rem', color: '#444', fontWeight: '700' }}>MEMBER SINCE</div><div style={{ fontSize: '1rem', fontWeight: '600' }}>{new Date(profile.createdAt).toLocaleDateString()}</div></div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><FiGlobe /></div>
@@ -489,15 +556,15 @@ function UserProfile() {
                      <AnimatePresence mode="wait">
                         <motion.div key={activeTab} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} style={{ padding: '40px' }}>
                            {activeTab === 'portfolio' && (
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '30px' }}>
+                              <div className="profile-portfolio-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '30px' }}>
                                  {works.length > 0 ? works.map(w => (
-                                    <motion.div whileHover={{ y: -10 }} key={w._id} onClick={() => navigate(`/works/${w._id}`)} style={{ cursor: 'pointer', borderRadius: '30px', overflow: 'hidden', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                       <div style={{ height: '240px', overflow: 'hidden', position: 'relative', background: '#111' }}>
-                                          {w.type === 'video' ? <HoverVideoPlayer src={getFullUrl(w.mainImage?.url || w.mediaUrl)} style={{ width: '100%', height: '100%' }} /> : w.mainImage?.url ? <img src={getFullUrl(w.mainImage.url)} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#222', fontSize: '0.65rem', letterSpacing: '3px' }}>NO PREVIEW</div>}
+                                    <motion.div className="profile-work-card" whileHover={{ y: -4 }} key={w._id} onClick={() => navigate(`/works/${w._id}`)} style={{ cursor: 'pointer', borderRadius: '30px', overflow: 'hidden', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                       <div className="profile-work-media" style={{ height: '240px', overflow: 'hidden', position: 'relative', background: '#111' }}>
+                                          {workIsVideo(w) ? <HoverVideoPlayer src={getWorkVideoUrl(w)} poster={getWorkPosterUrl(w)} style={{ width: '100%', height: '100%' }} /> : getMediaUrl(w) ? <img src={getMediaUrl(w)} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#222', fontSize: '0.65rem', letterSpacing: '3px' }}>NO PREVIEW</div>}
                                        </div>
-                                       <div style={{ padding: '25px' }}>
-                                          <h4 style={{ margin: '0 0 10px', fontSize: '1.2rem', color: '#fff' }}>{w.title}</h4>
-                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--accent)' }}>{w.category?.name}</span><span style={{ fontSize: '0.75rem', color: '#444' }}>{new Date(w.createdAt).getFullYear()}</span></div>
+                                       <div className="profile-work-body" style={{ padding: '25px' }}>
+                                          <h4 className="profile-work-title" style={{ margin: '0 0 10px', fontSize: '1.2rem', color: '#fff' }}>{w.title}</h4>
+                                          <div className="profile-work-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '0.75rem', fontWeight: '700' }}>{w.category?.name}</span><span style={{ fontSize: '0.75rem', color: '#444' }}>{new Date(w.createdAt).getFullYear()}</span></div>
                                        </div>
                                     </motion.div>
                                  )) : <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px', color: '#444', fontWeight: '700', letterSpacing: '4px' }}>NO TIMELINE DATA</div>}
@@ -515,8 +582,8 @@ function UserProfile() {
                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#666', marginBottom: '25px', fontSize: '0.9rem' }}><FiClock /> <span>{pkg.deliveryTime} DAYS DELIVERY</span></div>
                                        <p style={{ color: '#888', lineHeight: '1.6', marginBottom: '30px' }}>{pkg.description}</p>
                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '25px', display: 'flex', gap: '10px' }}>
-                                          {!isMyProfile ? <button onClick={() => { setSelectedPackage(pkg); setShowHireModal(true); }} style={{ flex: 1, padding: '18px', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', fontWeight: '700', cursor: 'pointer' }}>REQUEST BOOKING</button> : <div style={{ flex: 1, padding: '15px', borderRadius: '15px', background: 'rgba(255,255,255,0.02)', color: '#444', fontWeight: '700', textAlign: 'center', fontSize: '0.8rem' }}>YOUR PACKAGE</div>}
-                                          <motion.button onClick={() => setSharePackage(pkg)} style={{ padding: '18px', borderRadius: '15px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#555', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FiShare2 size={18} /></motion.button>
+                                          {!isMyProfile ? <button type="button" onClick={() => { setSelectedPackage(pkg); setShowHireModal(true); }} style={{ flex: 1, padding: '18px', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', fontWeight: '700', cursor: 'pointer' }}>REQUEST BOOKING</button> : <div style={{ flex: 1, padding: '15px', borderRadius: '15px', background: 'rgba(255,255,255,0.02)', color: '#444', fontWeight: '700', textAlign: 'center', fontSize: '0.8rem' }}>YOUR PACKAGE</div>}
+                                          <motion.button ref={(el) => { sharePackageButtonRefs.current[i] = el; }} type="button" data-profile-action="share-package" data-package-index={i} onMouseDown={(e) => openPackageShare(e, pkg)} onTouchStart={(e) => openPackageShare(e, pkg)} onPointerDown={(e) => openPackageShare(e, pkg)} onClick={(e) => openPackageShare(e, pkg)} style={{ padding: '18px', borderRadius: '15px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#555', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 20 }}><FiShare2 size={18} /></motion.button>
                                        </div>
                                     </div>
                                  ))}
@@ -557,31 +624,33 @@ function UserProfile() {
             </div>
          </div>
 
+         {typeof document !== 'undefined' && createPortal(<>
+         {imageToCrop && <ImageCropModal image={imageToCrop} aspect={cropConfig.aspect} title="Crop identity image" onClose={() => setImageToCrop(null)} onCropComplete={handleCroppedImage} />}
          {editingProfile && (
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass" style={{ padding: '50px', borderRadius: '40px', width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 50px 100px -20px rgba(0,0,0,0.5)' }}>
-                  <h3 style={{ margin: '0 0 40px', fontWeight: '700', letterSpacing: '4px', textAlign: 'center', color: '#fff', fontSize: '1.5rem' }}>EDIT IDENTITY RECORD</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', paddingBottom: '150px' }}>
+            <div className="profile-edit-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000, padding: '20px' }}>
+               <motion.div initial={{ scale: 0.96, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="glass profile-edit-modal" style={{ padding: '50px', borderRadius: '40px', width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 50px 100px -20px rgba(0,0,0,0.5)' }}>
+                  <h3 className="profile-edit-title" style={{ margin: '0 0 40px', fontWeight: '700', letterSpacing: '4px', textAlign: 'center', color: '#fff', fontSize: '1.5rem' }}>EDIT IDENTITY RECORD</h3>
+                  <div className="profile-edit-form" style={{ display: 'flex', flexDirection: 'column', gap: '30px', paddingBottom: '150px' }}>
                      <div className="edit-row-grid" style={{ gap: '25px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}><label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>LEGAL NAME</label><input value={nameText} onChange={e => setNameText(e.target.value)} placeholder="Full Name" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', outline: 'none' }} /></div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}><label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>USERNAME (@handle)</label><input value={usernameText} onChange={e => setUsernameText(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="username" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', outline: 'none' }} /></div>
+                        <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}><label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>LEGAL NAME</label><input value={nameText} onChange={e => setNameText(e.target.value)} placeholder="Full Name" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', outline: 'none' }} /></div>
+                        <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}><label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>USERNAME (@handle)</label><input value={usernameText} onChange={e => setUsernameText(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="username" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', outline: 'none' }} /></div>
                      </div>
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}><label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>BIOGRAPHY</label><textarea value={bioText} onChange={e => setBioText(e.target.value)} rows={3} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', resize: 'none', outline: 'none' }} /></div>
+                     <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}><label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>BIOGRAPHY</label><textarea value={bioText} onChange={e => setBioText(e.target.value)} rows={3} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', resize: 'none', outline: 'none' }} /></div>
                      
                      <div className="edit-row-grid" style={{ gap: '25px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minWidth: 'min(100%, 250px)' }}>
+                        <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minWidth: 'min(100%, 250px)' }}>
                            <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>GENDER IDENTITY</label>
                            <CustomSelect value={genderText} onChange={setGenderText} options={[{ value: "None", label: "Prefer not to say" }, { value: "Male", label: "Male" }, { value: "Female", label: "Female" }, { value: "Other", label: "Other" }]} />
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minWidth: 'min(100%, 250px)' }}>
+                        <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minWidth: 'min(100%, 250px)' }}>
                            <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>PROFESSIONAL ROLE</label>
                            <CustomSelect value={professionText} onChange={setProfessionText} options={[{ value: "General", label: "General User" }, { value: "Photographer", label: "Photographer" }, { value: "Videographer", label: "Videographer" }, { value: "Editor", label: "Editor" }, { value: "Director", label: "Director" }, { value: "Production Design", label: "Production Design" }, { value: "Creative Content", label: "Creative Content" }, { value: "Film Production", label: "Film Production" }, { value: "Post Production", label: "Post Production" }, { value: "Digital Artist", label: "Digital Artist" }, { value: "AI Operations", label: "AI Operations" }, { value: "AI Artist", label: "AI Artist" }, { value: "AI Animator", label: "AI Animator" }, { value: "AI Sound Designer", label: "AI Sound Designer" }, { value: "AI 3D Artist", label: "AI 3D Artist" }, { value: "AI Director", label: "AI Director" }, { value: "AI Producer", label: "AI Producer" }, { value: "KOL", label: "KOL" }, { value: "Influencer", label: "Influencer" }, { value: "Content Creator", label: "Content Creator" }, { value: "Tutor", label: "Tutor" }]} />
                         </div>
                      </div>
                      
-                     <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                        <button onClick={handleSaveProfile} style={{ flex: 1, background: 'var(--accent)', color: '#fff', border: 'none', padding: '20px', borderRadius: '20px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}>SAVE CHANGES</button>
-                        <button onClick={() => setEditingProfile(false)} style={{ flex: 0.6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', padding: '20px', borderRadius: '20px', color: '#666', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}>CANCEL</button>
+                     <div className="profile-edit-actions" style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                        <button className="profile-edit-save" onClick={handleSaveProfile} style={{ flex: 1, background: 'var(--accent)', color: '#fff', border: 'none', padding: '20px', borderRadius: '20px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}>SAVE CHANGES</button>
+                        <button className="profile-edit-cancel" onClick={() => setEditingProfile(false)} style={{ flex: 0.6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', padding: '20px', borderRadius: '20px', color: '#666', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}>CANCEL</button>
                      </div>
                   </div>
                </motion.div>
@@ -590,18 +659,11 @@ function UserProfile() {
 
          {sharePackage && <SharePackageModal pkg={sharePackage} profile={profile} onClose={() => setSharePackage(null)} />}
          {showHireModal && <HireModal freelancerId={targetProfileId} freelancerName={profile?.name} currentToken={currentToken} initialData={selectedPackage ? { title: `จ้างงาน: ${selectedPackage.title}`, budget: selectedPackage.price, description: `จ้างงานตามแพ็กเกจ ${selectedPackage.title}` } : null} onClose={() => { setShowHireModal(false); setSelectedPackage(null); }} />}
-         {imageToCrop && <ImageCropModal image={imageToCrop} aspect={cropConfig.aspect} title="CROP_IDENTITY_IMAGE" onClose={() => setImageToCrop(null)} onCropComplete={handleCroppedImage} />}
+         </>, document.body)}
+         
+         <Footer />
          <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={e => onFileSelect(e, 'profile')} />
          <input type="file" ref={coverInputRef} style={{ display: 'none' }} onChange={e => onFileSelect(e, 'cover')} />
-         <style>{`
-            .profile-main-container { max-width: 1400px; width: 100%; margin: -150px auto 0; padding: 0 40px 80px; box-sizing: border-box; }
-            .edit-row-grid { display: grid; grid-template-columns: 1fr 1fr; }
-            .profile-content-grid { display: grid; grid-template-columns: 400px 1fr; }
-            .profile-stats-grid { display: grid; grid-template-columns: 1fr 1fr; }
-            @media (max-width: 992px) { .profile-content-grid, .edit-row-grid, .profile-stats-grid { grid-template-columns: 1fr !important; } }
-            @media (max-width: 768px) { .profile-main-container { padding: 0 20px 80px; margin-top: -100px; } }
-            @media (max-width: 480px) { .profile-main-container { padding: 0 15px 60px; margin-top: -60px; } }
-         `}</style>
       </motion.div>
    );
 }

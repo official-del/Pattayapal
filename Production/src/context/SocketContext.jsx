@@ -4,11 +4,9 @@ import { AuthContext } from './AuthContext';
 import { usersAPI } from '../utils/api';
 import PointToast from '../components/PointToast';
 import RankUpCelebration from '../components/RankUpCelebration';
-
 import { CONFIG } from '../utils/config';
 
 const SocketContext = createContext();
-
 const SOCKET_URL = CONFIG.SOCKET_URL;
 
 export const SocketProvider = ({ children }) => {
@@ -19,8 +17,6 @@ export const SocketProvider = ({ children }) => {
   const [notificationPermission, setNotificationPermission] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'denied'
   );
-
-  // 🏆 Gamification States
   const [pointEvent, setPointEvent] = useState(null);
   const [rankUpEvent, setRankUpEvent] = useState(null);
 
@@ -30,14 +26,15 @@ export const SocketProvider = ({ children }) => {
       const info = JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
       const id = info?._id || info?.id;
       return id ? String(id) : null;
-    } catch (_) { return null; }
+    } catch (_) {
+      return null;
+    }
   })());
 
   useEffect(() => {
     const id = user?._id || user?.id;
     if (id) {
       userIdRef.current = String(id);
-      // Request notification permission when user is logged in
       if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
         Notification.requestPermission().then(setNotificationPermission);
       }
@@ -52,7 +49,8 @@ export const SocketProvider = ({ children }) => {
 
   const doJoinUser = useCallback(() => {
     if (socketRef.current && userIdRef.current) {
-      socketRef.current.emit('join_user', userIdRef.current);
+      const token = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
+      socketRef.current.emit('join_user', { userId: userIdRef.current, token });
     }
   }, []);
 
@@ -82,12 +80,14 @@ export const SocketProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    const socketToken = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
     const newSocket = io(SOCKET_URL, {
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       autoConnect: true,
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 10,
+      auth: { token: socketToken },
     });
 
     socketRef.current = newSocket;
@@ -121,25 +121,23 @@ export const SocketProvider = ({ children }) => {
 
     newSocket.on('rank_up', (data) => {
       setRankUpEvent(data);
-      showBrowserNotification("🏆 LEVEL UP!", {
+      showBrowserNotification('Rank up!', {
         body: `ยินดีด้วย! คุณเลื่อนระดับเป็น ${data.newRank} แล้ว`,
       });
     });
 
     newSocket.on('new_notification', (data) => {
-      // Logic from Navbar is mainly for UI, here we do OS notification
-      showBrowserNotification("การแจ้งเตือนใหม่", {
-        body: data.message || data.text || "คุณมีการแจ้งเตือนใหม่จาก Pattayapal",
+      showBrowserNotification('การแจ้งเตือนใหม่', {
+        body: data.message || data.text || 'คุณมีการแจ้งเตือนใหม่จาก PattayaPal',
       });
     });
 
     newSocket.on('receive_message', (data) => {
-      // Only show if it's not from us
       const myId = userIdRef.current;
       const senderId = data.sender?._id || data.sender;
       if (myId && String(senderId) !== String(myId)) {
         showBrowserNotification(`ข้อความใหม่จาก ${data.senderName || 'ผู้ใช้'}`, {
-          body: data.text || "คุณได้รับไฟล์แนบใหม่",
+          body: data.text || 'คุณได้รับไฟล์แนบใหม่',
         });
       }
     });
@@ -149,7 +147,7 @@ export const SocketProvider = ({ children }) => {
     return () => {
       newSocket.disconnect();
     };
-  }, [doJoinUser, fetchOnlineUsers]);
+  }, [doJoinUser, fetchOnlineUsers, showBrowserNotification]);
 
   useEffect(() => {
     if (user) {
@@ -196,20 +194,19 @@ export const SocketProvider = ({ children }) => {
       notificationPermission
     }}>
       {children}
-      
-      {/* 🏆 Real-time Feedback UI */}
+
       {pointEvent && (
-        <PointToast 
-          points={pointEvent.pointsAdded} 
-          label={pointEvent.label} 
-          onComplete={() => setPointEvent(null)} 
+        <PointToast
+          points={pointEvent.pointsAdded}
+          label={pointEvent.label}
+          onComplete={() => setPointEvent(null)}
         />
       )}
 
       {rankUpEvent && (
-        <RankUpCelebration 
-          newRank={rankUpEvent.newRank} 
-          onComplete={() => setRankUpEvent(null)} 
+        <RankUpCelebration
+          newRank={rankUpEvent.newRank}
+          onComplete={() => setRankUpEvent(null)}
         />
       )}
     </SocketContext.Provider>

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { worksAPI } from '../utils/api';
 import { FiArrowRight, FiArrowLeft, FiPlay, FiInfo } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import PremiumLoader from './PremiumLoader';
+import { getWorkPosterUrl, getWorkVideoUrl } from '../utils/mediaUtils';
 
 import { CONFIG } from '../utils/config';
 
@@ -64,9 +66,7 @@ function VideoSlider() {
     }, [slides.length]);
 
     if (loading) return (
-        <div style={{ height: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ width: '40px', height: '40px', border: '3px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }} />
-        </div>
+        <PremiumLoader text="Loading Showcase..." subtext="กำลังโหลดวิดีโอ..." />
     );
     if (slides.length === 0) return null;
 
@@ -84,7 +84,8 @@ function VideoSlider() {
                     >
                         <video
                             ref={(el) => (videoRefs.current[i] = el)}
-                            src={getMediaUrl(slide)}
+                            src={getWorkVideoUrl(slide) || getMediaUrl(slide)}
+                            poster={getWorkPosterUrl(slide)}
                             style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.6)' }}
                             loop muted playsInline preload={i === current ? "auto" : "none"}
                         />

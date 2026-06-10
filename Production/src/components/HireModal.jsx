@@ -1,13 +1,31 @@
-import { toast } from 'react-hot-toast';
-import { useState, useContext, useEffect } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiAlertCircle, FiCheck, FiMapPin, FiSearch, FiX, FiZap } from 'react-icons/fi';
 import { jobsAPI, walletAPI } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
-import { FiAlertCircle, FiMapPin, FiX, FiSearch, FiCheck, FiZap } from 'react-icons/fi';
-import { CoinIcon, CoinBadge } from './CoinIcon';
+import { CoinBadge } from './CoinIcon';
 import GasIcon from './GasIcon';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useRef } from 'react';
+import '../css/HireModal.css';
+
+const GAS_COSTS = {
+  Bronze: 10,
+  Silver: 20,
+  Gold: 30,
+  Platinum: 40,
+  Diamond: 50,
+  Conqueror: 60,
+};
+
+function getStoredUser() {
+  try {
+    return JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
+  } catch {
+    return {};
+  }
+}
 
 function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, currentToken, initialData = null }) {
   const { user, fetchProfile } = useContext(AuthContext);
@@ -15,49 +33,54 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
     title: initialData?.title || '',
     description: initialData?.description || '',
     budget: initialData?.budget || 0,
-    location: initialData?.location || { lat: 13.7563, lng: 100.5018, address: '' }
+    location: initialData?.location || { lat: 13.7563, lng: 100.5018, address: '' },
   });
   const [loading, setLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
 
+  const userInfo = user || getStoredUser();
+  const coinBalance = user?.coinBalance || userInfo?.coinBalance || 0;
+  const currentGas = user?.gas !== undefined ? user.gas : (userInfo?.gas || 0);
+  const rankName = freelancerRank || 'Bronze';
+  const gasCost = GAS_COSTS[rankName] || 10;
+  const isInsufficientCoins = Number(formData.budget) > coinBalance;
+  const isInsufficientGas = currentGas < gasCost;
 
   useEffect(() => {
-    if (showMap && mapContainerRef.current && !mapInstanceRef.current) {
-      const L = window.L;
-      if (!L) return;
+    if (!showMap || !mapContainerRef.current || mapInstanceRef.current) return undefined;
 
-      const initialLat = formData.location.lat || 13.7563;
-      const initialLng = formData.location.lng || 100.5018;
+    const L = window.L;
+    if (!L) return undefined;
 
-      const map = L.map(mapContainerRef.current, { zoomControl: false }).setView([initialLat, initialLng], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
+    const initialLat = formData.location.lat || 13.7563;
+    const initialLng = formData.location.lng || 100.5018;
+    const map = L.map(mapContainerRef.current, { zoomControl: false }).setView([initialLat, initialLng], 13);
 
-      const marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
-      
-      mapInstanceRef.current = map;
-      markerInstanceRef.current = marker;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      const onLocationChange = (lat, lng) => {
-        reverseGeocode(lat, lng);
-      };
+    const marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
+    mapInstanceRef.current = map;
+    markerInstanceRef.current = marker;
 
-      marker.on('dragend', () => {
-        const pos = marker.getLatLng();
-        onLocationChange(pos.lat, pos.lng);
-      });
+    const updateLocation = (lat, lng) => reverseGeocode(lat, lng);
 
-      map.on('click', (e) => {
-        marker.setLatLng(e.latlng);
-        onLocationChange(e.latlng.lat, e.latlng.lng);
-      });
-    }
-    
+    marker.on('dragend', () => {
+      const pos = marker.getLatLng();
+      updateLocation(pos.lat, pos.lng);
+    });
+
+    map.on('click', (event) => {
+      marker.setLatLng(event.latlng);
+      updateLocation(event.latlng.lat, event.latlng.lng);
+    });
+
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
@@ -69,99 +92,88 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
 
   const reverseGeocode = async (lat, lng) => {
     try {
-      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=th`);
-      const data = await resp.json();
-      if (data && data.display_name) {
-        setFormData(prev => ({
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=th`);
+      const data = await response.json();
+      if (data?.display_name) {
+        setFormData((prev) => ({
           ...prev,
-          location: { ...prev.location, address: data.display_name, lat, lng }
+          location: { ...prev.location, address: data.display_name, lat, lng },
         }));
       }
     } catch (err) {
-      console.error("Geocode error:", err);
+      console.error('Geocode error:', err);
     }
   };
 
   const handleSearchPlace = async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
+
     try {
-      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=th&limit=1`);
-      const data = await resp.json();
-      if (data && data.length > 0) {
-        const { lat, lon, display_name } = data[0];
-        const nLat = parseFloat(lat);
-        const nLon = parseFloat(lon);
-        
-        if (mapInstanceRef.current && markerInstanceRef.current) {
-           mapInstanceRef.current.setView([nLat, nLon], 15);
-           markerInstanceRef.current.setLatLng([nLat, nLon]);
-           setFormData(prev => ({
-             ...prev,
-             location: { ...prev.location, address: display_name, lat: nLat, lng: nLon }
-           }));
-        }
-      } else {
-        toast.error("ไม่พบสถานที่ที่ระบุ");
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=th&limit=1`);
+      const data = await response.json();
+
+      if (!data?.length) {
+        toast.error('ไม่พบสถานที่ที่ระบุ');
+        return;
+      }
+
+      const { lat, lon, display_name } = data[0];
+      const nextLat = parseFloat(lat);
+      const nextLng = parseFloat(lon);
+
+      if (mapInstanceRef.current && markerInstanceRef.current) {
+        mapInstanceRef.current.setView([nextLat, nextLng], 15);
+        markerInstanceRef.current.setLatLng([nextLat, nextLng]);
+        setFormData((prev) => ({
+          ...prev,
+          location: { ...prev.location, address: display_name, lat: nextLat, lng: nextLng },
+        }));
       }
     } catch (err) {
-      console.error("Search error:", err);
+      console.error('Search error:', err);
+      toast.error('ค้นหาสถานที่ไม่สำเร็จ');
     } finally {
       setIsSearching(false);
     }
   };
 
-  const userInfo = user || JSON.parse(window.safeStorage.getItem('userInfo'));
-  const coinBalance = user?.coinBalance || userInfo?.coinBalance || 0;
-  const currentGas = user?.gas !== undefined ? user.gas : (userInfo?.gas || 0);
-
-  const gasCosts = {
-    'Bronze': 10,
-    'Silver': 20,
-    'Gold': 30,
-    'Platinum': 40,
-    'Diamond': 50,
-    'Conqueror': 60
-  };
-  const gasCost = gasCosts[freelancerRank] || 10;
-
-  const isInsufficientCoins = formData.budget > coinBalance;
-  const isInsufficientGas = currentGas < gasCost;
-
   const handleRefillGas = async () => {
     if (loading) return;
+
     const refillCost = 1000;
     if (coinBalance < refillCost) {
-      return toast.error(`ยอด Coin ไม่พอสำหรับการเติม Gas (ต้องการ ${refillCost} Coins หรือ 100 บาท)`);
+      toast.error(`ยอด Coin ไม่พอสำหรับเติม Gas ต้องใช้ ${refillCost} Coins`);
+      return;
     }
 
     setLoading(true);
     try {
       await walletAPI.refillGas({ percent: 100 });
-      toast.success("เติม Gas เต็มถังแล้ว! 🔋");
+      toast.success('เติม Gas เต็มถังแล้ว');
       if (fetchProfile) fetchProfile();
     } catch (err) {
-      toast.error(err.response?.data?.message || "เติม Gas ไม่สำเร็จ");
+      toast.error(err.response?.data?.message || 'เติม Gas ไม่สำเร็จ');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // 🛡️ Client-side safety check
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
     if (userInfo?._id === freelancerId || userInfo?.id === freelancerId) {
-      return toast.error("คุณไม่สามารถจ้างงานตนเองได้ครับ");
+      toast.error('คุณไม่สามารถจ้างงานตนเองได้ครับ');
+      return;
     }
 
     setLoading(true);
     try {
       await jobsAPI.create({
         freelancerId,
-        ...formData
+        ...formData,
       }, currentToken);
-      toast.success(`ส่งคำขอจ้างงานให้คุณ ${freelancerName} สำเร็จ!`);
+      toast.success(`ส่งคำขอจ้างงานให้คุณ ${freelancerName} สำเร็จ`);
       if (fetchProfile) fetchProfile();
       onClose();
     } catch (err) {
@@ -171,195 +183,187 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
     }
   };
 
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-      backdropFilter: 'blur(5px)'
-    }}>
-      <div style={{
-        background: '#0a0a0a', border: '1px solid #333', borderRadius: '20px',
-        padding: '30px', width: '100%', maxWidth: '500px', position: 'relative'
-      }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
-        
-        <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '700', marginBottom: '8px' }}>จ้างงาน {freelancerName}</h2>
-        <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '24px' }}>กรอกรายละเอียดงานที่คุณต้องการจ้างเพื่อให้ฟรีแลนซ์พิจารณา</p>
+  return ReactDOM.createPortal(
+    <div className="hire-modal-shell" role="presentation">
+      <motion.div
+        className="hire-modal-card"
+        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="hire-modal-title"
+      >
+        <button type="button" className="hire-modal-close" onClick={onClose} aria-label="Close hire modal">
+          <FiX />
+        </button>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div>
-            <label style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '8px', letterSpacing: '1px' }}>ชื่องาน / โปรเจกต์</label>
-            <input 
-              type="text" 
+        <header className="hire-modal-header">
+          <span className="hire-modal-kicker"><FiZap /> Hire Quest</span>
+          <h2 id="hire-modal-title">จ้างงาน {freelancerName}</h2>
+          <p>กรอกรายละเอียดงาน งบประมาณ และพื้นที่ทำงาน เพื่อส่งคำขอให้ครีเอเตอร์พิจารณา</p>
+        </header>
+
+        <form onSubmit={handleSubmit} className="hire-modal-form">
+          <div className="hire-field-group">
+            <label htmlFor="hire-title">ชื่องาน / โปรเจกต์</label>
+            <input
+              id="hire-title"
+              type="text"
               required
-              placeholder="เช่น งานถ่ายรูปงานแต่งงาน"
+              placeholder="เช่น ถ่ายภาพงานแต่งงาน หรือออกแบบโปสเตอร์"
               value={formData.title}
-              onChange={e => setFormData({...formData, title: e.target.value})}
-              style={{ width: '100%', background: '#111', border: '1px solid #222', padding: '12px 16px', borderRadius: '10px', color: '#fff', outline: 'none' }}
+              onChange={(event) => setFormData({ ...formData, title: event.target.value })}
             />
           </div>
 
-          <div>
-            <label style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '8px', letterSpacing: '1px' }}>งบประมาณ (GOLD COINS)</label>
-            <input 
-              type="number" 
+          <div className="hire-field-group">
+            <label htmlFor="hire-budget">งบประมาณ (Gold Coins)</label>
+            <input
+              id="hire-budget"
+              type="number"
               required
+              min="0"
               placeholder="0.00"
               value={formData.budget === 0 ? '' : formData.budget}
-              onChange={e => setFormData({...formData, budget: Number(e.target.value)})}
-              style={{ width: '100%', background: '#111', border: '1px solid #222', padding: '12px 16px', borderRadius: '10px', color: '#fff', outline: 'none' }}
+              onChange={(event) => setFormData({ ...formData, budget: Number(event.target.value) })}
             />
           </div>
 
-          <div>
-            <label style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '8px', letterSpacing: '1px' }}>รายละเอียดงาน / วันเวลา</label>
-            <textarea 
+          <div className="hire-field-group">
+            <label htmlFor="hire-description">รายละเอียดงาน / วันเวลา</label>
+            <textarea
+              id="hire-description"
               required
               rows={4}
-              placeholder="ระบุสิ่งที่ต้องการจ้าง วันเวลา และสถานที่..."
+              placeholder="ระบุสิ่งที่ต้องการจ้าง วันเวลา สถานที่ และผลลัพธ์ที่คาดหวัง..."
               value={formData.description}
-              onChange={e => setFormData({...formData, description: e.target.value})}
-              style={{ width: '100%', background: '#111', border: '1px solid #222', padding: '12px 16px', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }}
+              onChange={(event) => setFormData({ ...formData, description: event.target.value })}
             />
           </div>
 
-          <div>
-             <label style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '8px', letterSpacing: '1px' }}>สถานที่ / ที่อยู่ทำงาน (เลือกจากแผนที่)</label>
-             <div style={{ display: 'flex', gap: '10px' }}>
-                <input 
-                  type="text" 
-                  placeholder="คลิกปุ่มขวาเพื่อจิ้มในแผนที่..."
-                  value={formData.location.address}
-                  readOnly
-                  style={{ flex: 1, background: '#111', border: '1px solid #222', padding: '12px 16px', borderRadius: '10px', color: '#fff', outline: 'none', fontSize: '0.85rem' }}
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowMap(true)}
-                  style={{ background: 'var(--accent)', border: 'none', padding: '0 15px', borderRadius: '10px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <FiMapPin />
-                </button>
-             </div>
-          </div>
-
-          <div style={{ 
-            background: 'rgba(255, 87, 51, 0.05)', 
-            border: '1px solid rgba(255, 87, 51, 0.2)', 
-            padding: '15px', 
-            borderRadius: '12px',
-            fontSize: '0.8rem',
-            color: '#ff8c33',
-            display: 'flex',
-            gap: '10px'
-          }}>
-            <FiAlertCircle style={{ fontSize: '2rem' }} />
-            <div>
-              <strong>หมายเหตุระบบ Escrow:</strong> เมื่อคุณกดส่งคำขอจ้างงาน ระบบจะ "พักเงิน" (Escrow) ตามงบประมาณที่คุณระบุไว้จากกระเป๋าเงินของคุณทันที เพื่อเป็นการการันตีโปรเจกต์
+          <div className="hire-field-group">
+            <label htmlFor="hire-location">สถานที่ / ที่อยู่ทำงาน</label>
+            <div className="hire-location-row">
+              <input
+                id="hire-location"
+                type="text"
+                placeholder="เลือกตำแหน่งจากแผนที่..."
+                value={formData.location.address}
+                readOnly
+              />
+              <button type="button" className="hire-map-button" onClick={() => setShowMap(true)} aria-label="เลือกตำแหน่งจากแผนที่">
+                <FiMapPin />
+              </button>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '5px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ color: '#888', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                Coin ของคุณ: <CoinBadge amount={coinBalance} size="sm" />
-              </div>
+          <section className="hire-escrow-note">
+            <FiAlertCircle />
+            <div>
+              <strong>Escrow protection</strong>
+              <p>เมื่อส่งคำขอจ้างงาน ระบบจะพักเงินตามงบประมาณที่ระบุไว้ในกระเป๋าเงินของคุณทันที เพื่อยืนยันโปรเจกต์กับฟรีแลนซ์</p>
+            </div>
+          </section>
+
+          <section className="hire-summary-panel">
+            <div className="hire-balance-row">
+              <span>Coin ของคุณ</span>
+              <CoinBadge amount={coinBalance} size="sm" />
               {isInsufficientCoins && (
-                <Link to="/dashboard/wallet" style={{ color: '#ff5733', fontSize: '0.85rem', fontWeight: 'bold' }}>เติม Coin เพิ่มที่นี่</Link>
+                <Link to="/dashboard/wallet" className="hire-refill-link">เติม Coin</Link>
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
-              <div style={{ color: isInsufficientGas ? '#ff5733' : '#888', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <GasIcon gas={currentGas} size="45px" />
-                <div>
-                    <div style={{ fontWeight: '800', color: isInsufficientGas ? '#ff5733' : '#fff', fontSize: '1rem', letterSpacing: '0.5px' }}>ENERGY: {currentGas}%</div>
-                    <div style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '2px' }}>Hire {freelancerName} ({freelancerRank}) consumes {gasCost}%</div>
-                </div>
+            <div className={`hire-energy-row ${isInsufficientGas ? 'is-warning' : ''}`}>
+              <GasIcon gas={currentGas} size="42px" />
+              <div className="hire-energy-copy">
+                <strong>Energy {currentGas}%</strong>
+                <small>Hire {freelancerName} ({rankName}) consumes {gasCost}%</small>
               </div>
               {isInsufficientGas && (
-                <button 
-                  type="button"
-                  onClick={handleRefillGas}
-                  style={{ background: 'var(--accent)', border: 'none', color: '#fff', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer', padding: '6px 12px', borderRadius: '8px' }}
-                >
-                  เติม (฿100)
+                <button type="button" className="hire-refill-button" onClick={handleRefillGas}>
+                  เติม Gas
                 </button>
               )}
             </div>
-          </div>
+          </section>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
+            className="hire-submit-button"
             disabled={loading || isInsufficientCoins || isInsufficientGas}
-            style={{
-              background: (isInsufficientCoins || isInsufficientGas) ? '#333' : 'linear-gradient(45deg, #ff5733, #ff8c33)',
-              color: (isInsufficientCoins || isInsufficientGas) ? '#666' : '#fff', border: 'none', padding: '14px', borderRadius: '12px',
-              fontWeight: '700', fontSize: '1rem', cursor: (isInsufficientCoins || isInsufficientGas) ? 'not-allowed' : 'pointer', marginTop: '5px',
-              opacity: loading ? 0.6 : 1, transition: '0.3s'
-            }}
           >
-            {loading ? 'กำลังส่งคำขอ...' : (isInsufficientCoins ? 'ยอด Coin ไม่เพียงพอ' : (isInsufficientGas ? 'Gas ไม่เพียงพอ' : 'ยืนยันจ้างงานและวางเงิน'))}
+            {loading ? (
+              <span className="hire-loading-label"><FiZap className="hire-spin" /> กำลังส่งคำขอ...</span>
+            ) : isInsufficientCoins ? (
+              'ยอด Coin ไม่เพียงพอ'
+            ) : isInsufficientGas ? (
+              'Gas ไม่เพียงพอ'
+            ) : (
+              'ยืนยันจ้างงานและวางเงิน'
+            )}
           </button>
         </form>
-      </div>
+      </motion.div>
 
-       {/* 🗺️ MAP PICKER OVERLAY */}
-       <AnimatePresence>
-         {showMap && (
-           <motion.div 
-             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
-           >
-             <div style={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: '25px', width: '100%', maxWidth: '600px', padding: '25px', position: 'relative' }}>
-                <button onClick={() => setShowMap(false)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', color: '#555', cursor: 'pointer' }}><FiX size={24}/></button>
-                <h3 style={{ color: '#fff', margin: '0 0 15px 0' }}>📍 เลือกสถานที่บนแผนที่</h3>
+      <AnimatePresence>
+        {showMap && (
+          <motion.div
+            className="hire-map-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="hire-map-dialog"
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <button type="button" className="hire-modal-close" onClick={() => setShowMap(false)} aria-label="Close map picker">
+                <FiX />
+              </button>
 
-                <div className="location-search-box" style={{ width: '100%', marginBottom: '15px', position: 'relative' }}>
-                   <input 
-                     type="text" 
-                     placeholder="ค้นชื่อสถานที่..." 
-                     value={searchQuery}
-                     onChange={(e) => setSearchQuery(e.target.value)}
-                     onKeyDown={(e) => e.key === 'Enter' && handleSearchPlace()}
-                     style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 50px 12px 15px', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
-                   />
-                   <button 
-                     onClick={handleSearchPlace} 
-                     disabled={isSearching}
-                     style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)', background: 'var(--accent)', border: 'none', padding: '8px 12px', borderRadius: '10px', color: '#fff', cursor: 'pointer' }}
-                   >
-                     {isSearching ? <FiZap className="spin" /> : <FiSearch />}
-                   </button>
-                </div>
-                
-                <div ref={mapContainerRef} style={{ width: '100%', height: '350px', borderRadius: '15px', background: '#111', border: '1px solid #222' }} />
-                
-                <div style={{ marginTop: '20px' }}>
-                   <p style={{ color: '#aaa', fontSize: '0.8rem', marginBottom: '5px' }}>ที่อยู่ที่เลือก:</p>
-                   <div style={{ background: '#111', padding: '12px', borderRadius: '10px', fontSize: '0.85rem', color: '#fff', border: '1px solid #222', minHeight: '40px' }}>
-                      {formData.location.address || 'จิ้มเลือกบนแผนที่...'}
-                   </div>
-                </div>
+              <header className="hire-map-header">
+                <span className="hire-modal-kicker"><FiMapPin /> Location Picker</span>
+                <h3>เลือกตำแหน่งบนแผนที่</h3>
+                <p>ค้นหาสถานที่หรือคลิกบนแผนที่เพื่อกำหนดจุดทำงาน</p>
+              </header>
 
-                <button 
-                  onClick={() => setShowMap(false)}
-                  style={{ width: '100%', marginTop: '20px', background: 'var(--accent)', color: '#fff', border: 'none', padding: '15px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
-                >
-                  ตกลงและเลือกตำแหน่งนี้
+              <div className="hire-map-search">
+                <input
+                  type="text"
+                  placeholder="ค้นหาชื่อสถานที่..."
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') handleSearchPlace();
+                  }}
+                />
+                <button type="button" onClick={handleSearchPlace} disabled={isSearching}>
+                  {isSearching ? <FiZap className="hire-spin" /> : <FiSearch />}
                 </button>
-             </div>
-           </motion.div>
-         )}
-       </AnimatePresence>
+              </div>
 
-       <style>{`
-          .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
-          .spin { animation: spin 1s linear infinite; }
-          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-       `}</style>
-      </div>
+              <div ref={mapContainerRef} className="hire-map-canvas" />
+
+              <div className="hire-selected-location">
+                <span>ตำแหน่งที่เลือก</span>
+                <p>{formData.location.address || 'คลิกเลือกตำแหน่งบนแผนที่...'}</p>
+              </div>
+
+              <button type="button" className="hire-submit-button" onClick={() => setShowMap(false)}>
+                <FiCheck /> ตกลงและใช้ตำแหน่งนี้
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>,
+    document.body
   );
-}
+};
 
 export default HireModal;

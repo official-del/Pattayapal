@@ -1,9 +1,10 @@
 import { useState, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { postsAPI } from '../utils/api';
-import { FiImage, FiSend, FiLoader, FiBriefcase, FiUserCheck, FiX, FiZap, FiPlusCircle, FiActivity } from 'react-icons/fi';
+import { FiImage, FiSend, FiBriefcase, FiUserCheck, FiX, FiZap, FiPlusCircle, FiActivity } from 'react-icons/fi';
 import { getFullUrl } from '../utils/mediaUtils';
 import { motion, AnimatePresence } from 'framer-motion';
+import PremiumLoader from './PremiumLoader';
 
 function CreatePostBox({ onPostCreated }) {
   const { user, token: contextToken, profileUpdateTag } = useContext(AuthContext);
@@ -110,7 +111,7 @@ function CreatePostBox({ onPostCreated }) {
             className="action-circle-btn send-post-btn"
             title="Post"
           >
-            {isSubmitting ? <FiLoader className="spin" size={18} /> : <FiSend size={18} />}
+            {isSubmitting ? <PremiumLoader bare size="tiny" /> : <FiSend size={18} />}
           </button>
         </div>
       </motion.div>
@@ -167,25 +168,33 @@ function CreatePostBox({ onPostCreated }) {
           display: flex;
           flex-direction: column;
           gap: 12px;
-          margin-bottom: clamp(30px, 6vw, 50px);
+          margin-bottom: 0;
           width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          overflow: hidden;
         }
 
         .create-post-box {
           display: flex;
           align-items: center;
-          gap: clamp(10px, 2vw, 15px);
-          background: rgba(255,255,255,0.03) !important;
-          padding: clamp(10px, 2vw, 15px) !important;
-          border-radius: 40px !important;
-          border: 1px solid rgba(255,87,51,0.1) !important;
+          gap: 12px;
+          background: rgba(8,8,8,0.88) !important;
+          padding: 12px 14px !important;
+          border-radius: var(--pixel-radius) !important;
+          border: 1px solid rgba(255,255,255,0.13) !important;
+          box-shadow: inset 0 0 0 1px rgba(0,0,0,0.72) !important;
+          backdrop-filter: none !important;
           width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
         }
 
         .profile-pic-wrapper {
-          width: clamp(35px, 6vw, 45px);
-          height: clamp(35px, 6vw, 45px);
-          border-radius: 50%;
+          width: 44px;
+          height: 44px;
+          border-radius: 10px;
           background: #111;
           border: 2px solid var(--accent);
           overflow: hidden;
@@ -201,12 +210,12 @@ function CreatePostBox({ onPostCreated }) {
         .input-field-wrapper {
           flex: 1;
           background: rgba(0,0,0,0.4);
-          border-radius: 30px;
-          padding: 0 clamp(15px, 3vw, 20px);
+          border-radius: 10px;
+          padding: 0 16px;
           display: flex;
           align-items: center;
-          height: clamp(38px, 6vw, 48px);
-          border: 1px solid rgba(255,255,255,0.05);
+          height: 44px;
+          border: 1px solid rgba(255,255,255,0.09);
           min-width: 0;
         }
 
@@ -216,37 +225,38 @@ function CreatePostBox({ onPostCreated }) {
           border: none;
           outline: none;
           color: #fff;
-          font-size: clamp(0.8rem, 1.5vw, 0.95rem);
-          font-weight: 500;
+          font-size: var(--text-sm);
+          font-weight: 700;
           width: 100%;
         }
 
         .input-field-wrapper input::placeholder {
-          color: #444;
+          color: rgba(255,255,255,0.48);
           font-weight: 700;
         }
 
         .action-buttons-group {
           display: flex;
-          gap: clamp(6px, 1.5vw, 10px);
+          gap: 8px;
           flex-shrink: 0;
+          min-width: 0;
         }
 
         .action-circle-btn {
-          width: clamp(38px, 6vw, 48px);
-          height: clamp(38px, 6vw, 48px);
-          border-radius: 50%;
+          width: 44px;
+          height: 44px;
+          border-radius: 10px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: 0.3s;
+          transition: transform 0.18s var(--ease-out), border-color 0.18s var(--ease-out), background-color 0.18s var(--ease-out);
         }
 
         .media-btn {
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #666;
+          background: rgba(255,255,255,0.045);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: rgba(255,255,255,0.58);
         }
 
         .media-btn:hover {
@@ -257,9 +267,9 @@ function CreatePostBox({ onPostCreated }) {
 
         .send-post-btn {
           background: var(--accent);
-          border: none;
+          border: 1px solid rgba(255,87,51,0.72);
           color: #fff;
-          box-shadow: 0 5px 15px rgba(255,87,51,0.2);
+          box-shadow: none;
         }
 
         .send-post-btn:disabled {
@@ -347,19 +357,46 @@ function CreatePostBox({ onPostCreated }) {
         /* ── MOBILE OPTIMIZATION ── */
         @media (max-width: 480px) {
           .create-post-box {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr) auto;
             padding: 8px !important;
             gap: 8px !important;
           }
           .input-field-wrapper {
+            min-width: 0;
             padding: 0 12px;
           }
           .action-buttons-group {
             gap: 5px;
           }
+          .action-circle-btn {
+            width: 40px;
+            height: 40px;
+          }
           .media-preview-wrapper {
             padding-left: 0;
             display: flex;
             justify-content: center;
+          }
+        }
+
+        @media (max-width: 370px) {
+          .create-post-box {
+            grid-template-columns: 40px minmax(0, 1fr) auto;
+            gap: 6px !important;
+            padding: 7px !important;
+          }
+
+          .profile-pic-wrapper,
+          .action-circle-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+          }
+
+          .input-field-wrapper {
+            height: 40px;
+            padding: 0 10px;
           }
         }
       `}</style>

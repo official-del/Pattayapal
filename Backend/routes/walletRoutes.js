@@ -3,6 +3,7 @@ import multer from 'multer';
 import { protect, admin } from '../middleware/auth.js';
 import { adminAdjustCoins, adminAdjustGas, getWalletTransactions, requestWithdrawal, getAdminWithdrawals, updateWithdrawalStatus, getAuditLogs, submitManualTopup, getAdminTopups, updateTopupStatus, refillGas } from '../controller/walletController.js';
 import { topupLimiter } from '../middleware/rateLimiter.js';
+import { buildDiskUploadOptions, imageOnlyFileFilter, maxImageUploadBytes } from '../middleware/uploadConfig.js';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
@@ -10,12 +11,14 @@ import fs from 'fs';
 const router = express.Router();
 
 // 🚀 Memory Storage for slip verification (bypasses disk/GCS issues on Hostinger)
-const memoryUpload = multer({ storage: multer.memoryStorage() });
-
 // Disk storage for admin proof uploads (only used internally)
 const tempDir = path.join(process.cwd(), 'uploads/temp');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-const diskUpload = multer({ dest: tempDir });
+const diskUpload = multer(buildDiskUploadOptions(tempDir, {
+  fileSize: maxImageUploadBytes,
+  files: 1,
+  fileFilter: imageOnlyFileFilter,
+}));
 
 // User: Submit Manual Topup (Slip upload)
 router.post('/topup-manual', protect, topupLimiter, diskUpload.single('slip'), submitManualTopup);

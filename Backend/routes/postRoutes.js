@@ -1,6 +1,7 @@
 import express from 'express';
 import { createPost, getPosts, getPostById, likePost, commentPost, deleteComment, deletePost, replyCommentPost, getPostsByUser } from '../controller/postController.js';
 import { protect } from '../middleware/auth.js';
+import { buildDiskUploadOptions, mediaFileFilter } from '../middleware/uploadConfig.js';
 import multer from 'multer';
 
 const router = express.Router();
@@ -8,7 +9,10 @@ import path from 'path';
 import fs from 'fs';
 const tempDir = path.join(process.cwd(), 'uploads/temp');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-const upload = multer({ dest: tempDir });
+const upload = multer(buildDiskUploadOptions(tempDir, {
+  files: 4,
+  fileFilter: mediaFileFilter,
+}));
 
 router.route('/')
   .get(getPosts)

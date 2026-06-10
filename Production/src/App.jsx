@@ -1,13 +1,18 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/Navbar';
-import PixelSplashIntro from './components/PixelSplashIntro';
+import PremiumLoader from './components/PremiumLoader';
 import { play8BitClick } from './utils/soundEffects';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
-import { HelmetProvider } from 'react-helmet-async';
+import {
+  requiresAuth,
+  getLoginPath,
+  shouldShowNavbar,
+} from './routes/paths';
+
+const PixelSplashIntro = lazy(() => import('./components/PixelSplashIntro'));
 
 
 // ── Public Pages ──
@@ -17,11 +22,8 @@ import Discovery from './pages/Discovery';
 
 import Works from './pages/Works';
 import WorkDetail from './pages/WorkDetail';
-import Clients from './pages/Clients';
-import Contact from './pages/Contact';
 
-// ── Feed / Community ──
-import Feed from './pages/Feed';
+// ── Community Posts ──
 import PostDetail from './pages/PostDetail';
 
 // ── Profile Page ──
@@ -54,31 +56,75 @@ import Privacy from './pages/Legal/Privacy';
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import AdminOverview from './pages/Admin/AdminOverview';
-import AdminWorkForm from './pages/Admin/AdminWorkForm';
 import AdminWithdrawals from './pages/Admin/AdminWithdrawals';
 
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // 🔍 ตรวจสอบว่าตอนนี้อยู่ในหน้า Admin หรือไม่
+
+  // ── Global Premium Resource Loading ──
+  const [globalLoading, setGlobalLoading] = useState(true);
+  const [loadingText, setLoadingText] = useState('INITIALIZING SYSTEMS');
+  const [loadingSubtext, setLoadingSubtext] = useState('Syncing assets and interfaces...');
+
+  // Track initial resource load
+  useEffect(() => {
+    let active = true;
+    const startTime = Date.now();
+    
+    const checkResources = () => {
+      if (!active) return;
+      
+      const images = Array.from(document.images);
+      const allImagesLoaded = images.every(img => img.complete || img.naturalWidth > 0);
+      const timeElapsed = Date.now() - startTime;
+      const minDuration = 800;
+      
+      if (document.readyState === 'complete' && allImagesLoaded && timeElapsed >= minDuration) {
+        setGlobalLoading(false);
+      } else {
+        if (timeElapsed > 900) {
+          setLoadingText('OPTIMIZING DISPLAY');
+          setLoadingSubtext('Rendering creator modules...');
+        } else if (timeElapsed > 400) {
+          setLoadingText('PREPARING MULTIMEDIA');
+          setLoadingSubtext('Loading covers and interface assets...');
+        }
+        
+        if (timeElapsed >= 2500) {
+          setGlobalLoading(false);
+        } else {
+          requestAnimationFrame(checkResources);
+        }
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      checkResources();
+    } else {
+      window.addEventListener('load', checkResources);
+    }
+
+    return () => {
+      active = false;
+      window.removeEventListener('load', checkResources);
+    };
+  }, []);
+
   const isAdminPage = location.pathname.startsWith('/admin');
 
-  // 🔒 ตรวจสอบ Token และหน้า Public
   let hasToken = false;
   try {
     hasToken = window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
   } catch (e) {
-    console.warn("Storage access denied");
+    console.warn('Storage access denied');
   }
-  const isPublicPage = ['/login', '/auth', '/verify-email', '/terms', '/privacy', '/admin/login'].some(p => location.pathname.startsWith(p));
 
-  // 🚀 Redirect guest to login if accessing private pages
+  // เฉพาะหน้าที่ต้องล็อกอินเท่านั้น — หน้าอื่นเปิดได้เลย
   useEffect(() => {
-    if (!hasToken && !isPublicPage) {
-      navigate('/login', { replace: true });
-    }
-  }, [hasToken, isPublicPage, navigate]);
+    if (hasToken || !requiresAuth(location.pathname)) return;
+    navigate(getLoginPath(location.pathname), { replace: true });
+  }, [hasToken, location.pathname, navigate]);
 
   const [showSplash, setShowSplash] = useState(() => {
      // ⚖️ ไม่แสดงเกมในหน้ากฎหมาย (Terms / Privacy)
@@ -130,14 +176,13 @@ function App() {
       try {
         window.safeSessionStorage.setItem('hasSeenSplash', 'true');
       } catch (e) {}
-      setShowSplash(false);
+      const frame = requestAnimationFrame(() => setShowSplash(false));
+      return () => cancelAnimationFrame(frame);
     }
   }, [isLegalPage]);
 
   return (
-    <HelmetProvider>
-      <AuthProvider> 
-        <SocketProvider>
+    <SocketProvider>
         <Toaster 
           position="top-center"
           toastOptions={{
@@ -169,13 +214,22 @@ function App() {
           }}
         />
         <AnimatePresence>
-          {showSplash && !isLegalPage && <PixelSplashIntro onComplete={handleSplashComplete} />}
+          {showSplash && !isLegalPage && (
+            <Suspense fallback={null}>
+              <PixelSplashIntro onComplete={handleSplashComplete} />
+            </Suspense>
+          )}
+        </AnimatePresence>
+  
+        <AnimatePresence>
+          {globalLoading && !showSplash && (
+            <PremiumLoader text={loadingText} subtext={loadingSubtext} />
+          )}
         </AnimatePresence>
   
   
   
-        {/* ✅ ถ้าเป็นหน้าแอดมิน หน้า Public (เช่น Login) หรือไม่มี Token (Guest) จะซ่อน Sidebar */}
-        {!isAdminPage && !isPublicPage && hasToken && <Navbar />}
+        {!isAdminPage && shouldShowNavbar(location.pathname, hasToken) && <Navbar />}
   
         <Routes>
   
@@ -198,20 +252,17 @@ function App() {
           <Route path="/services"   element={<Services />} />
           <Route path="/works"      element={<Works />} />
           <Route path="/works/:id"  element={<WorkDetail />} />
-          <Route path="/clients"    element={<Clients />} />
-          <Route path="/contact"    element={<Contact />} />
-          <Route path="/feed"       element={<Feed />} />
           <Route path="/posts/:id"  element={<PostDetail />} />
-          <Route path="/rankings"   element={<RankingsHub />} />
-          <Route path="/rankings/roles" element={<RoleRankings />} />
           <Route path="/leaderboard" element={<Navigate to="/rankings" replace />} />
+          <Route path="/rankings/roles" element={<RoleRankings />} />
+          <Route path="/discovery" element={<Navigate to="/freelancers" replace />} />
           <Route path="/freelancers" element={<Discovery />} />
   
           {/* ── Profile ── */}
           <Route path="/profile/:userId" element={<UserProfile />} />
           <Route path="/notifications" element={
             <div style={{ background: '#000', minHeight: '100vh', paddingTop: '20px', paddingBottom: '100px' }}>
-              <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+              <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
                 <Notifications />
               </div>
             </div>
@@ -230,6 +281,9 @@ function App() {
             <Route path="wallet" element={<ManageWallet />} />
             <Route path="quests" element={<Quests />} />
           </Route>
+          <Route element={<DashboardLayout />}>
+            <Route path="/rankings" element={<RankingsHub />} />
+          </Route>
   
           {/* ── Login / Register ── */}
           <Route path="/login"      element={<UserAuth />} />
@@ -240,8 +294,8 @@ function App() {
           <Route path="/admin/login"       element={<AdminLogin />} />
           <Route path="/admin/dashboard"   element={<AdminDashboard />} />
           <Route path="/admin/overview"    element={<AdminOverview />} /> 
-          <Route path="/admin/works/new"   element={<AdminWorkForm />} />
-          <Route path="/admin/works/:id"   element={<AdminWorkForm />} />
+          <Route path="/admin/works/new"   element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/works/:id"   element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
           
           {/* ── Legal Routes ── */}
@@ -251,9 +305,7 @@ function App() {
           {/* ── Vanity URL Catch-All ── */}
           <Route path="/:username" element={<UserProfile />} />
         </Routes>
-        </SocketProvider>
-      </AuthProvider>
-    </HelmetProvider>
+    </SocketProvider>
   );
 }
 

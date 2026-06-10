@@ -1,0 +1,106 @@
+.admin-withdrawals-shell {
+  min-height: 100vh;
+  color: var(--text-strong) !important;
+  font-family: var(--font-main) !important;
+  background:
+    linear-gradient(rgba(255, 87, 51, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 87, 51, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 82% 0%, rgba(255, 87, 51, 0.12), transparent 28%),
+    #050505;
+  background-size: 28px 28px, 28px 28px, auto, auto;
+}
+
+.admin-withdrawals-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(rgba(255, 87, 51, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 87, 51, 0.035) 1px, transparent 1px),
+    #050505;
+  background-size: 28px 28px, 28px 28px, auto;
+  pointer-events: none;
+}
+
+.admin-withdrawals-shell > header {
+  top: var(--space-4) !important;
+  margin: 0 clamp(var(--space-3), 4vw, var(--space-8)) !important;
+  min-height: 64px !important;
+  height: auto !important;
+  padding: var(--space-2) !important;
+  border: 1px solid var(--border-strong) !important;
+  border-radius: var(--radius-lg) !important;
+  background: rgba(8, 8, 8, 0.92) !important;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.74) !important;
+}
+
+.admin-withdrawals-shell > main {
+  width: min(1400px, 100%) !important;
+  padding: clamp(var(--space-5), 5vw, var(--space-8)) clamp(var(--space-3), 4vw, var(--space-8)) var(--space-12) !important;
+}
+
+.admin-withdrawals-shell .admin-title-text {
+  color: var(--text-strong) !important;
+  font-family: var(--font-title) !important;
+  font-size: clamp(2.4rem, 6vw, 4rem) !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.admin-withdrawals-shell .admin-title-text span {
+  color: var(--accent) !important;
+}
+
+.admin-withdrawal-stat {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border-strong) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.72);
+}
+
+.admin-withdrawal-card {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--border-strong) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025)) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.7);
+  backdrop-filter: none !important;
+}
+
+.admin-withdrawals-shell .admin-list-row {
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5) !important;
+}
+
+.admin-withdrawals-shell button,
+.admin-withdrawals-shell a {
+  border-radius: var(--radius-sm) !important;
+  font-family: var(--font-main) !important;
+  letter-spacing: 0.02em !important;
+}
+
+.admin-withdrawals-shell input,
+.admin-withdrawals-shell select,
+.admin-withdrawals-shell textarea {
+  border-radius: var(--radius-sm) !important;
+}
+
+.admin-withdrawals-shell [style*="border-radius: 24px"],
+.admin-withdrawals-shell [style*="borderRadius: 24"] {
+  border-radius: var(--radius-md) !important;
+}
+
+@media (max-width: 900px) {
+  .admin-withdrawals-shell > header {
+    position: relative !important;
+    top: auto !important;
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    gap: var(--space-3) !important;
+  }
+
+  .admin-withdrawals-shell .admin-list-row {
+    padding: var(--space-4) !important;
+  }
+}

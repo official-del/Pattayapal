@@ -1,45 +1,58 @@
 import { toast } from 'react-hot-toast';
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '../utils/canvasUtils';
-import { FiX, FiCheck, FiMaximize2, FiZoomIn } from 'react-icons/fi';
+import { FiCheck, FiMaximize2, FiX, FiZoomIn } from 'react-icons/fi';
 
-const ImageCropModal = ({ image, aspect, onCropComplete, onClose, title = "CROP IMAGE" }) => {
+const ImageCropModal = ({ image, aspect, onCropComplete, onClose, title = 'Crop image' }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  const onCropChange = useCallback((crop) => {
-    setCrop(crop);
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const onCropChange = useCallback((nextCrop) => {
+    setCrop(nextCrop);
   }, []);
 
-  const onZoomChange = useCallback((zoom) => {
-    setZoom(zoom);
-  }, []);
-
-  const onCropCompleteInternal = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
+  const onCropCompleteInternal = useCallback((_, nextCroppedAreaPixels) => {
+    setCroppedAreaPixels(nextCroppedAreaPixels);
   }, []);
 
   const handleSave = async () => {
     try {
       const croppedImageBlob = await getCroppedImg(image, croppedAreaPixels);
       onCropComplete(croppedImageBlob);
-    } catch (e) {
-      console.error(e);
-      toast.error("Error cropping image");
+    } catch (error) {
+      console.error(error);
+      toast.error('Could not crop image. Please try again.');
     }
   };
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modalCard}>
-        <div style={styles.header}>
-          <h3 style={styles.title}>{title}</h3>
-          <button onClick={onClose} style={styles.closeBtn}><FiX /></button>
-        </div>
+    <div className="pp-crop-overlay" role="presentation">
+      <section className="pp-crop-modal" role="dialog" aria-modal="true" aria-labelledby="crop-modal-title">
+        <header className="pp-crop-header">
+          <div>
+            <span className="pp-crop-kicker">
+              <FiMaximize2 />
+              Image frame
+            </span>
+            <h3 id="crop-modal-title">{title}</h3>
+          </div>
+          <button type="button" className="pp-crop-close" onClick={onClose} aria-label="Close crop modal">
+            <FiX />
+          </button>
+        </header>
 
-        <div style={styles.cropperContainer}>
+        <div className="pp-crop-canvas">
           <Cropper
             image={image}
             crop={crop}
@@ -47,80 +60,39 @@ const ImageCropModal = ({ image, aspect, onCropComplete, onClose, title = "CROP 
             aspect={aspect}
             onCropChange={onCropChange}
             onCropComplete={onCropCompleteInternal}
-            onZoomChange={onZoomChange}
+            onZoomChange={setZoom}
           />
         </div>
 
-        <div style={styles.controls}>
-          <div style={styles.zoomZone}>
-             <FiZoomIn style={{ color: '#888' }} />
-             <input
-                type="range"
-                value={zoom}
-                min={1}
-                max={3}
-                step={0.1}
-                aria-labelledby="Zoom"
-                onChange={(e) => setZoom(e.target.value)}
-                style={styles.slider}
-              />
-          </div>
+        <footer className="pp-crop-controls">
+          <label className="pp-crop-zoom">
+            <span>
+              <FiZoomIn />
+              Zoom
+            </span>
+            <input
+              type="range"
+              value={zoom}
+              min={1}
+              max={3}
+              step={0.1}
+              onChange={(event) => setZoom(Number(event.target.value))}
+            />
+          </label>
 
-          <div style={styles.actions}>
-            <button onClick={onClose} style={styles.cancelBtn}>CANCEL</button>
-            <button onClick={handleSave} style={styles.saveBtn}>
-              <FiCheck /> APPLY CROP
+          <div className="pp-crop-actions">
+            <button type="button" className="pp-button is-ghost" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="button" className="pp-button is-primary" onClick={handleSave}>
+              <FiCheck />
+              Apply crop
             </button>
           </div>
-        </div>
-      </div>
+        </footer>
+      </section>
     </div>
   );
-};
-
-const styles = {
-  overlay: {
-    position: 'fixed', inset: 0,
-    background: 'rgba(0,0,0,0.85)',
-    backdropFilter: 'blur(8px)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    zIndex: 9999, animation: 'fadeIn 0.3s ease'
-  },
-  modalCard: {
-    background: 'rgba(15,15,15,0.95)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '24px',
-    width: '90%', maxWidth: '600px',
-    height: '80vh',
-    display: 'flex', flexDirection: 'column',
-    boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-    overflow: 'hidden'
-  },
-  header: {
-    padding: '20px 24px',
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    borderBottom: '1px solid rgba(255,255,255,0.05)'
-  },
-  title: { margin: 0, fontSize: '1rem', fontWeight: '700', letterSpacing: '2px', color: '#ff5733' },
-  closeBtn: { background: 'none', border: 'none', color: '#555', fontSize: '1.5rem', cursor: 'pointer' },
-  cropperContainer: {
-    flex: 1, position: 'relative', background: '#000'
-  },
-  controls: {
-    padding: '24px', background: '#0a0a0a', display: 'flex', flexDirection: 'column', gap: '20px'
-  },
-  zoomZone: { display: 'flex', alignItems: 'center', gap: '15px' },
-  slider: { flex: 1, accentColor: '#ff5733', cursor: 'pointer' },
-  actions: { display: 'flex', gap: '12px' },
-  cancelBtn: {
-    flex: 1, background: '#222', color: '#fff', border: 'none',
-    padding: '12px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer'
-  },
-  saveBtn: {
-    flex: 2, background: '#ff5733', color: '#fff', border: 'none',
-    padding: '12px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-  }
 };
 
 export default ImageCropModal;

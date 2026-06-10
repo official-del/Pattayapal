@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import multer from 'multer';
 import { protect } from '../middleware/auth.js';
+import { buildDiskUploadOptions, mediaFileFilter } from '../middleware/uploadConfig.js';
 import {
   createWork,
   getWorks,
@@ -18,7 +19,10 @@ import path from 'path';
 import fs from 'fs';
 const tempDir = path.join(process.cwd(), 'uploads/temp');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-const upload = multer({ dest: tempDir });
+const upload = multer(buildDiskUploadOptions(tempDir, {
+  files: 11,
+  fileFilter: mediaFileFilter,
+}));
 
 // ✅ Define upload fields for Multer
 const uploadFields = upload.fields([
@@ -37,7 +41,7 @@ router.post('/:id/like', protect, async (req, res) => {
     if (!work) return res.status(404).json({ message: "ไม่พบผลงาน" });
 
     // ตรวจสอบว่า User คนนี้เคย Like ไปหรือยัง
-    const index = work.likes.indexOf(req.user._id);
+    const index = work.likes.findIndex((id) => id.toString() === req.user._id.toString());
 
     if (index === -1) {
       // ยังไม่เคย Like -> ให้เพิ่ม ID เข้าไป
@@ -57,7 +61,7 @@ router.post('/:id/like', protect, async (req, res) => {
 
     res.json({
       likesCount: work.likes.length,
-      isLiked: work.likes.includes(req.user._id)
+      isLiked: work.likes.some((id) => id.toString() === req.user._id.toString())
     });
   } catch (err) {
     console.error("🔥 Like Error:", err);
@@ -99,19 +103,22 @@ router.post('/:id/view', async (req, res) => {
 });
 
 // ✅ แก้ไข Route Comment ให้เสถียรขึ้น
-router.post('/:id/comment', async (req, res) => {
+router.post('/:id/comment', protect, async (req, res) => {
   try {
     // ✅ เพิ่ม userId เพื่อลิงก์ไปหน้า Profile ได้
-    const { user, text, profileImage, userId } = req.body;
+    const { text } = req.body;
+    const commentUserName = req.user.name || 'User';
+    const commentUserId = req.user._id;
+    const commentProfileImage = req.user.profileImage?.url || "";
 
     if (!text) return res.status(400).json({ message: "กรุณาพิมพ์ข้อความคอมเมนต์" });
     const work = await Work.findById(req.params.id);
     if (!work) return res.status(404).json({ message: "ไม่พบผลงานนี้ในระบบ" });
 
     const newComment = {
-      user: user || "Anonymous",
-      userId: userId || null, // ✅ เก็บ userId เพื่อ link ไปหน้า Profile
-      profileImage: profileImage || "", // ✅ เซฟรูปลง Database
+      user: commentUserName,
+      userId: commentUserId,
+      profileImage: commentProfileImage,
       text
     };
 
@@ -120,15 +127,15 @@ router.post('/:id/comment', async (req, res) => {
     await work.save();
 
     // 🔔 สร้างการแจ้งเตือน (Notification)
-    if (work.createdBy.toString() !== userId) {
+    if (work.createdBy.toString() !== commentUserId.toString()) {
       try {
         const Notification = (await import('../models/Notification.js')).default;
         const note = new Notification({
           recipient: work.createdBy,
-          sender: userId,
+          sender: commentUserId,
           type: 'comment',
           referenceId: work._id,
-          text: `${user} ได้แสดงความคิดเห็นในผลงาน "${work.title}" ของคุณ`,
+          text: `${commentUserName} commented on "${work.title}"`,
           link: `/works/${work._id}`
         });
         await note.save();
@@ -138,7 +145,7 @@ router.post('/:id/comment', async (req, res) => {
         if (io) {
           io.to(work.createdBy.toString()).emit('new_notification', {
             ...note._doc,
-            sender: { name: user, profileImage: profileImage ? { url: profileImage } : null }
+            sender: { name: commentUserName, profileImage: commentProfileImage ? { url: commentProfileImage } : null }
           });
         }
       } catch (err) { console.error("Notification Error:", err); }
@@ -181,7 +188,9 @@ router.delete('/:id/comment/:commentId', protect, async (req, res) => {
 
 router.post('/:id/comment/:commentId/reply', protect, async (req, res) => {
   try {
-    const { user, text, profileImage, userId } = req.body;
+    const { text } = req.body;
+    const replyUserName = req.user.name || 'User';
+    const replyProfileImage = req.user.profileImage?.url || "";
     if (!text) return res.status(400).json({ message: "กรุณาพิมพ์ข้อความตอบกลับ" });
     
     const work = await Work.findById(req.params.id);
@@ -191,9 +200,9 @@ router.post('/:id/comment/:commentId/reply', protect, async (req, res) => {
     if (!comment) return res.status(404).json({ message: "ไม่พบคอมเมนต์" });
 
     const newReply = {
-      user: user || req.user.name || "Anonymous",
-      userId: req.user._id || userId || null,
-      profileImage: profileImage || req.user.profileImage || "",
+      user: replyUserName,
+      userId: req.user._id,
+      profileImage: replyProfileImage,
       text
     };
 
@@ -219,7 +228,7 @@ router.post('/:id/comment/:commentId/reply', protect, async (req, res) => {
         if (io) {
           io.to(recipientId.toString()).emit('new_notification', {
             ...note._doc,
-            sender: { name: req.user.name, profileImage: profileImage ? { url: profileImage } : null }
+            sender: { name: replyUserName, profileImage: replyProfileImage ? { url: replyProfileImage } : null }
           });
         }
       } catch (err) { console.error("Reply Notification Error:", err); }
@@ -239,6 +248,19 @@ router.put('/:id/comment/:commentId', protect, async (req, res) => {
 
     const comment = work.comments.id(req.params.commentId);
     if (!comment) return res.status(404).json({ message: "ไม่พบคอมเมนต์" });
+
+    const currentUserId = String(req.user._id);
+    const commentOwnerId = comment.userId ? String(comment.userId) : null;
+    const workOwnerId = work.createdBy ? String(work.createdBy) : null;
+    const canEdit = commentOwnerId === currentUserId || workOwnerId === currentUserId || req.user.role === 'admin';
+
+    if (!canEdit) {
+      return res.status(403).json({ message: "คุณไม่มีสิทธิ์แก้ไขคอมเมนต์นี้" });
+    }
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "กรุณาพิมพ์ข้อความคอมเมนต์" });
+    }
 
     comment.text = text;
     await work.save();

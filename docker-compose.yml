@@ -50,9 +50,12 @@ services:
     build:
       context: ./Production
       dockerfile: Dockerfile
-      args:
-        # URL ของ Backend API ที่ Browser จะเรียกหา
-        VITE_API_URL: https://pattayapal.com
+      # NOTE: Dockerfile ใช้ nginx runner-only stage (ไม่มี build step)
+      # dist/ ถูก build ไว้ล่วงหน้าในเครื่อง local แล้ว push มาพร้อม git
+      # ถ้าต้องการ bake VITE_API_BASE_URL ลง bundle ให้ build local ก่อน:
+      #   cd Production && npm run build && git add dist && git commit
+      # args:
+      #   VITE_API_BASE_URL: https://pattayapal.com
     container_name: pattayapal-frontend
     restart: unless-stopped
     ports:

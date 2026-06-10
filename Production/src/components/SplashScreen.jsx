@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiZap, FiTarget, FiActivity, FiGlobe } from 'react-icons/fi';
 import logo from '../assets/LOGO1.png';
@@ -14,11 +14,27 @@ const bootLogs = [
   "READY FOR UPLINK."
 ];
 
+const seededRandom = (seed) => {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+};
+
 export default function SplashScreen({ onComplete }) {
   const [logIndex, setLogIndex] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const audioRef = useRef(new Audio(music));
+  const stars = useMemo(() => {
+    const width = typeof window !== 'undefined' ? window.innerWidth : 1280;
+    const height = typeof window !== 'undefined' ? window.innerHeight : 720;
+    return Array.from({ length: 50 }, (_, i) => ({
+      x: seededRandom(i + 1) * width,
+      y: seededRandom(i + 101) * height,
+      opacity: seededRandom(i + 201),
+      duration: 2 + seededRandom(i + 301) * 3,
+      delay: seededRandom(i + 401) * 2,
+    }));
+  }, []);
 
   useEffect(() => {
     if (logIndex < bootLogs.length - 1) {
@@ -54,13 +70,13 @@ export default function SplashScreen({ onComplete }) {
         >
           {/* 🌌 Animated Starfield Background */}
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-            {[...Array(50)].map((_, i) => (
+            {stars.map((star, i) => (
               <motion.div
                 key={i}
                 initial={{ 
-                  x: Math.random() * window.innerWidth, 
-                  y: Math.random() * window.innerHeight,
-                  opacity: Math.random() 
+                  x: star.x, 
+                  y: star.y,
+                  opacity: star.opacity 
                 }}
                 animate={{ 
                   opacity: [0.2, 0.8, 0.2],
@@ -68,8 +84,8 @@ export default function SplashScreen({ onComplete }) {
                 }}
                 transition={{ 
                   repeat: Infinity, 
-                  duration: 2 + Math.random() * 3,
-                  delay: Math.random() * 2 
+                  duration: star.duration,
+                  delay: star.delay 
                 }}
                 style={{
                   position: 'absolute', width: '2px', height: '2px', background: '#fff', borderRadius: '50%'

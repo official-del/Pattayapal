@@ -39,6 +39,7 @@ export default function VideoUploadForm({ onComplete }) {
 
     try {
       // ✅ ยิงมาที่ Local Backend ของเราแทน Cloudinary
+      const token = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
       const res = await axios.post(
         `${CONFIG.API_BASE_URL}/api/upload/single`, 
         formData,
@@ -46,7 +47,11 @@ export default function VideoUploadForm({ onComplete }) {
           onUploadProgress: (e) => {
             setProgress(Math.round((e.loaded * 100) / e.total));
           },
-          headers: { 'Content-Type': 'multipart/form-data' }
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+            'x-auth-token': token,
+          }
         }
       );
       

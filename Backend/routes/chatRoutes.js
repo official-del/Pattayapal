@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { protect } from '../middleware/auth.js';
+import { attachmentFileFilter, buildDiskUploadOptions } from '../middleware/uploadConfig.js';
 import {
   getOrCreateConversation,
   createGroup,
@@ -17,7 +18,10 @@ import path from 'path';
 import fs from 'fs';
 const tempDir = path.join(process.cwd(), 'uploads/temp');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-const upload = multer({ dest: tempDir });
+const upload = multer(buildDiskUploadOptions(tempDir, {
+  files: 10,
+  fileFilter: attachmentFileFilter,
+}));
 
 // 🔒 ทุกเส้นทางต้องผ่านการตรวจสอบ Token (protect)
 router.post('/conversation', protect, getOrCreateConversation);

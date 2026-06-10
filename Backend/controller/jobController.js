@@ -4,6 +4,15 @@ import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import { updateUserStats, getGasConsumption } from '../utils/rankHandler.js';
 
+const JOB_STATUSES = new Set(['accepted', 'completed', 'cancelled']);
+const PROGRESS_STAGES = new Set(['AWAITING_START', 'IN_PROGRESS', 'SUBMITTED', 'REVISING', 'COMPLETED']);
+
+const normalizePositiveAmount = (value, max = 10000000) => {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0 || amount > max) return null;
+  return Math.round(amount * 100) / 100;
+};
+
 // Helper to handle monthly gas refill
 const checkAndRefillGas = async (user) => {
   const now = new Date();
@@ -24,12 +33,25 @@ export const createJob = async (req, res) => {
   try {
     const { freelancerId, title, description, budget, location } = req.body;
     const employerId = req.user.id;
+    const safeBudget = normalizePositiveAmount(budget);
+    const safeTitle = String(title || '').trim();
+    const safeDescription = String(description || '').trim();
 
     if (employerId === freelancerId) {
       return res.status(400).json({ message: "ไม่สามารถจ้างตนเองได้" });
     }
 
     // ⛽ GAS CHECK: Check and Deduct Gas based on Freelancer's Rank
+    if (!freelancerId) {
+      return res.status(400).json({ message: 'freelancerId is required' });
+    }
+    if (!safeTitle || !safeDescription) {
+      return res.status(400).json({ message: 'Title and description are required' });
+    }
+    if (!safeBudget) {
+      return res.status(400).json({ message: 'Budget must be a positive amount' });
+    }
+
     const employer = await User.findById(employerId);
     if (!employer) return res.status(404).json({ message: "ไม่พบผู้จ้างงาน" });
 
@@ -50,8 +72,8 @@ export const createJob = async (req, res) => {
 
     // 🔒 ATOMIC TRANSACTION: Check balance, deduct coins, and deduct gas
     const updatedEmployer = await User.findOneAndUpdate(
-      { _id: employerId, coinBalance: { $gte: budget }, gas: { $gte: gasCost } },
-      { $inc: { coinBalance: -budget, gas: -gasCost } },
+      { _id: employerId, coinBalance: { $gte: safeBudget }, gas: { $gte: gasCost } },
+      { $inc: { coinBalance: -safeBudget, gas: -gasCost } },
       { new: true }
     );
 
@@ -62,25 +84,33 @@ export const createJob = async (req, res) => {
     const newJob = new Job({
       employer: employerId,
       freelancer: freelancerId,
-      title,
-      description,
-      budget,
-      escrowAmount: budget,
+      title: safeTitle,
+      description: safeDescription,
+      budget: safeBudget,
+      escrowAmount: safeBudget,
       paymentStatus: 'escrow_held',
       location
     });
 
-    await newJob.save();
+    try {
+      await newJob.save();
 
-    // Create Payment Transaction log
-    const tx = new Transaction({
-      user: employerId,
-      type: 'PAY_JOB',
-      amount: budget,
-      status: 'completed',
-      reference: newJob._id
-    });
-    await tx.save();
+      // Create Payment Transaction log
+      const tx = new Transaction({
+        user: employerId,
+        type: 'PAY_JOB',
+        amount: safeBudget,
+        status: 'completed',
+        reference: newJob._id
+      });
+      await tx.save();
+    } catch (saveErr) {
+      await User.findByIdAndUpdate(
+        employerId,
+        { $inc: { coinBalance: safeBudget, gas: gasCost } }
+      );
+      throw saveErr;
+    }
 
     // Notify freelancer
     try {
@@ -151,10 +181,18 @@ export const updateJobStatus = async (req, res) => {
     const { jobId } = req.params;
     const { status } = req.body; // 'accepted', 'completed', 'cancelled'
 
-    const job = await Job.findById(jobId);
+    if (!JOB_STATUSES.has(status)) {
+      return res.status(400).json({ message: 'Invalid job status' });
+    }
+
+    let job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ message: "ไม่พบงานนี้" });
 
     // 🛡️ SECURITY CHECK: Authorization
+    if (job.status === 'completed' || job.status === 'cancelled') {
+      return res.status(400).json({ message: 'This job has already been closed' });
+    }
+
     if (status === 'accepted' && job.freelancer.toString() !== req.user.id) {
       return res.status(403).json({ message: "คุณไม่มีสิทธิ์รับงานนี้ (เฉพาะ Freelancer)" });
     }
@@ -165,6 +203,15 @@ export const updateJobStatus = async (req, res) => {
     // 🔒 Release Escrow to Freelancer if Job is Completed
     if (status === 'completed' && job.paymentStatus === 'escrow_held') {
       const io = req.app.get('io');
+      const claimedJob = await Job.findOneAndUpdate(
+        { _id: job._id, paymentStatus: 'escrow_held', status: { $nin: ['completed', 'cancelled'] } },
+        { $set: { paymentStatus: 'releasing' } },
+        { new: true }
+      );
+      if (!claimedJob) {
+        return res.status(409).json({ message: 'This job payment has already been processed' });
+      }
+      job = claimedJob;
       
       // Atomic increment freelancer balance
       const updatedFreelancer = await User.findByIdAndUpdate(
@@ -173,16 +220,25 @@ export const updateJobStatus = async (req, res) => {
         { new: true }
       );
 
-      if (updatedFreelancer) {
-        // Create Earning Transaction log
-        const earnTx = new Transaction({
+      if (!updatedFreelancer) {
+        await Job.findByIdAndUpdate(job._id, { $set: { paymentStatus: 'escrow_held' } });
+        return res.status(404).json({ message: 'Freelancer not found' });
+      }
+      try {
+        await Transaction.create({
           user: job.freelancer,
           type: 'EARN_JOB',
           amount: job.budget,
           status: 'completed',
           reference: job._id
         });
-        await earnTx.save();
+      } catch (txErr) {
+        await User.findByIdAndUpdate(
+          job.freelancer,
+          { $inc: { coinBalance: -job.budget, totalEarnings: -job.budget } }
+        );
+        await Job.findByIdAndUpdate(job._id, { $set: { paymentStatus: 'escrow_held' } });
+        throw txErr;
       }
 
       job.paymentStatus = 'released';
@@ -205,21 +261,41 @@ export const updateJobStatus = async (req, res) => {
 
     // 💸 Refund if cancelled (only if not already paid out)
     else if (status === 'cancelled' && job.paymentStatus === 'escrow_held') {
+      const claimedJob = await Job.findOneAndUpdate(
+        { _id: job._id, paymentStatus: 'escrow_held', status: { $nin: ['completed', 'cancelled'] } },
+        { $set: { paymentStatus: 'refunding' } },
+        { new: true }
+      );
+      if (!claimedJob) {
+        return res.status(409).json({ message: 'This job payment has already been processed' });
+      }
+      job = claimedJob;
+
       const updatedEmployer = await User.findByIdAndUpdate(
         job.employer,
         { $inc: { coinBalance: job.budget } },
         { new: true }
       );
 
-      if (updatedEmployer) {
-        const refundTx = new Transaction({
+      if (!updatedEmployer) {
+        await Job.findByIdAndUpdate(job._id, { $set: { paymentStatus: 'escrow_held' } });
+        return res.status(404).json({ message: 'Employer not found' });
+      }
+      try {
+        await Transaction.create({
           user: job.employer,
           type: 'REFUND',
           amount: job.budget,
           status: 'completed',
           reference: job._id
         });
-        await refundTx.save();
+      } catch (txErr) {
+        await User.findByIdAndUpdate(
+          job.employer,
+          { $inc: { coinBalance: -job.budget } }
+        );
+        await Job.findByIdAndUpdate(job._id, { $set: { paymentStatus: 'escrow_held' } });
+        throw txErr;
       }
       job.paymentStatus = 'refunded';
       job.status = 'cancelled';
@@ -237,6 +313,9 @@ export const updateJobStatus = async (req, res) => {
     } 
     else {
       job.status = status;
+      if (status === 'accepted' && job.progressStage === 'AWAITING_START') {
+        job.progressStage = 'IN_PROGRESS';
+      }
     }
 
     await job.save();
@@ -284,8 +363,29 @@ export const updateJobProgress = async (req, res) => {
     const { jobId } = req.params;
     const { progressStage } = req.body;
 
+    if (!PROGRESS_STAGES.has(progressStage)) {
+      return res.status(400).json({ message: 'Invalid progress stage' });
+    }
+
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ message: "ไม่พบงานนี้" });
+
+    const requesterId = req.user.id;
+    const isFreelancer = job.freelancer.toString() === requesterId;
+    const isEmployer = job.employer.toString() === requesterId;
+
+    if (!isFreelancer && !isEmployer) {
+      return res.status(403).json({ message: 'You do not have access to this job' });
+    }
+    if (job.status !== 'accepted') {
+      return res.status(400).json({ message: 'Progress can only be updated after the job is accepted' });
+    }
+    if ((progressStage === 'SUBMITTED' || progressStage === 'IN_PROGRESS') && !isFreelancer) {
+      return res.status(403).json({ message: 'Only the freelancer can submit or update active work progress' });
+    }
+    if ((progressStage === 'REVISING' || progressStage === 'COMPLETED') && !isEmployer) {
+      return res.status(403).json({ message: 'Only the employer can request revision or confirm progress completion' });
+    }
 
     job.progressStage = progressStage;
     await job.save();

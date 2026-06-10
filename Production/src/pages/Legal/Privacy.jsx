@@ -1,63 +1,88 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { FiEye, FiLock, FiDatabase, FiArrowLeft } from 'react-icons/fi';
+import { FiArrowLeft, FiDatabase, FiEye, FiLock } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import Footer from '../../components/Footer';
+import '../../css/LegalPages.css';
+
+const privacySections = [
+  {
+    icon: FiDatabase,
+    title: 'Information collection',
+    body: 'We collect information you provide when creating an account, updating a profile, uploading works, posting jobs, or using wallet and marketplace features.',
+  },
+  {
+    icon: FiLock,
+    title: 'Data security',
+    body: 'We use platform safeguards to protect account data, wallet records, and creator content. No online system is perfect, so users should keep credentials private.',
+  },
+  {
+    icon: FiEye,
+    title: 'Cookies and usage signals',
+    body: 'PattayaPal may use cookies and usage data to remember preferences, improve discovery, keep sessions active, and understand how the product is used.',
+  },
+];
 
 function Privacy() {
   const navigate = useNavigate();
 
+  const goBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: '#fff', padding: '150px 5% 100px' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        
-        <button 
-          onClick={() => {
-            if (window.history.state && window.history.state.idx > 0) {
-              navigate(-1);
-            } else {
-              navigate('/');
-            }
-          }} 
-          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer', padding: '12px 25px', borderRadius: '15px', display: "flex", alignItems: "center", gap: '10px', marginBottom: '40px', fontWeight: '700', fontSize: '0.8rem' }}
-        >
-          <FiArrowLeft /> BACK
-        </button>
+    <>
+      <main className="legal-shell">
+        <article className="legal-container">
+          <button type="button" className="legal-back" onClick={goBack}>
+            <FiArrowLeft />
+            <span>Back</span>
+          </button>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-            <FiEye color="var(--accent)" size={24} />
-            <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '5px', fontSize: '0.8rem' }}>DATA PROTECTION</span>
-          </div>
-          <h1 style={{ fontSize: '4rem', fontWeight: '700', margin: 0, letterSpacing: '-2px' }}>Privacy Policy</h1>
-          <p style={{ color: '#444', marginTop: '15px', fontWeight: '700' }}>Last Updated: April 20, 2026</p>
-        </motion.div>
+          <motion.header
+            className="legal-hero"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="legal-badge">
+              <FiEye />
+              <span>Data protection</span>
+            </div>
+            <h1>Privacy Policy</h1>
+            <p>Last updated: April 20, 2026</p>
+          </motion.header>
 
-        <div className="glass" style={{ marginTop: '60px', padding: '60px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.03)', lineHeight: 1.8, color: '#888' }}>
-          
-          <section style={{ marginBottom: '50px' }}>
-            <h3 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-               <FiDatabase color="var(--accent)" /> 1. Information Collection
-            </h3>
-            <p>We collect information you provide directly to us when you create an account, update your profile, or purchase a service. This includes your name, email, and any portfolio works uploaded.</p>
-          </section>
+          <motion.div
+            className="legal-content"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.42, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {privacySections.map((section, index) => {
+              const Icon = section.icon;
 
-          <section style={{ marginBottom: '50px' }}>
-            <h3 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-               <FiLock color="var(--accent)" /> 2. Data Security
-            </h3>
-            <p>We implement a variety of security measures to maintain the safety of your personal information. Your sensitive data is encrypted via SSL technology and protected behind a firewall.</p>
-          </section>
-
-          <section style={{ marginBottom: '50px' }}>
-            <h3 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-               <FiEye color="var(--accent)" /> 3. Cookies
-            </h3>
-            <p>Pattayapal uses cookies to understand and save your preferences for future visits and compile aggregate data about site traffic and site interaction.</p>
-          </section>
-
-        </div>
-      </div>
-    </div>
+              return (
+                <section className="legal-section" key={section.title}>
+                  <div className="legal-section-index">{String(index + 1).padStart(2, '0')}</div>
+                  <div>
+                    <h2>
+                      <Icon />
+                      <span>{section.title}</span>
+                    </h2>
+                    <p>{section.body}</p>
+                  </div>
+                </section>
+              );
+            })}
+          </motion.div>
+        </article>
+      </main>
+      <Footer />
+    </>
   );
 }
 

@@ -607,6 +607,7 @@ const changePassword = async (req, res) => {
 
 // Claim Quest Reward
 const claimQuest = async (req, res) => {
+  return res.status(410).json({ message: 'Use /api/quests/:questId/claim instead' });
   try {
     const { questId, reward, xpReward } = req.body;
     const userId = req.user.id || req.user._id;

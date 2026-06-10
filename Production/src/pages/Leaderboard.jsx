@@ -5,6 +5,7 @@ import { FiAward, FiTrendingUp, FiDollarSign, FiUsers } from 'react-icons/fi';
 import RankBadge from '../components/RankBadge';
 import { getFullUrl } from '../utils/mediaUtils';
 import { CoinIcon, CoinBadge } from '../components/CoinIcon';
+import PremiumLoader from '../components/PremiumLoader';
 import { AuthContext } from '../context/AuthContext';
 
 import { CONFIG } from '../utils/config';
@@ -81,7 +82,7 @@ const Leaderboard = () => {
         {/* Leaderboard Table */}
         <div style={{ background: '#0a0a0a', borderRadius: '30px', border: '1px solid #1a1a1a', overflow: 'hidden' }}>
           {loading ? (
-            <div style={{ padding: '100px', textAlign: 'center', color: '#ff5733' }}>LOADING RANKINGS...</div>
+            <PremiumLoader fullScreen={false} text="Loading Rankings..." subtext="กำลังโหลดอันดับ..." />
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>

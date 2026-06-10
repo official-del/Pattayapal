@@ -4,6 +4,8 @@ import { worksAPI } from '../utils/api';
 import '../css/WorkSlider.css';
 import { FiArrowRight } from 'react-icons/fi';
 import HoverVideoPlayer from './HoverVideoPlayer';
+import PremiumLoader from './PremiumLoader';
+import { getMediaUrl, getWorkPosterUrl, getWorkVideoUrl, workIsVideo } from '../utils/mediaUtils';
 
 import { CONFIG } from '../utils/config';
 
@@ -60,8 +62,8 @@ function WorksSlider({ category }) {
   // ✅ ไม้ตายแก้ภาพ/วิดีโอไม่เต็มจอ
   const renderMedia = (work) => {
     const rawUrl = work.mediaUrl || work.mainImage?.url || work.mainImage || "";
-    const safeUrl = normalizeUrl(rawUrl);
-    const isVideo = work.type === 'video' || /\.(mp4|webm|ogg|mov)$/i.test(rawUrl);
+    const safeUrl = getMediaUrl(work) || normalizeUrl(rawUrl);
+    const isVideo = workIsVideo(work) || /\.(mp4|webm|ogg|mov)$/i.test(rawUrl);
 
     if (!safeUrl) {
       return <div style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", color: "#666" }}>No Media</div>;
@@ -70,7 +72,8 @@ function WorksSlider({ category }) {
     if (isVideo) {
       return (
         <HoverVideoPlayer 
-          src={safeUrl} 
+          src={getWorkVideoUrl(work) || safeUrl}
+          poster={getWorkPosterUrl(work)}
           style={{ position: 'absolute', top: 0, left: 0, width: "100%", height: "100%", backgroundColor: '#111', zIndex: 0 }} 
         />
       );
@@ -88,7 +91,9 @@ function WorksSlider({ category }) {
     );
   };
 
-  if (loading) return <div style={{ color: '#fff', padding: '20px', textAlign: 'center' }}>Lading {category?.label}...</div>;
+  if (loading) return (
+    <PremiumLoader fullScreen={false} size="small" text={`Loading ${category?.label || 'Works'}...`} subtext="" />
+  );
   if (works.length === 0) return null;
 
   const [featured, ...rest] = works;

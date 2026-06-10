@@ -1,24 +1,36 @@
-import palCoinImg from '../assets/pal-coin.png';
-
 export function CoinIcon({ size = 20, style = {} }) {
+  const pixel = Math.max(2, Math.round(Number(size) * 0.13));
+
   return (
-    <img
-      src={palCoinImg}
-      alt="Coin"
+    <span
+      aria-hidden="true"
       style={{
         width: size,
         height: size,
-        display: 'inline-block',
+        minWidth: size,
+        minHeight: size,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         verticalAlign: 'middle',
         flexShrink: 0,
-        objectFit: 'contain',
+        border: `${pixel}px solid #0a0a0a`,
+        borderRadius: '50%',
+        background: 'linear-gradient(135deg, #fff4a8 0%, #facc15 32%, #f97316 100%)',
+        boxShadow: `inset ${pixel}px ${pixel}px 0 rgba(255,255,255,0.55), ${pixel}px ${pixel}px 0 #0a0a0a`,
+        color: '#0a0a0a',
+        fontFamily: "'Outfit', 'Inter', sans-serif",
+        fontWeight: 900,
+        fontSize: Math.max(8, Math.round(Number(size) * 0.52)),
+        lineHeight: 1,
         ...style
       }}
-    />
+    >
+      P
+    </span>
   );
 }
 
-// 💰 CoinBadge - แสดงยอด Coin พร้อม icon ใช้สำหรับ balance display
 export function CoinBadge({ amount = 0, size = 'md', color = '#F59E0B', showIcon = true }) {
   const sizes = {
     sm: { icon: 14, font: '0.8rem', gap: '4px' },
@@ -36,7 +48,7 @@ export function CoinBadge({ amount = 0, size = 'md', color = '#F59E0B', showIcon
       fontWeight: '700',
       fontSize: s.font,
       color,
-      fontFamily: "'Outfit', 'Segoe UI', sans-serif",
+      fontFamily: "'Outfit', 'Inter', sans-serif",
     }}>
       {showIcon && <CoinIcon size={s.icon} />}
       {Number(amount).toLocaleString('th-TH')}
@@ -44,7 +56,6 @@ export function CoinBadge({ amount = 0, size = 'md', color = '#F59E0B', showIcon
   );
 }
 
-// 🏷️ CoinTag - เล็กๆ สำหรับใส่ใน card / badge
 export function CoinTag({ amount, positive = true }) {
   return (
     <span style={{

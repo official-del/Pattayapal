@@ -1,20 +1,36 @@
 import { customConfirm } from '../utils/customConfirm';
 import { toast } from 'react-hot-toast';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { worksAPI } from '../utils/api';
-import { getMediaUrl, workIsVideo, getFullUrl } from '../utils/mediaUtils';
+import { getFullUrl, getMediaUrl, getWorkPosterUrl, getWorkVideoUrl, workIsVideo } from '../utils/mediaUtils';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { FiArrowLeft, FiHeart, FiMessageSquare, FiClock, FiSend, FiTrash2, FiExternalLink, FiMaximize2, FiActivity, FiZap, FiTarget, FiBox, FiAlertTriangle, FiChevronLeft, FiChevronRight, FiX, FiEye } from 'react-icons/fi';
+import {
+  FiArrowLeft,
+  FiHeart,
+  FiMessageSquare,
+  FiSend,
+  FiTrash2,
+  FiExternalLink,
+  FiMaximize2,
+  FiZap,
+  FiTarget,
+  FiBox,
+  FiAlertTriangle,
+  FiChevronLeft,
+  FiChevronRight,
+  FiX,
+  FiEye,
+} from 'react-icons/fi';
 import HoverVideoPlayer from '../components/HoverVideoPlayer';
-
+import PremiumLoader from '../components/PremiumLoader';
+import Footer from '../components/Footer';
 import { CONFIG } from '../utils/config';
+import '../css/WorkDetail.css';
 
 const API_BASE_URL = CONFIG.API_BASE_URL;
-
-// 🛡️ Global tracker to prevent double-incrementing in development/Strict Mode
 const sessionViewedIds = new Set();
 
 function WorkDetail() {
@@ -28,12 +44,11 @@ function WorkDetail() {
   const [likesCount, setLikesCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState("");
+  const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
-
   const [replyingTo, setReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState("");
+  const [replyText, setReplyText] = useState('');
   const [expandedReplies, setExpandedReplies] = useState({});
 
   const userInfo = JSON.parse(window.safeStorage.getItem('userInfo'));
@@ -43,18 +58,16 @@ function WorkDetail() {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        // 📈 Increment View Count First (Only once per project ID per session load)
         let resView = null;
         if (!sessionViewedIds.has(id)) {
-          sessionViewedIds.add(id); // ✅ Add immediately to prevent race conditions
-          resView = await axios.post(`${API_BASE_URL}/api/works/${id}/view`).catch(err => null);
+          sessionViewedIds.add(id);
+          resView = await axios.post(`${API_BASE_URL}/api/works/${id}/view`).catch(() => null);
         }
-        
+
         const resDetail = await worksAPI.getById(id);
         const data = resDetail.work || resDetail;
-        
-        // If view increment was successful, use that count, otherwise use what's in data
-        if (resView && resView.data) {
+
+        if (resView?.data) {
           data.views = resView.data.views;
         }
 
@@ -63,124 +76,141 @@ function WorkDetail() {
         setLikesCount(data.likes?.length || 0);
 
         if (userInfo && data.likes) {
-          setIsLiked(data.likes.some(likeId => likeId === (userInfo._id || userInfo.id)));
+          setIsLiked(data.likes.some((likeId) => likeId === (userInfo._id || userInfo.id)));
         }
 
         const resAll = await worksAPI.getAll();
         const all = resAll.works || resAll || [];
-        setRecommendedWorks(all.filter(w => w._id !== id).slice(0, 4));
+        setRecommendedWorks(all.filter((item) => item._id !== id).slice(0, 4));
         setFetchError(false);
       } catch (err) {
-        console.error("Fetch Error:", err);
+        console.error('Fetch Error:', err);
         setFetchError(true);
       } finally {
         setLoading(false);
       }
     };
+
     fetchAllData();
     window.scrollTo(0, 0);
   }, [id]);
 
   const handleLike = async () => {
-    if (!token) return toast.error("Please log in to like this project");
+    if (!token) return toast.error('Please log in to like this project');
     try {
       const res = await axios.post(`${API_BASE_URL}/api/works/${id}/like`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       setLikesCount(res.data.likesCount);
       setIsLiked(res.data.isLiked);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    if (!userInfo) return toast.error("Please log in to join the discussion");
+    if (!userInfo) return toast.error('Please log in to join the discussion');
+    if (!token) return toast.error('Please log in again');
     setIsSubmitting(true);
     try {
       const res = await axios.post(`${API_BASE_URL}/api/works/${id}/comment`, {
-        user: userInfo?.name || "Anonymous",
-        profileImage: userInfo?.profileImage?.url || "",
-        userId: userInfo?._id || userInfo?.id || "",
-        text: commentText
+        text: commentText,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'x-auth-token': token,
+        },
       });
       setComments(res.data);
-      setCommentText("");
-    } catch (err) { toast.error("Comment protocol failed."); }
-    finally { setIsSubmitting(false); }
+      setCommentText('');
+    } catch (err) {
+      toast.error('Comment protocol failed.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReplySubmit = async (e, commentId) => {
     e.preventDefault();
     if (!replyText.trim()) return;
-    if (!userInfo) return toast.error("Please log in to reply 🙏");
+    if (!userInfo) return toast.error('Please log in to reply');
+    if (!token) return toast.error('Please log in again');
     try {
       const res = await worksAPI.replyComment(id, commentId, {
-        user: userInfo?.name || "Anonymous",
-        profileImage: userInfo?.profileImage?.url || "",
-        userId: userInfo?._id || userInfo?.id || "",
-        text: replyText
-      }, token);
+        text: replyText,
+      });
       setComments(res);
-      setReplyText("");
+      setReplyText('');
       setReplyingTo(null);
-      setExpandedReplies(prev => ({ ...prev, [commentId]: true }));
-    } catch (err) { toast.error("Reply failed."); }
+      setExpandedReplies((prev) => ({ ...prev, [commentId]: true }));
+    } catch (err) {
+      toast.error('Reply failed.');
+    }
   };
 
   const deleteComment = async (commentId) => {
-    if (!await customConfirm("Are you sure you want to delete this comment?")) return;
+    if (!await customConfirm('Are you sure you want to delete this comment?')) return;
     try {
       const res = await axios.delete(`${API_BASE_URL}/api/works/${id}/comment/${commentId}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       setComments(res.data);
-    } catch (err) { toast.error("Deletion signal failed."); }
+    } catch (err) {
+      toast.error('Deletion signal failed.');
+    }
   };
 
-  if (loading) return (
-    <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', gap: '20px' }}>
-      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '40px', height: '40px', border: '3px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }} />
-      <span style={{ fontWeight: '700', color: '#222', letterSpacing: '4px', fontSize: '0.8rem' }}>LOADING PROJECT DETAILS...</span>
-    </div>
-  );
+  if (loading) {
+    return (
+      <PremiumLoader
+        text="Loading Project..."
+        subtext="Preparing creator work details..."
+      />
+    );
+  }
 
-  if (fetchError || !work) return (
-    <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', gap: '25px', textAlign: 'center' }}>
-      <FiAlertTriangle size={50} color="var(--accent)" />
-      <span style={{ fontWeight: '700', letterSpacing: '2px', fontSize: '1rem', color: '#fff' }}>PROJECT DATA UNREACHABLE</span>
-      <p style={{ color: '#444', maxWidth: '400px' }}>No Detail</p>
-      <button onClick={() => window.location.reload()} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '15px', fontWeight: '700', cursor: 'pointer', marginTop: '10px' }}>RETRY SYNC</button>
-    </div>
-  );
+  if (fetchError || !work) {
+    return (
+      <>
+        <main className="work-detail-page">
+          <section className="work-detail-error">
+            <FiAlertTriangle size={42} />
+            <h1>Project data unreachable</h1>
+            <p>This work detail could not be loaded. Try refreshing the interface.</p>
+            <button type="button" onClick={() => window.location.reload()}>Retry sync</button>
+          </section>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
-  const albumMedia = work ? [
+  const albumMedia = [
     work.mainImage?.url || work.videoUrl || work.mediaUrl,
-    ...(work.album?.map(item => item.url) || [])
-  ].filter(Boolean) : [];
+    ...(work.album?.map((item) => item.url) || []),
+  ].filter(Boolean);
 
   const handlePrevMedia = (e) => {
     e.stopPropagation();
     const currentIndex = albumMedia.indexOf(selectedMedia);
     if (currentIndex === -1) return;
-    const newIndex = (currentIndex - 1 + albumMedia.length) % albumMedia.length;
-    setSelectedMedia(albumMedia[newIndex]);
+    setSelectedMedia(albumMedia[(currentIndex - 1 + albumMedia.length) % albumMedia.length]);
   };
 
   const handleNextMedia = (e) => {
     e.stopPropagation();
     const currentIndex = albumMedia.indexOf(selectedMedia);
     if (currentIndex === -1) return;
-    const newIndex = (currentIndex + 1) % albumMedia.length;
-    setSelectedMedia(albumMedia[newIndex]);
+    setSelectedMedia(albumMedia[(currentIndex + 1) % albumMedia.length]);
   };
 
   const handleShare = async () => {
-    if (!work) return;
     const shareData = {
-      title: `${work.title} | Pattayapal`,
-      text: work.description?.substring(0, 100) || 'Check out this project on Pattayapal!',
-      url: window.location.href
+      title: `${work.title} | PattayaPal`,
+      text: work.description?.substring(0, 100) || 'Check out this project on PattayaPal.',
+      url: window.location.href,
     };
 
     try {
@@ -188,369 +218,368 @@ function WorkDetail() {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        toast.success("🔗 Link copied to clipboard!");
+        toast.success('Link copied to clipboard.');
       }
     } catch (err) {
-      console.error("Error sharing:", err);
+      console.error('Error sharing:', err);
     }
   };
 
-  const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const itemVariants = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } };
+  const toggleReplies = (commentId) => {
+    setExpandedReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+  };
+
+  const mainIsVideo = workIsVideo(work);
+  const creatorId = work.createdBy?._id || work.createdBy?.id;
+  const creatorImage = work.createdBy?.profileImage?.url
+    ? getFullUrl(work.createdBy.profileImage.url)
+    : 'https://via.placeholder.com/96';
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.08 } },
+  };
+  const itemVariants = {
+    hidden: { y: 18, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { duration: 0.26, ease: [0.23, 1, 0.32, 1] } },
+  };
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="show" style={{ background: "#000", color: "#fff", minHeight: "100vh", paddingBottom: '150px' }}>
-      <Helmet>
-        <title>{work?.title} | {work?.category?.name || 'Project'} | Pattayapal Portfolio</title>
-        <meta name="description" content={work?.description?.substring(0, 160) || `ชมรายละเอียดโปรเจกต์ ${work?.title} บน Pattayapal`} />
-
-        {/* OpenGraph */}
-        <meta property="og:title" content={`${work?.title} | Pattayapal Portfolio`} />
-        <meta property="og:description" content={work?.description?.substring(0, 160)} />
-        <meta property="og:image" content={getMediaUrl(work) || "https://pattayapal.com/og-image.jpg"} />
-        <meta property="og:type" content="article" />
-      </Helmet>
+    <>
+      <motion.main
+        className="work-detail-page"
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+      >
+        <Helmet>
+          <title>{work?.title} | {work?.category?.name || 'Project'} | PattayaPal Portfolio</title>
+          <meta name="description" content={work?.description?.substring(0, 160) || `View ${work?.title} on PattayaPal`} />
+          <meta property="og:title" content={`${work?.title} | PattayaPal Portfolio`} />
+          <meta property="og:description" content={work?.description?.substring(0, 160)} />
+          <meta property="og:image" content={getMediaUrl(work) || 'https://pattayapal.com/og-image.jpg'} />
+          <meta property="og:type" content="article" />
+        </Helmet>
 
       <AnimatePresence>
         {selectedMedia && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="work-lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={() => setSelectedMedia(null)}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: 'blur(10px)' }}
           >
-            {/* ❌ Close Button */}
-            <button onClick={() => setSelectedMedia(null)} style={{ position: 'absolute', top: '30px', right: '30px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '50px', height: '50px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', zIndex: 10001 }}><FiX /></button>
+            <button className="lightbox-close" type="button" onClick={() => setSelectedMedia(null)} aria-label="Close media">
+              <FiX />
+            </button>
 
-            {/* ⬅️ Prev Button */}
             {albumMedia.length > 1 && (
-              <button onClick={handlePrevMedia} style={{ position: 'absolute', left: '30px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '60px', height: '60px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', zIndex: 10001, transition: '0.3s' }} className="nav-btn-hover"><FiChevronLeft /></button>
+              <button className="lightbox-nav is-prev" type="button" onClick={handlePrevMedia} aria-label="Previous media">
+                <FiChevronLeft />
+              </button>
             )}
 
-            <div style={{ position: 'relative', maxWidth: "90vw", maxHeight: "85vh", display: 'flex', justifyContent: 'center' }}>
+            <div className="lightbox-stage" onClick={(e) => e.stopPropagation()}>
               {selectedMedia.match(/\.(mp4|webm|mov)$/i) ? (
                 <motion.video
                   key={selectedMedia}
-                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                   src={getFullUrl(selectedMedia)}
-                  controls autoPlay
-                  style={{ maxHeight: "85vh", maxWidth: "90vw", borderRadius: "20px", boxShadow: '0 30px 100px rgba(0,0,0,1)' }}
-                  onClick={(e) => e.stopPropagation()}
+                  controls
+                  autoPlay
+                  initial={{ scale: 0.96, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
                 />
               ) : (
                 <motion.img
                   key={selectedMedia}
-                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                   src={getFullUrl(selectedMedia)}
-                  style={{ maxHeight: "85vh", maxWidth: "90vw", borderRadius: "20px", boxShadow: '0 30px 100px rgba(0,0,0,1)' }}
-                  onClick={(e) => e.stopPropagation()}
+                  alt=""
+                  initial={{ scale: 0.96, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
                 />
               )}
-
-              {/* Media Index Indicator */}
-              <div style={{ position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', fontWeight: '700', letterSpacing: '2px' }}>
-                {albumMedia.indexOf(selectedMedia) + 1} / {albumMedia.length}
-              </div>
+              <span className="lightbox-count">{albumMedia.indexOf(selectedMedia) + 1} / {albumMedia.length}</span>
             </div>
 
-            {/* ➡️ Next Button */}
             {albumMedia.length > 1 && (
-              <button onClick={handleNextMedia} style={{ position: 'absolute', right: '30px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '60px', height: '60px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', zIndex: 10001, transition: '0.3s' }} className="nav-btn-hover"><FiChevronRight /></button>
+              <button className="lightbox-nav is-next" type="button" onClick={handleNextMedia} aria-label="Next media">
+                <FiChevronRight />
+              </button>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="work-detail-container" style={{ maxWidth: "1600px", margin: "0 auto", padding: "150px 5% 0" }}>
+      <div className="work-detail-shell">
+        <motion.button
+          variants={itemVariants}
+          type="button"
+          className="work-back-btn"
+          onClick={() => navigate(-1)}
+        >
+          <FiArrowLeft />
+          <span>Back</span>
+        </motion.button>
 
-        {/* 📑 Tactical Case Grid */}
-        <div className="work-detail-grid" style={{ gap: '80px', alignItems: 'start' }}>
-
-          {/* 📽️ Cinematic Media Node */}
-          <motion.div variants={itemVariants}>
-            <button onClick={() => navigate(-1)} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", width: '50px', height: '50px', borderRadius: '15px', display: "flex", alignItems: "center", justifyContent: 'center', marginBottom: '40px' }}>
-              <FiArrowLeft size={20} />
-            </button>
-
-            <div className="glass" style={{ borderRadius: '50px', overflow: 'hidden', background: '#000', border: '1px solid rgba(255,255,255,0.03)', boxShadow: '0 50px 100px rgba(0,0,0,0.8)' }}>
-              {workIsVideo(work) ? (
-                <video src={getMediaUrl(work)} controls autoPlay muted loop style={{ width: '100%', display: 'block' }} />
-              ) : (
-                <img src={getMediaUrl(work)} style={{ width: '100%', display: 'block', cursor: 'zoom-in' }} onClick={() => setSelectedMedia(work.mainImage?.url || work.videoUrl || work.mediaUrl)} />
-              )}
-            </div>
-
-            {/* Content Payload */}
-            <div style={{ marginTop: '70px', padding: '0 20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-                <FiZap color="var(--accent)" size={18} />
-                <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '1.3rem', letterSpacing: '5px' }}>Project Detail</span>
-              </div>
-              <h3 className="work-title" style={{ fontSize: 'clamp(2rem, 7vw, 4rem)', fontWeight: '500', margin: '0 0 35px', letterSpacing: '0px', lineHeight: 0.9 }}>{work.title}</h3>
-              <div style={{ width: '60px', height: '4px', background: 'var(--accent)', marginBottom: '50px', borderRadius: '2px', boxShadow: '0 0 15px var(--accent-glow)' }}></div>
-            </div>
-
-            {/* Sub-Data Gallery */}
-            {work.album && work.album.length > 0 && (
-              <div style={{ marginTop: '100px', paddingTop: '80px', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
-                  <FiBox color="#222" size={16} />
-                  <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#222', letterSpacing: '4px' }}>Project Assets</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px' }}>
-                  {work.album.map((item, i) => {
-                    const isVid = item.url && item.url.match(/\.(mp4|webm|mov)$/i);
-                    return (
-                      <motion.div
-                        whileHover={{ y: -10, scale: 1.02 }}
-                        key={i} onClick={() => setSelectedMedia(item.url)}
-                        style={{ position: 'relative', aspectRatio: '16/10', borderRadius: '35px', overflow: 'hidden', background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer' }}
-                      >
-                        {isVid ? (
-                          <video src={getFullUrl(item.url)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <img 
-                            src={getFullUrl(item.url)} 
-                            loading="lazy"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                          />
-                        )}
-                        {isVid && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}><FiMaximize2 size={30} color="#fff" /></div>}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </motion.div>
-
-          {/* 📡 Right: Tactical Stats Node */}
-          <motion.aside variants={itemVariants} style={{ position: 'sticky', top: '150px' }}>
-            <div className="glass" style={{ padding: '50px', borderRadius: '60px', border: '1px solid rgba(255,255,255,0.03)' }}>
-              {/* Operative Bio */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(15px, 3vw, 25px)', marginBottom: 'clamp(20px, 5vw, 50px)' }}>
-                <div style={{ width: 'clamp(45px, 10vw, 65px)', height: 'clamp(45px, 10vw, 65px)', borderRadius: '50%', background: '#000', border: '2px solid var(--accent)', overflow: 'hidden', flexShrink: 0 }}>
-                  <img src={work.createdBy?.profileImage?.url ? getFullUrl(work.createdBy.profileImage.url) : 'https://via.placeholder.com/65'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '1px' }}>Creator</span>
-                  <Link to={`/profile/${work.createdBy?._id || work.createdBy?.id}`} style={{ display: 'block', color: '#fff', fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', fontWeight: '700', textDecoration: 'none', marginTop: '2px' }}>{work.createdBy?.name || 'Unknown'}</Link>
-                </div>
+        <div className="work-detail-grid">
+          <motion.section className="work-main-column" variants={itemVariants}>
+            <div className="work-media-panel">
+              <div className="work-media-topbar">
+                <span>{mainIsVideo ? 'Video Work' : 'Project Cover'}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMedia(work.mainImage?.url || work.videoUrl || work.mediaUrl)}
+                  aria-label="Open media preview"
+                >
+                  <FiMaximize2 />
+                </button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '35px' }}>
-                 <div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#333', letterSpacing: '2px', display: 'block', marginBottom: '10px' }}>Category</span>
-                  <div className="glass" style={{ display: 'inline-block', padding: 'clamp(6px, 1.5vw, 10px) clamp(12px, 3vw, 20px)', borderRadius: '12px', color: 'var(--accent)', fontWeight: '700', fontSize: 'clamp(0.7rem, 2vw, 0.85rem)', border: '1px solid rgba(255,87,51,0.1)' }}>{work.category?.name?.toUpperCase() || 'GENERAL'}</div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#222', letterSpacing: '1px', display: 'block', marginBottom: '10px' }}>Description</span>
-                  <span style={{ color: '#fff', fontWeight: '700', fontSize: '1.2rem' }}>
-                    <p style={{ fontSize: '1.25rem', lineHeight: 1.8, color: '#666', fontWeight: '500', maxWidth: '950px', whiteSpace: 'pre-wrap' }}>{work.description || "Project parameters not specified by the operative."}</p>
-                  </span>
-                </div>
-
-                 <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, 15px)', marginTop: '20px' }}>
-                  <motion.button
-                    onClick={handleLike}
-                    whileHover={{ scale: 1.05, boxShadow: isLiked ? '0 0 30px var(--accent-glow)' : 'none' }}
-                    className="glass"
-                    style={{ flex: 1, padding: 'clamp(12px, 3vw, 20px)', borderRadius: 'clamp(15px, 4vw, 30px)', color: isLiked ? 'var(--accent)' : '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: `1px solid ${isLiked ? 'var(--accent)' : 'rgba(255,255,255,0.03)'}`, cursor: 'pointer', transition: '0.3s', fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }}
-                  >
-                    <FiHeart fill={isLiked ? 'var(--accent)' : 'none'} size={18} /> {likesCount}
-                  </motion.button>
-                  <div 
-                    className="glass" 
-                    style={{ flex: 1, padding: 'clamp(12px, 3vw, 20px)', borderRadius: 'clamp(15px, 4vw, 30px)', color: '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: '1px solid rgba(255,255,255,0.03)', fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }}
-                  >
-                    <FiEye size={18} /> {Number(work.views || 0).toLocaleString()}
-                  </div>
-                  <motion.button 
-                    onClick={handleShare}
-                    whileHover={{ scale: 1.05 }} 
-                    className="glass" 
-                    style={{ flex: 1, padding: 'clamp(12px, 3vw, 20px)', borderRadius: 'clamp(15px, 4vw, 30px)', color: '#444', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', border: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer', fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }}
-                  >
-                    <FiExternalLink size={18} /> Share
-                  </motion.button>
-                </div>
-              </div>
-            </div>
-
-            {/* Intelligence Responses (Comments) */}
-            <div style={{ marginTop: '60px', padding: '0 10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
-                <FiMessageSquare color="#222" size={16} />
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#222', letterSpacing: '1px' }}>Conversation</span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                {comments.map((c, i) => {
-                  const toggleReplies = (cId) => setExpandedReplies(prev => ({ ...prev, [cId]: !prev[cId] }));
-
-                  return (
-                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ display: 'flex', gap: '18px' }}>
-                        <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: '#0a0a0a', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <img src={c.profileImage ? getFullUrl(c.profileImage) : 'https://via.placeholder.com/35'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                        <div className="glass" style={{ padding: '20px 25px', borderRadius: '25px', borderTopLeftRadius: 0, flex: 1, position: 'relative' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <span style={{ fontWeight: '700', color: 'var(--accent)', fontSize: '0.75rem', letterSpacing: '1px' }}>@{c.user?.toUpperCase()}</span>
-                            {(userInfo?.name === c.user || userInfo?._id === c.userId || userInfo?.id === c.userId) && <button onClick={() => deleteComment(c._id)} style={{ background: 'none', border: 'none', color: '#111', cursor: 'pointer' }}><FiTrash2 size={14} /></button>}
-                          </div>
-                          <p style={{ margin: 0, color: '#888', lineHeight: 1.5, fontSize: '0.95rem', fontWeight: '500' }}>{c.text}</p>
-
-                          {/* Reply Actions */}
-                          <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                            <button onClick={() => setReplyingTo(replyingTo === c._id ? null : c._id)} style={{ background: 'none', border: 'none', color: '#666', fontWeight: '700', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}>
-                              Reply
-                            </button>
-                            {c.replies?.length > 0 && (
-                              <button onClick={() => toggleReplies(c._id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontWeight: '700', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}>
-                                {expandedReplies[c._id] ? 'Hide' : `See ${c.replies.length} Reply`}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Reply Input Box */}
-                      <AnimatePresence>
-                        {replyingTo === c._id && (
-                          <motion.div className="comment-reply-container" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ marginLeft: '53px', marginTop: '5px' }}>
-                            <form onSubmit={(e) => handleReplySubmit(e, c._id)} style={{ display: 'flex', gap: '10px' }}>
-                              <input value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Reply to this comment..." style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '20px', padding: '10px 15px', fontSize: '0.85rem' }} />
-                              <button type="submit" disabled={!replyText.trim()} style={{ background: replyText.trim() ? 'var(--accent)' : '#222', color: '#000', border: 'none', borderRadius: '20px', padding: '0 15px', fontWeight: '700', cursor: 'pointer' }}>ส่ง</button>
-                            </form>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {/* Render Replies */}
-                      <AnimatePresence>
-                        {expandedReplies[c._id] && c.replies?.length > 0 && (
-                          <motion.div className="comment-reply-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginLeft: '53px', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '5px' }}>
-                            {c.replies.map((reply, rIdx) => (
-                              <div key={reply._id || rIdx} style={{ display: 'flex', gap: '12px' }}>
-                                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#000', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
-                                  <img src={reply.profileImage ? getFullUrl(reply.profileImage) : 'https://via.placeholder.com/30'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                                </div>
-                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px 18px', borderRadius: '20px', borderTopLeftRadius: '0', flex: 1 }}>
-                                  <span style={{ fontWeight: '700', fontSize: '0.75rem', color: 'var(--accent)' }}>@{reply.user?.toUpperCase() || 'ANON USER'}</span>
-                                  <div style={{ fontSize: '0.9rem', color: '#777', marginTop: '4px' }}>{reply.text}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )
-                })}
-
-                {token && (
-                  <form onSubmit={handleCommentSubmit} style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
-                    <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..." style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '30px', padding: '18px 25px', color: '#fff', outline: 'none', fontSize: '0.9rem', fontWeight: '500' }} />
-                    <motion.button disabled={isSubmitting} whileTap={{ scale: 0.9 }} type="submit" style={{ background: 'var(--accent)', border: 'none', width: '55px', height: '55px', borderRadius: '50%', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', boxShadow: '0 10px 20px var(--accent-glow)' }}>
-                      <FiSend />
-                    </motion.button>
-                  </form>
+              <div className="work-media-frame">
+                {mainIsVideo ? (
+                  <video
+                    src={getWorkVideoUrl(work)}
+                    poster={getWorkPosterUrl(work)}
+                    controls
+                    muted
+                    loop
+                  />
+                ) : (
+                  <img
+                    src={getMediaUrl(work)}
+                    alt={work.title || 'Project media'}
+                    onClick={() => setSelectedMedia(work.mainImage?.url || work.videoUrl || work.mediaUrl)}
+                  />
                 )}
               </div>
             </div>
+
+            {work.album && work.album.length > 0 && (
+              <section className="work-assets-section">
+                <div className="work-section-heading">
+                  <div>
+                    <span><FiBox /> Project Assets</span>
+                    <h2>More from this work</h2>
+                  </div>
+                  <strong>{work.album.length} items</strong>
+                </div>
+                <div className="work-assets-grid">
+                  {work.album.map((item, index) => {
+                    const isVid = item.url && item.url.match(/\.(mp4|webm|mov)$/i);
+                    return (
+                      <button
+                        key={item._id || item.url || index}
+                        type="button"
+                        className="asset-card"
+                        onClick={() => setSelectedMedia(item.url)}
+                      >
+                        {isVid ? (
+                          <video src={getFullUrl(item.url)} />
+                        ) : (
+                          <img src={getFullUrl(item.url)} loading="lazy" alt="" />
+                        )}
+                        <span><FiMaximize2 /> Preview</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+          </motion.section>
+
+          <motion.aside className="work-side-column" variants={itemVariants}>
+            <section className="work-info-panel">
+              <div className="creator-card">
+                <img src={creatorImage} alt={work.createdBy?.name || 'Creator'} />
+                <div>
+                  <span>Creator</span>
+                  {creatorId ? (
+                    <Link to={`/profile/${creatorId}`}>{work.createdBy?.name || 'Unknown'}</Link>
+                  ) : (
+                    <strong>{work.createdBy?.name || 'Unknown'}</strong>
+                  )}
+                </div>
+              </div>
+
+              <div className="work-meta-grid">
+                <div>
+                  <span>Category</span>
+                  <strong>{work.category?.name || 'General'}</strong>
+                </div>
+                <div>
+                  <span>Views</span>
+                  <strong>{Number(work.views || 0).toLocaleString()}</strong>
+                </div>
+              </div>
+
+              <div className="work-action-row">
+                <button
+                  type="button"
+                  onClick={handleLike}
+                  className={isLiked ? 'is-liked' : ''}
+                >
+                  <FiHeart fill={isLiked ? 'currentColor' : 'none'} />
+                  {likesCount}
+                </button>
+                <button type="button" onClick={handleShare}>
+                  <FiExternalLink />
+                  Share
+                </button>
+              </div>
+            </section>
+
+            <section className="work-content-block">
+              <div className="work-kicker">
+                <FiZap />
+                <span>Project Detail</span>
+              </div>
+              <h1>{work.title}</h1>
+              <p>{work.description || 'Project details have not been added yet.'}</p>
+            </section>
+
+            <section className="work-comments-panel">
+              <div className="work-section-heading is-compact">
+                <div>
+                  <span><FiMessageSquare /> Conversation</span>
+                  <h2>{comments.length} comments</h2>
+                </div>
+              </div>
+
+              <div className="work-comments-list">
+                {comments.length === 0 && (
+                  <div className="comment-empty">No comments yet. Start the conversation.</div>
+                )}
+
+                {comments.map((comment, index) => (
+                  <article className="comment-card" key={comment._id || index}>
+                    <div className="comment-row">
+                      <img
+                        src={comment.profileImage ? getFullUrl(comment.profileImage) : 'https://via.placeholder.com/40'}
+                        alt=""
+                      />
+                      <div className="comment-bubble">
+                        <div className="comment-head">
+                          <strong>@{comment.user || 'Anonymous'}</strong>
+                          {(userInfo?.name === comment.user || userInfo?._id === comment.userId || userInfo?.id === comment.userId) && (
+                            <button type="button" onClick={() => deleteComment(comment._id)} aria-label="Delete comment">
+                              <FiTrash2 />
+                            </button>
+                          )}
+                        </div>
+                        <p>{comment.text}</p>
+                        <div className="comment-actions">
+                          <button type="button" onClick={() => setReplyingTo(replyingTo === comment._id ? null : comment._id)}>
+                            Reply
+                          </button>
+                          {comment.replies?.length > 0 && (
+                            <button type="button" onClick={() => toggleReplies(comment._id)}>
+                              {expandedReplies[comment._id] ? 'Hide replies' : `See ${comment.replies.length} replies`}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <AnimatePresence>
+                      {replyingTo === comment._id && (
+                        <motion.form
+                          className="reply-form"
+                          onSubmit={(e) => handleReplySubmit(e, comment._id)}
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                        >
+                          <input
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Reply to this comment..."
+                          />
+                          <button type="submit" disabled={!replyText.trim()}>Send</button>
+                        </motion.form>
+                      )}
+                    </AnimatePresence>
+
+                    <AnimatePresence>
+                      {expandedReplies[comment._id] && comment.replies?.length > 0 && (
+                        <motion.div
+                          className="reply-list"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          {comment.replies.map((reply, replyIndex) => (
+                            <div className="reply-card" key={reply._id || replyIndex}>
+                              <img
+                                src={reply.profileImage ? getFullUrl(reply.profileImage) : 'https://via.placeholder.com/32'}
+                                alt=""
+                              />
+                              <div>
+                                <strong>@{reply.user || 'Anonymous'}</strong>
+                                <p>{reply.text}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </article>
+                ))}
+              </div>
+
+              {token && (
+                <form className="comment-form" onSubmit={handleCommentSubmit}>
+                  <input
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Write a comment..."
+                  />
+                  <button type="submit" disabled={isSubmitting || !commentText.trim()}>
+                    <FiSend />
+                  </button>
+                </form>
+              )}
+            </section>
           </motion.aside>
         </div>
 
-        {/* --- Related Signals (Recommendations) --- */}
-        <div style={{ marginTop: '180px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-            <FiTarget color="var(--accent)" size={30} style={{ marginBottom: '20px' }} />
-            <h3 style={{ fontSize: '2.5rem', fontWeight: '700', color: '#fff', letterSpacing: '1px' }}>You Might Like</h3>
-            <p style={{ color: '#222', fontWeight: '700', letterSpacing: '1px', fontSize: '1.2rem', marginTop: '10px' }}>More Like This</p>
-          </div>
-          <div className="recommendation-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '40px' }}>
-            {recommendedWorks.map(rec => ( // <--- ตัวแปร rec จะถูกนิยามตรงนี้
-              <motion.div whileHover={{ y: -10 }} key={rec._id}>
-                <Link to={`/works/${rec._id}`} style={{ textDecoration: 'none' }}>
-                  <div className="glass" style={{ padding: '20px', borderRadius: '45px', border: '1px solid rgba(255,255,255,0.03)' }}>
+        {recommendedWorks.length > 0 && (
+          <motion.section className="related-section" variants={itemVariants}>
+            <div className="work-section-heading">
+              <div>
+                <span><FiTarget /> Related Works</span>
+                <h2>You might like</h2>
+              </div>
+              <Link to="/works">View all</Link>
+            </div>
 
-                    {/* ส่วนนี้คือตำแหน่งที่แสดงสื่อ (Media) */}
-                    <div style={{ aspectRatio: '16/10', borderRadius: '30px', overflow: 'hidden', background: '#0a0a0a', marginBottom: '25px' }}>
-                          {workIsVideo(rec) ? (
-                            <HoverVideoPlayer
-                              src={getMediaUrl(rec)}
-                              style={{ width: '100%', height: '100%' }}
-                            />
-                          ) : (
-                            <img
-                              src={getMediaUrl(rec)}
-                              loading="lazy"
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          )}
-                    </div>
-
-                    <div style={{ padding: '0 15px 15px' }}>
-                      <span style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--accent)', letterSpacing: '2px' }}>{rec.category?.name?.toUpperCase()}</span>
-                      <h4 style={{ color: '#fff', margin: '8px 0 0', fontSize: '1.5rem', fontWeight: '500', letterSpacing: '1px' }}>{rec.title}</h4>
-                    </div>
+            <div className="related-grid">
+              {recommendedWorks.map((rec) => (
+                <Link to={`/works/${rec._id}`} className="related-card" key={rec._id}>
+                  <div className="related-media">
+                    {workIsVideo(rec) ? (
+                      <HoverVideoPlayer
+                        src={getWorkVideoUrl(rec)}
+                        poster={getWorkPosterUrl(rec)}
+                      />
+                    ) : (
+                      <img src={getMediaUrl(rec)} loading="lazy" alt={rec.title || 'Related work'} />
+                    )}
+                  </div>
+                  <div className="related-body">
+                    <span>{rec.category?.name || 'General'}</span>
+                    <h3>{rec.title}</h3>
+                    <p><FiEye /> {Number(rec.views || 0).toLocaleString()} views</p>
                   </div>
                 </Link>
-              </motion.div>
-            ))}
-          </div>
-
+              ))}
+            </div>
+          </motion.section>
+        )}
         </div>
-
-      </div>
-
-      <style>{`
-        .work-detail-grid {
-          display: grid;
-          grid-template-columns: minmax(0, 1.8fr) 450px;
-        }
-        @media (max-width: 1200px) {
-          .work-detail-grid { grid-template-columns: minmax(0, 1.5fr) 400px; gap: 40px !important; }
-        }
-        @media (max-width: 1024px) {
-          .work-detail-grid {
-            grid-template-columns: 1fr;
-            gap: 50px !important;
-          }
-          .work-detail-container { padding-top: 100px !important; }
-        }
-        @media (max-width: 768px) {
-          .work-detail-container { padding: 80px 4% 0 !important; }
-          .work-title { font-size: 2.5rem !important; margin-bottom: 20px !important; }
-          .glass { padding: 25px !important; border-radius: 35px !important; }
-        }
-        @media (max-width: 480px) {
-          .work-detail-container { padding: 60px 15px 0 !important; }
-          .work-title { font-size: 2.2rem !important; }
-          .recommendation-grid { gap: 20px !important; }
-          .comment-reply-container { margin-left: 20px !important; }
-        }
-        @media (max-width: 1024px) {
-          .work-detail-grid aside { position: static !important; }
-        }
-        .nav-btn-hover:hover {
-          background: rgba(255, 255, 255, 0.15) !important;
-          border-color: rgba(255, 255, 255, 0.3) !important;
-          transform: translateY(-50%) scale(1.1) !important;
-        }
-        @media (max-width: 768px) {
-          .nav-btn-hover {
-            width: 45px !important;
-            height: 45px !important;
-            font-size: 1.2rem !important;
-            left: 10px !important;
-          }
-          .nav-btn-hover:last-of-type {
-            right: 10px !important;
-          }
-        }
-      `}</style>
-    </motion.div>
+      </motion.main>
+      <Footer />
+    </>
   );
 }
 

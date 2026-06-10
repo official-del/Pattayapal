@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { worksAPI } from '../utils/api';
-import { getMediaUrl, workIsVideo } from '../utils/mediaUtils';
+import { getMediaUrl, getWorkPosterUrl, getWorkVideoUrl, workIsVideo } from '../utils/mediaUtils';
 import { FiEye, FiActivity } from 'react-icons/fi';
 
 function TopRanking({ label }) {
@@ -91,7 +91,7 @@ function TopRanking({ label }) {
                       boxShadow: index === currentIndex ? '0 30px 60px rgba(255,87,51,0.2)' : '0 20px 40px rgba(0,0,0,0.5)'
                     }}>
                       {isVideo ? (
-                        <video src={mediaUrl} muted loop playsInline autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <video src={getWorkVideoUrl(work) || mediaUrl} poster={getWorkPosterUrl(work)} muted loop playsInline autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <img src={mediaUrl} alt={work.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       )}

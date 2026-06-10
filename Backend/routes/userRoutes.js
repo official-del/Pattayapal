@@ -6,6 +6,8 @@ import path from 'path';
 
 import { register, login, getProfile, verifyEmail } from '../controller/authController.js';
 import { protect, admin } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
+import { buildDiskUploadOptions, imageOnlyFileFilter, maxImageUploadBytes } from '../middleware/uploadConfig.js';
 import User from '../models/User.js';
 import {
   getPublicProfile,
@@ -25,18 +27,22 @@ import {
   getLeaderboard,
   getRankProgress,
   changePassword,
-  claimQuest,
   broadcastNotification
 } from '../controller/userController.js';
+import { claimQuest as claimQuestReward } from '../controller/questController.js';
 
 const router = express.Router();
 const tempDir = path.join(process.cwd(), 'uploads/temp');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-const upload = multer({ dest: tempDir });
+const upload = multer(buildDiskUploadOptions(tempDir, {
+  fileSize: maxImageUploadBytes,
+  files: 1,
+  fileFilter: imageOnlyFileFilter,
+}));
 
 // Auth Routes
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', authLimiter, register);
+router.post('/login', authLimiter, login);
 router.get('/profile', protect, getProfile);
 router.get('/verify-email/:token', verifyEmail);
 
@@ -181,7 +187,10 @@ router.post('/admin/broadcast', protect, admin, broadcastNotification);
 // ==========================================
 // 🎮 Quests
 // ==========================================
-router.post('/claim-quest', protect, claimQuest);
+router.post('/claim-quest', protect, (req, res, next) => {
+  req.params.questId = req.body.questId;
+  return claimQuestReward(req, res, next);
+});
 
 // ==========================================
 // 👥 FRIEND SYSTEM ROUTES (ต้อง login)
@@ -194,6 +203,5 @@ router.delete('/:id/friend-request', protect, cancelFriendRequest);
 router.patch('/me/profile', protect, updateProfile);
 router.patch('/me/password', protect, changePassword);
 router.get('/search', protect, searchUsers);
-router.get('/admin/all', protect, admin, getAllUsersAdmin);
 
 export default router;

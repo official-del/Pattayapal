@@ -3,7 +3,7 @@ import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiHome, FiGrid, FiPackage, FiBriefcase, FiUser, FiArrowLeft, FiMessageCircle, FiSettings, FiZap, FiDollarSign, FiActivity, FiGlobe, FiBell, FiSearch, FiGift
+  FiHome, FiGrid, FiPackage, FiBriefcase, FiUser, FiArrowLeft, FiMessageCircle, FiSettings, FiZap, FiDollarSign, FiActivity, FiBell, FiSearch, FiGift
 } from 'react-icons/fi';
 import { CoinIcon } from './CoinIcon';
 
@@ -29,7 +29,6 @@ function DashboardSidebar({ show, onClose }) {
     menuItems = [
       { name: 'Admin Dashboard', icon: <FiHome />, href: '/admin/dashboard' },
       { name: 'Platform Analytics', icon: <FiActivity />, href: '/admin/overview' },
-      { name: 'Global Workspace', icon: <FiGlobe />, href: '/feed' },
       { name: 'Rankings & Hall of Fame', icon: <FiZap />, href: '/rankings' },
       { name: 'Withdrawal Requests', icon: <FiArrowLeft style={{ transform: 'rotate(-45deg)' }} />, href: '/admin/withdrawals' }
     ];
@@ -56,6 +55,7 @@ function DashboardSidebar({ show, onClose }) {
   return (
     <aside style={{
       width: '320px',
+      maxWidth: 'calc(100vw - 24px)',
       background: '#050505',
       height: '100vh',
       position: 'fixed',
@@ -174,6 +174,11 @@ function DashboardSidebar({ show, onClose }) {
 
       <style>{`
         @media (max-width: 1024px) {
+          .dashboard-sidebar {
+            width: min(320px, calc(100vw - 24px)) !important;
+            padding: 42px 18px 22px !important;
+            z-index: 1002 !important;
+          }
           .sidebar-mobile-close { display: block !important; }
         }
         @media (min-width: 1025px) {

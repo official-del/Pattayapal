@@ -1,6 +1,8 @@
 node_modules
 npm-debug.log
 .env
+.env.*
+!.env.example
 .env.local
 .DS_Store
 uploads
@@ -9,6 +11,10 @@ build
 *.log
 error_log.txt
 scratch
+test-*.js
+check_msgs.js
+get_msgs.js
+migrateUsers.js
 .git
 .gitignore
 README.md

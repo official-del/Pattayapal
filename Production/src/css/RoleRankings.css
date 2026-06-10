@@ -1,0 +1,363 @@
+.role-rankings-page {
+  min-height: 100vh;
+  padding: clamp(var(--space-5), 4vw, var(--space-8)) 0 var(--space-16);
+  color: var(--text-primary);
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.032) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255,255,255,0.024) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, rgba(255, 87, 51, 0.09), transparent 30rem),
+    #000;
+  background-size: 32px 32px, 32px 32px, auto;
+}
+
+.role-rankings-shell {
+  width: min(100%, 1360px);
+  margin: 0 auto;
+  padding: 0 clamp(var(--space-4), 4vw, var(--space-8));
+}
+
+.role-rankings-hero {
+  position: relative;
+  min-height: 220px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-5);
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, rgba(255,87,51,0.13), transparent 54%),
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.022)),
+    #080808;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.76);
+  overflow: hidden;
+}
+
+.role-rankings-hero::before,
+.role-rank-card::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  box-shadow: -11px 0 0 rgba(255,87,51,0.38), 0 11px 0 rgba(255,87,51,0.38);
+  pointer-events: none;
+}
+
+.role-rankings-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.role-back-link {
+  width: fit-content;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: 0 var(--space-3);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.36);
+  color: rgba(255,255,255,0.72);
+  font-size: var(--text-sm);
+  font-weight: 750;
+  text-decoration: none;
+  transition: transform 0.18s var(--ease-out), border-color 0.18s var(--ease-out), color 0.18s var(--ease-out);
+}
+
+.role-back-link:hover {
+  transform: translateX(-2px);
+  border-color: rgba(255,87,51,0.3);
+  color: #fff;
+}
+
+.role-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.role-rankings-copy h1 {
+  max-width: 12ch;
+  margin: var(--space-2) 0 0;
+  color: #fff;
+  font-size: clamp(2.25rem, 7vw, 4.25rem);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.role-rankings-copy p {
+  max-width: 62ch;
+  margin: var(--space-4) 0 0;
+  color: rgba(255,255,255,0.7);
+  font-size: var(--text-base);
+  font-weight: 650;
+  line-height: 1.65;
+}
+
+.role-tabs {
+  display: inline-flex;
+  gap: var(--space-2);
+  padding: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.42);
+  align-self: end;
+}
+
+.role-tabs button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255,255,255,0.62);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.18s var(--ease-out), border-color 0.18s var(--ease-out), background-color 0.18s var(--ease-out), color 0.18s var(--ease-out);
+}
+
+.role-tabs button:hover {
+  transform: translateY(-1px);
+  color: #fff;
+  border-color: rgba(255,87,51,0.28);
+}
+
+.role-tabs button.is-active {
+  background: rgba(255,87,51,0.14);
+  border-color: rgba(255,87,51,0.52);
+  color: #fff;
+  box-shadow: inset 0 -2px 0 rgba(255,87,51,0.2);
+}
+
+.role-rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: var(--space-5);
+}
+
+.role-rank-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 420px;
+  padding: var(--space-5);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.058), rgba(255,255,255,0.024)),
+    #080808;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.76);
+  transition: transform 0.2s var(--ease-out), border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+
+.role-rank-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,87,51,0.3);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.76), 0 12px 28px rgba(0,0,0,0.24);
+}
+
+.role-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.role-icon-box {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,87,51,0.28);
+  border-radius: 8px;
+  background: rgba(255,87,51,0.12);
+  color: var(--accent);
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.72);
+}
+
+.role-card-title {
+  min-width: 0;
+}
+
+.role-card-title span {
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.role-card-title h2 {
+  margin: 2px 0 0;
+  color: #fff;
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.role-rank-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.role-rank-row {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 42px auto minmax(0, 1fr) minmax(92px, auto);
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid rgba(255,255,255,0.105);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.34);
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.18s var(--ease-out), border-color 0.18s var(--ease-out), background-color 0.18s var(--ease-out);
+}
+
+.role-rank-row:hover {
+  transform: translateX(3px);
+  border-color: rgba(255,87,51,0.32);
+  background: rgba(255,87,51,0.07);
+}
+
+.role-rank-row.is-top {
+  border-color: rgba(255,87,51,0.36);
+  background:
+    linear-gradient(180deg, rgba(255,87,51,0.08), rgba(255,255,255,0.02)),
+    rgba(0,0,0,0.38);
+}
+
+.role-rank-number {
+  color: var(--accent);
+  font-size: var(--text-base);
+  font-weight: 800;
+  text-align: center;
+}
+
+.role-avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+}
+
+.role-user-copy {
+  min-width: 0;
+}
+
+.role-user-copy strong {
+  display: block;
+  color: #fff;
+  font-size: var(--text-base);
+  font-weight: 800;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-user-copy span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.role-score {
+  text-align: right;
+  min-width: 92px;
+}
+
+.role-score strong {
+  color: var(--accent);
+  font-size: var(--text-base);
+  font-weight: 800;
+}
+
+.role-score span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.role-empty-state {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  border: 1px dashed rgba(255,255,255,0.14);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.22);
+  color: rgba(255,255,255,0.46);
+  font-size: var(--text-sm);
+  font-weight: 750;
+  text-align: center;
+}
+
+@media (max-width: 820px) {
+  .role-rankings-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .role-tabs {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 560px) {
+  .role-rankings-shell {
+    padding: 0 var(--space-4);
+  }
+
+  .role-rankings-hero,
+  .role-rank-card {
+    padding: var(--space-4);
+  }
+
+  .role-rank-row {
+    grid-template-columns: 36px auto minmax(0, 1fr);
+  }
+
+  .role-score {
+    grid-column: 3;
+    min-width: 0;
+    text-align: left;
+  }
+}

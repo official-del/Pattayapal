@@ -1,8 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import RankBadge from './RankBadge';
+
+const seededRandom = (seed) => {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+};
 
 const RankUpCelebration = ({ newRank, onComplete }) => {
   const [visible, setVisible] = useState(false);
+  const confettiStyles = useMemo(() => (
+    Array.from({ length: 20 }, (_, i) => ({
+      left: seededRandom(i + 1) * 100,
+      duration: 3 + seededRandom(i + 21) * 3,
+      delay: seededRandom(i + 41) * 3,
+      rotation: 360 + seededRandom(i + 61) * 360,
+      color: ['#ff5733', '#ffbd33', '#3b82f6', '#fff'][i % 4],
+    }))
+  ), []);
 
   useEffect(() => {
     setVisible(true);
@@ -99,16 +113,16 @@ const RankUpCelebration = ({ newRank, onComplete }) => {
         }
         .confetti-container { position: absolute; inset: 0; pointer-events: none; }
         .confetti { position: absolute; width: 10px; height: 10px; background: #ff5733; top: -10px; border-radius: 2px; }
-        ${[...Array(20)].map((_, i) => `
+        ${confettiStyles.map((piece, i) => `
           .piece-${i} {
-            left: ${Math.random() * 100}%;
-            background: ${['#ff5733', '#ffbd33', '#3b82f6', '#fff'][i % 4]};
-            animation: confettiFall-${i} ${3 + Math.random() * 3}s linear infinite;
-            animation-delay: ${Math.random() * 3}s;
+            left: ${piece.left}%;
+            background: ${piece.color};
+            animation: confettiFall-${i} ${piece.duration}s linear infinite;
+            animation-delay: ${piece.delay}s;
           }
           @keyframes confettiFall-${i} {
             0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(${360 + Math.random() * 360}deg); opacity: 0; }
+            100% { transform: translateY(100vh) rotate(${piece.rotation}deg); opacity: 0; }
           }
         `).join('')}
       `}</style>

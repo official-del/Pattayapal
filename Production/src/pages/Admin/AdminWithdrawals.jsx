@@ -12,6 +12,8 @@ import {
   FiTrendingUp, FiZap, FiSend, FiInbox, FiShield
 } from 'react-icons/fi';
 import { CoinIcon } from '../../components/CoinIcon';
+import PremiumLoader from '../../components/PremiumLoader';
+import '../../css/AdminWithdrawals.css';
 
 // ── DESIGN TOKENS ──
 const COLORS = {
@@ -131,16 +133,11 @@ function AdminWithdrawals() {
 
   /* ─────────── PREMIUM COMPONENTS ─────────── */
 
-  const PageBackground = () => (
-    <div style={{ position: 'fixed', inset: 0, zIndex: -1, background: COLORS.bg, overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(255,87,51,0.05) 0%, transparent 70%)', borderRadius: '50%' }} />
-      <div style={{ position: 'absolute', bottom: '10%', right: '-5%', width: '30%', height: '30%', background: 'radial-gradient(circle, rgba(99,102,241,0.04) 0%, transparent 70%)', borderRadius: '50%' }} />
-      <div style={{ position: 'absolute', top: '20%', right: '10%', width: '20%', height: '20%', background: 'radial-gradient(circle, rgba(34,197,94,0.03) 0%, transparent 70%)', borderRadius: '50%' }} />
-    </div>
-  );
+  const PageBackground = () => <div className="admin-withdrawals-bg" />;
 
   const StatCard = ({ icon, label, value, sub, color }) => (
     <motion.div
+      className="admin-withdrawal-stat"
       whileHover={{ y: -5, background: 'rgba(255,255,255,0.04)' }}
       style={{
         background: COLORS.glass, border: `1px solid ${COLORS.glassBorder}`, borderRadius: '24px',
@@ -165,7 +162,7 @@ function AdminWithdrawals() {
 
   /* ─────────── RENDER ─────────── */
   return (
-    <div style={{ minHeight: '100vh', color: '#fff', fontFamily: "'Outfit', 'Inter', sans-serif", position: 'relative' }}>
+    <div className="admin-withdrawals-shell" style={{ minHeight: '100vh', color: '#fff', fontFamily: "'Outfit', 'Inter', sans-serif", position: 'relative' }}>
       <PageBackground />
 
       <AnimatePresence>
@@ -281,10 +278,7 @@ function AdminWithdrawals() {
 
         {/* ── Data List ── */}
         {loading ? (
-          <div style={{ height: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: 40, height: 40, border: '4px solid #333', borderTopColor: COLORS.accent, borderRadius: '50%', marginBottom: 20 }} />
-            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#333', letterSpacing: '5px' }}>SYNCING MATRIX...</div>
-          </div>
+          <PremiumLoader fullScreen={false} text="Syncing Matrix..." subtext="กำลังโหลดรายการถอนเงิน..." />
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '100px 0', border: `1px dashed ${COLORS.glassBorder}`, borderRadius: 40 }}>
             <FiInbox size={50} color="#151515" />
@@ -301,6 +295,7 @@ function AdminWithdrawals() {
                 return (
                   <motion.div
                     key={w._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
+                    className="admin-withdrawal-card"
                     style={{
                       background: isExpanded ? 'rgba(255,255,255,0.03)' : COLORS.glass,
                       border: `1px solid ${isExpanded ? 'rgba(255,87,51,0.2)' : COLORS.glassBorder}`,

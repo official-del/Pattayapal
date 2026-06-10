@@ -6,14 +6,34 @@ import { usersAPI } from '../utils/api';
 import { getFullUrl } from '../utils/mediaUtils';
 import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiUsers, FiSearch, FiUserPlus, FiUserCheck, FiUserX, FiGlobe, FiTarget, FiActivity, FiZap, FiTrash2, FiArrowRight, FiLoader } from 'react-icons/fi';
+import {
+  FiActivity,
+  FiArrowRight,
+  FiCheck,
+  FiGlobe,
+  FiSearch,
+  FiTarget,
+  FiTrash2,
+  FiUserPlus,
+  FiUsers,
+  FiX,
+  FiZap,
+} from 'react-icons/fi';
 import ProfileFrame from '../components/ProfileFrame';
 import { useSocket } from '../context/SocketContext';
+import PremiumLoader from '../components/PremiumLoader';
+import '../css/Friends.css';
+
+const toDisplayText = (value, fallback = '') => {
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  if (!value || typeof value !== 'object') return fallback;
+  return String(value.name || value.label || value.title || value.category || value.level || value.rank || value._id || value.id || fallback);
+};
 
 function Friends() {
   const { user: contextUser, token: contextToken } = useContext(AuthContext);
   const currentToken = contextToken || window.safeStorage.getItem('userToken') || window.safeStorage.getItem('token');
-  const currentUser = contextUser || JSON.parse(window.safeStorage.getItem('userInfo'));
+  const currentUser = contextUser || JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
   const { socket } = useSocket();
 
   const [friendRequests, setFriendRequests] = useState([]);
@@ -36,26 +56,27 @@ function Friends() {
         setFriends(profileData.user?.friends || []);
 
         const reqs = await usersAPI.getMyFriendRequests(currentToken);
-        setFriendRequests(reqs);
+        setFriendRequests(reqs || []);
       } catch (err) {
         console.error('Friends load error:', err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
     window.scrollTo(0, 0);
 
     if (socket) {
       const handleRequestReceived = (data) => {
-        setFriendRequests(prev => [data, ...prev]);
+        setFriendRequests((prev) => [data, ...prev]);
       };
       const handleRequestAccepted = (newFriend) => {
-        setFriends(prev => [...prev, newFriend]);
-        setFriendRequests(prev => prev.filter(r => r.from?._id !== newFriend._id));
+        setFriends((prev) => [...prev, newFriend]);
+        setFriendRequests((prev) => prev.filter((request) => request.from?._id !== newFriend._id));
       };
       const handleFriendRemoved = ({ friendId }) => {
-        setFriends(prev => prev.filter(f => f._id !== friendId));
+        setFriends((prev) => prev.filter((friend) => friend._id !== friendId));
       };
 
       socket.on('friend_request_received', handleRequestReceived);
@@ -73,35 +94,35 @@ function Friends() {
   const acceptRequest = async (requesterId, requesterName, requesterAvatar, requesterRank, requesterPoints) => {
     try {
       await usersAPI.respondFriendRequest(requesterId, 'accept', currentToken);
-      setFriendRequests(prev => prev.filter(r => r.from._id !== requesterId));
-      setFriends(prev => [...prev, { 
-        _id: requesterId, 
-        name: requesterName, 
+      setFriendRequests((prev) => prev.filter((request) => request.from._id !== requesterId));
+      setFriends((prev) => [...prev, {
+        _id: requesterId,
+        name: requesterName,
         profileImage: requesterAvatar,
         rank: requesterRank,
-        points: requesterPoints
+        points: requesterPoints,
       }]);
     } catch (err) {
-      toast.error('เกิดข้อผิดพลาด: ' + (err?.response?.data?.message || err.message));
+      toast.error(`Unable to accept request: ${err?.response?.data?.message || err.message}`);
     }
   };
 
   const rejectRequest = async (requesterId) => {
     try {
       await usersAPI.respondFriendRequest(requesterId, 'reject', currentToken);
-      setFriendRequests(prev => prev.filter(r => r.from._id !== requesterId));
+      setFriendRequests((prev) => prev.filter((request) => request.from._id !== requesterId));
     } catch (err) {
-      toast.error('เกิดข้อผิดพลาด');
+      toast.error('Unable to reject request.');
     }
   };
 
   const removeFriend = async (friendId, friendName) => {
-    if (!await customConfirm(`ยืนยันการยกเลิกเพื่อนกับ ${friendName}?`)) return;
+    if (!await customConfirm(`Remove ${friendName} from your friends?`)) return;
     try {
       await usersAPI.removeFriend(friendId, currentToken);
-      setFriends(prev => prev.filter(f => f._id !== friendId));
+      setFriends((prev) => prev.filter((friend) => friend._id !== friendId));
     } catch (err) {
-      toast.error('เกิดข้อผิดพลาด');
+      toast.error('Unable to remove friend.');
     }
   };
 
@@ -114,7 +135,7 @@ function Friends() {
     setSearchLoading(true);
     try {
       const results = await usersAPI.searchUsers(query, currentToken);
-      setSearchResults(results);
+      setSearchResults(results || []);
     } catch (err) {
       console.error('Search error:', err);
     } finally {
@@ -125,307 +146,261 @@ function Friends() {
   const sendFriendRequest = async (targetId) => {
     try {
       await usersAPI.sendFriendRequest(targetId, currentToken);
-      setSentRequests(prev => new Set([...prev, targetId]));
+      setSentRequests((prev) => new Set([...prev, targetId]));
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'เกิดข้อผิดพลาด');
+      toast.error(err?.response?.data?.message || 'Unable to send friend request.');
     }
   };
 
   if (loading && !friends.length) {
-    return (
-      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '20px' }}>
-        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '40px', height: '40px', border: '3px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }} />
-        <p style={{ color: '#444', fontWeight: '700', letterSpacing: '4px', fontSize: '0.8rem' }}>กำลังเชื่อมต่อเครือข่ายสมาชิก...</p>
-      </div>
-    );
+    return <PremiumLoader text="Loading Friends..." subtext="Preparing your creator network." />;
   }
 
-  const friendIds = new Set(friends.map(f => f._id));
-
+  const friendIds = new Set(friends.map((friend) => friend._id));
   const tabs = [
-    { id: 'search', label: 'ค้นหาและเพิ่มเพื่อน', icon: <FiSearch /> },
-    { id: 'requests', label: 'คำขอที่รออยู่ (' + friendRequests.length + ')', icon: <FiUserPlus /> },
-    { id: 'friends', label: 'รายชื่อเพื่อน (' + friends.length + ')', icon: <FiUsers /> },
+    { id: 'search', label: 'Find friends', count: searchResults.length, icon: <FiSearch /> },
+    { id: 'requests', label: 'Requests', count: friendRequests.length, icon: <FiUserPlus /> },
+    { id: 'friends', label: 'Friends', count: friends.length, icon: <FiUsers /> },
   ];
 
-  const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const itemVariants = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } };
-
-  const friendsCSS = `
-    .spin { animation: spin 1s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    
-    .friends-tabs { 
-      display: flex; 
-      gap: 12px; 
-      margin-bottom: clamp(30px, 6vw, 60px); 
-      overflow-x: auto; 
-      padding-bottom: 10px; 
-      scroll-behavior: smooth; 
-      -webkit-overflow-scrolling: touch;
-    }
-    .friends-tabs::-webkit-scrollbar { display: none; }
-    .friends-tabs { -ms-overflow-style: none; scrollbar-width: none; }
-    
-    .friends-row-card { 
-      padding: clamp(20px, 3vw, 30px); 
-      border-radius: 35px; 
-      display: flex; 
-      align-items: center; 
-      gap: clamp(15px, 2.5vw, 25px); 
-      border: 1px solid rgba(255,255,255,0.03); 
-    }
-
-    .friends-hero-title {
-      font-size: clamp(2.5rem, 8vw, 4.5rem);
-      line-height: 1.1;
-      margin: 0;
-      letter-spacing: -1px;
-    }
-
-    .friends-hero-subtitle {
-      font-size: clamp(0.9rem, 2vw, 1.1rem);
-      color: #444;
-      margin-top: 15px;
-      font-weight: 700;
-      max-width: 600px;
-    }
-
-    @media (max-width: 1100px) { 
-      .friends-page-content { 
-        padding-left: 5% !important; 
-      } 
-    }
-    
-    @media (max-width: 768px) { 
-      .friends-row-card { 
-        flex-direction: column; 
-        text-align: center; 
-        gap: 20px; 
-      }
-      
-      .friend-action-container {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-      }
-
-      .friends-tabs {
-        margin-left: -5%;
-        margin-right: -5%;
-        padding-left: 5%;
-        padding-right: 5%;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .friends-row-card {
-        padding: 25px 20px !important;
-      }
-      
-      .search-box-wrapper {
-        padding: 8px 20px !important;
-      }
-      
-      .search-input {
-        font-size: 1rem !important;
-      }
-    }
-  `;
+  const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.045 } } };
+  const itemVariants = { hidden: { y: 14, opacity: 0 }, show: { y: 0, opacity: 1, transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] } } };
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: '#fff', paddingBottom: '150px' }}>
-      <div className="friends-page-content" style={{ maxWidth: '1440px', margin: '0 auto', padding: '40px 5% 0', paddingLeft: 'max(5%, calc(240px + 3%))' }}>
+    <main className="friends-page">
+      <header className="friends-hero">
+        <div className="friends-hero-copy">
+          <div className="friends-kicker"><FiGlobe size={16} /><span>Friend Station</span></div>
+          <h1>Friends</h1>
+          <p>Build your creator network, manage requests, and keep frequent collaborators one click away.</p>
+        </div>
+        <div className="friends-hero-hud">
+          <span>Network</span>
+          <strong>{friends.length}</strong>
+        </div>
+      </header>
 
-        {/* 🔮 Hero Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 'clamp(40px, 8vw, 60px)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px' }}>
-            <FiGlobe color="var(--accent)" size={18} />
-            <span style={{ color: 'var(--accent)', fontWeight: '700', letterSpacing: '2px', fontSize: 'clamp(0.8rem, 1.5vw, 1.1rem)' }}>Friend Station</span>
+      <section className="friends-stats-grid" aria-label="Friends summary">
+        <div className="friends-stat-card"><span>Friends</span><strong>{friends.length}</strong></div>
+        <div className="friends-stat-card is-orange"><span>Pending</span><strong>{friendRequests.length}</strong></div>
+        <div className="friends-stat-card is-blue"><span>Search results</span><strong>{searchResults.length}</strong></div>
+      </section>
+
+      <section className="friends-board">
+        <div className="friends-board-header">
+          <div>
+            <div className="friends-kicker"><FiZap size={15} /><span>Social Hub</span></div>
+            <h2>{tabs.find((tab) => tab.id === activeTab)?.label}</h2>
           </div>
-          <h1 className="friends-hero-title">รายชื่อสมาชิก</h1>
-          <p className="friends-hero-subtitle">สร้างเครือข่ายและเชื่อมต่อกับครีเอเตอร์ทั่วประเทศ</p>
-        </motion.div>
+          <span>{tabs.find((tab) => tab.id === activeTab)?.count || 0} items</span>
+        </div>
 
-
-        {/* 🧬 Interactive Tabs */}
-        <div className="friends-tabs">
-          {tabs.map(tab => (
-            <motion.button
+        <div className="friends-tabs" role="tablist" aria-label="Friends sections">
+          {tabs.map((tab) => (
+            <button
               key={tab.id}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              type="button"
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                background: activeTab === tab.id ? 'var(--accent)' : 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.05)',
-                color: activeTab === tab.id ? '#fff' : '#444',
-                padding: '16px 30px',
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontWeight: '700',
-                fontSize: '0.9rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                transition: '0.3s',
-                whiteSpace: 'nowrap',
-                flexShrink: 0
-              }}
+              className={activeTab === tab.id ? 'active' : ''}
             >
-              {tab.icon} {tab.label}
-            </motion.button>
+              {tab.icon}<span>{tab.label}</span><strong>{tab.count}</strong>
+            </button>
           ))}
         </div>
 
-        {/* 🧪 Tab Content */}
         <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-          >
-            {/* 🔍 Content: Search */}
+          <motion.div key={activeTab} variants={containerVariants} initial="hidden" animate="show" exit="hidden">
             {activeTab === 'search' && (
-              <div>
-                <div style={{ position: 'relative', maxWidth: '800px', margin: '0 auto clamp(40px, 8vw, 60px)' }}>
-                  <div className="glass search-box-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '10px 30px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                    <FiSearch color="#444" size={24} />
-                    <input
-                      type="text"
-                      className="search-input"
-                      value={searchQuery}
-                      onChange={e => handleSearch(e.target.value)}
-                      placeholder="ค้นหาชื่อสมาชิก..."
-                      style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', padding: '15px 0', outline: 'none', fontWeight: '700' }}
-                    />
-                    {searchLoading && <FiLoader className="spin" color="var(--accent)" />}
-                  </div>
-                </div>
-
-                {searchResults.length > 0 ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 400px), 1fr))', gap: '25px' }}>
-                    {searchResults.map(user => {
-                      const isFriend = friendIds.has(user._id);
-                      const isSent = sentRequests.has(user._id);
-                      return (
-                        <motion.div variants={itemVariants} key={user._id} className="glass friends-row-card">
-                          <ProfileFrame rank={user.rank} points={user.points || 0} size="70px" showBadge={true}>
-                            <img src={user.profileImage?.url ? getFullUrl(user.profileImage.url) : 'https://via.placeholder.com/70'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </ProfileFrame>
-                          <div style={{ flex: 1 }}>
-                            <Link to={`/profile/${user._id}`} style={{ textDecoration: 'none', color: '#fff', fontSize: '1.3rem', fontWeight: '700', letterSpacing: '-0.5px' }}>{user.name}</Link>
-                            <p style={{ color: 'var(--accent)', margin: '4px 0 0', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{user.profession || 'MEMBER'}</p>
-                            
-                            {user.skills && user.skills.length > 0 && (
-                              <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-                                {user.skills.slice(0, 3).map((skill, sIdx) => (
-                                  <span key={sIdx} style={{ fontSize: '0.6rem', padding: '4px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', color: '#666', border: '1px solid rgba(255,255,255,0.03)' }}>
-                                    {skill.name}
-                                  </span>
-                                ))}
-                                {user.skills.length > 3 && <span style={{ color: '#222', fontSize: '0.6rem' }}>+{user.skills.length - 3}</span>}
-                              </div>
-                            )}
-                          </div>
-                          <div className="friend-action-container">
-                            {isFriend ? (
-                              <span style={{ color: '#22c55e', fontWeight: '700', fontSize: '0.8rem' }}>✓ เพื่อนกัน</span>
-                            ) : isSent ? (
-                              <span style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.8rem' }}>ส่งคำขอแล้ว</span>
-                            ) : (
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                onClick={() => sendFriendRequest(user._id)}
-                                style={{ background: 'var(--accent)', color: '#fff', border: 'none', width: '45px', height: '45px', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px var(--accent-glow)' }}
-                              >
-                                <FiUserPlus size={20} />
-                              </motion.button>
-                            )}
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '100px' }}>
-                    <FiTarget size={60} color="#111" />
-                    <p style={{ color: '#222', fontWeight: '700', marginTop: '20px', letterSpacing: '2px' }}>ค้นพบบุคคลที่น่าสนใจและเริ่มความร่วมมือใหม่</p>
-                  </div>
-                )}
-              </div>
+              <SearchPanel
+                searchQuery={searchQuery}
+                searchLoading={searchLoading}
+                searchResults={searchResults}
+                friendIds={friendIds}
+                sentRequests={sentRequests}
+                itemVariants={itemVariants}
+                onSearch={handleSearch}
+                onSendRequest={sendFriendRequest}
+              />
             )}
 
-            {/* 📩 Content: Requests */}
             {activeTab === 'requests' && (
-              <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                {friendRequests.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '100px' }}>
-                    <FiUserPlus size={60} color="#111" />
-                    <p style={{ color: '#222', fontWeight: '700', marginTop: '20px' }}>ยังไม่มีคำขอเป็นเพื่อนในเวฟนี้</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {friendRequests.map(req => (
-                      <motion.div variants={itemVariants} key={req._id} className="glass" style={{ padding: '30px', borderRadius: '35px', display: 'flex', alignItems: 'center', gap: '25px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                        <ProfileFrame rank={req.from.rank} points={req.from.points || 0} size="60px" showBadge={true}>
-                          <img src={req.from.profileImage?.url ? getFullUrl(req.from.profileImage.url) : 'https://via.placeholder.com/60'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </ProfileFrame>
-                        <div style={{ flex: 1 }}>
-                          <Link to={`/profile/${req.from._id}`} style={{ textDecoration: 'none', color: '#fff', fontSize: '1.2rem', fontWeight: '700' }}>{req.from.name}</Link>
-                          <p style={{ color: '#444', margin: '4px 0 0', fontWeight: '700' }}>ต้องการเป็นเพื่อนกับคุณ</p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '15px' }}>
-                          <motion.button onClick={() => acceptRequest(req.from._id, req.from.name, req.from.profileImage, req.from.rank, req.from.points)} whileHover={{ scale: 1.05 }} style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '12px 25px', borderRadius: '20px', fontWeight: '700', cursor: 'pointer' }}>ยืนยัน</motion.button>
-                          <motion.button onClick={() => rejectRequest(req.from._id)} whileHover={{ scale: 1.05 }} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 25px', borderRadius: '20px', fontWeight: '700', cursor: 'pointer' }}>ลบ</motion.button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <RequestsPanel
+                requests={friendRequests}
+                itemVariants={itemVariants}
+                onAccept={acceptRequest}
+                onReject={rejectRequest}
+              />
             )}
 
-            {/* 👥 Content: Friends List */}
             {activeTab === 'friends' && (
-              <div>
-                {friends.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '100px' }}>
-                    <FiUsers size={60} color="#111" />
-                    <p style={{ color: '#222', fontWeight: '700', marginTop: '20px' }}>คุณยังไม่มีรายชื่อเพื่อนในระบบ</p>
-                    <button onClick={() => setActiveTab('search')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontWeight: '700', marginTop: '10px', cursor: 'pointer' }}>ค้นหาเพื่อนใหม่เลย →</button>
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '30px' }}>
-                    {friends.map(friend => (
-                      <motion.div variants={itemVariants} key={friend._id} className="glass" style={{ padding: '40px 30px', borderRadius: '40px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.03)', position: 'relative' }}>
-                        <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
-                          <FiActivity color="#222" size={14} />
-                        </div>
-                        <ProfileFrame rank={friend.rank} points={friend.points || 0} size="100px" showBadge={true}>
-                          <img src={friend.profileImage?.url ? getFullUrl(friend.profileImage.url) : 'https://via.placeholder.com/100'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </ProfileFrame>
-                        <h4 style={{ margin: '25px 0 5px', fontSize: '1.4rem', fontWeight: '700', letterSpacing: '-0.5px' }}>{friend.name}</h4>
-                        <p style={{ color: '#444', fontWeight: '700', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '30px' }}>{friend.profession || 'MEMBER'}</p>
-
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                          <Link to={`/profile/${friend._id}`} style={{ flex: 1, textDecoration: 'none', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', padding: '14px', borderRadius: '15px', fontWeight: '700', fontSize: '0.8rem', transition: '0.3s' }}>โปรไฟล์</Link>
-                          <motion.button onClick={() => removeFriend(friend._id, friend.name)} whileHover={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444' }} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#444', width: '50px', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.3s' }}>
-                            <FiTrash2 />
-                          </motion.button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <FriendsPanel
+                friends={friends}
+                itemVariants={itemVariants}
+                onRemove={removeFriend}
+                onFind={() => setActiveTab('search')}
+              />
             )}
           </motion.div>
         </AnimatePresence>
+      </section>
+    </main>
+  );
+}
+
+function SearchPanel({ searchQuery, searchLoading, searchResults, friendIds, sentRequests, itemVariants, onSearch, onSendRequest }) {
+  return (
+    <div className="friends-panel">
+      <div className="friends-search-box">
+        <FiSearch size={20} />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(event) => onSearch(event.target.value)}
+          placeholder="Search creator name or role..."
+        />
+        {searchLoading && <PremiumLoader bare size="small" />}
       </div>
-      <style dangerouslySetInnerHTML={{ __html: friendsCSS }} />
+
+      {searchResults.length > 0 ? (
+        <div className="friends-grid">
+          {searchResults.map((user) => {
+            const isFriend = friendIds.has(user._id);
+            const isSent = sentRequests.has(user._id);
+            return (
+              <PersonRow
+                key={user._id}
+                person={user}
+                itemVariants={itemVariants}
+                meta={isFriend ? 'Already friends' : isSent ? 'Request sent' : 'Available to connect'}
+                action={isFriend ? 'friend' : isSent ? 'sent' : 'add'}
+                onAction={() => onSendRequest(user._id)}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <EmptyState icon={<FiTarget size={34} />} title="Search the network" text="Type a creator name, role, or keyword to find people to connect with." />
+      )}
+    </div>
+  );
+}
+
+function RequestsPanel({ requests, itemVariants, onAccept, onReject }) {
+  if (requests.length === 0) {
+    return <EmptyState icon={<FiUserPlus size={34} />} title="No pending requests" text="Friend requests will appear here when creators invite you to connect." />;
+  }
+
+  return (
+    <div className="friends-list">
+      {requests.map((request) => {
+        const sender = request.from || {};
+        return (
+          <PersonRow
+            key={request._id || sender._id}
+            person={sender}
+            itemVariants={itemVariants}
+            meta="Wants to connect with you"
+            action="request"
+            onAccept={() => onAccept(sender._id, sender.name, sender.profileImage, sender.rank, sender.points)}
+            onReject={() => onReject(sender._id)}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function FriendsPanel({ friends, itemVariants, onRemove, onFind }) {
+  if (friends.length === 0) {
+    return (
+      <EmptyState
+        icon={<FiUsers size={34} />}
+        title="No friends yet"
+        text="Start by searching for creators you collaborate with often."
+        action={<button type="button" className="friends-primary-btn" onClick={onFind}>Find friends <FiArrowRight size={15} /></button>}
+      />
+    );
+  }
+
+  return (
+    <div className="friends-grid">
+      {friends.map((friend) => (
+        <PersonCard key={friend._id} friend={friend} itemVariants={itemVariants} onRemove={onRemove} />
+      ))}
+    </div>
+  );
+}
+
+function PersonRow({ person, itemVariants, meta, action, onAction, onAccept, onReject }) {
+  const name = toDisplayText(person.name, 'Unnamed creator');
+  const profession = toDisplayText(person.profession, 'Member');
+  const rank = toDisplayText(person.rank, 'Bronze');
+  const skills = person.skills || [];
+
+  return (
+    <motion.article variants={itemVariants} className="friends-row-card">
+      <ProfileFrame rank={rank} points={person.points || 0} size="68px" showBadge>
+        <img src={person.profileImage?.url ? getFullUrl(person.profileImage.url) : 'https://via.placeholder.com/70'} alt={name} />
+      </ProfileFrame>
+
+      <div className="friends-person-copy">
+        <Link to={`/profile/${person._id}`}>{name}</Link>
+        <p>{profession}</p>
+        <span>{meta}</span>
+        {skills.length > 0 && (
+          <div className="friends-skills">
+            {skills.slice(0, 3).map((skill, index) => (
+              <em key={`${toDisplayText(skill, 'Skill')}-${index}`}>{toDisplayText(skill, 'Skill')}</em>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="friends-actions">
+        {action === 'friend' && <span className="friends-status is-green"><FiCheck size={13} /> Friend</span>}
+        {action === 'sent' && <span className="friends-status"><FiActivity size={13} /> Sent</span>}
+        {action === 'add' && <button type="button" className="friends-icon-btn is-primary" onClick={onAction} aria-label={`Add ${name}`}><FiUserPlus size={17} /></button>}
+        {action === 'request' && (
+          <>
+            <button type="button" className="friends-primary-btn" onClick={onAccept}><FiCheck size={15} /> Accept</button>
+            <button type="button" className="friends-icon-btn is-danger" onClick={onReject} aria-label={`Reject ${name}`}><FiX size={17} /></button>
+          </>
+        )}
+      </div>
+    </motion.article>
+  );
+}
+
+function PersonCard({ friend, itemVariants, onRemove }) {
+  const name = toDisplayText(friend.name, 'Unnamed creator');
+  const profession = toDisplayText(friend.profession, 'Member');
+  const rank = toDisplayText(friend.rank, 'Bronze');
+
+  return (
+    <motion.article variants={itemVariants} className="friend-card">
+      <div className="friend-card-signal"><FiActivity size={14} /></div>
+      <ProfileFrame rank={rank} points={friend.points || 0} size="92px" showBadge>
+        <img src={friend.profileImage?.url ? getFullUrl(friend.profileImage.url) : 'https://via.placeholder.com/100'} alt={name} />
+      </ProfileFrame>
+      <h3>{name}</h3>
+      <p>{profession}</p>
+      <div className="friend-card-actions">
+        <Link to={`/profile/${friend._id}`}>Profile</Link>
+        <button type="button" onClick={() => onRemove(friend._id, name)} aria-label={`Remove ${name}`}>
+          <FiTrash2 size={16} />
+        </button>
+      </div>
+    </motion.article>
+  );
+}
+
+function EmptyState({ icon, title, text, action }) {
+  return (
+    <div className="friends-empty-state">
+      {icon}
+      <h2>{title}</h2>
+      <p>{text}</p>
+      {action}
     </div>
   );
 }

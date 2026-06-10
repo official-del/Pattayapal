@@ -3,6 +3,18 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendVerificationEmail } from '../utils/sendEmail.js';
 
+const signUserToken = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+
+  return jwt.sign(
+    { id: user._id, role: user.role, tokenVersion: user.tokenVersion || 0 },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '30d' }
+  );
+};
+
 export const register = async (req, res) => {
   try {
     const { name, email, password, profession, phone } = req.body;
@@ -90,12 +102,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Please verify your email before logging in. Check your inbox.' });
     }
 
-    // Create JWT token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET || 'pattayapal_secret_key',
-      { expiresIn: '3650d' }
-    );
+    const token = signUserToken(user);
 
     res.status(200).json({
       token,

@@ -1,40 +1,53 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-export const protect = async (req, res, next) => {
-  let token;
-
-  // ✅ รับ Token จาก Authorization header (มาตรฐาน)
+export const getTokenFromRequest = (req) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
+    return req.headers.authorization.split(' ')[1];
   }
-  // 🔄 Fallback: รับจาก x-auth-token (กรณี Proxy สกัด Authorization header)
-  else if (req.headers['x-auth-token']) {
-    token = req.headers['x-auth-token'];
+
+  if (req.headers['x-auth-token']) {
+    return req.headers['x-auth-token'];
   }
+
+  return null;
+};
+
+export const verifyToken = (token) => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+
+  return jwt.verify(token, secret);
+};
+
+export const protect = async (req, res, next) => {
+  const token = getTokenFromRequest(req);
 
   if (!token || token === 'null' || token === 'undefined') {
-    console.error('🛡️ Auth Middleware Error: Token missing or null from headers');
-    return res.status(401).json({ message: 'ไม่มีสิทธิ์เข้าถึง, Token เป็นค่าว่าง', tokenValue: token });
+    return res.status(401).json({ message: 'Authentication token is required' });
   }
 
   try {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      console.error('🛡️ CRITICAL: JWT_SECRET environment variable is not set!');
-      return res.status(500).json({ message: 'Server configuration error' });
-    }
-    const decoded = jwt.verify(token, secret);
-
+    const decoded = verifyToken(token);
     const user = await User.findById(decoded.id).select('-password');
+
     if (!user) {
-      return res.status(401).json({ message: 'ไม่พบผู้ใช้งานนี้ในระบบ กรุณา Login ใหม่' });
+      return res.status(401).json({ message: 'User no longer exists. Please login again.' });
+    }
+
+    if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== (user.tokenVersion || 0)) {
+      return res.status(401).json({ message: 'Session expired. Please login again.' });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Token ไม่ถูกต้องหรือหมดอายุ กรุณา Login ใหม่' });
+    const status = error.message === 'JWT_SECRET is not configured' ? 500 : 401;
+    return res.status(status).json({
+      message: status === 500 ? 'Server authentication is not configured' : 'Invalid or expired token',
+    });
   }
 };
 
@@ -42,6 +55,6 @@ export const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(403).json({ message: 'ไม่มีสิทธิ์เข้าถึง, สำหรับผู้ดูแลระบบเท่านั้น' });
+    res.status(403).json({ message: 'Admin access required' });
   }
 };

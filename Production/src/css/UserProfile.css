@@ -1,0 +1,1048 @@
+.profile-page {
+  color: var(--text-primary);
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+    radial-gradient(circle at 78% 0%, rgba(255, 87, 51, 0.11), transparent 26rem),
+    #000 !important;
+  background-size: 32px 32px, 32px 32px, auto;
+}
+
+.profile-page > div[style*="filter: blur"] {
+  display: none !important;
+}
+
+.profile-cover-stage {
+  isolation: isolate;
+  z-index: 0;
+  height: 260px !important;
+  border-bottom: 1px solid rgba(255, 87, 51, 0.18);
+  background: #050505;
+  pointer-events: none !important;
+}
+
+.profile-cover-media {
+  z-index: 0;
+  transform: scale(1.02);
+}
+
+.profile-cover-scrim {
+  z-index: 2;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.34) 55%, rgba(0, 0, 0, 0.88)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.62) 62%, #000 100%) !important;
+  pointer-events: none;
+}
+
+.profile-cover-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.profile-main-container {
+  position: relative;
+  z-index: 10;
+  width: min(100%, 1400px) !important;
+  box-sizing: border-box !important;
+  margin: -190px auto 0 !important;
+  padding: 0 clamp(var(--space-4), 4vw, var(--space-8)) var(--space-12) !important;
+  pointer-events: auto;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+    radial-gradient(circle at 80% 0%, rgba(255, 87, 51, 0.08), transparent 24rem),
+    #000;
+  background-size: 32px 32px, 32px 32px, auto;
+  border-top: 1px solid rgba(255, 87, 51, 0.12);
+  box-shadow: 0 -34px 70px rgba(0, 0, 0, 0.86);
+}
+
+@media (min-width: 1101px) {
+  .profile-main-container {
+    padding-left: 110px !important;
+  }
+}
+
+.profile-header-wrap {
+  position: relative;
+  isolation: isolate;
+  z-index: 20;
+  margin-bottom: var(--space-6) !important;
+  min-height: 210px;
+  padding: var(--space-6);
+  border: 1px solid rgba(255, 87, 51, 0.28);
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, rgba(255, 87, 51, 0.16), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.024)),
+    #080808;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.74);
+  overflow: hidden;
+}
+
+.profile-header-wrap::before,
+.profile-page .glass::before {
+  display: none;
+  content: none;
+}
+
+.profile-header-wrap > *,
+.profile-page .glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+.profile-main-flex {
+  position: relative;
+  z-index: 30;
+  min-height: 156px;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-5) !important;
+  align-items: center !important;
+  justify-content: initial !important;
+}
+
+.profile-left-group {
+  position: relative;
+  z-index: 31;
+  flex: unset !important;
+  display: grid !important;
+  grid-template-columns: 184px minmax(0, 1fr);
+  gap: var(--space-6) !important;
+  align-items: center !important;
+  min-width: 0;
+}
+
+.profile-left-group > div:first-child {
+  width: 184px;
+  max-width: 184px;
+  min-height: 166px;
+  flex: unset !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.profile-avatar-plate {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.profile-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: unset !important;
+  min-width: 0;
+  padding-bottom: 0 !important;
+}
+
+.profile-info-text h1 {
+  max-width: 17ch;
+  color: #fff !important;
+  font-size: clamp(2rem, 4vw, 3.25rem) !important;
+  font-weight: 760 !important;
+  line-height: 1.08 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-shadow: 2px 2px 0 rgba(255, 87, 51, 0.42);
+  overflow-wrap: anywhere;
+  margin-bottom: 0 !important;
+}
+
+.profile-info-text > div {
+  gap: var(--space-3) !important;
+  margin-top: 0 !important;
+}
+
+.profile-identity-meta {
+  align-items: center !important;
+  gap: var(--space-2) !important;
+}
+
+.profile-info-text span {
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+.profile-info-text div[style*="rgba(255, 87, 51"] {
+  border-color: rgba(255, 87, 51, 0.42) !important;
+  border-radius: 8px !important;
+  background: rgba(255, 87, 51, 0.14) !important;
+}
+
+.profile-role-badge {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 0 var(--space-3) !important;
+  border-radius: 7px !important;
+  line-height: 1;
+}
+
+.profile-info-text div[style*="rgba(255, 87, 51"] span {
+  color: var(--accent) !important;
+  font-size: 0.7rem !important;
+  font-weight: 760 !important;
+  line-height: 1 !important;
+  text-transform: uppercase;
+}
+
+.profile-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1) !important;
+}
+
+.profile-hero-stats span {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.34);
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: 650 !important;
+  line-height: 1.2;
+}
+
+.profile-hero-stats svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.profile-right-group {
+  position: relative;
+  z-index: 80 !important;
+  flex: 0 1 auto;
+  max-width: 360px;
+  justify-content: flex-end;
+  gap: var(--space-3) !important;
+  padding-bottom: 0 !important;
+  pointer-events: auto !important;
+}
+
+.profile-right-group button {
+  position: relative;
+  z-index: 81 !important;
+  pointer-events: auto !important;
+}
+
+.profile-edit-overlay {
+  z-index: 100000 !important;
+}
+
+.profile-edit-identity-btn {
+  position: relative;
+  z-index: 82 !important;
+  background: rgba(255, 87, 51, 0.14) !important;
+  border-color: rgba(255, 87, 51, 0.58) !important;
+  color: #fff !important;
+  pointer-events: auto !important;
+}
+
+.profile-page .profile-right-group .profile-edit-identity-btn:hover {
+  background: rgba(255, 87, 51, 0.22) !important;
+  border-color: rgba(251, 202, 31, 0.72) !important;
+}
+
+.profile-page button {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  min-height: 42px;
+  border-radius: 8px !important;
+  font-family: inherit;
+  font-size: var(--text-sm) !important;
+  font-weight: 760 !important;
+  letter-spacing: 0 !important;
+  transition: transform 0.18s var(--ease-out), border-color 0.18s var(--ease-out), background-color 0.18s var(--ease-out), color 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
+}
+
+.profile-page button:hover {
+  transform: translateY(-1px);
+}
+
+.profile-page button:focus-visible,
+.profile-page a:focus-visible,
+.profile-page input:focus-visible,
+.profile-page textarea:focus-visible {
+  outline: 2px solid rgba(251, 202, 31, 0.86);
+  outline-offset: 2px;
+}
+
+.profile-right-group button,
+.tabs-container button,
+.profile-page motion-button {
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.75);
+}
+
+.profile-right-group button {
+  min-width: 150px;
+  justify-content: center;
+}
+
+.profile-right-group button:first-child,
+.profile-page button[style*="var(--accent)"] {
+  background: #fbca1f !important;
+  border-color: #000 !important;
+  color: #111 !important;
+}
+
+.profile-right-group button:not(:first-child),
+.profile-page button[class*="glass"] {
+  background: rgba(255, 87, 51, 0.12) !important;
+  border-color: rgba(255, 87, 51, 0.45) !important;
+  color: #fff !important;
+}
+
+.profile-content-grid {
+  position: relative;
+  z-index: 25;
+  display: grid !important;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr) !important;
+  gap: var(--space-5) !important;
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.profile-content-grid > div {
+  gap: var(--space-4) !important;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Left column glass cards: prevent overflow ── */
+.profile-content-grid > div:first-child > .glass,
+.profile-content-grid > div:first-child > div {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* All text inside left column must wrap / truncate */
+.profile-content-grid > div:first-child * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.profile-content-grid > div:first-child div[style*="minWidth: 0"],
+.profile-content-grid > div:first-child div[style*="min-width: 0"] {
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Address / long text: force wrap */
+.profile-content-grid > div:first-child div[style*="wordBreak"],
+.profile-content-grid > div:first-child div[style*="word-break"] {
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+}
+
+/* URLs / links inside left column */
+.profile-content-grid > div:first-child a {
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* XP / number spans that can overflow */
+.profile-content-grid > div:first-child span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.profile-page .glass {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.022)),
+    #080808 !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.76) !important;
+  backdrop-filter: none !important;
+}
+
+.profile-page .glass button,
+.profile-page button[aria-label],
+.profile-page button[type="button"] {
+  pointer-events: auto !important;
+}
+
+.profile-content-grid > div:first-child > .glass {
+  padding: var(--space-5) !important;
+}
+
+.profile-content-grid h4,
+.profile-page label {
+  margin: 0 0 var(--space-3) !important;
+  color: var(--accent) !important;
+  font-size: 0.75rem !important;
+  font-weight: 680 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase;
+}
+
+.profile-content-grid p {
+  max-width: 68ch;
+  color: rgba(255, 255, 255, 0.76) !important;
+  font-size: var(--text-base) !important;
+  font-weight: 480 !important;
+  line-height: 1.7 !important;
+}
+
+.profile-content-grid > div:first-child .glass:first-child h4 {
+  margin: 0 !important;
+  color: #fff !important;
+  font-size: 1.25rem !important;
+  font-weight: 640 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.profile-content-grid > div:first-child .glass div[style*="fontSize: '1rem'"],
+.profile-content-grid > div:first-child .glass div[style*="font-size: '1rem'"],
+.profile-content-grid > div:first-child .glass div[style*="font-size: 1rem"] {
+  color: rgba(255, 255, 255, 0.86) !important;
+  font-size: 0.95rem !important;
+  font-weight: 560 !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0 !important;
+}
+
+.profile-content-grid > div:first-child .glass div[style*="fontSize: '0.65rem'"],
+.profile-content-grid > div:first-child .glass div[style*="font-size: '0.65rem'"],
+.profile-content-grid > div:first-child .glass div[style*="font-size: 0.65rem"] {
+  color: rgba(255, 255, 255, 0.44) !important;
+  font-size: 0.72rem !important;
+  font-weight: 620 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase;
+}
+
+.profile-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 1px !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.profile-stats-grid > div {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.profile-stats-grid > div > div:first-child {
+  color: var(--accent) !important;
+  font-size: 0.72rem !important;
+  font-weight: 660 !important;
+  line-height: 1.3;
+  letter-spacing: 0 !important;
+}
+
+.profile-stats-grid > div > div:last-child {
+  color: #fff !important;
+  font-size: 1.35rem !important;
+  font-weight: 680 !important;
+  line-height: 1.15;
+  letter-spacing: 0 !important;
+}
+
+.tabs-container {
+  width: 100% !important;
+  padding: 6px !important;
+  gap: var(--space-2) !important;
+  border-radius: 10px !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tabs-container button {
+  min-height: 40px;
+  padding: 0 var(--space-4) !important;
+  color: rgba(255, 255, 255, 0.62) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 640 !important;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tabs-container button[style*="var(--accent)"] {
+  background: rgba(255, 87, 51, 0.16) !important;
+  border-color: rgba(255, 87, 51, 0.54) !important;
+  color: #fff !important;
+  box-shadow: inset 0 -2px 0 rgba(255, 87, 51, 0.24);
+}
+
+.profile-content-grid > div:nth-child(2) > .glass:last-child {
+  min-height: 520px !important;
+  border-radius: 10px !important;
+}
+
+.profile-content-grid > div:nth-child(2) > .glass:last-child > div {
+  padding: var(--space-4) !important;
+}
+
+.profile-portfolio-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)) !important;
+  gap: var(--space-4) !important;
+}
+
+.profile-work-card {
+  position: relative;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  background: #090909 !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.72);
+  transition: transform 0.18s var(--ease-out), border-color 0.18s var(--ease-out);
+}
+
+.profile-work-card:hover {
+  border-color: rgba(255, 87, 51, 0.46) !important;
+}
+
+.profile-work-media {
+  height: auto !important;
+  aspect-ratio: 16 / 10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-work-media img,
+.profile-work-media video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.profile-work-body {
+  padding: var(--space-4) !important;
+}
+
+.profile-content-grid .profile-work-card .profile-work-title,
+.profile-work-title {
+  margin: 0 0 var(--space-2) !important;
+  color: #fff !important;
+  font-size: var(--text-base) !important;
+  font-weight: 600 !important;
+  line-height: 1.42 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  overflow-wrap: anywhere;
+}
+
+.profile-work-meta {
+  gap: var(--space-2);
+}
+
+.profile-work-meta span {
+  font-size: 0.75rem !important;
+  font-weight: 560 !important;
+  line-height: 1.35;
+  letter-spacing: 0 !important;
+}
+
+.profile-content-grid .profile-work-card .profile-work-meta span:first-child,
+.profile-work-meta span:first-child {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.profile-work-meta span:last-child {
+  color: rgba(255, 255, 255, 0.42) !important;
+}
+
+.profile-content-grid > div:nth-child(2) .glass .glass h4:not(.profile-work-title),
+.profile-content-grid > div:nth-child(2) [style*="fontSize: '1.4rem'"],
+.profile-content-grid > div:nth-child(2) [style*="font-size: 1.4rem"] {
+  color: #fff !important;
+  font-size: 1.125rem !important;
+  font-weight: 620 !important;
+  line-height: 1.38 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-wrap: pretty;
+}
+
+.profile-content-grid > div:nth-child(2) [style*="fontSize: '1.1rem'"],
+.profile-content-grid > div:nth-child(2) [style*="font-size: '1.1rem'"],
+.profile-content-grid > div:nth-child(2) [style*="font-size: 1.1rem"] {
+  color: rgba(255, 255, 255, 0.56) !important;
+  font-size: 0.95rem !important;
+  font-weight: 520 !important;
+  line-height: 1.45 !important;
+  letter-spacing: 0 !important;
+}
+
+.profile-content-grid > div:nth-child(2) [style*="fontSize: '0.8rem'"],
+.profile-content-grid > div:nth-child(2) [style*="font-size: '0.8rem'"],
+.profile-content-grid > div:nth-child(2) [style*="font-size: 0.8rem"] {
+  font-size: 0.75rem !important;
+  font-weight: 620 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}
+
+.profile-content-grid [style*="letterSpacing"],
+.profile-content-grid [style*="letter-spacing"] {
+  letter-spacing: 0 !important;
+}
+
+.profile-content-grid a {
+  color: #55c7ff !important;
+  text-decoration: none !important;
+}
+
+.profile-content-grid a:hover {
+  color: #fbca1f !important;
+}
+
+.profile-page input,
+.profile-page textarea {
+  border: 1px solid rgba(255, 87, 51, 0.34) !important;
+  border-radius: 8px !important;
+  background: rgba(0, 0, 0, 0.52) !important;
+  color: #fff !important;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.profile-page textarea {
+  min-height: 116px;
+}
+
+.profile-page .av-up:hover {
+  opacity: 1 !important;
+}
+
+.profile-page [style*="position: fixed"][style*="zIndex: 1000"] {
+  background: rgba(0, 0, 0, 0.84) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.profile-page [style*="maxWidth: '750px'"] {
+  max-width: 780px !important;
+  padding: var(--space-6) !important;
+  border-radius: 10px !important;
+  border-color: rgba(255, 87, 51, 0.28) !important;
+}
+
+.profile-page [style*="maxWidth: '750px'"] h3 {
+  margin: 0 0 var(--space-5) !important;
+  color: #fff !important;
+  font-size: var(--text-2xl) !important;
+  font-weight: 760 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase;
+}
+
+.profile-page .edit-row-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-edit-overlay {
+  display: grid !important;
+  place-items: center !important;
+  padding: clamp(16px, 4vw, 32px) !important;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    radial-gradient(circle at 76% 12%, rgba(255, 87, 51, 0.13), transparent 28rem),
+    rgba(0, 0, 0, 0.9) !important;
+  background-size: 28px 28px, 28px 28px, auto !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.profile-edit-modal {
+  position: relative;
+  width: min(100%, 760px) !important;
+  max-height: min(820px, calc(100vh - 32px)) !important;
+  padding: var(--space-6) !important;
+  border: 1px solid rgba(255, 87, 51, 0.34) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.024)),
+    #080808 !important;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.82), inset 0 0 0 1px rgba(0, 0, 0, 0.72) !important;
+}
+
+.profile-edit-modal::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  background:
+    linear-gradient(#ff5733 0 0) 0 0 / 7px 7px no-repeat,
+    linear-gradient(#ff5733 0 0) 11px 0 / 7px 7px no-repeat,
+    linear-gradient(rgba(255, 87, 51, 0.58) 0 0) 11px 11px / 7px 7px no-repeat;
+  opacity: 0.8;
+}
+
+.profile-edit-title {
+  margin: 0 0 var(--space-5) !important;
+  padding-right: var(--space-8);
+  color: #fff !important;
+  font-size: 1.35rem !important;
+  font-weight: 720 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  text-align: left !important;
+  text-transform: uppercase;
+}
+
+.profile-edit-title::before {
+  content: "Identity";
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 740;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.profile-edit-form {
+  display: grid !important;
+  gap: var(--space-5) !important;
+  padding-bottom: 0 !important;
+}
+
+.profile-edit-form .edit-row-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) !important;
+}
+
+.profile-edit-field {
+  display: grid !important;
+  gap: var(--space-2) !important;
+}
+
+.profile-edit-field label {
+  margin: 0 !important;
+  color: var(--accent) !important;
+  font-size: 0.72rem !important;
+  font-weight: 720 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase;
+}
+
+.profile-edit-field input,
+.profile-edit-field textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-3) !important;
+  border: 1px solid rgba(255, 87, 51, 0.32) !important;
+  border-radius: 8px !important;
+  outline: none;
+  background: rgba(0, 0, 0, 0.52) !important;
+  color: #fff !important;
+  font-size: 0.92rem !important;
+  font-weight: 560;
+  line-height: 1.5;
+}
+
+.profile-edit-field textarea {
+  min-height: 96px;
+  padding-block: var(--space-3) !important;
+  resize: vertical !important;
+}
+
+.profile-edit-field input:focus,
+.profile-edit-field textarea:focus {
+  border-color: rgba(251, 202, 31, 0.72) !important;
+}
+
+.profile-edit-field > div[style*="position: relative"] > div:first-child {
+  min-height: 48px;
+  padding: 0 var(--space-3) !important;
+  border: 1px solid rgba(255, 87, 51, 0.32) !important;
+  border-radius: 8px !important;
+  background: rgba(0, 0, 0, 0.52) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.profile-edit-field > div[style*="position: relative"] > div:first-child span {
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 560;
+}
+
+.profile-edit-field > div[style*="position: relative"] > div[style*="position: absolute"] {
+  margin-top: var(--space-2) !important;
+  padding: var(--space-2) !important;
+  border: 1px solid rgba(255, 87, 51, 0.28) !important;
+  border-radius: 8px !important;
+  background: #090909 !important;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.78) !important;
+}
+
+.profile-edit-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(148px, 0.48fr);
+  gap: var(--space-3) !important;
+  margin-top: var(--space-1) !important;
+}
+
+.profile-edit-save,
+.profile-edit-cancel {
+  min-height: 48px;
+  padding: 0 var(--space-4) !important;
+  border-radius: 8px !important;
+  font-size: 0.9rem !important;
+  font-weight: 760 !important;
+  letter-spacing: 0 !important;
+}
+
+.profile-edit-save {
+  border: 1px solid #000 !important;
+  background: #fbca1f !important;
+  color: #111 !important;
+  box-shadow: 3px 3px 0 #000;
+}
+
+.profile-edit-cancel {
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.profile-edit-save:hover,
+.profile-edit-cancel:hover {
+  transform: translate(-1px, -1px);
+}
+
+@media (max-width: 1100px) {
+  .profile-main-container {
+    margin-top: -170px !important;
+  }
+
+  .profile-content-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .profile-main-flex {
+    grid-template-columns: 1fr !important;
+  }
+
+  .profile-right-group {
+    max-width: none;
+    justify-content: flex-start;
+  }
+
+  .profile-content-grid > div:first-child {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-stats-grid {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .profile-edit-modal {
+    padding: var(--space-5) !important;
+  }
+
+  .profile-edit-title {
+    font-size: 1.15rem !important;
+  }
+
+  .profile-edit-form .edit-row-grid,
+  .profile-edit-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .profile-cover-stage {
+    height: 230px !important;
+  }
+
+  .profile-main-container {
+    margin-top: -148px !important;
+    padding-inline: var(--space-4) !important;
+  }
+
+  .profile-header-wrap {
+    padding: var(--space-4);
+  }
+
+  .profile-left-group,
+  .profile-main-flex {
+    align-items: flex-start !important;
+  }
+
+  .profile-left-group {
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: var(--space-4) !important;
+  }
+
+  .profile-left-group > div:first-child {
+    width: 150px;
+    max-width: 150px;
+    min-height: 150px;
+    flex-basis: auto;
+  }
+
+  .profile-info-text h1 {
+    font-size: 2rem !important;
+  }
+
+  .profile-right-group,
+  .tabs-container {
+    width: 100%;
+  }
+
+  .profile-right-group button {
+    flex: 1 1 160px;
+  }
+
+  .profile-content-grid > div:first-child,
+  .profile-stats-grid,
+  .profile-page .edit-row-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .profile-content-grid > div:nth-child(2) > .glass:last-child > div {
+    padding: var(--space-4) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .profile-main-container {
+    margin-top: -132px !important;
+    padding-inline: var(--space-3) !important;
+  }
+
+  .profile-info-text {
+    min-width: 100%;
+  }
+
+  .profile-left-group {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .profile-left-group > div:first-child {
+    width: 148px;
+    max-width: 148px;
+    min-height: 150px;
+    margin-bottom: 30px;
+  }
+
+  .profile-info-text h1 {
+    max-width: 100%;
+  }
+
+  .profile-identity-meta,
+  .profile-hero-stats {
+    justify-content: center;
+  }
+
+  .tabs-container button {
+    padding-inline: var(--space-3) !important;
+  }
+
+  .profile-page [style*="padding: '100px'"],
+  .profile-page [style*="padding: '60px'"] {
+    padding: var(--space-6) var(--space-4) !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   🔒  NUCLEAR OVERFLOW-X CONTAINMENT
+   ────────────────────────────────────────────────────
+   Prevent ANY horizontal scroll on the profile page.
+   This is the final, definitive solution.
+   ════════════════════════════════════════════════════ */
+
+.profile-page,
+.profile-main-container,
+.profile-header-wrap,
+.profile-content-grid,
+.profile-content-grid > div {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Glass cards in left column */
+.profile-content-grid > div:first-child .glass {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Every flex/grid child: reset intrinsic min size */
+.profile-content-grid > div:first-child .glass > *,
+.profile-content-grid > div:first-child .glass div,
+.profile-content-grid > div:first-child .glass span,
+.profile-content-grid > div:first-child .glass p,
+.profile-content-grid > div:first-child .glass a {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* All text nodes: force word wrap */
+.profile-content-grid > div:first-child .glass p,
+.profile-content-grid > div:first-child .glass span,
+.profile-content-grid > div:first-child .glass div {
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Links specifically: break-all to handle long URLs */
+.profile-content-grid > div:first-child .glass a {
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
+  display: inline-block !important;
+}
+
+

@@ -6,6 +6,7 @@ import { worksAPI, categoriesAPI } from '../../utils/api';
 import { CONFIG } from '../../utils/config';
 import VideoUploadForm from './VideoUploadForm';
 import axios from 'axios';
+import PremiumLoader from '../../components/PremiumLoader';
 import '../../css/AdminWorkForm.css';
 
 export default function AdminWorkForm() {
@@ -88,8 +89,13 @@ export default function AdminWorkForm() {
 
     try {
       // ✅ ยิงไปที่ Backend ของเราเอง
+      const token = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
       const res = await axios.post(`${CONFIG.API_URL}/upload/single`, uploadData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+          'x-auth-token': token,
+        }
       });
 
       // console.log("✅ Main Image Uploaded:", res.data.url);
@@ -158,7 +164,7 @@ export default function AdminWorkForm() {
     } finally { setLoading(false); }
   };
 
-  if (pageLoading) return <div className="page-loader-full">กำลังดึงข้อมูล...</div>;
+  if (pageLoading) return <PremiumLoader text="Loading Work Form..." subtext="กำลังดึงข้อมูล..." />;
 
   return (
     <div className="work-form-page fadeIn">
@@ -254,7 +260,7 @@ export default function AdminWorkForm() {
               ) : (
                 <div className="image-label" onClick={() => !imgUploading && mainImageInputRef.current.click()} style={{ cursor: imgUploading ? 'not-allowed' : 'pointer' }}>
                   <input type="file" ref={mainImageInputRef} accept="image/*" onChange={handleMainImageUpload} hidden />
-                  <div className="icon">{imgUploading ? '⏳' : '☁️'}</div>
+                  <div className="icon">{imgUploading ? <PremiumLoader bare size="small" /> : '☁️'}</div>
                   <p>{imgUploading ? 'Uploading to GCS...' : 'CLICK TO UPLOAD MAIN IMAGE'}</p>
                 </div>
               )}

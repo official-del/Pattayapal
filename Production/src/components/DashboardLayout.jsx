@@ -23,6 +23,8 @@ function DashboardLayout() {
     if (path.includes('/admin/overview')) return 'Platform Analytics';
     if (path.includes('/dashboard/wallet')) return 'Financial Hub';
     if (path.includes('/dashboard/hiring')) return 'Job Management';
+    if (path === '/rankings') return 'Rankings Hub';
+    if (path.includes('/rankings/roles')) return 'Role Leaderboards';
     if (path === '/dashboard') return 'User Workspace';
     return 'Dashboard';
   };
@@ -63,7 +65,16 @@ function DashboardLayout() {
         {/* ⚡ Content Stage */}
         <div className="dashboard-content-stage" style={{ padding: '20px 40px 40px', flex: 1 }}>
           <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
-            
+            <button
+              type="button"
+              className="dashboard-mobile-menu-btn"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open workspace menu"
+            >
+              <FiMenu />
+              <span>Workspace menu</span>
+            </button>
+
             {/* 💎 Minimalist Section Indicator */}
             <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                <div style={{ width: '4px', height: '20px', background: 'var(--accent)', borderRadius: '2px', boxShadow: '0 0 10px var(--accent-glow)' }} />
@@ -90,6 +101,31 @@ function DashboardLayout() {
 
       <style>{`
         .dashboard-main-area { margin-left: 320px; }
+
+        .dashboard-mobile-menu-btn {
+          display: none;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          min-height: 44px;
+          margin: 0 0 18px;
+          padding: 0 14px;
+          border: 1px solid rgba(255, 87, 51, 0.42);
+          border-radius: var(--pixel-radius, 8px);
+          background: rgba(255, 87, 51, 0.12);
+          color: #fff;
+          box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.72);
+          font-family: var(--font-main);
+          font-size: var(--text-sm, 0.875rem);
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .dashboard-mobile-menu-btn svg {
+          width: 18px;
+          height: 18px;
+          color: var(--accent);
+        }
         
         @keyframes headerGlow {
           from { background: rgba(0,0,0,0.7); }
@@ -103,7 +139,16 @@ function DashboardLayout() {
         @media (max-width: 1024px) {
           .dashboard-main-area { margin-left: 0 !important; }
           .dashboard-content-stage { padding: 15px 20px !important; }
+          .dashboard-mobile-menu-btn { display: inline-flex; }
           header { padding: 15px 20px !important; }
+        }
+
+        @media (max-width: 420px) {
+          .dashboard-content-stage { padding: 14px 10px 28px !important; }
+          .dashboard-mobile-menu-btn {
+            width: 100%;
+            margin-bottom: 14px;
+          }
         }
       `}</style>
     </div>

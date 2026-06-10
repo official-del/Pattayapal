@@ -4,6 +4,8 @@ import multer from 'multer';
 // ✅ นำเข้าฟังก์ชันสุดเทพจาก Controller ที่เราเพิ่งแก้ไป
 import { register, login, getProfile, verifyEmail } from '../controller/authController.js';
 import { protect } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
+import { buildDiskUploadOptions, imageOnlyFileFilter, maxImageUploadBytes } from '../middleware/uploadConfig.js';
 import { uploadToGCS } from '../utils/gcs.js';
 import User from '../models/User.js';
 import path from 'path';
@@ -14,14 +16,18 @@ const router = express.Router();
 import fs from 'fs';
 const tempDir = path.join(process.cwd(), 'uploads/temp');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-const upload = multer({ dest: tempDir });
+const upload = multer(buildDiskUploadOptions(tempDir, {
+  fileSize: maxImageUploadBytes,
+  files: 1,
+  fileFilter: imageOnlyFileFilter,
+}));
 
 
 // ==========================================
 // 🚀 AUTH ROUTES (โยนงานให้ authController จัดการ)
 // ==========================================
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', authLimiter, register);
+router.post('/login', authLimiter, login);
 router.get('/profile', protect, getProfile); // 👈 ตัวนี้แหละที่ Navbar จะวิ่งมาขอข้อมูลล่าสุด!
 router.get('/verify-email/:token', verifyEmail);
 
