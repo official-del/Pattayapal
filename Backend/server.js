@@ -73,10 +73,24 @@ const io = new Server(server, {
 });
 app.set('io', io);
 
+const setHtmlNoCacheHeaders = (res) => {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+    Pragma: 'no-cache',
+    Expires: '0',
+    'Surrogate-Control': 'no-store',
+  });
+};
+
 const frontendStaticOptions = {
   index: false,
   maxAge: isProduction ? '1d' : 0,
   dotfiles: 'deny',
+  setHeaders: (res, filePath) => {
+    if (path.extname(filePath) === '.html') {
+      setHtmlNoCacheHeaders(res);
+    }
+  },
 };
 
 const uploadStaticOptions = {
@@ -454,6 +468,7 @@ const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => 
 // ✅ Catch-all route เพื่อรองรับ SPA (React Router) + Dynamic SEO Meta Tags
 app.get('*', async (req, res) => {
   const indexPath = path.join(__dirname, 'dist', 'index.html');
+  setHtmlNoCacheHeaders(res);
   
   if (fs.existsSync(indexPath)) {
     try {
