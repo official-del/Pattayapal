@@ -161,9 +161,9 @@ function Navbar() {
         <div className="m-actions">
           {currentToken && (
             <>
-              <div className="m-gas" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }}>
+              <div className="m-gas" aria-label={`Gas ${user?.gas ?? userInfo?.gas ?? 0}%`}>
                 <GasIcon gas={user?.gas ?? userInfo?.gas ?? 0} size="20px" />
-                <span style={{ fontSize: '0.8rem', fontWeight: '800' }}>{user?.gas ?? userInfo?.gas ?? 0}%</span>
+                <span>{user?.gas ?? userInfo?.gas ?? 0}%</span>
               </div>
               <div className="m-coin"><CoinIcon size={16} /> <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span></div>
             </>
@@ -177,11 +177,12 @@ function Navbar() {
       {/* 💎 Desktop Top Actions (3-Buttons Hub) */}
       {currentToken && !isMessengerRoute && (
         <div className={`desktop-top-actions hide-mobile ${usesWorkspaceSidebar ? 'is-workspace' : ''}`}>
-          <div className="d-gas-box" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap' }}>
+          <div className="d-gas-box" aria-label={`Gas ${user?.gas ?? userInfo?.gas ?? 0}%`}>
             <GasIcon gas={user?.gas ?? userInfo?.gas ?? 0} size="20px" />
-            <span style={{ fontSize: '0.85rem', fontWeight: '800' }}>{user?.gas ?? userInfo?.gas ?? 0}%</span>
+            <span className="d-status-label">Gas</span>
+            <span className="d-status-value">{user?.gas ?? userInfo?.gas ?? 0}%</span>
           </div>
-          <div className="d-coin-box" style={{ whiteSpace: 'nowrap', padding: '6px 12px' }}>
+          <div className="d-coin-box">
             <CoinIcon size={16} />
             <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span>
           </div>
