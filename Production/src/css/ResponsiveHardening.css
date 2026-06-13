@@ -1,0 +1,631 @@
+/* Responsive hardening layer.
+   Keep this file imported last so broad device fixes stay visible and easy to audit. */
+
+:root {
+  --app-mobile-nav-height: 65px;
+  --app-gutter: clamp(12px, 3vw, 32px);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body,
+#root {
+  min-height: 100dvh;
+}
+
+#root,
+main,
+section,
+article,
+aside,
+header,
+footer {
+  min-width: 0;
+}
+
+.route-page-shell {
+  width: 100%;
+  min-width: 0;
+}
+
+.route-page-frame {
+  width: min(100%, 1400px);
+  min-width: 0;
+}
+
+.route-page-frame-compact {
+  width: min(100%, 1200px);
+}
+
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea,
+  .pp-button,
+  .ui-button,
+  .btn-premium,
+  .p-nav-item,
+  .m-toggle-btn,
+  .d-action-btn,
+  .mj-tab-btn,
+  .mw-add-btn,
+  .mw-empty-action,
+  .edit-btn,
+  .delete-btn,
+  .feed-post-action,
+  .nav-btn,
+  .new-chat-btn,
+  .icon-action-btn,
+  .input-aux-btn,
+  .mic-btn,
+  .send-btn,
+  .mobile-back,
+  .sidebar-mobile-close,
+  .profile-right-group button,
+  .quest-modal-shell button {
+    min-height: 44px;
+  }
+
+  .m-toggle-btn,
+  .d-action-btn,
+  .delete-btn,
+  .nav-btn,
+  .new-chat-btn,
+  .icon-action-btn,
+  .input-aux-btn,
+  .mic-btn,
+  .send-btn,
+  .sidebar-mobile-close,
+  .quest-modal-shell > button {
+    min-width: 44px;
+  }
+
+  .p-nav-item,
+  .conv-item,
+  .work-card,
+  .profile-work-card,
+  .job-card {
+    -webkit-tap-highlight-color: rgba(255, 87, 51, 0.16);
+  }
+}
+
+@media (hover: none) {
+  .premium-sidebar-container:hover {
+    width: var(--p-sb-collapsed);
+  }
+
+  .feed-post-card:hover,
+  .job-card:hover,
+  .work-card:hover,
+  .mw-add-btn:hover,
+  .mw-empty-action:hover,
+  .d-action-btn:hover {
+    transform: none !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-sidebar-container:hover,
+  .premium-sidebar-container:focus-within {
+    width: var(--p-sb-expanded);
+  }
+
+  .premium-sidebar-container:focus-within .p-brand-text,
+  .premium-sidebar-container:focus-within .p-user-info,
+  .premium-sidebar-container:focus-within .p-item-label,
+  .premium-sidebar-container:focus-within .p-group-label {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+  }
+}
+
+@media (min-width: 1181px) and (hover: none) and (pointer: coarse) {
+  .premium-sidebar-container,
+  .premium-sidebar-container:hover {
+    width: 110px;
+  }
+
+  .premium-sidebar-container .p-item-label,
+  .premium-sidebar-container .p-brand-text,
+  .premium-sidebar-container .p-user-info,
+  .premium-sidebar-container .p-group-label {
+    display: none;
+  }
+}
+
+.pp-modal-backdrop,
+.pp-crop-overlay,
+.quest-modal-overlay,
+.profile-edit-overlay {
+  overscroll-behavior: contain;
+}
+
+.pp-modal,
+.pp-crop-modal,
+.quest-modal-shell,
+.profile-edit-modal,
+.group-dialog {
+  max-width: calc(100vw - 24px) !important;
+}
+
+@media (max-width: 1180px) {
+  .route-page-shell {
+    min-height: calc(100dvh - var(--app-mobile-nav-height));
+    padding-top: 16px !important;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .route-page-frame {
+    padding-inline: var(--app-gutter) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --app-gutter: clamp(10px, 3.6vw, 16px);
+    --space-1: 3px;
+    --space-2: 6px;
+    --space-3: 10px;
+    --space-4: 14px;
+    --space-5: 18px;
+    --space-6: 22px;
+    --space-8: 28px;
+    --space-10: 36px;
+    --space-12: 44px;
+    --space-16: 56px;
+    --text-2xl: 1.65rem;
+    --text-3xl: 2rem;
+    --text-4xl: 2.4rem;
+  }
+
+  .route-page-shell {
+    padding-top: 12px !important;
+  }
+
+  .route-page-frame {
+    padding-inline: var(--app-gutter) !important;
+  }
+
+  h1 {
+    font-size: clamp(1.65rem, 6.5vw, 2.15rem) !important;
+    line-height: 1.05 !important;
+  }
+
+  h2 {
+    font-size: clamp(1.35rem, 5vw, 1.65rem) !important;
+    line-height: 1.1 !important;
+  }
+
+  h3 {
+    font-size: clamp(1.1rem, 4vw, 1.3rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  :where(
+    .title-huge,
+    .header-title,
+    .db-title,
+    .page-title,
+    .section-title,
+    .hero-title,
+    .profile-title,
+    .works-title,
+    .auth-title,
+    .service-title,
+    .post-title,
+    .rank-title,
+    .dashboard-title
+  ) {
+    font-size: clamp(1.7rem, 6.5vw, 2.1rem) !important;
+    line-height: 1.05 !important;
+  }
+
+  .home-section-padding {
+    padding: 40px 0 !important;
+  }
+
+  .pp-card,
+  .pp-panel,
+  .glass-card,
+  .ui-panel {
+    padding: var(--space-3) !important;
+  }
+
+  .pp-modal {
+    padding: var(--space-4) !important;
+  }
+
+  .db-header {
+    min-height: 124px !important;
+    padding: var(--space-4) !important;
+  }
+
+  .stat-card {
+    min-height: 92px !important;
+    padding: var(--space-3) !important;
+    gap: var(--space-3) !important;
+  }
+
+  .chart-container {
+    padding: var(--space-3) !important;
+  }
+
+  .works-grid {
+    grid-auto-rows: minmax(220px, 72vw) !important;
+  }
+
+  .showcase-overlay,
+  .card-large .showcase-overlay {
+    padding: var(--space-3) !important;
+  }
+
+  .card-large .overlay-title {
+    font-size: 1.35rem !important;
+    line-height: 1.12 !important;
+  }
+
+  :where(
+    .services-hero,
+    .services-flow-panel,
+    .services-final-cta,
+    .discovery-hero,
+    .wallet-hero,
+    .mw-header,
+    .mj-header,
+    .quests-hero,
+    .friends-hero,
+    .rankings-hero,
+    .role-rankings-hero,
+    .notifications-header,
+    .admin-overview-hero,
+    .auth-brand-panel,
+    .auth-form-panel,
+    .work-form-title-row
+  ) {
+    min-height: auto !important;
+    padding: var(--space-4) !important;
+    gap: var(--space-3) !important;
+  }
+
+  .services-hero-copy {
+    min-height: auto !important;
+    padding: var(--space-4) !important;
+    gap: var(--space-3) !important;
+  }
+
+  :where(
+    .services-category-card,
+    .services-action-card,
+    .discovery-search-panel,
+    .discovery-stat-card,
+    .friends-stat-card,
+    .friends-row-card,
+    .wallet-stat-card,
+    .wallet-panel,
+    .wallet-conversion-card,
+    .wallet-bank-card,
+    .mw-stat-card,
+    .mj-card,
+    .quest-card,
+    .rankings-podium-card,
+    .rankings-my-card,
+    .role-rank-card,
+    .auth-hud-card,
+    .work-form-card,
+    .work-info-card,
+    .admin-overview-panel
+  ) {
+    min-height: auto !important;
+    padding: var(--space-3) !important;
+    gap: var(--space-2) !important;
+  }
+
+  :where(
+    .mw-stats-grid,
+    .wallet-balance-grid,
+    .friends-stats-grid,
+    .discovery-stats-grid,
+    .quests-stats-grid,
+    .auth-hud-grid
+  ) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: var(--space-2) !important;
+  }
+
+  :where(
+    .mw-grid,
+    .friends-grid,
+    .discovery-suggestion-grid,
+    .services-category-grid,
+    .services-action-grid,
+    .role-rank-grid,
+    .rankings-podium-grid
+  ) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)) !important;
+    gap: var(--space-2) !important;
+  }
+
+  :where(
+    .home-feed-toolbar,
+    .mw-toolbar,
+    .wallet-panel-heading,
+    .friends-board-header,
+    .discovery-board-header,
+    .rankings-board-header,
+    .work-form-card-head,
+    .chart-header
+  ) {
+    padding: var(--space-3) !important;
+    gap: var(--space-2) !important;
+  }
+
+  :where(
+    .home-feed-filters,
+    .discovery-filter-grid,
+    .services-hero-actions,
+    .services-cta-actions,
+    .quests-hero-actions,
+    .admin-console-actions,
+    .mj-actions,
+    .friends-actions,
+    .profile-right-group
+  ) {
+    gap: var(--space-2) !important;
+  }
+
+  :where(
+    .mw-empty-state,
+    .mj-empty-state,
+    .wallet-empty-history,
+    .quests-empty,
+    .friends-empty-state,
+    .discovery-empty-state,
+    .role-empty-state,
+    .notifications-empty,
+    .pp-empty-state
+  ) {
+    min-height: clamp(150px, 40vw, 190px) !important;
+    padding: var(--space-4) !important;
+    gap: var(--space-3) !important;
+  }
+
+  :where(.mw-empty-icon, .mj-empty-icon, .wallet-empty-history svg) {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 1.6rem !important;
+  }
+
+  :where(.stat-icon-box, .wallet-stat-card svg, .friends-stat-card svg, .discovery-stat-card svg) {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 1.15rem !important;
+  }
+
+  :where(.pp-input, .pp-select, .pp-custom-select-trigger, .pp-textarea) {
+    min-height: 44px !important;
+    padding-inline: var(--space-3) !important;
+    font-size: 0.95rem !important;
+  }
+
+  :where(.filter-btn, .home-filter-btn, .mj-tab-btn, .m-toggle-btn, .d-action-btn) {
+    padding-inline: var(--space-3) !important;
+  }
+
+  .pp-modal-backdrop,
+  .pp-crop-overlay,
+  .quest-modal-overlay,
+  .profile-edit-overlay {
+    align-items: flex-start !important;
+    padding: 12px !important;
+    overflow-y: auto;
+  }
+
+  .pp-modal,
+  .pp-crop-modal,
+  .quest-modal-shell,
+  .profile-edit-modal,
+  .group-dialog {
+    width: 100% !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    border-radius: 14px !important;
+  }
+
+  .quest-modal-shell,
+  .profile-edit-modal {
+    padding: 18px !important;
+  }
+
+  .quest-modal-header {
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .quest-modal-header > div:first-child {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    flex: 0 0 44px;
+  }
+
+  .quest-modal-header h2 {
+    padding-right: 44px;
+    font-size: 1.28rem !important;
+    line-height: 1.18 !important;
+  }
+
+  .quest-modal-header p {
+    font-size: 0.84rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .quest-modal-subgrid,
+  .edit-row-grid,
+  .profile-edit-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .profile-edit-form {
+    gap: 18px !important;
+    padding-bottom: 24px !important;
+  }
+
+  .profile-edit-actions {
+    display: grid !important;
+    gap: 10px !important;
+  }
+
+  .feed-post-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px !important;
+  }
+
+  .feed-post-card .feed-post-action {
+    justify-content: center;
+    padding-inline: 10px !important;
+  }
+
+  .mw-toolbar,
+  .mj-tabs,
+  .tabs-container,
+  .inbox-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .mw-toolbar::-webkit-scrollbar,
+  .mj-tabs::-webkit-scrollbar,
+  .tabs-container::-webkit-scrollbar,
+  .inbox-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dashboard-content-stage,
+  .manage-jobs-container,
+  .manage-works-container,
+  .manage-wallet-container,
+  .quests-container,
+  .notifications-container {
+    min-width: 0;
+  }
+
+  .dashboard-content-stage table,
+  .route-page-frame table,
+  .premium-table-wrap table {
+    width: max-content;
+    min-width: min(640px, calc(100vw - 24px));
+  }
+
+  .premium-table-wrap,
+  .dashboard-content-stage .table-wrap,
+  .dashboard-content-stage .table-container,
+  .dashboard-content-stage .premium-table-wrap,
+  .route-page-frame .table-wrap,
+  .route-page-frame .table-container,
+  .route-page-frame .premium-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 520px) {
+  .feed-post-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-cover-stage {
+    height: 210px !important;
+  }
+
+  .works-grid {
+    grid-auto-rows: minmax(185px, 62vw) !important;
+  }
+
+  :where(
+    .services-page,
+    .home-main-container,
+    .works-content-wrapper,
+    .dashboard-overview-container,
+    .manage-jobs-container,
+    .manage-works-container,
+    .manage-wallet-container,
+    .quests-container,
+    .notifications-container,
+    .friends-page,
+    .discovery-page,
+    .rankings-page,
+    .role-rankings-page,
+    .work-form-page
+  ) {
+    padding-inline: var(--app-gutter) !important;
+  }
+
+  .profile-left-group,
+  .profile-right-group {
+    width: 100%;
+  }
+
+  .profile-right-group > * {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 380px) {
+  :root {
+    --app-mobile-nav-height: 60px;
+    --app-gutter: 10px;
+  }
+
+  .pp-modal,
+  .pp-crop-modal,
+  .quest-modal-shell,
+  .profile-edit-modal,
+  .group-dialog {
+    max-width: calc(100vw - 16px) !important;
+  }
+
+  .quest-modal-overlay,
+  .profile-edit-overlay {
+    padding: 8px !important;
+  }
+
+  .quest-modal-shell,
+  .profile-edit-modal {
+    padding: 14px !important;
+  }
+}
+
+@media (max-height: 620px) and (orientation: landscape) {
+  .mobile-top-nav {
+    min-height: 56px;
+  }
+
+  .premium-sidebar-container {
+    padding-top: 56px !important;
+  }
+
+  .quest-modal-overlay,
+  .profile-edit-overlay,
+  .pp-modal-backdrop {
+    align-items: flex-start !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}

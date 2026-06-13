@@ -27,7 +27,7 @@ export const authAPI = {
 
 // ── Works ──
 export const worksAPI = {
-  getAll:   ()           => API.get('/works').then(res => res.data),
+  getAll:   (params)     => API.get('/works', { params }).then(res => res.data),
   getById:  (id)         => API.get(`/works/${id}`).then(res => res.data),
   getByUser: (userId)    => API.get(`/works/user/${userId}`).then(res => res.data),
   create:   (data) => API.post('/works', data).then(res => res.data),

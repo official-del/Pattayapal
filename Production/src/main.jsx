@@ -9,6 +9,7 @@ import App from "./App"
 import ErrorBoundary from "./components/ErrorBoundary"
 import { HelmetProvider } from "react-helmet-async"
 import "./index.css"
+import "./css/ResponsiveHardening.css"
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

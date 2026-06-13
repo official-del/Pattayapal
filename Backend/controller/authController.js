@@ -3,6 +3,12 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendVerificationEmail } from '../utils/sendEmail.js';
 
+const normalizeName = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+const duplicateMessage = (field) => field === 'nameKey'
+  ? 'This user name is already in use.'
+  : 'This email address is already in use.';
+
 const signUserToken = (user) => {
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET is not configured');
@@ -18,16 +24,38 @@ const signUserToken = (user) => {
 export const register = async (req, res) => {
   try {
     const { name, email, password, profession, phone } = req.body;
+    const normalizedName = normalizeName(name);
+    const normalizedEmail = normalizeEmail(email);
+    const nameKey = normalizedName.toLowerCase();
 
-    // Check if user exists
-    let user = await User.findOne({ email });
+    if (!normalizedName || !normalizedEmail || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required.' });
+    }
+
+    const [emailUser, nameUser] = await Promise.all([
+      User.findOne({ email: normalizedEmail }).collation({ locale: 'en', strength: 2 }),
+      User.findOne({
+        $or: [
+          { nameKey },
+          { name: normalizedName },
+        ],
+      }).collation({ locale: 'en', strength: 2 }),
+    ]);
+
+    if (nameUser && (!emailUser || String(nameUser._id) !== String(emailUser._id))) {
+      return res.status(409).json({ message: duplicateMessage('nameKey') });
+    }
+
+    let user = emailUser;
     if (user) {
       if (user.isEmailVerified) {
-        return res.status(400).json({ message: 'User already exists' });
+        return res.status(409).json({ message: duplicateMessage('email') });
       } else {
         // User exists but is not verified: Update info and resend email
         const verificationToken = crypto.randomBytes(32).toString('hex');
-        user.name = name;
+        user.name = normalizedName;
+        user.nameKey = nameKey;
+        user.email = normalizedEmail;
         user.password = password; 
         user.profession = profession || 'General';
         user.phone = phone || '';
@@ -49,8 +77,9 @@ export const register = async (req, res) => {
 
     // Create new user
     user = new User({
-      name,
-      email,
+      name: normalizedName,
+      nameKey,
+      email: normalizedEmail,
       password,
       role: 'user',
       profession: profession || 'General',
@@ -72,13 +101,18 @@ export const register = async (req, res) => {
       message: 'Registration successful! Please check your email to verify your account.',
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      const field = Object.keys(error.keyPattern || error.keyValue || {})[0];
+      return res.status(409).json({ message: duplicateMessage(field) });
+    }
     res.status(500).json({ message: error.message });
   }
 };
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { password } = req.body;
 
     // Validate input
     if (!email || !password) {
@@ -86,7 +120,7 @@ export const login = async (req, res) => {
     }
 
     // Check for user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).collation({ locale: 'en', strength: 2 });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }

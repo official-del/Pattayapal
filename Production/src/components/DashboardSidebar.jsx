@@ -57,7 +57,8 @@ function DashboardSidebar({ show, onClose }) {
       width: '320px',
       maxWidth: 'calc(100vw - 24px)',
       background: '#050505',
-      height: '100vh',
+      height: '100dvh',
+      maxHeight: '100dvh',
       position: 'fixed',
       left: 0,
       top: 0,
@@ -68,6 +69,8 @@ function DashboardSidebar({ show, onClose }) {
       pointerEvents: isNavbarOpen ? 'none' : 'auto',
       display: 'flex',
       flexDirection: 'column',
+      boxSizing: 'border-box',
+      overflow: 'hidden',
       transform: show ? 'translateX(0)' : 'translateX(-100%)',
       transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, z-index 0.3s',
       backgroundColor: '#000'
@@ -78,7 +81,9 @@ function DashboardSidebar({ show, onClose }) {
         onClick={onClose}
         style={{
           position: 'absolute', top: '20px', right: '20px',
-          background: 'none', border: 'none', color: '#fff', fontSize: '1.5rem',
+          width: '44px', height: '44px', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '12px', color: '#fff', fontSize: '1.5rem',
           cursor: 'pointer', display: 'none'
         }}
         className="sidebar-mobile-close"
@@ -153,6 +158,7 @@ function DashboardSidebar({ show, onClose }) {
                   alignItems: 'center',
                   gap: '15px',
                   padding: '16px 20px',
+                  minHeight: '48px',
                   borderRadius: '20px',
                   color: isActive(item.href) ? '#fff' : '#444',
                   textDecoration: 'none',
@@ -176,10 +182,28 @@ function DashboardSidebar({ show, onClose }) {
         @media (max-width: 1024px) {
           .dashboard-sidebar {
             width: min(320px, calc(100vw - 24px)) !important;
-            padding: 42px 18px 22px !important;
+            padding: calc(42px + env(safe-area-inset-top, 0px)) 18px calc(22px + env(safe-area-inset-bottom, 0px)) !important;
             z-index: 1002 !important;
           }
-          .sidebar-mobile-close { display: block !important; }
+          .sidebar-mobile-close { display: inline-flex !important; }
+        }
+
+        @media (max-width: 380px) {
+          .dashboard-sidebar {
+            width: min(300px, calc(100vw - 16px)) !important;
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+          }
+        }
+
+        @media (max-height: 620px) and (max-width: 1024px) {
+          .dashboard-sidebar {
+            padding-top: calc(22px + env(safe-area-inset-top, 0px)) !important;
+          }
+
+          .dashboard-sidebar > div:first-of-type {
+            margin-bottom: 24px !important;
+          }
         }
         @media (min-width: 1025px) {
           .dashboard-sidebar { transform: none !important; }

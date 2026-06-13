@@ -30,7 +30,7 @@ function DashboardLayout() {
   };
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', display: 'flex', overflow: 'hidden' }}>
+    <div className="dashboard-layout-shell" style={{ background: '#000', minHeight: '100dvh', display: 'flex' }}>
 
       {/* 📱 Mobile Sidebar Overlay */}
       <AnimatePresence>
@@ -52,7 +52,7 @@ function DashboardLayout() {
 
       <main style={{
         flex: 1,
-        height: '100vh',
+        minHeight: '100dvh',
         overflowY: 'auto',
         overflowX: 'hidden',
         position: 'relative',
@@ -63,8 +63,8 @@ function DashboardLayout() {
         {/* 🏛️ Dashboard Content Stage */}
 
         {/* ⚡ Content Stage */}
-        <div className="dashboard-content-stage" style={{ padding: '20px 40px 40px', flex: 1 }}>
-          <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
+        <div className="dashboard-content-stage" style={{ flex: 1 }}>
+          <div className="dashboard-content-inner" style={{ maxWidth: '1440px', margin: '0 auto' }}>
             <button
               type="button"
               className="dashboard-mobile-menu-btn"
@@ -76,7 +76,7 @@ function DashboardLayout() {
             </button>
 
             {/* 💎 Minimalist Section Indicator */}
-            <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="dashboard-crumb" style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                <div style={{ width: '4px', height: '20px', background: 'var(--accent)', borderRadius: '2px', boxShadow: '0 0 10px var(--accent-glow)' }} />
                <span style={{ color: '#333', fontSize: '0.75rem', fontWeight: '700', letterSpacing: '3px', textTransform: 'uppercase' }}>
                  Workspace <FiChevronRight size={10} style={{ margin: '0 5px' }} /> 
@@ -86,6 +86,7 @@ function DashboardLayout() {
 
             <AnimatePresence mode="wait">
               <motion.div
+                className="dashboard-route-motion"
                 key={location.pathname}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -100,7 +101,29 @@ function DashboardLayout() {
       </main>
 
       <style>{`
-        .dashboard-main-area { margin-left: 320px; }
+        .dashboard-layout-shell {
+          width: 100%;
+          min-width: 0;
+          overflow: visible;
+        }
+
+        .dashboard-main-area {
+          margin-left: 320px;
+          min-width: 0;
+          width: 100%;
+        }
+
+        .dashboard-content-stage {
+          width: 100%;
+          min-width: 0;
+          padding: 84px 40px 40px;
+        }
+
+        .dashboard-content-inner,
+        .dashboard-route-motion {
+          width: 100%;
+          min-width: 0;
+        }
 
         .dashboard-mobile-menu-btn {
           display: none;
@@ -138,9 +161,25 @@ function DashboardLayout() {
 
         @media (max-width: 1024px) {
           .dashboard-main-area { margin-left: 0 !important; }
-          .dashboard-content-stage { padding: 15px 20px !important; }
+          .dashboard-content-stage {
+            padding: 18px 20px calc(34px + env(safe-area-inset-bottom, 0px)) !important;
+          }
           .dashboard-mobile-menu-btn { display: inline-flex; }
           header { padding: 15px 20px !important; }
+        }
+
+        @media (max-width: 640px) {
+          .dashboard-crumb {
+            margin-bottom: 22px !important;
+            align-items: flex-start !important;
+          }
+
+          .dashboard-crumb span {
+            max-width: 100%;
+            letter-spacing: 1.4px !important;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+          }
         }
 
         @media (max-width: 420px) {
@@ -148,6 +187,12 @@ function DashboardLayout() {
           .dashboard-mobile-menu-btn {
             width: 100%;
             margin-bottom: 14px;
+          }
+        }
+
+        @media (max-width: 420px) and (max-height: 700px) {
+          .dashboard-content-stage {
+            padding-top: 10px !important;
           }
         }
       `}</style>

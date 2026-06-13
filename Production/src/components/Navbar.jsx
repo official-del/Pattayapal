@@ -34,6 +34,7 @@ function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isMessengerRoute = location.pathname === '/messenger' || location.pathname.startsWith('/messenger/');
+  const usesWorkspaceSidebar = location.pathname.startsWith('/dashboard') || location.pathname === '/rankings';
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [balanceUpdateMessage, setBalanceUpdateMessage] = useState(null);
@@ -175,7 +176,7 @@ function Navbar() {
 
       {/* 💎 Desktop Top Actions (3-Buttons Hub) */}
       {currentToken && !isMessengerRoute && (
-        <div className="desktop-top-actions hide-mobile">
+        <div className={`desktop-top-actions hide-mobile ${usesWorkspaceSidebar ? 'is-workspace' : ''}`}>
           <div className="d-gas-box" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap' }}>
             <GasIcon gas={user?.gas ?? userInfo?.gas ?? 0} size="20px" />
             <span style={{ fontSize: '0.85rem', fontWeight: '800' }}>{user?.gas ?? userInfo?.gas ?? 0}%</span>
@@ -201,7 +202,7 @@ function Navbar() {
 
       {/* 🛸 Neo-Cyber Premium Sidebar */}
       <AnimatePresence>
-        {(isOpen || window.innerWidth > 1180) && (
+        {(isOpen || (window.innerWidth > 1180 && !usesWorkspaceSidebar)) && (
           <>
             {isOpen && window.innerWidth <= 1180 && (
               <MotionDiv

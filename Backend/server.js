@@ -465,6 +465,27 @@ const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => 
   "'": '&#39;',
 }[char]));
 
+const publicSiteUrl = String(process.env.PUBLIC_SITE_URL || 'https://pattayapal.com').replace(/\/+$/, '');
+const videoExtensions = /\.(mp4|webm|mov|avi|mkv)(?:$|[?#])/i;
+const imageExtensions = /\.(jpe?g|png|webp|gif|avif)(?:$|[?#])/i;
+
+const toPublicMediaUrl = (value) => {
+  const raw = typeof value === 'string' ? value : value?.url;
+  if (!raw || typeof raw !== 'string') return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return `${publicSiteUrl}/${raw.replace(/^\/+/, '')}`;
+};
+
+const getWorkShareImage = (work) => {
+  const mainImage = toPublicMediaUrl(work?.mainImage);
+  if (mainImage && !videoExtensions.test(mainImage)) return mainImage;
+
+  if (!Array.isArray(work?.album)) return '';
+  return work.album
+    .map(toPublicMediaUrl)
+    .find((item) => item && imageExtensions.test(item)) || '';
+};
+
 // ✅ Catch-all route เพื่อรองรับ SPA (React Router) + Dynamic SEO Meta Tags
 app.get('*', async (req, res) => {
   const indexPath = path.join(__dirname, 'dist', 'index.html');
@@ -477,15 +498,16 @@ app.get('*', async (req, res) => {
       // Default Meta Data
       let title = "Pattayapal Portfolio | Community & Workspace for Freelancers";
       let description = "Pattayapal แพลตฟอร์มรวมผลงานและชุมชนฟรีแลนซ์คุณภาพ แหล่งรวมโปรดักชั่น ดีไซน์ และการตลาดออนไลน์ที่ดีที่สุด";
-      let image = "https://pattayapal.com/og-image.jpg";
-      let url = `https://pattayapal.com${req.url}`;
+      let image = `${publicSiteUrl}/og-image.jpg`;
+      let imageAlt = 'PattayaPal creator community and portfolio hub';
+      let url = `${publicSiteUrl}${req.originalUrl || req.url}`;
 
       // 1. Check for Work Detail (/works/:id)
       const workMatch = req.url.match(/\/works\/([a-zA-Z0-9]+)/);
       if (workMatch) {
         try {
           const work = await Work.findById(workMatch[1])
-            .select('title description mainImage createdBy')
+            .select('title description shortDescription mainImage album type createdBy')
             .populate('createdBy', 'name profession');
           
           if (work) {
@@ -496,9 +518,8 @@ app.get('*', async (req, res) => {
             const cleanDesc = work.description?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || "";
             description = cleanDesc ? `${cleanDesc} - ผลงานโดย ${authorName}` : `ชมผลงาน ${work.title} โดย ${authorName} บน Pattayapal`;
             
-            if (work.mainImage?.url) {
-              image = work.mainImage.url.startsWith('http') ? work.mainImage.url : `https://pattayapal.com${work.mainImage.url.startsWith('/') ? '' : '/'}${work.mainImage.url}`;
-            }
+            image = getWorkShareImage(work) || image;
+            imageAlt = `${work.title} by ${authorName}`;
           }
         } catch (err) {
           console.error("Work SEO Error:", err);
@@ -521,8 +542,9 @@ app.get('*', async (req, res) => {
             title = `${user.name} (@${user.username}) | ${user.profession || 'Freelancer'} | Pattayapal`;
             description = user.bio?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `${user.name} - ${user.profession || 'Freelancer'} on Pattayapal. View portfolio and contact for work.`;
             if (user.profileImage?.url) {
-              image = user.profileImage.url.startsWith('http') ? user.profileImage.url : `https://pattayapal.com${user.profileImage.url.startsWith('/') ? '' : '/'}${user.profileImage.url}`;
+              image = toPublicMediaUrl(user.profileImage.url) || image;
             }
+            imageAlt = `${user.name} on PattayaPal`;
           }
         } catch (err) {
           console.error("Profile SEO Error:", err);
@@ -539,10 +561,11 @@ app.get('*', async (req, res) => {
             title = `Post by ${authorName} | Pattayapal Portfolio`;
             description = post.content?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `Check out this update from ${authorName} on Pattayapal`;
             
-            if (post.media && post.media.length > 0 && post.media[0].url) {
-              const firstMedia = post.media[0].url;
-              image = firstMedia.startsWith('http') ? firstMedia : `https://pattayapal.com${firstMedia.startsWith('/') ? '' : '/'}${firstMedia}`;
-            }
+            const firstImage = Array.isArray(post.media)
+              ? post.media.map(toPublicMediaUrl).find((item) => item && !videoExtensions.test(item))
+              : '';
+            image = firstImage || image;
+            imageAlt = `Post by ${authorName}`;
           }
         } catch (err) {
           console.error("Post SEO Error:", err);
@@ -573,6 +596,7 @@ app.get('*', async (req, res) => {
       html = injectMeta(html, 'og:image:secure_url', image);
       html = injectMeta(html, 'og:image:width', '1200');
       html = injectMeta(html, 'og:image:height', '630');
+      html = injectMeta(html, 'og:image:alt', imageAlt);
       html = injectMeta(html, 'og:url', url);
       html = injectMeta(html, 'og:site_name', 'Pattayapal Portfolio');
       html = injectMeta(html, 'og:type', workMatch || postMatch ? 'article' : 'website');
@@ -655,8 +679,13 @@ app.use((err, req, res, next) => {
 
 const connectDatabase = async () => {
   mongoose.set('strictQuery', true);
-  await mongoose.connect(process.env.MONGO_URI, {
-    serverSelectionTimeoutMS: 2000,
+  const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+  if (!mongoUri) {
+    throw new Error('MONGO_URI is required');
+  }
+
+  await mongoose.connect(mongoUri, {
+    serverSelectionTimeoutMS: Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS || 10000),
   });
   await createFirstAdmin();
 };

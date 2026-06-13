@@ -5,6 +5,9 @@ import Job from '../models/Job.js';
 import Transaction from '../models/Transaction.js';
 import ProfileView from '../models/ProfileView.js';
 
+const normalizeName = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+const normalizeUsername = (value) => String(value || '').trim().toLowerCase();
+
 // GET Public Profile (by ID)
 const getPublicProfile = async (req, res) => {
   try {
@@ -303,8 +306,32 @@ const updateProfile = async (req, res) => {
     } = req.body;
     
     const updateData = { bio };
-    if (name) updateData.name = name;
-    if (username) updateData.username = username;
+    if (name) {
+      const normalizedName = normalizeName(name);
+      const nameKey = normalizedName.toLowerCase();
+      const existingName = await User.findOne({
+        _id: { $ne: req.user.id },
+        $or: [{ nameKey }, { name: normalizedName }],
+      }).collation({ locale: 'en', strength: 2 });
+
+      if (existingName) {
+        return res.status(409).json({ message: 'This user name is already in use.' });
+      }
+      updateData.name = normalizedName;
+      updateData.nameKey = nameKey;
+    }
+    if (username) {
+      const normalizedUsername = normalizeUsername(username);
+      const existingUsername = await User.findOne({
+        _id: { $ne: req.user.id },
+        username: normalizedUsername,
+      }).collation({ locale: 'en', strength: 2 });
+
+      if (existingUsername) {
+        return res.status(409).json({ message: 'This username is already in use.' });
+      }
+      updateData.username = normalizedUsername;
+    }
     if (profession) updateData.profession = profession;
     if (typeof isAvailableForHire !== 'undefined') updateData.isAvailableForHire = isAvailableForHire;
     if (serviceTags) updateData.serviceTags = serviceTags;
@@ -322,7 +349,7 @@ const updateProfile = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user.id,
       updateData,
-      { new: true }
+      { new: true, runValidators: true }
     ).select('-password');
     
     // 📡 Emit Real-Time Event
@@ -331,6 +358,13 @@ const updateProfile = async (req, res) => {
 
     res.json({ message: 'อัปเดตโปรไฟล์สำเร็จ', user });
   } catch (err) {
+    if (err?.code === 11000) {
+      const field = Object.keys(err.keyPattern || err.keyValue || {})[0];
+      const message = field === 'username'
+        ? 'This username is already in use.'
+        : 'This user name is already in use.';
+      return res.status(409).json({ message });
+    }
     res.status(500).json({ message: err.message });
   }
 };

@@ -2,9 +2,10 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, trim: true },
+  nameKey: { type: String, unique: true, sparse: true, select: false },
   username: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['user', 'client', 'freelancer', 'admin'], default: 'user' },
   
@@ -132,6 +133,20 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // 🔒 เข้ารหัสผ่านอัตโนมัติก่อนบันทึกลง Database
+userSchema.pre('validate', function (next) {
+  if (this.isNew || this.isModified('name')) {
+    this.name = String(this.name || '').replace(/\s+/g, ' ').trim();
+    this.nameKey = this.name.toLowerCase();
+  }
+  if (this.isNew || this.isModified('email')) {
+    this.email = String(this.email || '').trim().toLowerCase();
+  }
+  if (this.username && (this.isNew || this.isModified('username'))) {
+    this.username = String(this.username).trim().toLowerCase();
+  }
+  next();
+});
+
 userSchema.pre('save', async function (next) {
   // 🕵️ เช็คเฉพาะเมื่อมีการแก้รหัสผ่านจริงๆ เท่านั้น
   if (this.isModified('password')) {

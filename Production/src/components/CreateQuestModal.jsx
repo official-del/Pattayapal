@@ -96,7 +96,7 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
   const labelStyle = { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#aaa', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)', padding: '20px', perspective: '1000px' }}>
+    <div className="quest-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)', padding: '20px', perspective: '1000px' }}>
       
       <style>{`
         .premium-input {
@@ -140,7 +140,7 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
         animate={{ opacity: 1, rotateX: 0, y: 0, scale: 1 }}
         exit={{ opacity: 0, rotateX: -10, y: -30, scale: 0.95 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="custom-scrollbar"
+        className="custom-scrollbar quest-modal-shell"
         style={{ 
           background: '#080808', 
           width: '100%', 
@@ -160,7 +160,7 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
         </button>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '20px' }}>
+        <div className="quest-modal-header" style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '20px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}>
             {editData ? <FiEdit3 size={28} /> : <FiStar size={28} />}
           </div>
@@ -212,7 +212,7 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
           {/* Right Column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <FormGroup title="รางวัล (Reward)" icon={<FiAward />}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="quest-modal-subgrid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={labelStyle}>ประเภทรางวัล</label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -257,7 +257,7 @@ function CreateQuestModal({ isOpen, onClose, onSuccess, isAdmin, editData = null
             </FormGroup>
 
             <FormGroup title="ข้อกำหนด (Requirements)" icon={<FiSettings />}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="quest-modal-subgrid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={labelStyle}><FiAward size={14} /> Rank ขั้นต่ำ</label>
                   <select className="premium-input" value={form.requiredRank} onChange={e => set('requiredRank', e.target.value)}>

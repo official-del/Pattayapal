@@ -4,6 +4,7 @@
 import { CONFIG } from './config';
 
 const API_BASE_URL = CONFIG.API_BASE_URL;  // e.g. http://localhost:5000 or https://pattayapal.com
+const DEFAULT_WORK_POSTER = `${API_BASE_URL}/og-image.jpg`;
 
 const VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
 const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
@@ -114,7 +115,15 @@ export const getWorkPosterUrl = (work) => {
   const imageRaw = readMediaField(imageItem);
   if (imageRaw) return getFullUrl(imageRaw);
 
-  return "";
+  const albumItems = Array.isArray(work.album) ? work.album : [];
+  const albumImage = albumItems.find((item) => {
+    const raw = readMediaField(item);
+    return raw && !isVideoUrl(raw);
+  });
+  const albumRaw = readMediaField(albumImage);
+  if (albumRaw) return getFullUrl(albumRaw);
+
+  return DEFAULT_WORK_POSTER;
 };
 
 export const getWorkVideoUrl = (work) => {

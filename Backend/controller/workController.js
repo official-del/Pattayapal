@@ -163,10 +163,30 @@ export const updateWork = async (req, res) => {
 
 export const getWorks = async (req, res) => {
   try {
-    const works = await Work.find()
-      .populate('category')
-      .populate('createdBy', 'name profileImage')
-      .sort({ createdAt: -1 });
+    const query = {};
+    const requestedStatus = String(req.query.status || '').trim();
+    if (['published', 'draft'].includes(requestedStatus)) {
+      query.status = requestedStatus;
+    }
+
+    const isGalleryView = req.query.view === 'gallery';
+    const limit = Math.min(Math.max(Number(req.query.limit) || 0, 0), 200);
+    let workQuery = Work.find(query).sort({ createdAt: -1 });
+
+    if (isGalleryView) {
+      workQuery = workQuery
+        .select('_id title category type mainImage album videoUrl views createdAt status featured')
+        .slice('album', 1)
+        .populate('category', 'name');
+    } else {
+      workQuery = workQuery
+        .populate('category')
+        .populate('createdBy', 'name profileImage');
+    }
+
+    if (limit > 0) workQuery = workQuery.limit(limit);
+
+    const works = await workQuery.lean();
     res.status(200).json({ works });
   } catch (error) { res.status(500).json({ message: error.message }); }
 };

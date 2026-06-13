@@ -17,7 +17,7 @@ const FILTERS = [
   'VFX & Animation', 'Digital Art'
 ];
 
-function WorkCoverImage({ src, alt }) {
+function WorkCoverImage({ src, alt, priority = false }) {
   const [ready, setReady] = useState(false);
 
   return (
@@ -29,7 +29,9 @@ function WorkCoverImage({ src, alt }) {
       )}
       <img
         src={src}
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : 'auto'}
+        decoding="async"
         className={`card-media showcase-img ${ready ? 'is-ready' : 'is-loading'}`}
         alt={alt}
         onLoad={() => setReady(true)}
@@ -52,9 +54,9 @@ function Works() {
     const fetchWorks = async () => {
       try {
         setLoading(true);
-        const res = await worksAPI.getAll();
+        const res = await worksAPI.getAll({ status: 'published', view: 'gallery' });
         const data = res.works || res || [];
-        const published = Array.isArray(data) ? data.filter((work) => work.status === 'published') : [];
+        const published = Array.isArray(data) ? data : [];
         setWorks(published);
 
         const catParam = searchParams.get('category');
@@ -83,10 +85,10 @@ function Works() {
     if (!socket) return undefined;
 
     const handleWorkUpdate = () => {
-      worksAPI.getAll()
+      worksAPI.getAll({ status: 'published', view: 'gallery' })
         .then((res) => {
           const data = res.works || res || [];
-          const published = Array.isArray(data) ? data.filter((work) => work.status === 'published') : [];
+          const published = Array.isArray(data) ? data : [];
           setWorks(published);
           setFiltered(activeFilter === 'All' ? published : published.filter((work) => work.category?.name === activeFilter));
         })
@@ -186,6 +188,7 @@ function Works() {
                       <WorkCoverImage
                         src={mediaUrl}
                         alt={work.title || 'Creator work'}
+                        priority={index < 2}
                       />
                     )}
 

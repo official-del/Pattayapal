@@ -451,6 +451,74 @@ function GuestAuthBar() {
   );
 }
 
+function MobileLaunchPad({ categories }) {
+  const quickActions = [
+    {
+      to: '/freelancers',
+      icon: <FiUsers />,
+      label: 'Find creators',
+      note: 'Browse talent fast',
+    },
+    {
+      to: '/works',
+      icon: <FiLayout />,
+      label: 'Explore works',
+      note: 'See portfolios first',
+    },
+    {
+      to: '/rankings',
+      icon: <FiStar />,
+      label: 'Rankings',
+      note: 'Open top creators',
+    },
+    {
+      to: '/upload-work',
+      icon: <FiPenTool />,
+      label: 'Post a work',
+      note: 'Share a project',
+    },
+  ];
+
+  const visibleCategories = (Array.isArray(categories) ? categories : []).slice(0, 6);
+
+  return (
+    <section className="home-mobile-launchpad" aria-label="Mobile quick access">
+      <div className="home-mobile-launchpad-hero">
+        <div className="ui-kicker">Mobile quick access</div>
+        <h2>One-hand browsing, less stack</h2>
+        <p>Jump to creators, works, rankings, or categories without the desktop-sized layout.</p>
+      </div>
+
+      <div className="home-mobile-action-grid">
+        {quickActions.map((action) => (
+          <Link key={action.to} to={action.to} className="home-mobile-action-card">
+            <span className="home-mobile-action-icon">{action.icon}</span>
+            <strong className="home-mobile-action-label">{action.label}</strong>
+            <span className="home-mobile-action-note">{action.note}</span>
+          </Link>
+        ))}
+      </div>
+
+      {visibleCategories.length > 0 && (
+        <div className="home-mobile-chip-section">
+          <div className="home-mobile-chip-label">Browse categories</div>
+          <div className="home-mobile-chip-row" aria-label="Category shortcuts">
+            {visibleCategories.map((cat, index) => (
+              <Link
+                key={cat?._id || cat?.name || index}
+                to={`/works?category=${encodeURIComponent(cat?.name || 'General')}`}
+                className="home-mobile-chip"
+              >
+                {cat?.name || 'General'}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function Home() {
   const { user, token } = useContext(AuthContext);
   let userInfo = user;
@@ -479,6 +547,7 @@ function Home() {
     <>
       <div className="home-page">
         {!activeToken && <GuestAuthBar />}
+        <MobileLaunchPad categories={categories} />
         <div className="home-main-container">
           <div className="home-left-sidebar"><LeftSidebar categories={categories} /></div>
           <CenterFeed user={userInfo} />
