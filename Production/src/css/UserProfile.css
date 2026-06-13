@@ -696,7 +696,8 @@
 
 .profile-edit-modal {
   position: relative;
-  width: min(100%, 760px) !important;
+  width: min(100%, 920px) !important;
+  max-width: 920px !important;
   max-height: min(820px, calc(100vh - 32px)) !important;
   padding: var(--space-6) !important;
   border: 1px solid rgba(255, 87, 51, 0.34) !important;
@@ -735,7 +736,7 @@
 }
 
 .profile-edit-title::before {
-  content: "Identity";
+  content: "Profile control";
   display: block;
   margin-bottom: var(--space-1);
   color: var(--accent);
@@ -749,6 +750,53 @@
   display: grid !important;
   gap: var(--space-5) !important;
   padding-bottom: 0 !important;
+}
+
+.profile-edit-section {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.profile-edit-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.profile-edit-section-head > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.profile-edit-section-head span {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.profile-edit-section-head h4 {
+  margin: 0;
+  color: #fff;
+  font-size: 0.96rem;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.profile-edit-section-head p,
+.profile-package-help {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .profile-edit-form .edit-row-grid {
@@ -773,7 +821,8 @@
 }
 
 .profile-edit-field input,
-.profile-edit-field textarea {
+.profile-edit-field textarea,
+.profile-edit-field select {
   width: 100%;
   min-height: 48px;
   padding: 0 var(--space-3) !important;
@@ -794,8 +843,19 @@
 }
 
 .profile-edit-field input:focus,
-.profile-edit-field textarea:focus {
+.profile-edit-field textarea:focus,
+.profile-edit-field select:focus {
   border-color: rgba(251, 202, 31, 0.72) !important;
+}
+
+.profile-edit-field select option {
+  background: #090909;
+  color: #fff;
+}
+
+.profile-edit-field small {
+  color: rgba(255, 255, 255, 0.34);
+  font-size: 0.68rem;
 }
 
 .profile-edit-field > div[style*="position: relative"] > div:first-child {
@@ -823,15 +883,238 @@
   box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.78) !important;
 }
 
+.profile-availability-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid rgba(251, 202, 31, 0.22);
+  border-radius: 8px;
+  background: rgba(251, 202, 31, 0.04);
+  cursor: pointer;
+}
+
+.profile-availability-row input {
+  width: 20px;
+  height: 20px;
+  accent-color: #fbca1f;
+}
+
+.profile-availability-row span {
+  display: grid;
+  gap: 3px;
+}
+
+.profile-availability-row strong {
+  color: #fff;
+  font-size: 0.84rem;
+}
+
+.profile-availability-row small {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.7rem;
+}
+
+.profile-edit-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border: 1px solid rgba(255, 87, 51, 0.34);
+  border-radius: 7px;
+  background: rgba(255, 87, 51, 0.08);
+  color: #ff795e;
+  font-size: 0.7rem;
+  font-weight: 760;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.profile-edit-add-primary {
+  border-color: rgba(251, 202, 31, 0.42);
+  background: rgba(251, 202, 31, 0.08);
+  color: #fbca1f;
+}
+
+.profile-edit-stack,
+.profile-package-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.profile-edit-item {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.profile-edit-remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.05);
+  color: rgba(248, 113, 113, 0.72);
+  cursor: pointer;
+}
+
+.profile-edit-item > .edit-row-grid:first-of-type {
+  padding-right: 38px;
+}
+
+.profile-skill-level {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.profile-skill-level input {
+  accent-color: #fbca1f;
+}
+
+.profile-skill-level strong {
+  color: #fbca1f;
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.profile-edit-empty {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  padding: var(--space-4);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.32);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+.profile-package-edit-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid rgba(255, 87, 51, 0.25);
+  border-radius: 8px;
+  background: linear-gradient(110deg, rgba(255, 87, 51, 0.07), rgba(255, 255, 255, 0.018));
+}
+
+.profile-package-edit-main {
+  min-width: 0;
+}
+
+.profile-package-edit-main > span {
+  color: #ff795e;
+  font-size: 0.62rem;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.profile-package-edit-main h5 {
+  margin: 5px 0 8px;
+  overflow: hidden;
+  color: #fff;
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-package-edit-main div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.72rem;
+}
+
+.profile-package-edit-main div strong {
+  color: #fbca1f;
+}
+
+.profile-package-edit-main div i {
+  width: 1px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.profile-package-edit-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.profile-package-edit-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.7rem;
+  font-weight: 720;
+  cursor: pointer;
+}
+
+.profile-package-edit-actions button.danger {
+  border-color: rgba(239, 68, 68, 0.2);
+  color: rgba(248, 113, 113, 0.74);
+}
+
+.profile-package-empty {
+  gap: var(--space-2);
+  min-height: 130px;
+}
+
+.profile-package-empty svg {
+  color: rgba(255, 87, 51, 0.62);
+  font-size: 1.5rem;
+}
+
+.profile-package-empty strong {
+  color: rgba(255, 255, 255, 0.62);
+  text-transform: uppercase;
+}
+
+.profile-package-empty span {
+  color: rgba(255, 255, 255, 0.3);
+}
+
 .profile-edit-actions {
+  position: sticky;
+  bottom: calc(var(--space-6) * -1);
+  z-index: 4;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) minmax(148px, 0.48fr);
   gap: var(--space-3) !important;
-  margin-top: var(--space-1) !important;
+  margin: var(--space-1) calc(var(--space-6) * -1) calc(var(--space-6) * -1) !important;
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 8, 8, 0.96);
+  backdrop-filter: blur(14px);
 }
 
 .profile-edit-save,
 .profile-edit-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 48px;
   padding: 0 var(--space-4) !important;
   border-radius: 8px !important;
@@ -856,6 +1139,81 @@
 .profile-edit-save:hover,
 .profile-edit-cancel:hover {
   transform: translate(-1px, -1px);
+}
+
+.package-edit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100100;
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 4vw, 32px);
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(12px);
+}
+
+.package-edit-modal {
+  width: min(100%, 620px);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: var(--space-6);
+  border: 1px solid rgba(251, 202, 31, 0.42);
+  border-radius: 10px;
+  background: #090909;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.9), 0 30px 90px rgba(0, 0, 0, 0.72);
+}
+
+.package-edit-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.package-edit-heading span {
+  color: #fbca1f;
+  font-size: 0.7rem;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.package-edit-heading h3 {
+  margin: 5px 0 0;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.package-edit-heading button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  cursor: pointer;
+}
+
+.package-edit-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.package-edit-form .edit-row-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.package-edit-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.42fr);
+  gap: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 @media (max-width: 1100px) {
@@ -896,8 +1254,50 @@
   }
 
   .profile-edit-form .edit-row-grid,
-  .profile-edit-actions {
+  .profile-edit-actions,
+  .package-edit-form .edit-row-grid,
+  .package-edit-actions {
     grid-template-columns: 1fr !important;
+  }
+
+  .profile-edit-section {
+    padding: var(--space-4);
+  }
+
+  .profile-edit-section-head {
+    display: grid;
+  }
+
+  .profile-edit-section-head-action {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .profile-edit-section-head-action p {
+    grid-column: 1 / -1;
+  }
+
+  .profile-package-edit-card {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-package-edit-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-package-edit-actions button {
+    justify-content: center;
+  }
+
+  .profile-edit-actions {
+    bottom: calc(var(--space-5) * -1);
+    margin: var(--space-1) calc(var(--space-5) * -1) calc(var(--space-5) * -1) !important;
+    padding-inline: var(--space-5);
+  }
+
+  .package-edit-modal {
+    padding: var(--space-5);
   }
 
   .profile-cover-stage {
@@ -1045,5 +1445,3 @@
   overflow-wrap: anywhere !important;
   display: inline-block !important;
 }
-
-

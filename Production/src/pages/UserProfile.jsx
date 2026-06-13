@@ -310,7 +310,13 @@ function UserProfile() {
 
    const handlePackageSubmit = () => {
       if (!pkgForm.title || !pkgForm.price) return toast.error('โปรดกรอกชื่อและราคาแพ็กเกจ');
-      const newPkg = { ...pkgForm, features: pkgForm.features.split(',').map(f => f.trim()).filter(Boolean) };
+      const newPkg = {
+         ...pkgForm,
+         title: pkgForm.title.trim(),
+         price: Number(pkgForm.price),
+         deliveryTime: Number(pkgForm.deliveryTime) || 0,
+         features: String(pkgForm.features || '').split(',').map(f => f.trim()).filter(Boolean)
+      };
       if (pkgEditingIndex !== null) {
          const updated = [...servicePackages];
          updated[pkgEditingIndex] = newPkg;
@@ -325,13 +331,25 @@ function UserProfile() {
 
    const handlePackageEdit = (index) => {
       const pkg = servicePackages[index];
-      setPkgForm({ ...pkg, features: pkg.features.join(', ') });
+      setPkgForm({ ...pkg, features: Array.isArray(pkg.features) ? pkg.features.join(', ') : '' });
       setPkgEditingIndex(index);
       setShowPkgModal(true);
    };
 
+   const handlePackageCreate = () => {
+      setPkgEditingIndex(null);
+      setPkgForm({ title: '', price: '', deliveryTime: '', description: '', features: '' });
+      setShowPkgModal(true);
+   };
+
+   const handlePackageClose = () => {
+      setShowPkgModal(false);
+      setPkgEditingIndex(null);
+      setPkgForm({ title: '', price: '', deliveryTime: '', description: '', features: '' });
+   };
+
    const handleDeletePackage = async (index) => {
-      if (await customConfirm('ยืนยันหน้าการลบแพ็กเกจนี้?')) {
+      if (await customConfirm('ยืนยันการลบแพ็กเกจนี้?')) {
          setServicePackages(servicePackages.filter((_, i) => i !== index));
       }
    };
@@ -629,33 +647,154 @@ function UserProfile() {
          {editingProfile && (
             <div className="profile-edit-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000, padding: '20px' }}>
                <motion.div initial={{ scale: 0.96, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="glass profile-edit-modal" style={{ padding: '50px', borderRadius: '40px', width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 50px 100px -20px rgba(0,0,0,0.5)' }}>
-                  <h3 className="profile-edit-title" style={{ margin: '0 0 40px', fontWeight: '700', letterSpacing: '4px', textAlign: 'center', color: '#fff', fontSize: '1.5rem' }}>EDIT IDENTITY RECORD</h3>
-                  <div className="profile-edit-form" style={{ display: 'flex', flexDirection: 'column', gap: '30px', paddingBottom: '150px' }}>
-                     <div className="edit-row-grid" style={{ gap: '25px' }}>
-                        <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}><label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>LEGAL NAME</label><input value={nameText} onChange={e => setNameText(e.target.value)} placeholder="Full Name" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', outline: 'none' }} /></div>
-                        <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}><label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>USERNAME (@handle)</label><input value={usernameText} onChange={e => setUsernameText(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="username" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', outline: 'none' }} /></div>
-                     </div>
-                     <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}><label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>BIOGRAPHY</label><textarea value={bioText} onChange={e => setBioText(e.target.value)} rows={3} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '18px', borderRadius: '15px', color: '#fff', resize: 'none', outline: 'none' }} /></div>
-                     
-                     <div className="edit-row-grid" style={{ gap: '25px' }}>
-                        <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minWidth: 'min(100%, 250px)' }}>
-                           <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>GENDER IDENTITY</label>
-                           <CustomSelect value={genderText} onChange={setGenderText} options={[{ value: "None", label: "Prefer not to say" }, { value: "Male", label: "Male" }, { value: "Female", label: "Female" }, { value: "Other", label: "Other" }]} />
+                  <h3 className="profile-edit-title">EDIT PROFILE RECORD</h3>
+                  <div className="profile-edit-form">
+                     <section className="profile-edit-section">
+                        <div className="profile-edit-section-head">
+                           <div><span>01</span><h4>Identity & contact</h4></div>
+                           <p>Public profile details and contact information.</p>
                         </div>
-                        <div className="profile-edit-field" style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minWidth: 'min(100%, 250px)' }}>
-                           <label style={{ fontSize: '0.65rem', fontWeight: '700', color: '#555', letterSpacing: '1px' }}>PROFESSIONAL ROLE</label>
-                           <CustomSelect value={professionText} onChange={setProfessionText} options={[{ value: "General", label: "General User" }, { value: "Photographer", label: "Photographer" }, { value: "Videographer", label: "Videographer" }, { value: "Editor", label: "Editor" }, { value: "Director", label: "Director" }, { value: "Production Design", label: "Production Design" }, { value: "Creative Content", label: "Creative Content" }, { value: "Film Production", label: "Film Production" }, { value: "Post Production", label: "Post Production" }, { value: "Digital Artist", label: "Digital Artist" }, { value: "AI Operations", label: "AI Operations" }, { value: "AI Artist", label: "AI Artist" }, { value: "AI Animator", label: "AI Animator" }, { value: "AI Sound Designer", label: "AI Sound Designer" }, { value: "AI 3D Artist", label: "AI 3D Artist" }, { value: "AI Director", label: "AI Director" }, { value: "AI Producer", label: "AI Producer" }, { value: "KOL", label: "KOL" }, { value: "Influencer", label: "Influencer" }, { value: "Content Creator", label: "Content Creator" }, { value: "Tutor", label: "Tutor" }]} />
+                        <div className="edit-row-grid">
+                           <div className="profile-edit-field"><label>Legal name</label><input value={nameText} onChange={e => setNameText(e.target.value)} placeholder="Full name" /></div>
+                           <div className="profile-edit-field"><label>Username (@handle)</label><input value={usernameText} onChange={e => setUsernameText(e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="username" /></div>
                         </div>
-                     </div>
-                     
-                     <div className="profile-edit-actions" style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                        <button className="profile-edit-save" onClick={handleSaveProfile} style={{ flex: 1, background: 'var(--accent)', color: '#fff', border: 'none', padding: '20px', borderRadius: '20px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}>SAVE CHANGES</button>
-                        <button className="profile-edit-cancel" onClick={() => setEditingProfile(false)} style={{ flex: 0.6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', padding: '20px', borderRadius: '20px', color: '#666', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}>CANCEL</button>
+                        <div className="profile-edit-field"><label>Biography</label><textarea value={bioText} onChange={e => setBioText(e.target.value)} rows={3} placeholder="Tell people about your work." /></div>
+                        <div className="edit-row-grid">
+                           <div className="profile-edit-field">
+                              <label>Gender identity</label>
+                              <CustomSelect value={genderText} onChange={setGenderText} options={[{ value: "None", label: "Prefer not to say" }, { value: "Male", label: "Male" }, { value: "Female", label: "Female" }, { value: "Other", label: "Other" }]} />
+                           </div>
+                           <div className="profile-edit-field">
+                              <label>Professional role</label>
+                              <CustomSelect value={professionText} onChange={setProfessionText} options={[{ value: "General", label: "General User" }, { value: "Photographer", label: "Photographer" }, { value: "Videographer", label: "Videographer" }, { value: "Editor", label: "Editor" }, { value: "Director", label: "Director" }, { value: "Production Design", label: "Production Design" }, { value: "Creative Content", label: "Creative Content" }, { value: "Film Production", label: "Film Production" }, { value: "Post Production", label: "Post Production" }, { value: "Digital Artist", label: "Digital Artist" }, { value: "AI Operations", label: "AI Operations" }, { value: "AI Artist", label: "AI Artist" }, { value: "AI Animator", label: "AI Animator" }, { value: "AI Sound Designer", label: "AI Sound Designer" }, { value: "AI 3D Artist", label: "AI 3D Artist" }, { value: "AI Director", label: "AI Director" }, { value: "AI Producer", label: "AI Producer" }, { value: "KOL", label: "KOL" }, { value: "Influencer", label: "Influencer" }, { value: "Content Creator", label: "Content Creator" }, { value: "Tutor", label: "Tutor" }]} />
+                           </div>
+                        </div>
+                        <div className="edit-row-grid">
+                           <div className="profile-edit-field"><label>Contact phone</label><input value={phoneText} onChange={e => setPhoneText(e.target.value)} placeholder="+66 ..." /></div>
+                           <div className="profile-edit-field"><label>Date of birth</label><input type="date" value={birthdayText} onChange={e => setBirthdayText(e.target.value)} /></div>
+                        </div>
+                        <div className="profile-edit-field"><label>Address / city</label><input value={addressText} onChange={e => setAddressText(e.target.value)} placeholder="City, country" /></div>
+                     </section>
+
+                     <section className="profile-edit-section">
+                        <div className="profile-edit-section-head">
+                           <div><span>02</span><h4>Services & discovery</h4></div>
+                           <p>Help clients find your profile and understand your offer.</p>
+                        </div>
+                        <div className="profile-edit-field"><label>Website</label><input value={websiteText} onChange={e => setWebsiteText(e.target.value)} placeholder="https://your-portfolio.com" /></div>
+                        <div className="profile-edit-field"><label>Service tags</label><input value={tagsText} onChange={e => setTagsText(e.target.value)} placeholder="Photography, Retouching, Art Direction" /><small>Separate tags with commas.</small></div>
+                        <label className="profile-availability-row" htmlFor="avail-check">
+                           <input type="checkbox" checked={isAvailable} onChange={e => setIsAvailable(e.target.checked)} id="avail-check" />
+                           <span><strong>Open for professional assignments</strong><small>Show clients that you are currently available for work.</small></span>
+                        </label>
+                     </section>
+
+                     <section className="profile-edit-section">
+                        <div className="profile-edit-section-head profile-edit-section-head-action">
+                           <div><span>03</span><h4>Skills</h4></div>
+                           <button type="button" className="profile-edit-add" onClick={() => setSkills([...skills, { name: '', category: 'General', level: 50 }])}><FiPlus /> Add skill</button>
+                        </div>
+                        <div className="profile-edit-stack">
+                           {skills.map((skill, index) => (
+                              <div className="profile-edit-item profile-skill-item" key={index}>
+                                 <button type="button" className="profile-edit-remove" onClick={() => setSkills(skills.filter((_, i) => i !== index))} aria-label="Remove skill"><FiTrash2 /></button>
+                                 <div className="edit-row-grid">
+                                    <div className="profile-edit-field">
+                                       <label>Skill name</label>
+                                       <input value={skill.name} list={`production-skills-${index}`} onChange={e => { const next = [...skills]; next[index] = { ...next[index], name: e.target.value }; setSkills(next); }} placeholder="e.g. Photoshop" />
+                                       <datalist id={`production-skills-${index}`}>{PRODUCTION_SKILLS.map(value => <option key={value} value={value} />)}</datalist>
+                                    </div>
+                                    <div className="profile-edit-field">
+                                       <label>Category</label>
+                                       <select value={skill.category || 'General'} onChange={e => { const next = [...skills]; next[index] = { ...next[index], category: e.target.value }; setSkills(next); }}>{SKILL_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</select>
+                                    </div>
+                                 </div>
+                                 <div className="profile-skill-level"><input type="range" min="0" max="100" value={skill.level ?? 50} onChange={e => { const next = [...skills]; next[index] = { ...next[index], level: Number(e.target.value) }; setSkills(next); }} /><strong>{skill.level ?? 50}%</strong></div>
+                              </div>
+                           ))}
+                           {skills.length === 0 && <div className="profile-edit-empty">No skills added yet.</div>}
+                        </div>
+                     </section>
+
+                     <section className="profile-edit-section">
+                        <div className="profile-edit-section-head profile-edit-section-head-action">
+                           <div><span>04</span><h4>Experience</h4></div>
+                           <button type="button" className="profile-edit-add" onClick={() => setExperience([...experience, { company: '', role: '', duration: '', description: '' }])}><FiPlus /> Add item</button>
+                        </div>
+                        <div className="profile-edit-stack">
+                           {experience.map((exp, index) => (
+                              <div className="profile-edit-item" key={index}>
+                                 <button type="button" className="profile-edit-remove" onClick={() => setExperience(experience.filter((_, i) => i !== index))} aria-label="Remove experience"><FiTrash2 /></button>
+                                 <div className="edit-row-grid">
+                                    <div className="profile-edit-field"><label>Role</label><input value={exp.role} onChange={e => { const next = [...experience]; next[index] = { ...next[index], role: e.target.value }; setExperience(next); }} placeholder="Senior Editor" /></div>
+                                    <div className="profile-edit-field"><label>Company</label><input value={exp.company} onChange={e => { const next = [...experience]; next[index] = { ...next[index], company: e.target.value }; setExperience(next); }} placeholder="Company / Studio" /></div>
+                                 </div>
+                                 <div className="profile-edit-field"><label>Duration</label><input value={exp.duration} onChange={e => { const next = [...experience]; next[index] = { ...next[index], duration: e.target.value }; setExperience(next); }} placeholder="2022 - Present" /></div>
+                                 <div className="profile-edit-field"><label>Description</label><textarea value={exp.description} onChange={e => { const next = [...experience]; next[index] = { ...next[index], description: e.target.value }; setExperience(next); }} rows={2} placeholder="Responsibilities and achievements." /></div>
+                              </div>
+                           ))}
+                           {experience.length === 0 && <div className="profile-edit-empty">No experience records yet.</div>}
+                        </div>
+                     </section>
+
+                     <section className="profile-edit-section profile-package-section">
+                        <div className="profile-edit-section-head profile-edit-section-head-action">
+                           <div><span>05</span><h4>Service packages</h4></div>
+                           <button type="button" className="profile-edit-add profile-edit-add-primary" onClick={handlePackageCreate}><FiPlus /> Create package</button>
+                        </div>
+                        <p className="profile-package-help">Create clear offers with a coin price, delivery time, features, and description.</p>
+                        <div className="profile-package-list">
+                           {servicePackages.map((pkg, index) => (
+                              <div className="profile-package-edit-card" key={index}>
+                                 <div className="profile-package-edit-main">
+                                    <span>Package {String(index + 1).padStart(2, '0')}</span>
+                                    <h5>{pkg.title || 'Untitled package'}</h5>
+                                    <div><CoinIcon size={16} /> <strong>{Number(pkg.price || 0).toLocaleString()}</strong><i /> <FiClock /> {pkg.deliveryTime || 0} days</div>
+                                 </div>
+                                 <div className="profile-package-edit-actions">
+                                    <button type="button" onClick={() => handlePackageEdit(index)}><FiEdit3 /> Edit</button>
+                                    <button type="button" className="danger" onClick={() => handleDeletePackage(index)}><FiTrash2 /> Delete</button>
+                                 </div>
+                              </div>
+                           ))}
+                           {servicePackages.length === 0 && <div className="profile-edit-empty profile-package-empty"><FiBox /><strong>No packages created</strong><span>Create your first service package to receive booking requests.</span></div>}
+                        </div>
+                     </section>
+
+                     <div className="profile-edit-actions">
+                        <button type="button" className="profile-edit-save" onClick={handleSaveProfile}><FiSave /> Save all changes</button>
+                        <button type="button" className="profile-edit-cancel" onClick={() => setEditingProfile(false)}>Cancel</button>
                      </div>
                   </div>
                </motion.div>
             </div>
          )}
+
+         <AnimatePresence>
+            {showPkgModal && (
+               <div className="package-edit-overlay">
+                  <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 16 }} className="package-edit-modal">
+                     <div className="package-edit-heading">
+                        <div><span>{pkgEditingIndex !== null ? 'Update offer' : 'New offer'}</span><h3>{pkgEditingIndex !== null ? 'EDIT SERVICE PACKAGE' : 'CREATE SERVICE PACKAGE'}</h3></div>
+                        <button type="button" onClick={handlePackageClose} aria-label="Close package editor"><FiX /></button>
+                     </div>
+                     <div className="package-edit-form">
+                        <div className="profile-edit-field"><label>Package title</label><input value={pkgForm.title} onChange={e => setPkgForm({ ...pkgForm, title: e.target.value })} placeholder="e.g. Product photo set" /></div>
+                        <div className="edit-row-grid">
+                           <div className="profile-edit-field"><label>Price (coins)</label><input type="number" min="0" value={pkgForm.price} onChange={e => setPkgForm({ ...pkgForm, price: e.target.value })} placeholder="1500" /></div>
+                           <div className="profile-edit-field"><label>Delivery (days)</label><input type="number" min="0" value={pkgForm.deliveryTime} onChange={e => setPkgForm({ ...pkgForm, deliveryTime: e.target.value })} placeholder="7" /></div>
+                        </div>
+                        <div className="profile-edit-field"><label>Features</label><textarea value={pkgForm.features} onChange={e => setPkgForm({ ...pkgForm, features: e.target.value })} placeholder="10 edited photos, 2 revisions, Commercial use" rows={3} /><small>Separate features with commas.</small></div>
+                        <div className="profile-edit-field"><label>Description</label><textarea value={pkgForm.description} onChange={e => setPkgForm({ ...pkgForm, description: e.target.value })} placeholder="Explain what the client receives." rows={4} /></div>
+                        <div className="package-edit-actions">
+                           <button type="button" className="profile-edit-save" onClick={handlePackageSubmit}><FiCheck /> {pkgEditingIndex !== null ? 'Update package' : 'Add package'}</button>
+                           <button type="button" className="profile-edit-cancel" onClick={handlePackageClose}>Close</button>
+                        </div>
+                     </div>
+                  </motion.div>
+               </div>
+            )}
+         </AnimatePresence>
 
          {sharePackage && <SharePackageModal pkg={sharePackage} profile={profile} onClose={() => setSharePackage(null)} />}
          {showHireModal && <HireModal freelancerId={targetProfileId} freelancerName={profile?.name} currentToken={currentToken} initialData={selectedPackage ? { title: `จ้างงาน: ${selectedPackage.title}`, budget: selectedPackage.price, description: `จ้างงานตามแพ็กเกจ ${selectedPackage.title}` } : null} onClose={() => { setShowHireModal(false); setSelectedPackage(null); }} />}
