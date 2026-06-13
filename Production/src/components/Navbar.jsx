@@ -179,7 +179,6 @@ function Navbar() {
         <div className={`desktop-top-actions hide-mobile ${usesWorkspaceSidebar ? 'is-workspace' : ''}`}>
           <div className="d-gas-box" aria-label={`Gas ${user?.gas ?? userInfo?.gas ?? 0}%`}>
             <GasIcon gas={user?.gas ?? userInfo?.gas ?? 0} size="20px" />
-            <span className="d-status-label">Gas</span>
             <span className="d-status-value">{user?.gas ?? userInfo?.gas ?? 0}%</span>
           </div>
           <div className="d-coin-box">
