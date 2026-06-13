@@ -413,27 +413,11 @@
   flex-shrink: 0;
 }
 
-.m-gas {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  margin-right: 2px;
-  padding: 5px 10px;
-  border: 1px solid rgba(59, 130, 246, 0.42);
-  border-radius: 999px;
-  background: #06101f;
-  color: #dbeafe;
-  font-size: 0.78rem;
-  font-weight: 850;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.72);
-}
-
 .m-coin {
   min-width: 0;
-  background: #1c1203;
-  border: 1px solid rgba(245, 158, 11, 0.42);
-  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
   padding: 5px 12px;
   border-radius: 100px;
   font-weight: 800;
@@ -535,24 +519,21 @@
 
 .desktop-top-actions {
   position: fixed;
-  top: 12px;
-  right: 18px;
-  z-index: 140;
+  top: 15px;
+  right: 20px;
+  z-index: 120;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  background: #050505;
-  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.78);
-  isolation: isolate;
+  gap: 15px;
 }
 
 .desktop-top-actions.is-workspace {
   gap: 8px;
   padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
   background: #0b0b0b;
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.72);
 }
 
 .desktop-top-actions.is-workspace .d-coin-box {
@@ -565,44 +546,18 @@
   background: #151515;
 }
 
-.d-gas-box,
 .d-coin-box {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 6px 12px;
+  border-radius: 100px;
+  color: #f59e0b;
+  font-weight: 800;
+  font-size: 0.85rem;
   display: flex;
   align-items: center;
-  min-height: 34px;
-  white-space: nowrap;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 850;
-}
-
-.d-gas-box {
-  gap: 6px;
-  padding: 6px 11px 6px 9px;
-  border: 1px solid rgba(59, 130, 246, 0.5);
-  background: #06101f;
-  color: #dbeafe;
-}
-
-.d-status-label {
-  color: #93c5fd;
-  font-size: 0.68rem;
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.d-status-value {
-  color: #fff;
-  font-variant-numeric: tabular-nums;
-}
-
-.d-coin-box {
   gap: 8px;
-  padding: 6px 12px;
-  border: 1px solid rgba(245, 158, 11, 0.42);
-  background: #1c1203;
-  color: #fbbf24;
+  backdrop-filter: blur(5px);
 }
 
 .d-btn-group {
