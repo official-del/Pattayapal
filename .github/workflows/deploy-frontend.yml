@@ -1,0 +1,56 @@
+name: 🚀 Build & Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Production/**'
+
+  workflow_dispatch: # allow manual trigger from GitHub UI
+
+jobs:
+  build-and-deploy:
+    name: Build Vite + Deploy via FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout source ─────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Node ────────────────────────────────────────────────
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Production/package-lock.json
+
+      # ── 3. Install dependencies ────────────────────────────────────────
+      - name: Install dependencies
+        working-directory: Production
+        run: npm ci
+
+      # ── 4. Build production bundle ─────────────────────────────────────
+      - name: Build
+        working-directory: Production
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+      # ── 5. Deploy dist/ → public_html via FTP ─────────────────────────
+      - name: Deploy to Hostinger via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: Production/dist/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          # Only sync changed files (fast incremental deploy)
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+          dangerous-clean-slate: false
