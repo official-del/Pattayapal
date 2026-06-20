@@ -60,14 +60,6 @@
   margin: -190px auto 0 !important;
   padding: 0 clamp(var(--space-4), 4vw, var(--space-8)) var(--space-12) !important;
   pointer-events: auto;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px),
-    radial-gradient(circle at 80% 0%, rgba(255, 87, 51, 0.08), transparent 24rem),
-    #000;
-  background-size: 32px 32px, 32px 32px, auto;
-  border-top: 1px solid rgba(255, 87, 51, 0.12);
-  box-shadow: 0 -34px 70px rgba(0, 0, 0, 0.86);
 }
 
 @media (min-width: 1101px) {
