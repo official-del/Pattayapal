@@ -620,9 +620,9 @@ footer {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *:not(.loadingspinner):not(.loadingspinner div):not(.premium-loader-text),
+  *:not(.loadingspinner):not(.loadingspinner div):not(.premium-loader-text)::before,
+  *:not(.loadingspinner):not(.loadingspinner div):not(.premium-loader-text)::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
