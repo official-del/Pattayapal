@@ -12,7 +12,6 @@ import {
   FiActivity, FiGrid, FiSearch, FiLayers
 } from 'react-icons/fi';
 import { CoinIcon } from './CoinIcon';
-import GasIcon from './GasIcon';
 import RankBadge from './RankBadge';
 import logo from '../assets/LOGO1.png';
 import '../css/Navbar.css';
@@ -124,8 +123,6 @@ function Navbar() {
   const isAdmin = userInfo?.role?.toLowerCase() === 'admin';
   const isClient = userInfo?.role === 'client';
   const isFreelancer = userInfo?.role === 'freelancer' || (userInfo?.profession && userInfo.profession !== 'General');
-  const gasValue = Number(user?.gas ?? userInfo?.gas ?? 0);
-  const gasTone = gasValue <= 20 ? 'is-low' : gasValue <= 50 ? 'is-mid' : 'is-high';
 
   const navLinks = isAdmin ? [
     { name: 'Admin Panel', href: '/admin/dashboard', icon: <FiSettings /> },
@@ -150,22 +147,6 @@ function Navbar() {
     { name: 'Messenger', href: '/messenger', icon: <FiMessageCircle /> },
     { name: 'Friends', href: '/friends', icon: <FiUsers /> },
   ];
-
-  const GasChip = ({ compact = false }) => (
-    <div
-      className={`gas-chip ${gasTone} ${compact ? 'is-compact' : ''}`}
-      title={`Gas energy ${gasValue}%`}
-      aria-label={`Gas energy ${gasValue} percent`}
-    >
-      <span className="gas-chip-badge" aria-hidden="true">
-        <GasIcon gas={gasValue} size={compact ? '16px' : '18px'} />
-      </span>
-      <span className="gas-chip-copy">
-        <span className="gas-chip-label">Gas</span>
-        <strong>{gasValue}%</strong>
-      </span>
-    </div>
-  );
 
 
   return (
@@ -304,11 +285,6 @@ function Navbar() {
                         </div>
                         <div className="p-role" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
                           <span>RANK: {rankName.toUpperCase()}</span>
-                          <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', fontWeight: '800' }}>
-                            <GasIcon gas={user?.gas ?? userInfo?.gas ?? 0} size="12px" />
-                            <span>{user?.gas ?? userInfo?.gas ?? 0}%</span>
-                          </div>
                         </div>
                       </div>
                     </Link>
@@ -415,15 +391,6 @@ function Navbar() {
                     {(balanceUpdateMessage.newBalance ?? (user?.coinBalance || 0)).toLocaleString()}
                   </div>
                 </div>
-                {balanceUpdateMessage.newGas !== undefined && (
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
-                    <div style={{ color: '#888', fontSize: '0.7rem', fontWeight: '700', letterSpacing: '2px', marginBottom: '5px', textTransform: 'uppercase' }}>GAS ENERGY</div>
-                    <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                      <GasIcon gas={balanceUpdateMessage.newGas} size="30px" />
-                      {balanceUpdateMessage.newGas}%
-                    </div>
-                  </div>
-                )}
               </div>
 
               <MotionButton
