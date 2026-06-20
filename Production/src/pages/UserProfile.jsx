@@ -437,8 +437,8 @@ function UserProfile() {
             <title>{profile?.name} | {profile?.profession || 'Freelancer'} | Pattayapal Portfolio</title>
          </Helmet>
 
-         <div style={{ position: 'fixed', top: '10%', left: '5%', width: '400px', height: '400px', background: 'var(--accent)', filter: 'blur(150px)', opacity: 0.05, pointerEvents: 'none' }} />
-         <div style={{ position: 'fixed', bottom: '10%', right: '5%', width: '500px', height: '500px', background: 'var(--indigo)', filter: 'blur(180px)', opacity: 0.05, pointerEvents: 'none' }} />
+
+
 
          <div className="profile-cover-stage" style={{ width: '100%', height: '400px', position: 'relative', overflow: 'hidden' }}>
             <div className="profile-cover-media" style={{ position: 'absolute', inset: 0, background: profile.coverImage?.url ? `url(${getFullUrl(profile.coverImage.url) + (isMyProfile ? `?t=${profileUpdateTag}` : '')}) center/cover` : 'linear-gradient(45deg, #111, #222)', filter: 'brightness(0.7)' }} />
