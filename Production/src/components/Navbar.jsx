@@ -13,6 +13,7 @@ import {
 } from 'react-icons/fi';
 import { CoinIcon } from './CoinIcon';
 import RankBadge from './RankBadge';
+import GasIcon from './GasIcon';
 import logo from '../assets/LOGO1.png';
 import '../css/Navbar.css';
 import { PATHS } from '../routes/paths';
@@ -285,6 +286,11 @@ function Navbar() {
                         </div>
                         <div className="p-role" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
                           <span>RANK: {rankName.toUpperCase()}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', fontWeight: 'bold' }}>
+                            <GasIcon gas={userInfo.gas || 0} size="16px" />
+                            <span>{userInfo.gas || 0}%</span>
+                          </div>
                         </div>
                       </div>
                     </Link>
