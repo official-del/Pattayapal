@@ -15,16 +15,16 @@ export default function PremiumLoader({
 
   const cube = (
     <div
-      className={`pp-pixel-loader ${isSmall ? 'is-small' : ''} ${isTiny ? 'is-tiny' : ''}`}
+      className={`loadingspinner ${isSmall ? 'is-small' : ''} ${isTiny ? 'is-tiny' : ''}`}
       style={{ margin: bare ? 0 : '0 auto' }}
       role="status"
       aria-label={text || 'Loading'}
     >
-      <span className="pp-pixel-square pp-pixel-square-1" />
-      <span className="pp-pixel-square pp-pixel-square-2" />
-      <span className="pp-pixel-square pp-pixel-square-3" />
-      <span className="pp-pixel-square pp-pixel-square-4" />
-      <span className="pp-pixel-square pp-pixel-square-5" />
+      <div className="square1"></div>
+      <div className="square2"></div>
+      <div className="square3"></div>
+      <div className="square4"></div>
+      <div className="square5"></div>
     </div>
   );
 

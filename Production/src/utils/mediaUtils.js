@@ -219,6 +219,10 @@ export const getWorkPosterUrl = (work) => {
   const albumRaw = readMediaField(albumImage);
   if (albumRaw) return getFullUrl(albumRaw);
 
+  // If it's a video and has no custom poster, return empty string
+  // This allows <video> and HoverVideoPlayer to auto-extract a video frame
+  if (workIsVideo(work)) return "";
+
   return getWorkFallbackCoverUrl(work);
 };
 
