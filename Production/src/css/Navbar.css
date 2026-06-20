@@ -413,6 +413,114 @@
   flex-shrink: 0;
 }
 
+.gas-chip {
+  --gas-surface: rgba(8, 18, 24, 0.96);
+  --gas-surface-2: rgba(3, 10, 16, 0.98);
+  --gas-border: rgba(56, 189, 248, 0.32);
+  --gas-ink: #e0f2fe;
+  --gas-accent: #38bdf8;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 12px 5px 7px;
+  border: 1px solid var(--gas-border);
+  border-radius: 100px;
+  background:
+    linear-gradient(180deg, var(--gas-surface), var(--gas-surface-2)),
+    #050505;
+  color: var(--gas-ink);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.72);
+  font-weight: 800;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+
+.gas-chip.is-high {
+  --gas-surface: rgba(9, 28, 39, 0.98);
+  --gas-surface-2: rgba(3, 11, 18, 0.98);
+  --gas-border: rgba(56, 189, 248, 0.42);
+  --gas-ink: #e0f2fe;
+  --gas-accent: #38bdf8;
+}
+
+.gas-chip.is-mid {
+  --gas-surface: rgba(38, 27, 8, 0.98);
+  --gas-surface-2: rgba(18, 11, 3, 0.98);
+  --gas-border: rgba(251, 191, 36, 0.4);
+  --gas-ink: #fef3c7;
+  --gas-accent: #fbbf24;
+}
+
+.gas-chip.is-low {
+  --gas-surface: rgba(45, 12, 12, 0.98);
+  --gas-surface-2: rgba(18, 5, 5, 0.98);
+  --gas-border: rgba(248, 113, 113, 0.46);
+  --gas-ink: #fee2e2;
+  --gas-accent: #fb7185;
+}
+
+.gas-chip-badge {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--gas-accent) 55%, transparent);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--gas-accent) 42%, white 18%), transparent 34%),
+    radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--gas-accent) 32%, transparent), transparent 62%),
+    #061018;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    2px 2px 0 rgba(0, 0, 0, 0.72);
+}
+
+.gas-chip-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  line-height: 1;
+}
+
+.gas-chip-label {
+  color: color-mix(in srgb, var(--gas-accent) 72%, white 20%);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.gas-chip-copy strong {
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.gas-chip.is-compact {
+  gap: 7px;
+  padding: 4px 9px 4px 5px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.72);
+}
+
+.gas-chip.is-compact .gas-chip-badge {
+  width: 24px;
+  height: 24px;
+  flex-basis: 24px;
+}
+
+.gas-chip.is-compact .gas-chip-label {
+  font-size: 0.54rem;
+}
+
+.gas-chip.is-compact .gas-chip-copy strong {
+  font-size: 0.78rem;
+}
+
 .m-coin {
   min-width: 0;
   background: rgba(245, 158, 11, 0.15);
@@ -542,6 +650,10 @@
   color: #ffd166;
 }
 
+.desktop-top-actions.is-workspace .gas-chip {
+  box-shadow: none;
+}
+
 .desktop-top-actions.is-workspace .d-action-btn {
   background: #151515;
 }
@@ -621,8 +733,16 @@
 }
 
 @media (max-width: 410px) {
-  .m-gas {
-    display: none !important;
+  .mobile-top-nav .gas-chip.is-compact {
+    padding-right: 7px;
+  }
+
+  .mobile-top-nav .gas-chip.is-compact .gas-chip-label {
+    display: none;
+  }
+
+  .mobile-top-nav .gas-chip.is-compact .gas-chip-copy strong {
+    font-size: 0.72rem;
   }
 }
 

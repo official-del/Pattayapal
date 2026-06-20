@@ -72,7 +72,7 @@ const GasIcon = ({ gas = 100, size = '40px', style = {} }) => {
         position: 'relative',
         ...style 
       }}
-      title={`Gas Level: ${gas}%`}
+      title={`Energy Level: ${gas}%`}
     >
       {/* Background glow to simulate gas aura */}
       <motion.div 
@@ -89,9 +89,10 @@ const GasIcon = ({ gas = 100, size = '40px', style = {} }) => {
       
       <motion.img 
         src={icon} 
-        alt={`Gas ${gas}%`} 
+        alt=""
         animate={iconAnim.animate}
         transition={iconAnim.transition}
+        aria-hidden="true"
         style={{ 
           width: '100%', 
           height: '100%', 
