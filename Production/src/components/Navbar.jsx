@@ -179,7 +179,6 @@ function Navbar() {
         <div className="m-actions">
           {currentToken && (
             <>
-              <GasChip compact />
               <div className="m-coin"><CoinIcon size={16} /> <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span></div>
             </>
           )}
@@ -192,8 +191,7 @@ function Navbar() {
       {/* 💎 Desktop Top Actions (3-Buttons Hub) */}
       {currentToken && !isMessengerRoute && (
         <div className={`desktop-top-actions hide-mobile ${usesWorkspaceSidebar ? 'is-workspace' : ''}`}>
-          <GasChip />
-          <div className="d-coin-box" style={{ whiteSpace: 'nowrap', padding: '6px 12px' }}>
+            <div className="d-coin-box" style={{ whiteSpace: 'nowrap', padding: '6px 12px' }}>
             <CoinIcon size={16} />
             <span>{(user?.coinBalance || userInfo?.coinBalance || 0).toLocaleString()}</span>
           </div>

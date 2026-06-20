@@ -123,6 +123,7 @@ export const AuthProvider = ({ children }) => {
         } catch(e) {}
         return { success: true };
       }
+
       return { success: false, message: 'Invalid server response' };
     } catch (error) {
       return { 
@@ -139,14 +140,18 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     try {
       window.safeStorage.removeItem('token');
-      window.safeStorage.removeItem('userToken'); // 👈 เพิ่มการลบตัวนี้ด้วย
+      window.safeStorage.removeItem('userToken');
       window.safeStorage.removeItem('userInfo');
     } catch(e) {}
   };
 
   const updateUser = (newData) => {
     setUser(prev => {
-      const updated = { ...prev, ...newData };
+      let baseUser = prev;
+      if (!baseUser) {
+        try { baseUser = JSON.parse(window.safeStorage.getItem('userInfo') || '{}'); } catch(e) { baseUser = {}; }
+      }
+      const updated = { ...baseUser, ...newData };
       try { window.safeStorage.setItem('userInfo', JSON.stringify(updated)); } catch(e) {}
       return updated;
     });

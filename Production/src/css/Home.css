@@ -1053,9 +1053,6 @@ body {
   .home-feed-toolbar {
     flex-direction: column;
     align-items: stretch;
-    position: sticky;
-    top: 72px;
-    z-index: 30;
     padding: var(--space-3);
   }
 
@@ -1098,7 +1095,6 @@ body {
   }
 
   .home-feed-toolbar {
-    top: 64px;
     padding: var(--space-2);
   }
 
