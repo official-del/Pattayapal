@@ -14,6 +14,8 @@ import {
   FiZap,
   FiChevronDown,
   FiCheck,
+  FiEye,
+  FiEyeOff,
 } from 'react-icons/fi';
 import PremiumLoader from '../components/PremiumLoader';
 import { CONFIG } from '../utils/config';
@@ -82,6 +84,7 @@ export default function UserAuth() {
   const [successMsg, setSuccessMsg] = useState('');
   const [formData, setFormData] = useState(emptyForm);
   const [rolePickerOpen, setRolePickerOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const rolePickerRef = useRef(null);
 
   useEffect(() => {
@@ -421,7 +424,7 @@ export default function UserAuth() {
               <div className="auth-input-shell">
                 <FiLock />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
@@ -429,6 +432,15 @@ export default function UserAuth() {
                   minLength="6"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="auth-eye-btn"
+                  aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                </button>
               </div>
             </label>
 

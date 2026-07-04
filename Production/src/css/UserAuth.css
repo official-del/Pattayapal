@@ -338,9 +338,38 @@
   font-weight: 600;
 }
 
+/* Override browser autofill white background */
+.auth-input-shell input:-webkit-autofill,
+.auth-input-shell input:-webkit-autofill:hover,
+.auth-input-shell input:-webkit-autofill:focus,
+.auth-input-shell input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 60px rgba(10, 10, 10, 0.95) inset !important;
+  box-shadow: 0 0 0 60px rgba(10, 10, 10, 0.95) inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+}
+
 .auth-input-shell input:focus-visible,
 .auth-input-shell select:focus-visible {
   outline: none;
+}
+
+.auth-eye-btn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.18s ease;
+  border-radius: 4px;
+}
+
+.auth-eye-btn:hover {
+  color: var(--accent);
 }
 
 .auth-input-shell input::placeholder {
