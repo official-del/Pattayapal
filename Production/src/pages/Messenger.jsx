@@ -273,8 +273,10 @@ function Messenger() {
   };
 
   const scrollToMessage = (messageId) => {
+    console.log("scrollToMessage called with ID:", messageId);
     if (!messageId) return;
     const el = document.getElementById(`msg-${messageId}`);
+    console.log("Found element in DOM:", el);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       el.classList.add('highlight-msg');
