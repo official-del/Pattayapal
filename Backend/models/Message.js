@@ -29,6 +29,10 @@ const messageSchema = new mongoose.Schema({
     }
   ],
   callDuration: { type: Number }, // in seconds
+  replyTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Message'
+  },
   isRead: {
     type: Boolean,
     default: false

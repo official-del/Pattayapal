@@ -104,6 +104,7 @@ export const getMessages = async (req, res) => {
 
     // ค้นหาข้อความ
     const messages = await Message.find({ conversationId })
+      .populate('replyTo', 'text sender messageType attachments')
       .sort({ createdAt: 1 });
     
     // อัปเดตข้อความที่คนอื่นส่งมาให้เราเป็น "อ่านแล้ว"
@@ -152,7 +153,7 @@ export const markMessagesAsRead = async (req, res) => {
 // ── ส่งข้อความและบันทึกลง Database ──
 export const sendMessage = async (req, res) => {
   try {
-    const { conversationId, text, messageType } = req.body;
+    const { conversationId, text, messageType, replyTo } = req.body;
     const senderId = req.user.id;
     let attachments = [];
     const safeText = String(text || '').trim();
@@ -203,7 +204,8 @@ export const sendMessage = async (req, res) => {
       sender: senderId,
       text: safeText,
       messageType: messageType || detectedType,
-      attachments
+      attachments,
+      replyTo: replyTo || undefined
     });
 
     await newMessage.save();
@@ -221,8 +223,14 @@ export const sendMessage = async (req, res) => {
     // ✅ REAL-TIME: Push message to recipient via Socket immediately from server
     const io = req.app.get('io');
     const sender = await User.findById(senderId).select('name profileImage');
+    // Populate replyTo details for real-time socket payload
+    let populatedMessage = newMessage;
+    if (replyTo) {
+      populatedMessage = await Message.findById(newMessage._id).populate('replyTo', 'text sender messageType attachments');
+    }
+
     const messagePayload = {
-      ...newMessage.toJSON(),
+      ...populatedMessage.toJSON(),
       conversationId,
       roomId: conversationId,
       senderName: sender?.name || 'Unknown',

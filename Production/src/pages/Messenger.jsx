@@ -14,7 +14,7 @@ import {
   FiArrowLeft, FiAlertTriangle, FiSearch, FiChevronDown,
   FiPhone, FiPlus, FiImage, FiMic, FiPaperclip, FiArchive, FiUsers, 
   FiLogOut, FiShoppingBag, FiUserPlus, FiFilter, FiFileText, FiFile,
-  FiMusic, FiX, FiPlay, FiPause, FiDownload, FiMapPin
+  FiMusic, FiX, FiPlay, FiPause, FiDownload, FiMapPin, FiCornerUpLeft
 } from 'react-icons/fi';
 
 const isInsideThailand = (lat, lng) => {
@@ -167,6 +167,7 @@ function Messenger() {
   const [isUploading, setIsUploading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [replyingTo, setReplyingTo] = useState(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [groupName, setGroupName] = useState('');
@@ -248,6 +249,18 @@ function Messenger() {
   useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
+
+  const isNewDay = (prevDate, currDate) => new Date(prevDate).toDateString() !== new Date(currDate).toDateString();
+  const formatDateDivider = (dateString) => {
+    const d = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (d.toDateString() === today.toDateString()) return 'วันนี้';
+    if (d.toDateString() === yesterday.toDateString()) return 'เมื่อวานนี้';
+    return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
 
   useEffect(() => {
     activeChatIdRef.current = currentChat ? currentChat._id : null;
@@ -777,6 +790,7 @@ function Messenger() {
     const formData = new FormData();
     formData.append('conversationId', currentChat._id);
     if (newMessage.trim()) formData.append('text', newMessage);
+    if (replyingTo) formData.append('replyTo', replyingTo._id);
     
     if (selectedFiles.length > 0) {
       selectedFiles.forEach(item => {
@@ -800,10 +814,19 @@ function Messenger() {
         fileName: f.file.name || 'uploading...',
         fileSize: f.file.size || 0
       })),
+      replyTo: replyingTo ? {
+        _id: replyingTo._id,
+        text: replyingTo.text,
+        sender: replyingTo.sender,
+        messageType: replyingTo.messageType,
+        attachments: replyingTo.attachments
+      } : null,
       _optimistic: true,
     };
     setMessages(prev => [...prev, optimisticMsg]);
     setNewMessage('');
+    const currentReplyingTo = replyingTo;
+    setReplyingTo(null);
 
     try {
       const res = await chatAPI.sendMessage(formData, currentToken);
@@ -1224,15 +1247,30 @@ function Messenger() {
                       const attachments = m.attachments || [];
                       const hasImageAttachment = attachments.some((att) => (att.fileType || '').startsWith('image/'));
                       const hasAudioAttachment = attachments.some((att) => (att.fileType || '').startsWith('audio/'));
+                      const showDateDivider = i === 0 || isNewDay(messages[i - 1].createdAt, m.createdAt);
+
                       return (
-                         <div
-                           key={m._id || i}
-                           className={`msg-wrapper ${isMe ? 'me' : 'them'}${hasImageAttachment ? ' has-image-media' : ''}${hasAudioAttachment ? ' has-voice-media' : ''}`}
-                         >
-                            {!isMe && currentChat.isGroup && (
-                               <img src={getFullUrl(m.sender?.profileImage?.url)} className="msg-avatar-small" />
+                         <div key={m._id || i} className="msg-group">
+                            {showDateDivider && (
+                               <div className="msg-date-divider">
+                                  <span>{formatDateDivider(m.createdAt)}</span>
+                               </div>
                             )}
-                            <div className="msg-bubble">
+                            <div className={`msg-wrapper ${isMe ? 'me' : 'them'}${hasImageAttachment ? ' has-image-media' : ''}${hasAudioAttachment ? ' has-voice-media' : ''}`}>
+                               {!isMe && currentChat.isGroup && (
+                                  <img src={getFullUrl(m.sender?.profileImage?.url)} className="msg-avatar-small" alt="avatar" />
+                               )}
+                               <div className="msg-bubble-container">
+                                  <button className="msg-reply-btn" onClick={() => setReplyingTo(m)} aria-label="Reply to message">
+                                     <FiCornerUpLeft size={16} />
+                                  </button>
+                                  <div className="msg-bubble">
+                                     {m.replyTo && (
+                                        <div className="msg-quote-block">
+                                           <div className="quote-sender">{m.replyTo.sender?.name || 'Someone'}</div>
+                                           <div className="quote-text">{m.replyTo.text || (m.replyTo.attachments?.length > 0 ? '[Attachment]' : '')}</div>
+                                        </div>
+                                     )}
                                {attachments.length > 0 && (
                                   <div className={`msg-attachments ${attachments.length === 1 ? 'single' : ''}`}>
                                      {attachments.map((att, idx) => (
@@ -1294,6 +1332,8 @@ function Messenger() {
                                   {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   {isMe && (m.isRead ? <FiCheckCircle size={12} style={{ marginLeft: '4px' }} /> : <FiCheck size={12} style={{ marginLeft: '4px' }} />)}
                                </div>
+                               </div>
+                               </div>
                             </div>
                          </div>
                       )
@@ -1322,6 +1362,22 @@ function Messenger() {
 
                 <div className="chat-input-wrapper">
                      <AnimatePresence>
+                        {replyingTo && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="reply-preview-bar"
+                          >
+                            <div className="reply-preview-content">
+                              <span className="reply-preview-name">ตอบกลับ {replyingTo.sender?.name || 'ข้อความ'}</span>
+                              <span className="reply-preview-text">{replyingTo.text || (replyingTo.attachments?.length > 0 ? '[Attachment]' : '')}</span>
+                            </div>
+                            <button type="button" className="reply-preview-close" onClick={() => setReplyingTo(null)}>
+                              <FiX size={18} />
+                            </button>
+                          </motion.div>
+                        )}
                         {isRecording && (
                           <motion.div
                             initial={{ opacity: 0, y: 8 }}
