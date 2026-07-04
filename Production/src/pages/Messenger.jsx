@@ -272,6 +272,20 @@ function Messenger() {
     return 'Someone';
   };
 
+  const scrollToMessage = (messageId) => {
+    if (!messageId) return;
+    const el = document.getElementById(`msg-${messageId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-msg');
+      setTimeout(() => {
+        el.classList.remove('highlight-msg');
+      }, 1500);
+    } else {
+      toast.error('ไม่พบข้อความต้นฉบับ');
+    }
+  };
+
   useEffect(() => {
     activeChatIdRef.current = currentChat ? currentChat._id : null;
     
@@ -1266,7 +1280,7 @@ function Messenger() {
                                   <span>{formatDateDivider(m.createdAt)}</span>
                                </div>
                             )}
-                            <div className={`msg-wrapper ${isMe ? 'me' : 'them'}${hasImageAttachment ? ' has-image-media' : ''}${hasAudioAttachment ? ' has-voice-media' : ''}`}>
+                            <div id={`msg-${m._id}`} className={`msg-wrapper ${isMe ? 'me' : 'them'}${hasImageAttachment ? ' has-image-media' : ''}${hasAudioAttachment ? ' has-voice-media' : ''}`}>
                                {!isMe && currentChat.isGroup && (
                                   <img src={getFullUrl(m.sender?.profileImage?.url)} className="msg-avatar-small" alt="avatar" />
                                )}
@@ -1276,7 +1290,7 @@ function Messenger() {
                                   </button>
                                   <div className="msg-bubble">
                                      {m.replyTo && (
-                                        <div className="msg-quote-block">
+                                        <div className="msg-quote-block" onClick={(e) => { e.stopPropagation(); scrollToMessage(m.replyTo._id); }}>
                                            <div className="quote-sender">{getSenderName(m.replyTo.sender)}</div>
                                            <div className="quote-text">{m.replyTo.text || (m.replyTo.attachments?.length > 0 ? '[Attachment]' : '')}</div>
                                         </div>
