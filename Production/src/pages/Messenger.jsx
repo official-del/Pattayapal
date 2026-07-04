@@ -276,9 +276,19 @@ function Messenger() {
     console.log("scrollToMessage called with ID:", messageId);
     if (!messageId) return;
     const el = document.getElementById(`msg-${messageId}`);
-    console.log("Found element in DOM:", el);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const container = messageAreaRef.current;
+    console.log("Found element and container in DOM:", el, container);
+    if (el && container) {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const relativeTop = elRect.top - containerRect.top + container.scrollTop;
+      const targetScroll = relativeTop - (container.clientHeight / 2) + (elRect.height / 2);
+
+      container.scrollTo({
+        top: targetScroll,
+        behavior: 'smooth'
+      });
+
       el.classList.add('highlight-msg');
       setTimeout(() => {
         el.classList.remove('highlight-msg');
