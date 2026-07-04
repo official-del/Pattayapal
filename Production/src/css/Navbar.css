@@ -353,7 +353,7 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding-left: var(--space-6, 24px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
   transition: all 0.3s ease;
 }
 
