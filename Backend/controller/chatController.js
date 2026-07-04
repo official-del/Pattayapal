@@ -104,7 +104,11 @@ export const getMessages = async (req, res) => {
 
     // ค้นหาข้อความ
     const messages = await Message.find({ conversationId })
-      .populate('replyTo', 'text sender messageType attachments')
+      .populate({
+        path: 'replyTo',
+        select: 'text sender messageType attachments',
+        populate: { path: 'sender', select: 'name' }
+      })
       .sort({ createdAt: 1 });
     
     // อัปเดตข้อความที่คนอื่นส่งมาให้เราเป็น "อ่านแล้ว"
@@ -226,7 +230,11 @@ export const sendMessage = async (req, res) => {
     // Populate replyTo details for real-time socket payload
     let populatedMessage = newMessage;
     if (replyTo) {
-      populatedMessage = await Message.findById(newMessage._id).populate('replyTo', 'text sender messageType attachments');
+      populatedMessage = await Message.findById(newMessage._id).populate({
+        path: 'replyTo',
+        select: 'text sender messageType attachments',
+        populate: { path: 'sender', select: 'name' }
+      });
     }
 
     const messagePayload = {

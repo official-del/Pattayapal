@@ -262,6 +262,16 @@ function Messenger() {
     return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
+  const getSenderName = (senderId) => {
+    if (!senderId) return 'Someone';
+    const idStr = typeof senderId === 'object' ? (senderId._id || senderId.id) : senderId;
+    if (idStr === contextUserId) return 'คุณ';
+    
+    const participant = currentChat?.participants?.find(p => String(p.user?._id || p.user) === String(idStr));
+    if (participant?.user?.name) return participant.user.name;
+    return 'Someone';
+  };
+
   useEffect(() => {
     activeChatIdRef.current = currentChat ? currentChat._id : null;
     
@@ -1267,7 +1277,7 @@ function Messenger() {
                                   <div className="msg-bubble">
                                      {m.replyTo && (
                                         <div className="msg-quote-block">
-                                           <div className="quote-sender">{m.replyTo.sender?.name || 'Someone'}</div>
+                                           <div className="quote-sender">{getSenderName(m.replyTo.sender)}</div>
                                            <div className="quote-text">{m.replyTo.text || (m.replyTo.attachments?.length > 0 ? '[Attachment]' : '')}</div>
                                         </div>
                                      )}
@@ -1370,7 +1380,7 @@ function Messenger() {
                             className="reply-preview-bar"
                           >
                             <div className="reply-preview-content">
-                              <span className="reply-preview-name">ตอบกลับ {replyingTo.sender?.name || 'ข้อความ'}</span>
+                              <span className="reply-preview-name">ตอบกลับ {getSenderName(replyingTo.sender)}</span>
                               <span className="reply-preview-text">{replyingTo.text || (replyingTo.attachments?.length > 0 ? '[Attachment]' : '')}</span>
                             </div>
                             <button type="button" className="reply-preview-close" onClick={() => setReplyingTo(null)}>
