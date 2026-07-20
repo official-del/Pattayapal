@@ -242,6 +242,40 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
             </AnimatePresence>
           </motion.button>
 
+          <motion.button 
+            whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.1)' }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleShare}
+            style={{ 
+              background: copied ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)', 
+              border: `1px solid ${copied ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`, 
+              color: copied ? 'var(--accent)' : '#888', 
+              cursor: 'pointer', 
+              padding: 'clamp(8px, 1.5vw, 12px)', 
+              borderRadius: '15px', 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              position: 'relative'
+            }}
+            title="แชร์โพสต์"
+          >
+            {copied ? <FiZap style={{ width: '18px', height: '18px' }} /> : <FiShare2 style={{ width: '18px', height: '18px' }} />}
+            <AnimatePresence>
+              {copied && (
+                <motion.span
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  style={{ position: 'absolute', bottom: '-25px', left: '50%', transform: 'translateX(-50%)', fontSize: '10px', color: 'var(--accent)', fontWeight: '800', whiteSpace: 'nowrap' }}
+                >
+                  COPIED!
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
+
           {isAuthor && (
             <motion.button 
               whileHover={{ scale: 1.1, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }} 
@@ -268,9 +302,87 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
       </div>
 
       {/* Intelligence Payload */}
-      <div style={{ fontSize: 'clamp(0.9rem, 2vw, 1.25rem)', lineHeight: 1.7, color: '#aaa', marginBottom: 'clamp(20px, 4vw, 30px)', fontWeight: '500', whiteSpace: 'pre-line', padding: '0 clamp(0px, 1vw, 5px)', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+      <div style={{ fontSize: 'clamp(0.9rem, 2vw, 1.25rem)', lineHeight: 1.7, color: '#aaa', marginBottom: post.sharedPackage ? '16px' : 'clamp(20px, 4vw, 30px)', fontWeight: '500', whiteSpace: 'pre-line', padding: '0 clamp(0px, 1vw, 5px)', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
         {renderContentWithLinks(post.content)}
       </div>
+
+      {/* Package Card */}
+      {post.sharedPackage?.title && (() => {
+        const pkg = post.sharedPackage;
+        const profilePath = `/${pkg.ownerUsername || `profile/${pkg.ownerId}`}?tab=packages`;
+        return (
+          <div style={{ marginBottom: 'clamp(20px, 4vw, 30px)', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(255,87,51,0.18)', background: 'linear-gradient(145deg, rgba(255,87,51,0.06), rgba(0,0,0,0.4))', position: 'relative' }}>
+            {/* Header accent strip */}
+            <div style={{ height: '3px', background: 'linear-gradient(90deg, var(--accent), transparent)' }} />
+            <div style={{ padding: 'clamp(16px,3vw,24px)' }}>
+              {/* Kicker */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <FiZap size={13} style={{ color: 'var(--accent)' }} />
+                <span style={{ fontSize: '0.7rem', fontWeight: '800', letterSpacing: '2px', color: 'var(--accent)', textTransform: 'uppercase' }}>Service Package</span>
+                {pkg.ownerName && (
+                  <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', fontWeight: '600' }}>by {pkg.ownerName}</span>
+                )}
+              </div>
+
+              {/* Title & Price row */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
+                <h4 style={{ margin: 0, fontSize: 'clamp(1rem,2.5vw,1.25rem)', fontWeight: '800', color: '#fff', lineHeight: 1.3, flex: 1 }}>{pkg.title}</h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,87,51,0.12)', border: '1px solid rgba(255,87,51,0.25)', borderRadius: '10px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '900', color: 'var(--accent)' }}>⬡ {Number(pkg.price || 0).toLocaleString()}</span>
+                  <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600' }}>Coins</span>
+                </div>
+              </div>
+
+              {/* Delivery time */}
+              {pkg.deliveryTime && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', fontWeight: '600', marginBottom: '12px' }}>
+                  <FiClock size={12} />
+                  <span>{pkg.deliveryTime} วัน Delivery</span>
+                </div>
+              )}
+
+              {/* Description */}
+              {pkg.description && (
+                <p style={{ margin: '0 0 14px', fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {pkg.description}
+                </p>
+              )}
+
+              {/* Features */}
+              {pkg.features?.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+                  {pkg.features.slice(0, 4).map((f, i) => (
+                    <span key={i} style={{ fontSize: '0.7rem', fontWeight: '700', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '3px 10px' }}>✓ {f}</span>
+                  ))}
+                  {pkg.features.length > 4 && <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', padding: '3px 6px' }}>+{pkg.features.length - 4} more</span>}
+                </div>
+              )}
+
+              {/* CTA Buttons */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <Link
+                  to={profilePath}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: '40px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.8rem', fontWeight: '700', textDecoration: 'none', transition: '0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                >
+                  <FiActivity size={13} />
+                  ดูแพ็กเกจ
+                </Link>
+                <Link
+                  to={profilePath}
+                  style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: '40px', borderRadius: '10px', border: '2px solid #000', background: 'var(--accent)', color: '#fff', fontSize: '0.82rem', fontWeight: '900', textDecoration: 'none', boxShadow: '3px 3px 0 #000', transition: 'transform 0.15s ease, box-shadow 0.15s ease' }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-1px,-1px)'; e.currentTarget.style.boxShadow = '4px 4px 0 #000'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '3px 3px 0 #000'; }}
+                >
+                  <FiBriefcase size={13} />
+                  จ้างงานเลย
+                </Link>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Media Stream */}
       {post.media && post.media.length > 0 && (

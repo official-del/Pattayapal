@@ -19,6 +19,16 @@ const postSchema = new mongoose.Schema({
     url: String,
     publicId: String
   }],
+  sharedPackage: {
+    title: { type: String },
+    price: { type: Number },
+    description: { type: String },
+    deliveryTime: { type: Number },
+    features: [{ type: String }],
+    ownerName: { type: String },
+    ownerUsername: { type: String },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  },
   likes: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User' 

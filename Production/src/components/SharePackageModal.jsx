@@ -79,17 +79,21 @@ function SharePackageModal({ pkg, profile, onClose }) {
   const handleShareToFeed = async () => {
     setIsPostingToFeed(true);
     try {
-      const defaultMsg = [
-        `New package available: ${pkg?.title}`,
-        `${packagePrice} Coins / ${packageDays}`,
-        pkg?.description || '',
-        shareUrl,
-      ].filter(Boolean).join('\n\n');
-      const content = feedMessage.trim() ? `${feedMessage.trim()}\n\n${shareUrl}` : defaultMsg;
+      const content = feedMessage.trim() || '';
 
       const formData = new FormData();
       formData.append('content', content);
       formData.append('postType', 'looking_for_work');
+      formData.append('sharedPackage', JSON.stringify({
+        title: pkg?.title || '',
+        price: pkg?.price || 0,
+        description: pkg?.description || '',
+        deliveryTime: pkg?.deliveryTime || null,
+        features: pkg?.features || [],
+        ownerName: profile?.name || '',
+        ownerUsername: profile?.username || profile?._id || '',
+        ownerId: profile?._id || '',
+      }));
 
       await postsAPI.create(formData);
       toast.success('Package posted to Feed.');

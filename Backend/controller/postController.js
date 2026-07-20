@@ -47,7 +47,7 @@ export const getPostById = async (req, res) => {
 
 export const createPost = async (req, res) => {
   try {
-    const { content, postType } = req.body;
+    const { content, postType, sharedPackage } = req.body;
     const author = req.user.id;
 
     const media = [];
@@ -58,11 +58,19 @@ export const createPost = async (req, res) => {
       }
     }
 
+    let parsedPackage = undefined;
+    if (sharedPackage) {
+      try {
+        parsedPackage = typeof sharedPackage === 'string' ? JSON.parse(sharedPackage) : sharedPackage;
+      } catch {}
+    }
+
     const newPost = new Post({
       author,
       content,
       postType,
-      media
+      media,
+      ...(parsedPackage ? { sharedPackage: parsedPackage } : {})
     });
 
     await newPost.save();
