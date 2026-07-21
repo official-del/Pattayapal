@@ -32,6 +32,7 @@ import questRoutes from './routes/questRoutes.js';
 import questSubmissionRoutes from './routes/questSubmissionRoutes.js';
 import testEmailRoute from './routes/testEmailRoute.js';
 import { protect, admin } from './middleware/auth.js';
+import { initCronJobs } from './utils/cronJobs.js';
 
 // ตั้งค่าสำหรับ ES Module
 const __filename = fileURLToPath(import.meta.url);
@@ -693,6 +694,10 @@ const connectDatabase = async () => {
 const startServer = async () => {
   try {
     await connectDatabase();
+    
+    // Initialize cron jobs after DB connection
+    initCronJobs();
+
     server.listen(PORT, () => {
       console.log(`Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
     });
