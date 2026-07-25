@@ -44,6 +44,10 @@
   opacity: 0.8;
 }
 
+.share-package-modal.has-cover-image::after {
+  display: none;
+}
+
 .share-package-close {
   position: absolute;
   top: 14px;

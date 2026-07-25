@@ -3,7 +3,7 @@ import { toast } from 'react-hot-toast';
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { usersAPI, chatAPI, worksAPI, postsAPI } from '../utils/api';
+import { usersAPI, chatAPI, worksAPI, postsAPI, uploadAPI } from '../utils/api';
 import FeedPost from '../components/FeedPost';
 import { getFullUrl, getMediaUrl, getWorkPosterUrl, getWorkVideoUrl, isVideoUrl, workIsVideo } from '../utils/mediaUtils';
 import { AuthContext } from '../context/AuthContext';
@@ -18,7 +18,7 @@ import { Helmet } from 'react-helmet-async';
 import {
    FiMessageSquare, FiUserPlus, FiUserCheck, FiUserX, FiBriefcase,
    FiCalendar, FiLayers, FiMessageCircle, FiUsers, FiClock, FiTrash2, FiEdit3, FiSave, FiCheck, FiX, FiShare2, FiPlus, FiVideo, FiMic, FiType, FiCamera, FiLayout, FiMaximize2, FiMinimize2, FiBox, FiActivity, FiZap, FiAward, FiCheckCircle,
-   FiMapPin, FiMail, FiGlobe, FiPhone, FiStar, FiBookmark
+   FiMapPin, FiMail, FiGlobe, FiPhone, FiStar, FiBookmark, FiUploadCloud
 } from 'react-icons/fi';
 import CustomSelect from '../components/CustomSelect';
 import SharePackageModal from '../components/SharePackageModal';
@@ -91,7 +91,7 @@ function UserProfile() {
    const [servicePackages, setServicePackages] = useState([]);
    const [showPkgModal, setShowPkgModal] = useState(false);
    const [pkgEditingIndex, setPkgEditingIndex] = useState(null);
-   const [pkgForm, setPkgForm] = useState({ title: '', price: '', deliveryTime: '', description: '', features: '' });
+   const [pkgForm, setPkgForm] = useState({ title: '', price: '', deliveryTime: '', description: '', features: '', coverImages: [] });
    const [activeTab, setActiveTab] = useState(() => {
       const params = new URLSearchParams(window.location.search);
       return params.get('tab') || 'portfolio';
@@ -325,33 +325,75 @@ function UserProfile() {
          setServicePackages([...servicePackages, newPkg]);
       }
       setShowPkgModal(false);
-      setPkgForm({ title: '', price: '', deliveryTime: '', description: '', features: '' });
+      setPkgForm({ title: '', price: '', deliveryTime: '', description: '', features: '', coverImages: [] });
       setPkgEditingIndex(null);
    };
 
    const handlePackageEdit = (index) => {
       const pkg = servicePackages[index];
-      setPkgForm({ ...pkg, features: Array.isArray(pkg.features) ? pkg.features.join(', ') : '' });
+      setPkgForm({ ...pkg, features: Array.isArray(pkg.features) ? pkg.features.join(', ') : '', coverImages: pkg.coverImages || [] });
       setPkgEditingIndex(index);
       setShowPkgModal(true);
    };
 
    const handlePackageCreate = () => {
       setPkgEditingIndex(null);
-      setPkgForm({ title: '', price: '', deliveryTime: '', description: '', features: '' });
+      setPkgForm({ title: '', price: '', deliveryTime: '', description: '', features: '', coverImages: [] });
       setShowPkgModal(true);
    };
 
    const handlePackageClose = () => {
       setShowPkgModal(false);
       setPkgEditingIndex(null);
-      setPkgForm({ title: '', price: '', deliveryTime: '', description: '', features: '' });
+      setPkgForm({ title: '', price: '', deliveryTime: '', description: '', features: '', coverImages: [] });
    };
 
    const handleDeletePackage = async (index) => {
       if (await customConfirm('ยืนยันการลบแพ็กเกจนี้?')) {
          setServicePackages(servicePackages.filter((_, i) => i !== index));
       }
+   };
+
+   const handlePackageImageUpload = async (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+      if (pkgForm.coverImages.length + files.length > 5) {
+         return toast.error('You can only upload up to 5 images per package.');
+      }
+      
+      const uploadPromises = files.map(async (file) => {
+         const formData = new FormData();
+         formData.append('file', file);
+         try {
+            const res = await uploadAPI.uploadSingle(formData);
+            return res.file || res.url;
+         } catch (error) {
+            console.error('Package image upload error:', error);
+            toast.error('Failed to upload ' + file.name);
+            return null;
+         }
+      });
+      
+      toast.promise(Promise.all(uploadPromises), {
+         loading: 'Uploading images...',
+         success: 'Images uploaded successfully!',
+         error: 'Some images failed to upload.'
+      }).then(urls => {
+         const validUrls = urls.filter(Boolean);
+         if (validUrls.length > 0) {
+            setPkgForm(prev => ({
+               ...prev,
+               coverImages: [...prev.coverImages, ...validUrls.map(url => ({ url, publicId: url }))]
+            }));
+         }
+      });
+   };
+
+   const handleRemovePackageImage = (indexToRemove) => {
+      setPkgForm(prev => ({
+         ...prev,
+         coverImages: prev.coverImages.filter((_, i) => i !== indexToRemove)
+      }));
    };
 
    const handleSaveProfile = async () => {
@@ -786,6 +828,58 @@ function UserProfile() {
                         </div>
                         <div className="profile-edit-field"><label>Features</label><textarea value={pkgForm.features} onChange={e => setPkgForm({ ...pkgForm, features: e.target.value })} placeholder="10 edited photos, 2 revisions, Commercial use" rows={3} /><small>Separate features with commas.</small></div>
                         <div className="profile-edit-field"><label>Description</label><textarea value={pkgForm.description} onChange={e => setPkgForm({ ...pkgForm, description: e.target.value })} placeholder="Explain what the client receives." rows={4} /></div>
+                        <div className="profile-edit-field">
+                           <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: '700', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '1px' }}>Cover Images (Max 5)</label>
+                           <div 
+                              onClick={() => document.getElementById('pkg-cover-upload').click()}
+                              style={{ 
+                                 border: '2px dashed rgba(255,255,255,0.1)', 
+                                 borderRadius: '16px', 
+                                 padding: '30px 20px', 
+                                 textAlign: 'center', 
+                                 cursor: pkgForm.coverImages?.length >= 5 ? 'not-allowed' : 'pointer', 
+                                 background: 'rgba(255,255,255,0.02)',
+                                 transition: 'all 0.2s ease',
+                                 opacity: pkgForm.coverImages?.length >= 5 ? 0.5 : 1,
+                                 display: 'flex',
+                                 flexDirection: 'column',
+                                 alignItems: 'center',
+                                 justifyContent: 'center',
+                                 gap: '12px'
+                              }}
+                              onMouseEnter={e => { if(pkgForm.coverImages?.length < 5) { e.currentTarget.style.border = '2px dashed var(--accent)'; e.currentTarget.style.background = 'rgba(255,87,51,0.05)'; } }}
+                              onMouseLeave={e => { e.currentTarget.style.border = '2px dashed rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+                           >
+                              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
+                                 <FiUploadCloud size={24} />
+                              </div>
+                              <div>
+                                 <div style={{ color: '#fff', fontSize: '1rem', fontWeight: '600', marginBottom: '4px' }}>
+                                    {pkgForm.coverImages?.length >= 5 ? 'Maximum 5 images reached' : 'Click to upload images'}
+                                 </div>
+                                 <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>PNG, JPG or WEBP (Max 5MB each)</div>
+                              </div>
+                              <input 
+                                 id="pkg-cover-upload"
+                                 type="file" 
+                                 multiple 
+                                 accept="image/*" 
+                                 onChange={handlePackageImageUpload} 
+                                 disabled={pkgForm.coverImages?.length >= 5} 
+                                 style={{ display: 'none' }} 
+                              />
+                           </div>
+                           {pkgForm.coverImages && pkgForm.coverImages.length > 0 && (
+                              <div className="package-image-previews" style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                 {pkgForm.coverImages.map((img, i) => (
+                                    <div key={i} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden' }}>
+                                       <img src={getFullUrl(img.url)} alt={`preview-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                       <button type="button" onClick={() => handleRemovePackageImage(i)} style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FiX size={12} /></button>
+                                    </div>
+                                 ))}
+                              </div>
+                           )}
+                        </div>
                         <div className="package-edit-actions">
                            <button type="button" className="profile-edit-save" onClick={handlePackageSubmit}><FiCheck /> {pkgEditingIndex !== null ? 'Update package' : 'Add package'}</button>
                            <button type="button" className="profile-edit-cancel" onClick={handlePackageClose}>Close</button>

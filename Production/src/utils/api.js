@@ -277,3 +277,10 @@ export const walletAPI = {
     API.post('/wallet/refill-gas', data).then(res => res.data),
 };
 
+// ── Uploads ──
+export const uploadAPI = {
+  uploadSingle: (formData) =>
+    API.post('/upload/single', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(res => res.data)
+};

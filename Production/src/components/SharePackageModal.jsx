@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { FiX, FiLink, FiCheck, FiSend } from 'react-icons/fi';
 import { postsAPI } from '../utils/api';
+import { getFullUrl } from '../utils/mediaUtils';
 import { CoinIcon } from './CoinIcon';
 import '../css/SharePackageModal.css';
 
@@ -90,6 +91,7 @@ function SharePackageModal({ pkg, profile, onClose }) {
         description: pkg?.description || '',
         deliveryTime: pkg?.deliveryTime || null,
         features: pkg?.features || [],
+        coverImages: pkg?.coverImages || [],
         ownerName: profile?.name || '',
         ownerUsername: profile?.username || profile?._id || '',
         ownerId: profile?._id || '',
@@ -121,16 +123,31 @@ function SharePackageModal({ pkg, profile, onClose }) {
         onClick={onClose}
       >
         <motion.div
-          className="share-package-modal"
+          className={`share-package-modal ${pkg?.coverImages?.length ? 'has-cover-image' : ''}`}
           initial={{ scale: 0.96, opacity: 0, y: 16 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.96, opacity: 0, y: 16 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           onClick={(e) => e.stopPropagation()}
         >
-          <button className="share-package-close" type="button" onClick={onClose} aria-label="Close share package modal">
+          <button className="share-package-close" type="button" onClick={onClose} aria-label="Close share package modal" style={{ zIndex: 10, background: pkg?.coverImages?.length ? 'rgba(0,0,0,0.45)' : '', backdropFilter: pkg?.coverImages?.length ? 'blur(8px)' : '', border: pkg?.coverImages?.length ? '1px solid rgba(255,255,255,0.2)' : '' }}>
             <FiX size={16} />
           </button>
+
+          {pkg?.coverImages && pkg.coverImages.length > 0 && (
+             <div style={{ margin: 'calc(var(--space-6) * -1) calc(var(--space-6) * -1) var(--space-5) calc(var(--space-6) * -1)', display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none', borderRadius: '9px 9px 0 0', position: 'relative', zIndex: 1 }} className="hide-scrollbar">
+                {pkg.coverImages.map((img, idx) => (
+                   <div key={idx} style={{ flex: '0 0 100%', scrollSnapAlign: 'start', height: '240px', position: 'relative' }}>
+                      <img src={getFullUrl(img.url)} alt={`cover-${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      {pkg.coverImages.length > 1 && (
+                         <div style={{ position: 'absolute', bottom: '12px', right: '12px', background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', color: '#fff', fontWeight: 'bold' }}>
+                            {idx + 1}/{pkg.coverImages.length}
+                         </div>
+                      )}
+                   </div>
+                ))}
+             </div>
+          )}
 
           <header className="share-package-header">
             <span className="share-package-kicker">Share Package</span>

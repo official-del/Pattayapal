@@ -324,6 +324,22 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
                 )}
               </div>
 
+              {/* Cover Images Slider */}
+              {pkg.coverImages && pkg.coverImages.length > 0 && (
+                 <div style={{ margin: '0 -24px 16px -24px', display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
+                    {pkg.coverImages.map((img, idx) => (
+                       <div key={idx} style={{ flex: '0 0 100%', scrollSnapAlign: 'start', height: '220px', position: 'relative' }}>
+                          <img src={getFullUrl(img.url)} alt={`cover-${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          {pkg.coverImages.length > 1 && (
+                             <div style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(0,0,0,0.6)', padding: '2px 8px', borderRadius: '10px', fontSize: '10px', color: '#fff', fontWeight: 'bold' }}>
+                                {idx + 1}/{pkg.coverImages.length}
+                             </div>
+                          )}
+                       </div>
+                    ))}
+                 </div>
+              )}
+
               {/* Title & Price row */}
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
                 <h4 style={{ margin: 0, fontSize: 'clamp(1rem,2.5vw,1.25rem)', fontWeight: '800', color: '#fff', lineHeight: 1.3, flex: 1 }}>{pkg.title}</h4>

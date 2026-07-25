@@ -25,6 +25,10 @@ const postSchema = new mongoose.Schema({
     description: { type: String },
     deliveryTime: { type: Number },
     features: [{ type: String }],
+    coverImages: [{
+      url: { type: String },
+      publicId: { type: String }
+    }],
     ownerName: { type: String },
     ownerUsername: { type: String },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }

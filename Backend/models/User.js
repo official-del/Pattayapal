@@ -60,6 +60,10 @@ const userSchema = new mongoose.Schema({
       description: { type: String },
       features: [{ type: String }],
       deliveryTime: { type: Number },
+      coverImages: [{
+        url: { type: String, required: true },
+        publicId: { type: String, required: true }
+      }],
       createdAt: { type: Date, default: Date.now }
     }
   ],
