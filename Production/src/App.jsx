@@ -185,6 +185,7 @@ function App() {
     <SocketProvider>
         <Toaster 
           position="top-center"
+          containerStyle={{ zIndex: 9999999 }}
           toastOptions={{
             style: {
               background: '#111',
