@@ -880,8 +880,23 @@ function UserProfile() {
                               </div>
                            )}
                         </div>
-                        <div className="package-edit-actions">
-                           <button type="button" className="profile-edit-save" onClick={handlePackageSubmit}><FiCheck /> {pkgEditingIndex !== null ? 'Update package' : 'Add package'}</button>
+                        <div className="package-edit-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                           {pkgEditingIndex !== null && (
+                              <button 
+                                 type="button" 
+                                 className="profile-edit-cancel" 
+                                 style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }} 
+                                 onClick={async () => {
+                                    if (await customConfirm('ยืนยันการลบแพ็กเกจนี้?')) {
+                                       setServicePackages(prev => prev.filter((_, i) => i !== pkgEditingIndex));
+                                       handlePackageClose();
+                                    }
+                                 }}
+                              >
+                                 <FiTrash2 /> Delete
+                              </button>
+                           )}
+                           <button type="button" className="profile-edit-save" onClick={handlePackageSubmit} style={{ flex: 1 }}><FiCheck /> {pkgEditingIndex !== null ? 'Update package' : 'Add package'}</button>
                            <button type="button" className="profile-edit-cancel" onClick={handlePackageClose}>Close</button>
                         </div>
                      </div>
