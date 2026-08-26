@@ -242,40 +242,6 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
             </AnimatePresence>
           </motion.button>
 
-          <motion.button 
-            whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.1)' }}
-            whileTap={{ scale: 0.9 }}
-            onClick={handleShare}
-            style={{ 
-              background: copied ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)', 
-              border: `1px solid ${copied ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`, 
-              color: copied ? 'var(--accent)' : '#888', 
-              cursor: 'pointer', 
-              padding: 'clamp(8px, 1.5vw, 12px)', 
-              borderRadius: '15px', 
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease',
-              position: 'relative'
-            }}
-            title="แชร์โพสต์"
-          >
-            {copied ? <FiZap style={{ width: '18px', height: '18px' }} /> : <FiShare2 style={{ width: '18px', height: '18px' }} />}
-            <AnimatePresence>
-              {copied && (
-                <motion.span
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  style={{ position: 'absolute', bottom: '-25px', left: '50%', transform: 'translateX(-50%)', fontSize: '10px', color: 'var(--accent)', fontWeight: '800', whiteSpace: 'nowrap' }}
-                >
-                  COPIED!
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
-
           {isAuthor && (
             <motion.button 
               whileHover={{ scale: 1.1, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }} 
