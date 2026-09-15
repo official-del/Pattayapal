@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiAlertTriangle, FiArrowLeft, FiMessageSquare } from 'react-icons/fi';
+import { Helmet } from 'react-helmet-async';
 import FeedPost from '../components/FeedPost';
 import Footer from '../components/Footer';
 import PremiumLoader from '../components/PremiumLoader';
 import { PATHS } from '../routes/paths';
 import { postsAPI } from '../utils/api';
+import { getFullUrl } from '../utils/mediaUtils';
 import '../css/PostDetail.css';
 
 function PostDetail() {
@@ -64,8 +66,28 @@ function PostDetail() {
     );
   }
 
+  const postTitle = post ? `โพสต์จาก ${post.author?.name || 'PattayaPal'}` : 'Post Detail | PattayaPal';
+  const postDesc = post?.content ? (post.content.length > 150 ? post.content.substring(0, 150) + '...' : post.content) : 'ดูโพสต์นี้บน PattayaPal';
+  const postImage = post?.media?.[0]?.url ? getFullUrl(post.media[0].url) : '';
+  const postUrl = typeof window !== 'undefined' ? window.location.href : '';
+
   return (
     <>
+      {post && (
+        <Helmet>
+          <title>{postTitle}</title>
+          <meta name="description" content={postDesc} />
+          <meta property="og:title" content={postTitle} />
+          <meta property="og:description" content={postDesc} />
+          {postImage && <meta property="og:image" content={postImage} />}
+          <meta property="og:url" content={postUrl} />
+          <meta property="og:type" content="article" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={postTitle} />
+          <meta name="twitter:description" content={postDesc} />
+          {postImage && <meta name="twitter:image" content={postImage} />}
+        </Helmet>
+      )}
       <main className="post-detail-shell">
         <section className="post-detail-container" aria-label="Community post detail">
           <div className="post-detail-toolbar">

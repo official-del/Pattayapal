@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { usersAPI } from '../utils/api';
+import { usersAPI, postsAPI } from '../utils/api';
 import { getFullUrl, isVideoUrl } from '../utils/mediaUtils';
 import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,9 @@ import {
   FiTarget,
   FiUsers,
   FiZap,
+  FiFileText,
+  FiClock,
+  FiImage,
 } from 'react-icons/fi';
 import ProfileFrame from '../components/ProfileFrame';
 import HireModal from '../components/HireModal';
@@ -42,6 +45,9 @@ function Discovery() {
   const [activeProfession, setActiveProfession] = useState('All');
   const [activeRank, setActiveRank] = useState('All');
   const [hireModal, setHireModal] = useState({ show: false, freelancerId: null, freelancerName: '' });
+  const [searchMode, setSearchMode] = useState('people'); // 'people' | 'posts'
+  const [postResults, setPostResults] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(false);
 
   const ranks = ['All', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
   const skillOptions = PRODUCTION_SKILLS
@@ -92,16 +98,40 @@ function Discovery() {
     setActiveProfession(prof);
   };
 
+  // Switch mode — clear results of the other mode
+  const switchMode = (mode) => {
+    setSearchMode(mode);
+    setSearchQuery('');
+    setPostResults([]);
+    setShowSkillSuggestions(false);
+    if (mode === 'people') {
+      fetchInitialFreelancers();
+    }
+  };
+
   const handleSearch = async (query) => {
     setSearchQuery(query);
-    setSearchLoading(true);
-    try {
-      const results = await usersAPI.searchUsers(query, currentToken);
-      setFreelancers(results || []);
-    } catch (err) {
-      console.error('Discovery search error:', err);
-    } finally {
-      setSearchLoading(false);
+    if (searchMode === 'posts') {
+      if (!query.trim()) { setPostResults([]); return; }
+      setPostsLoading(true);
+      try {
+        const results = await postsAPI.search(query);
+        setPostResults(results || []);
+      } catch (err) {
+        console.error('Post search error:', err);
+      } finally {
+        setPostsLoading(false);
+      }
+    } else {
+      setSearchLoading(true);
+      try {
+        const results = await usersAPI.searchUsers(query, currentToken);
+        setFreelancers(results || []);
+      } catch (err) {
+        console.error('Discovery search error:', err);
+      } finally {
+        setSearchLoading(false);
+      }
     }
   };
 
@@ -176,24 +206,43 @@ function Discovery() {
       </section>
 
       <section className="discovery-search-panel">
+        {/* ── Mode Toggle ── */}
+        <div className="discovery-mode-toggle">
+          <button
+            type="button"
+            onClick={() => switchMode('people')}
+            className={`discovery-mode-btn ${searchMode === 'people' ? 'active' : ''}`}
+          >
+            <FiUsers size={15} /> People
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode('posts')}
+            className={`discovery-mode-btn ${searchMode === 'posts' ? 'active' : ''}`}
+          >
+            <FiFileText size={15} /> Posts
+          </button>
+        </div>
+
         <div className="discovery-search-box">
           <FiSearch size={20} />
           <input
             type="text"
-            placeholder="Search by skill, role, or creator name..."
+            placeholder={searchMode === 'posts' ? 'ค้นหาเนื้อหาโพสต์ หรือชื่อผู้โพสต์...' : 'Search by skill, role, or creator name...'}
             value={searchQuery}
-            onFocus={() => setShowSkillSuggestions(true)}
+            onFocus={() => searchMode === 'people' && setShowSkillSuggestions(true)}
             onBlur={() => window.setTimeout(() => setShowSkillSuggestions(false), 140)}
             onChange={(e) => handleSearch(e.target.value)}
           />
-          {searchLoading && <PremiumLoader bare size="small" />}
+          {(searchLoading || postsLoading) && <PremiumLoader bare size="small" />}
           <button type="button" onClick={() => handleSearch(searchQuery)}>
             Search
           </button>
         </div>
 
+        {/* Skill suggestions — People mode only */}
         <AnimatePresence>
-          {showSkillSuggestions && visibleSkillOptions.length > 0 && (
+          {searchMode === 'people' && showSkillSuggestions && visibleSkillOptions.length > 0 && (
             <motion.div
               className="discovery-suggestion-panel"
               initial={{ opacity: 0, y: -6 }}
@@ -220,86 +269,138 @@ function Discovery() {
           )}
         </AnimatePresence>
 
-        <div className="discovery-filter-grid">
-          <div className="discovery-filter-group">
-            <span>Browse by role</span>
-            <div>
-              {professions.map((profession) => (
-                <button
-                  type="button"
-                  key={profession}
-                  onClick={() => selectProfession(profession)}
-                  className={activeProfession === profession ? 'active' : ''}
-                >
-                  {profession}
-                </button>
-              ))}
+        {/* Filters — People mode only */}
+        {searchMode === 'people' && (
+          <div className="discovery-filter-grid">
+            <div className="discovery-filter-group">
+              <span>Browse by role</span>
+              <div>
+                {professions.map((profession) => (
+                  <button
+                    type="button"
+                    key={profession}
+                    onClick={() => selectProfession(profession)}
+                    className={activeProfession === profession ? 'active' : ''}
+                  >
+                    {profession}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="discovery-filter-group">
-            <span>Rank filter</span>
-            <div>
-              {ranks.map((rank) => (
-                <button
-                  type="button"
-                  key={rank}
-                  onClick={() => setActiveRank(rank)}
-                  className={activeRank === rank ? 'active' : ''}
-                >
-                  {rank}
-                </button>
-              ))}
+            <div className="discovery-filter-group">
+              <span>Rank filter</span>
+              <div>
+                {ranks.map((rank) => (
+                  <button
+                    type="button"
+                    key={rank}
+                    onClick={() => setActiveRank(rank)}
+                    className={activeRank === rank ? 'active' : ''}
+                  >
+                    {rank}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="discovery-stats-grid" aria-label="Discovery summary">
-        <div className="discovery-stat-card"><span>Showing</span><strong>{publishedCreators}</strong></div>
-        <div className="discovery-stat-card is-green"><span>High rank</span><strong>{highRankCount}</strong></div>
-        <div className="discovery-stat-card is-blue"><span>Video ready</span><strong>{videoReadyCount}</strong></div>
-        <div className="discovery-stat-card is-orange"><span>Roles</span><strong>{Math.max(professions.length - 1, 0)}</strong></div>
-      </section>
-
-      <section className="discovery-board">
-        <div className="discovery-board-header">
-          <div>
-            <div className="discovery-kicker"><FiTarget size={15} /><span>Creator Market</span></div>
-            <h2>Available freelancers</h2>
-          </div>
-          <span>{filteredFreelancers.length} creators</span>
-        </div>
-
-        {loading ? (
-          <div className="discovery-loader">
-            <PremiumLoader bare size="small" />
-            <p>Synchronizing talent pool...</p>
-          </div>
-        ) : filteredFreelancers.length > 0 ? (
-          <motion.div variants={containerVariants} initial="hidden" animate="show" className="talent-grid">
-            {filteredFreelancers.map((freelancer) => (
-              <TalentCard
-                key={freelancer._id}
-                freelancer={freelancer}
-                itemVariants={itemVariants}
-                onHire={() => setHireModal({
-                  show: true,
-                  freelancerId: freelancer._id,
-                  freelancerName: toDisplayText(freelancer.name, 'Creator'),
-                  freelancerRank: toDisplayText(freelancer.rank, 'Bronze'),
-                })}
-              />
-            ))}
-          </motion.div>
-        ) : (
-          <div className="discovery-empty-state">
-            <FiTarget size={34} />
-            <h2>No freelancers found</h2>
-            <p>Try another role, rank, or skill keyword to widen the creator search.</p>
           </div>
         )}
       </section>
+
+      {/* Stats — People mode only */}
+      {searchMode === 'people' && (
+        <section className="discovery-stats-grid" aria-label="Discovery summary">
+          <div className="discovery-stat-card"><span>Showing</span><strong>{publishedCreators}</strong></div>
+          <div className="discovery-stat-card is-green"><span>High rank</span><strong>{highRankCount}</strong></div>
+          <div className="discovery-stat-card is-blue"><span>Video ready</span><strong>{videoReadyCount}</strong></div>
+          <div className="discovery-stat-card is-orange"><span>Roles</span><strong>{Math.max(professions.length - 1, 0)}</strong></div>
+        </section>
+      )}
+
+      {/* ── People Results Board ── */}
+      {searchMode === 'people' && (
+        <section className="discovery-board">
+          <div className="discovery-board-header">
+            <div>
+              <div className="discovery-kicker"><FiTarget size={15} /><span>Creator Market</span></div>
+              <h2>Available freelancers</h2>
+            </div>
+            <span>{filteredFreelancers.length} creators</span>
+          </div>
+
+          {loading ? (
+            <div className="discovery-loader">
+              <PremiumLoader bare size="small" />
+              <p>Synchronizing talent pool...</p>
+            </div>
+          ) : filteredFreelancers.length > 0 ? (
+            <motion.div variants={containerVariants} initial="hidden" animate="show" className="talent-grid">
+              {filteredFreelancers.map((freelancer) => (
+                <TalentCard
+                  key={freelancer._id}
+                  freelancer={freelancer}
+                  itemVariants={itemVariants}
+                  onHire={() => setHireModal({
+                    show: true,
+                    freelancerId: freelancer._id,
+                    freelancerName: toDisplayText(freelancer.name, 'Creator'),
+                    freelancerRank: toDisplayText(freelancer.rank, 'Bronze'),
+                  })}
+                />
+              ))}
+            </motion.div>
+          ) : (
+            <div className="discovery-empty-state">
+              <FiTarget size={34} />
+              <h2>No freelancers found</h2>
+              <p>Try another role, rank, or skill keyword to widen the creator search.</p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── Posts Results Board ── */}
+      {searchMode === 'posts' && (
+        <section className="discovery-board">
+          <div className="discovery-board-header">
+            <div>
+              <div className="discovery-kicker"><FiFileText size={15} /><span>Post Search</span></div>
+              <h2>{searchQuery ? `ผลลัพธ์สำหรับ "${searchQuery}"` : 'ค้นหาเนื้อหาโพสต์'}</h2>
+            </div>
+            {postResults.length > 0 && <span>{postResults.length} โพสต์</span>}
+          </div>
+
+          {postsLoading ? (
+            <div className="discovery-loader">
+              <PremiumLoader bare size="small" />
+              <p>กำลังค้นหา...</p>
+            </div>
+          ) : !searchQuery.trim() ? (
+            <div className="discovery-empty-state">
+              <FiSearch size={34} />
+              <h2>พิมพ์คำค้นหาเพื่อเริ่มต้น</h2>
+              <p>ค้นหาจากเนื้อหาโพสต์ หรือชื่อผู้โพสต์บนแพลตฟอร์ม</p>
+            </div>
+          ) : postResults.length > 0 ? (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+            >
+              {postResults.map((post) => (
+                <PostCard key={post._id} post={post} itemVariants={itemVariants} />
+              ))}
+            </motion.div>
+          ) : (
+            <div className="discovery-empty-state">
+              <FiFileText size={34} />
+              <h2>ไม่พบโพสต์</h2>
+              <p>ลองเปลี่ยนคำค้นหาใหม่</p>
+            </div>
+          )}
+        </section>
+      )}
 
       <AnimatePresence>
         {hireModal.show && (
@@ -367,6 +468,70 @@ function TalentCard({ freelancer, itemVariants, onHire }) {
         </Link>
         <Link to={`/profile/${freelancer._id}`} className="talent-profile-link">
           Profile <FiArrowRight size={14} />
+        </Link>
+      </div>
+    </motion.article>
+  );
+}
+
+function PostCard({ post, itemVariants }) {
+  const author = post.author || {};
+  const profileImage = author.profileImage?.url || '';
+  const authorName = toDisplayText(author.name, 'Unknown');
+  const profession = toDisplayText(author.profession, '');
+  const content = post.content || '';
+  const preview = content.length > 150 ? content.slice(0, 150) + '...' : content;
+  const thumbnail = post.media?.[0]?.url;
+  const hasMedia = post.media && post.media.length > 0;
+  const mediaCount = post.media?.length || 0;
+
+  const dateStr = post.createdAt
+    ? new Date(post.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '';
+
+  return (
+    <motion.article
+      variants={itemVariants}
+      className="discovery-post-card"
+    >
+      {/* Thumbnail */}
+      {thumbnail && (
+        <Link to={`/posts/${post._id}`} className="discovery-post-card-thumb">
+          <img src={getFullUrl(thumbnail)} alt="" />
+          {mediaCount > 1 && (
+            <div className="discovery-post-card-count">
+              <FiImage size={9} /> {mediaCount}
+            </div>
+          )}
+        </Link>
+      )}
+
+      {/* Content */}
+      <div className="discovery-post-card-body">
+        {/* Author row */}
+        <div className="discovery-post-card-author">
+          <Link to={`/profile/${author._id}`}>
+            <img src={profileImage ? getFullUrl(profileImage) : 'https://via.placeholder.com/32'} alt={authorName} />
+          </Link>
+          <div className="discovery-post-card-author-info">
+            <Link to={`/profile/${author._id}`} className="discovery-post-card-author-name">
+              {authorName}
+            </Link>
+            {profession && (
+              <div className="discovery-post-card-author-role">{profession}</div>
+            )}
+          </div>
+          <div className="discovery-post-card-date">
+            <FiClock size={11} /> {dateStr}
+          </div>
+        </div>
+
+        {/* Post content preview */}
+        <p className="discovery-post-card-content">{preview}</p>
+
+        {/* CTA */}
+        <Link to={`/posts/${post._id}`} className="discovery-post-card-link">
+          อ่านโพสต์เต็ม <FiArrowRight size={13} />
         </Link>
       </div>
     </motion.article>

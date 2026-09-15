@@ -32,7 +32,7 @@ function SharePackageModal({ pkg, profile, onClose }) {
   const [isPostingToFeed, setIsPostingToFeed] = useState(false);
 
   const profileSlug = profile?.username || profile?._id;
-  const shareUrl = `${window.location.origin}/${profileSlug || `profile/${profile?._id}`}?tab=packages`;
+  const shareUrl = `${window.location.origin}/${profileSlug || `profile/${profile?._id}`}?tab=packages${pkg?._id ? `&pkgId=${pkg._id}` : ''}`;
   const packagePrice = Number(pkg?.price || 0).toLocaleString();
   const packageDays = pkg?.deliveryTime ? `${pkg.deliveryTime} days` : 'Timeline on request';
   const shareText = [
@@ -42,7 +42,10 @@ function SharePackageModal({ pkg, profile, onClose }) {
     shareUrl,
   ].filter(Boolean).join('\n');
 
-  const handleFacebook = () => {
+  const handleFacebook = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: pkg?.title, text: shareText, url: shareUrl }); return; } catch (e) {}
+    }
     window.open(
       `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`,
       '_blank',
@@ -50,7 +53,10 @@ function SharePackageModal({ pkg, profile, onClose }) {
     );
   };
 
-  const handleX = () => {
+  const handleX = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: pkg?.title, text: shareText, url: shareUrl }); return; } catch (e) {}
+    }
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&hashtags=Pattayapal,Freelance`,
       '_blank',
@@ -58,7 +64,10 @@ function SharePackageModal({ pkg, profile, onClose }) {
     );
   };
 
-  const handleLine = () => {
+  const handleLine = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: pkg?.title, text: shareText, url: shareUrl }); return; } catch (e) {}
+    }
     window.open(
       `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
       '_blank',

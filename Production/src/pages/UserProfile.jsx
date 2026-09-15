@@ -11,6 +11,7 @@ import axios from 'axios';
 import HireModal from '../components/HireModal';
 import ImageCropModal from '../components/ImageCropModal';
 import HoverVideoPlayer from '../components/HoverVideoPlayer';
+import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import { useSocket } from '../context/SocketContext';
 import { formatLastSeen } from '../utils/timeUtils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -473,13 +474,39 @@ function UserProfile() {
 
    const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 
+   const searchParamsUrl = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+   const sharedPkgId = searchParamsUrl?.get('pkgId');
+   const sharedPkg = sharedPkgId && profile?.servicePackages ? profile.servicePackages.find(p => p._id === sharedPkgId) : null;
+
+   const pageTitle = sharedPkg 
+     ? `${sharedPkg.title} | ${profile?.name}` 
+     : `${profile?.name} | ${profile?.profession || 'Freelancer'} | Pattayapal Portfolio`;
+     
+   const pageDesc = sharedPkg 
+     ? (sharedPkg.description ? sharedPkg.description.substring(0, 150) : `แพ็กเกจบริการโดย ${profile?.name}`)
+     : (profile?.bio ? profile.bio.substring(0, 150) : `โปรไฟล์ของ ${profile?.name} บน PattayaPal`);
+     
+   const pageImage = sharedPkg && sharedPkg.coverImages?.length > 0
+     ? getFullUrl(sharedPkg.coverImages[0].url || sharedPkg.coverImages[0])
+     : (profile?.profileImage?.url ? getFullUrl(profile.profileImage.url) : '');
+     
+   const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+
    return (
       <motion.div className="profile-page" onPointerDownCapture={handleProfileActionCapture} onClickCapture={handleProfileActionCapture} variants={containerVariants} initial="hidden" animate="show" style={{ minHeight: '100vh', background: '#050505', color: '#fff', position: 'relative', overflowX: 'hidden' }}>
          <Helmet>
-            <title>{profile?.name} | {profile?.profession || 'Freelancer'} | Pattayapal Portfolio</title>
+            <title>{pageTitle}</title>
+            <meta name="description" content={pageDesc} />
+            <meta property="og:title" content={pageTitle} />
+            <meta property="og:description" content={pageDesc} />
+            {pageImage && <meta property="og:image" content={pageImage} />}
+            <meta property="og:url" content={pageUrl} />
+            <meta property="og:type" content="profile" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={pageTitle} />
+            <meta name="twitter:description" content={pageDesc} />
+            {pageImage && <meta name="twitter:image" content={pageImage} />}
          </Helmet>
-
-
 
 
          <div className="profile-cover-stage" style={{ width: '100%', height: '400px', position: 'relative', overflow: 'hidden' }}>
@@ -604,7 +631,8 @@ function UserProfile() {
                         { id: 'portfolio', label: 'PORTFOLIO', icon: <FiActivity /> },
                         { id: 'packages', label: 'PACKAGES', icon: <FiZap /> },
                         { id: 'about', label: 'EXPERIENCE', icon: <FiAward /> },
-                        { id: 'timeline', label: 'TIMELINE', icon: <FiClock /> }
+                        { id: 'timeline', label: 'TIMELINE', icon: <FiClock /> },
+                        { id: 'calendar', label: 'CALENDAR', icon: <FiCalendar /> }
                      ].map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? 'var(--accent)' : 'transparent', border: 'none', padding: '12px 25px', borderRadius: '18px', color: activeTab === tab.id ? '#fff' : '#666', fontWeight: '700', cursor: 'pointer', transition: '0.3s', display: 'flex', alignItems: 'center', gap: '10px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                            {tab.icon} {tab.label}
@@ -674,6 +702,12 @@ function UserProfile() {
                            {activeTab === 'timeline' && (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '700px', margin: '0 auto' }}>
                                  {userPosts.length > 0 ? userPosts.map(post => <FeedPost key={post._id} post={post} onDelete={(id) => setUserPosts(prev => prev.filter(p => p._id !== id))} />) : <div style={{ padding: '100px', textAlign: 'center', color: '#444', fontWeight: '700', letterSpacing: '4px' }}>NO SOCIAL POSTS RECORDED</div>}
+                              </div>
+                           )}
+
+                           {activeTab === 'calendar' && (
+                              <div style={{ minHeight: '400px' }}>
+                                 <AvailabilityCalendar userId={profile._id} isOwner={isMyProfile} />
                               </div>
                            )}
 

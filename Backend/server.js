@@ -696,7 +696,7 @@ const startServer = async () => {
     await connectDatabase();
     
     // Initialize cron jobs after DB connection
-    initCronJobs();
+    initCronJobs(io);
 
     server.listen(PORT, () => {
       console.log(`Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`);

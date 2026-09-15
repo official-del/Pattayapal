@@ -275,3 +275,59 @@ export const replyCommentPost = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+
+export const updatePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'ไม่พบโพสต์' });
+    if (post.author.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'คุณไม่มีสิทธิ์แก้ไขโพสต์นี้' });
+    }
+
+    if (req.body.content) {
+      post.content = req.body.content;
+    }
+    
+    await post.save();
+    
+    const updatedPost = await Post.findById(req.params.id)
+      .populate('author', 'name profileImage profession rank')
+      .populate('comments.user', 'name profileImage')
+      .populate('comments.replies.user', 'name profileImage');
+      
+    res.json(updatedPost);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// 🔍 Search Posts by content or author name
+export const searchPosts = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || !q.trim()) {
+      return res.json([]);
+    }
+
+    const regex = new RegExp(q.trim(), 'i');
+
+    // Find authors whose names match first
+    const matchingAuthors = await User.find({ name: regex }).select('_id').limit(30);
+    const authorIds = matchingAuthors.map(u => u._id);
+
+    const posts = await Post.find({
+      $or: [
+        { content: regex },
+        { author: { $in: authorIds } }
+      ]
+    })
+      .populate('author', 'name profileImage profession rank')
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

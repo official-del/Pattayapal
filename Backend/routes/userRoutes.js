@@ -27,7 +27,9 @@ import {
   getLeaderboard,
   getRankProgress,
   changePassword,
-  broadcastNotification
+  broadcastNotification,
+  getBusyDates,
+  updateBusyDates
 } from '../controller/userController.js';
 import { claimQuest as claimQuestReward } from '../controller/questController.js';
 
@@ -203,5 +205,9 @@ router.delete('/:id/friend-request', protect, cancelFriendRequest);
 router.patch('/me/profile', protect, updateProfile);
 router.patch('/me/password', protect, changePassword);
 router.get('/search', protect, searchUsers);
+
+// 📅 Calendar Routes
+router.get('/:id/busy-dates', getBusyDates);               // Public — ใครก็ดูได้
+router.patch('/me/busy-dates', protect, updateBusyDates);  // เจ้าของเท่านั้น
 
 export default router;

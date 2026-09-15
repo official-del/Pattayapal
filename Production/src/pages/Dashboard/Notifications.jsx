@@ -18,6 +18,7 @@ import {
   FiTrash2,
   FiUsers,
   FiZap,
+  FiTarget
 } from 'react-icons/fi';
 import PremiumLoader from '../../components/PremiumLoader';
 import '../../css/Notifications.css';
@@ -27,6 +28,7 @@ const TABS = [
   { key: 'job', label: 'Jobs', icon: <FiBriefcase /> },
   { key: 'payment', label: 'Payments', icon: <FiDollarSign /> },
   { key: 'system', label: 'System', icon: <FiInfo /> },
+  { key: 'quest', label: 'Quests', icon: <FiTarget /> },
 ];
 
 const TYPE_MAP = {
@@ -34,6 +36,7 @@ const TYPE_MAP = {
   payment: { label: 'Payment', tone: 'is-coin', icon: <FiDollarSign size={16} /> },
   wallet: { label: 'Wallet', tone: 'is-coin', icon: <FiDollarSign size={16} /> },
   system: { label: 'System', tone: 'is-green', icon: <FiInfo size={16} /> },
+  quest: { label: 'Quest', tone: 'is-orange', icon: <FiTarget size={16} /> },
   friend: { label: 'Friend', tone: 'is-pink', icon: <FiUsers size={16} /> },
   message: { label: 'Message', tone: 'is-green', icon: <FiMessageCircle size={16} /> },
   messenger: { label: 'Message', tone: 'is-green', icon: <FiMessageCircle size={16} /> },
@@ -161,6 +164,8 @@ function Notifications() {
       navigate('/friends');
     } else if (type.includes('payment') || type.includes('wallet')) {
       navigate('/dashboard/wallet');
+    } else if (type.includes('quest')) {
+      navigate('/dashboard/quests');
     }
   };
 

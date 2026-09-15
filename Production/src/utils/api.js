@@ -206,6 +206,8 @@ export const postsAPI = {
   create: (formData) => API.post('/posts', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }).then(res => res.data),
+  update: (id, content) => API.put(`/posts/${id}`, { content }).then(res => res.data),
+  search: (q) => API.get(`/posts/search?q=${encodeURIComponent(q)}`).then(res => res.data),
   like: (id) => API.post(`/posts/${id}/like`, {}).then(res => res.data),
   comment: (id, text) => API.post(`/posts/${id}/comment`, { text }).then(res => res.data),
   delete: (id) => API.delete(`/posts/${id}`).then(res => res.data),
@@ -283,4 +285,10 @@ export const uploadAPI = {
     API.post('/upload/single', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data)
+};
+
+// 📅 Calendar ──
+export const calendarAPI = {
+  getBusyDates: (userId) => API.get(`/users/${userId}/busy-dates`).then(res => res.data),
+  updateBusyDates: (dates) => API.patch('/users/me/busy-dates', { busyDates: dates }).then(res => res.data),
 };

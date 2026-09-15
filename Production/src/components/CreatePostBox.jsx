@@ -20,8 +20,8 @@ function CreatePostBox({ onPostCreated }) {
   }
 
   const [content, setContent] = useState('');
-  const [media, setMedia] = useState(null);
-  const [mediaPreview, setMediaPreview] = useState(null);
+  const [media, setMedia] = useState([]);
+  const [mediaPreview, setMediaPreview] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -36,27 +36,37 @@ function CreatePostBox({ onPostCreated }) {
     : 'แนะนำตัวให้คอมมูนิตี้รู้จัก หรือแชร์ไอเดียของคุณที่นี่...';
 
   const handleMediaChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setMedia(file);
-      setMediaPreview(URL.createObjectURL(file));
+    const files = Array.from(e.target.files);
+    if (files.length + media.length > 5) {
+      alert('อัปโหลดได้สูงสุด 5 ไฟล์เท่านั้น');
+      return;
     }
+    setMedia(prev => [...prev, ...files]);
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setMediaPreview(prev => [...prev, ...newPreviews]);
   };
 
-  const removeMedia = () => {
-    setMedia(null);
-    setMediaPreview(null);
+  const removeMedia = (index) => {
+    if (typeof index === 'number') {
+      setMedia(prev => prev.filter((_, i) => i !== index));
+      setMediaPreview(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setMedia([]);
+      setMediaPreview([]);
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handlePost = async () => {
-    if (!content.trim() && !media) return;
+    if (!content.trim() && media.length === 0) return;
     setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append('content', content);
       formData.append('postType', isGeneral ? 'hiring' : 'looking_for_work');
-      if (media) formData.append('media', media);
+      if (media && media.length > 0) {
+        media.forEach(file => formData.append('media', file));
+      }
 
       const newPost = await postsAPI.create(formData, currentToken);
       setContent('');
@@ -92,7 +102,7 @@ function CreatePostBox({ onPostCreated }) {
             onBlur={() => setIsFocused(false)}
           />
           {/* Hidden file input */}
-          <input type="file" ref={fileInputRef} accept="image/*,video/*" style={{ display: 'none' }} onChange={handleMediaChange} />
+          <input type="file" ref={fileInputRef} accept="image/*,video/*" style={{ display: 'none' }} onChange={handleMediaChange} multiple />
         </div>
 
         {/* Action Circles */}
@@ -107,7 +117,7 @@ function CreatePostBox({ onPostCreated }) {
 
           <button
             onClick={handlePost}
-            disabled={isSubmitting || (!content.trim() && !media)}
+            disabled={isSubmitting || (!content.trim() && media.length === 0)}
             className="action-circle-btn send-post-btn"
             title="Post"
           >
@@ -118,23 +128,27 @@ function CreatePostBox({ onPostCreated }) {
 
       {/* Media Stream Preview */}
       <AnimatePresence>
-        {mediaPreview && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }} 
-            animate={{ opacity: 1, scale: 1, y: 0 }} 
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+        {mediaPreview && mediaPreview.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             className="media-preview-wrapper"
+            style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '10px 0', paddingLeft: 'clamp(45px, 8vw, 60px)' }}
           >
-            <div className="media-preview-card">
-              <img 
-                src={mediaPreview} 
-                alt="Preview" 
-                onClick={() => setSelectedImage(mediaPreview)}
-              />
-              <button onClick={removeMedia} className="remove-media-btn">
-                <FiX size={16} />
-              </button>
-            </div>
+            {mediaPreview.map((preview, index) => (
+              <div key={index} className="media-preview-card" style={{ flexShrink: 0, position: 'relative' }}>
+                <img 
+                  src={preview} 
+                  alt="Preview" 
+                  onClick={() => setSelectedImage(preview)}
+                  style={{ height: '120px', width: 'auto', objectFit: 'cover', borderRadius: '15px' }}
+                />
+                <button onClick={(e) => { e.preventDefault(); removeMedia(index); }} className="remove-media-btn" style={{ zIndex: 10 }}>
+                  <FiX size={16} />
+                </button>
+              </div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>

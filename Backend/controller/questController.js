@@ -2,8 +2,59 @@ import Quest from '../models/Quest.js';
 import User from '../models/User.js';
 import Work from '../models/Work.js';
 import Transaction from '../models/Transaction.js';
+import Notification from '../models/Notification.js';
 
-// ── GET All Active Quests ─────────────────────────────────────────────────────
+// ── Helper: ส่ง Quest Notification ไปหา users ที่ eligible ──────────────────────
+const broadcastNewQuestNotification = async (quest, io) => {
+  try {
+    const rankHierarchy = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Conqueror'];
+    const eligibleRanks = quest.requiredRank === 'All'
+      ? rankHierarchy
+      : rankHierarchy.slice(rankHierarchy.indexOf(quest.requiredRank));
+
+    const eligibleUsers = await User.find({
+      role: { $ne: 'admin' },
+      rank: { $in: eligibleRanks },
+    }).select('_id').lean();
+
+    if (!eligibleUsers.length) return;
+
+    const adminUser = await User.findOne({ role: 'admin' }).select('_id').lean();
+    if (!adminUser) return;
+
+    const rewardText = quest.coinReward > 0
+      ? `${quest.coinReward} Coins`
+      : `${quest.xpReward} XP`;
+    const rankText = quest.requiredRank === 'All'
+      ? 'ทุกแรงค์'
+      : `แรงค์ ${quest.requiredRank} ขึ้นไป`;
+
+    const notifications = eligibleUsers.map(u => ({
+      recipient: u._id,
+      sender: adminUser._id,
+      type: 'quest',
+      text: `🎯 เควสใหม่: "${quest.title}" รางวัล ${rewardText} — ${rankText}`,
+      link: '/dashboard/quests',
+    }));
+
+    await Notification.insertMany(notifications);
+
+    if (io) {
+      for (const u of eligibleUsers) {
+        io.to(u._id.toString()).emit('new_notification', { type: 'quest' });
+        io.to(u._id.toString()).emit('quest_new', {
+          questId: quest._id,
+          title: quest.title,
+          reward: rewardText,
+        });
+      }
+    }
+  } catch (err) {
+    console.error('❌ [Quest] broadcastNewQuestNotification error:', err.message);
+  }
+};
+
+// ── GET All Active Quests ──────────────────────────────────────────────────────
 export const getActiveQuests = async (req, res) => {
   try {
     const now = new Date();
@@ -19,7 +70,7 @@ export const getActiveQuests = async (req, res) => {
   }
 };
 
-// ── CREATE Quest ──────────────────────────────────────────────────────────────
+// ── CREATE Quest ───────────────────────────────────────────────────────────────
 export const createQuest = async (req, res) => {
   try {
     const { title, description, taskType, rewardType, coinReward, xpReward, requiredRank, maxParticipants, durationDays, expiresAt } = req.body;
@@ -56,6 +107,11 @@ export const createQuest = async (req, res) => {
 
     await quest.save();
     await quest.populate('createdBy', 'name username profileImage rank');
+
+    // 🔔 Broadcast new quest notification to eligible users (non-blocking)
+    const io = req.app.get('io');
+    broadcastNewQuestNotification(quest, io).catch(console.error);
+
     res.status(201).json(quest);
 
   } catch (err) {
@@ -63,7 +119,7 @@ export const createQuest = async (req, res) => {
   }
 };
 
-// ── ACCEPT Quest ──────────────────────────────────────────────────────────────
+// ── ACCEPT Quest ───────────────────────────────────────────────────────────────
 export const acceptQuest = async (req, res) => {
   try {
     const { questId } = req.params;
@@ -156,28 +212,13 @@ export const acceptQuest = async (req, res) => {
     }
 
     return res.json({ message: 'Quest accepted successfully', deadline });
-    
-    if (!user.activeQuests) user.activeQuests = [];
-    user.activeQuests.push({
-      questId: quest._id,
-      acceptedAt: new Date(),
-      deadline
-    });
-
-    await user.save();
-
-    // Increment Participant Count
-    quest.participantCount += 1;
-    await quest.save();
-
-    res.json({ message: 'รับเควสสำเร็จ!', deadline });
 
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// ── CLAIM Quest ───────────────────────────────────────────────────────────────
+// ── CLAIM Quest ────────────────────────────────────────────────────────────────
 export const claimQuest = async (req, res) => {
   try {
     const { questId } = req.params;
@@ -193,7 +234,7 @@ export const claimQuest = async (req, res) => {
 
     // Check if it's a limited quest that must be accepted first
     const activeEntry = user.activeQuests?.find(q => q.questId.toString() === questId.toString());
-    
+
     // If the quest has a participant limit or duration, it MUST be in activeQuests
     if ((quest.maxParticipants > 0 || quest.durationDays > 0) && !activeEntry) {
       return res.status(400).json({ message: 'กรุณากดรับเควสก่อนทำภารกิจ' });
@@ -209,7 +250,6 @@ export const claimQuest = async (req, res) => {
       return res.status(403).json({ message: 'แอดมินไม่สามารถรับรางวัลจากเควสได้' });
     }
 
-    // ... (rest of the checks)
     if (!quest.isActive) {
       return res.status(400).json({ message: 'เควสนี้ปิดรับแล้ว' });
     }
@@ -304,44 +344,12 @@ export const claimQuest = async (req, res) => {
       points: updatedUser.points,
     });
 
-    // Grant Rewards
-    if (quest.coinReward > 0) {
-      user.coinBalance = (user.coinBalance || 0) + quest.coinReward;
-      await new Transaction({
-        user: userId,
-        type: 'TOPUP',
-        amount: quest.coinReward,
-        status: 'completed',
-        reference: `QUEST: ${quest.title}`,
-      }).save();
-    }
-
-    if (quest.xpReward > 0) {
-      user.points = (user.points || 0) + quest.xpReward;
-    }
-
-    if (!user.claimedQuests) user.claimedQuests = [];
-    user.claimedQuests.push({ questId: quest._id.toString(), claimedAt: new Date() });
-
-    // Remove from activeQuests if it exists
-    if (activeEntry) {
-      user.activeQuests = user.activeQuests.filter(q => q.questId.toString() !== questId.toString());
-    }
-
-    await user.save();
-
-    res.json({
-      message: 'รับรางวัลสำเร็จ!',
-      coinBalance: user.coinBalance,
-      points: user.points,
-    });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// ── UPDATE Quest ──────────────────────────────────────────────────────────────
+// ── UPDATE Quest ───────────────────────────────────────────────────────────────
 export const updateQuest = async (req, res) => {
   try {
     const { questId } = req.params;
@@ -384,7 +392,7 @@ export const updateQuest = async (req, res) => {
   }
 };
 
-// ── DELETE Quest ──────────────────────────────────────────────────────────────
+// ── DELETE Quest ───────────────────────────────────────────────────────────────
 export const deleteQuest = async (req, res) => {
   try {
     const { questId } = req.params;

@@ -762,5 +762,48 @@ export {
   getRankProgress,
   changePassword,
   claimQuest,
-  broadcastNotification
+  broadcastNotification,
+  getBusyDates,
+  updateBusyDates
 };
+
+// 📅 GET busy dates ของ user (Public)
+async function getBusyDates(req, res) {
+  try {
+    const user = await User.findById(req.params.id).select('busyDates');
+    if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+    res.json({ busyDates: user.busyDates || [] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+// 📅 UPDATE busy dates (เจ้าของเท่านั้น)
+async function updateBusyDates(req, res) {
+  try {
+    const { busyDates } = req.body;
+
+    // Validate: ต้องเป็น array ของ "YYYY-MM-DD"
+    if (!Array.isArray(busyDates)) {
+      return res.status(400).json({ message: 'busyDates ต้องเป็น array' });
+    }
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const isValid = busyDates.every(d => typeof d === 'string' && dateRegex.test(d));
+    if (!isValid) {
+      return res.status(400).json({ message: 'รูปแบบวันที่ไม่ถูกต้อง (ต้องเป็น YYYY-MM-DD)' });
+    }
+
+    // กรองวันซ้ำออก
+    const uniqueDates = [...new Set(busyDates)];
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { busyDates: uniqueDates },
+      { new: true }
+    ).select('busyDates');
+
+    res.json({ busyDates: user.busyDates });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}

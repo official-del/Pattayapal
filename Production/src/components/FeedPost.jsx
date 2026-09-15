@@ -1,9 +1,9 @@
 import { customConfirm } from '../utils/customConfirm';
 import { toast } from 'react-hot-toast';
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { postsAPI } from '../utils/api';
-import { FiHeart, FiMessageSquare, FiMoreHorizontal, FiSend, FiClock, FiBriefcase, FiUserCheck, FiTrash2, FiActivity, FiShare2, FiZap, FiX } from 'react-icons/fi';
+import { FiHeart, FiMessageSquare, FiMoreHorizontal, FiSend, FiClock, FiBriefcase, FiUserCheck, FiTrash2, FiActivity, FiShare2, FiZap, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { getFullUrl, isVideoUrl } from '../utils/mediaUtils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -102,7 +102,25 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
   const [replyText, setReplyText] = useState('');
   const [expandedReplies, setExpandedReplies] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [sliderIndex, setSliderIndex] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content || '');
+  const [postContent, setPostContent] = useState(post.content || '');
+
+  const handleUpdatePost = async () => {
+    if (!editContent.trim() || !currentToken) return;
+    try {
+      const updated = await postsAPI.update(post._id, editContent, currentToken);
+      setPostContent(updated.content);
+      setIsEditing(false);
+      toast.success('แก้ไขโพสต์สำเร็จ', { style: { borderRadius: '10px', background: '#333', color: '#fff' } });
+    } catch (err) { 
+      toast.error('แก้ไขไม่สำเร็จ'); 
+    }
+  };
+
 
   const isAuthor = userInfo && (post.author?._id === (userInfo._id || userInfo.id));
   const displayAuthor = isAuthor ? userInfo : post.author;
@@ -164,13 +182,46 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
     } catch (err) { toast.success('ลบไม่สำเร็จ'); }
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const shareUrl = `${window.location.origin}/posts/${post._id}`;
+    const title = post.sharedPackage ? `แพ็กเกจบริการจาก ${post.author?.name || 'ฟรีแลนซ์'}` : `โพสต์จาก ${post.author?.name || 'ผู้ใช้'}`;
+    const text = postContent ? (postContent.substring(0, 100) + '...') : (post.sharedPackage?.title || 'คลิกเพื่อดูรายละเอียดเพิ่มเติมบน PattayaPal');
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text,
+          url: shareUrl
+        });
+        return;
+      } catch (err) {
+        // user cancelled or failed, fallback to clipboard
+      }
+    }
+    
+    // Fallback to clipboard
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
+
+  // ── Read More Logic ──
+  const MAX_LINES = 4;
+  const contentText = postContent || '';
+  const textLines = contentText.split('\n');
+  const isLongText = textLines.length > MAX_LINES || contentText.length > 250;
+  const [isExpandedText, setIsExpandedText] = useState(false);
+
+  let displayedContent = contentText;
+  if (isLongText && !isExpandedText) {
+    if (textLines.length > MAX_LINES) {
+      displayedContent = textLines.slice(0, MAX_LINES).join('\n') + '...';
+    } else {
+      displayedContent = contentText.slice(0, 250) + '...';
+    }
+  }
 
   return (
     <motion.div
@@ -208,7 +259,30 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
         </div>
 
         <div className="feed-post-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 1.5vw, 12px)' }}>
-          <motion.button 
+          {isAuthor && (
+            <motion.button 
+              whileHover={{ scale: 1.1, background: 'rgba(255, 255, 255, 0.1)', color: '#fff' }} 
+              onClick={() => setIsEditing(true)} 
+              style={{ 
+                background: 'rgba(255,255,255,0.05)', 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                color: '#888', 
+                cursor: 'pointer', 
+                padding: 'clamp(8px, 1.5vw, 12px)', 
+                borderRadius: '15px', 
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                marginRight: '8px'
+              }}
+              title='แก้ไขโพสต์'
+            >
+              <svg stroke='currentColor' fill='none' strokeWidth='2' viewBox='0 0 24 24' strokeLinecap='round' strokeLinejoin='round' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'></path><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'></path></svg>
+            </motion.button>
+          )}
+            <motion.button 
             whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.1)' }}
             whileTap={{ scale: 0.9 }}
             onClick={handleShare}
@@ -268,9 +342,75 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
       </div>
 
       {/* Intelligence Payload */}
-      <div style={{ fontSize: 'clamp(0.9rem, 2vw, 1.25rem)', lineHeight: 1.7, color: '#aaa', marginBottom: post.sharedPackage ? '16px' : 'clamp(20px, 4vw, 30px)', fontWeight: '500', whiteSpace: 'pre-line', padding: '0 clamp(0px, 1vw, 5px)', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-        {renderContentWithLinks(post.content)}
-      </div>
+      {isEditing ? (
+        <div style={{ marginBottom: '20px' }}>
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            style={{
+              width: '100%',
+              minHeight: '100px',
+              background: 'rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: '#fff',
+              padding: '12px',
+              borderRadius: '10px',
+              fontSize: '1rem',
+              resize: 'vertical',
+              marginBottom: '10px',
+              fontFamily: 'inherit'
+            }}
+          />
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setEditContent(postContent);
+              }}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              ยกเลิก
+            </button>
+            <button
+              onClick={handleUpdatePost}
+              style={{
+                background: 'var(--accent)',
+                color: '#000',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              บันทึก
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ fontSize: 'clamp(0.9rem, 2vw, 1.25rem)', lineHeight: 1.7, color: '#aaa', marginBottom: post.sharedPackage ? '16px' : 'clamp(20px, 4vw, 30px)', fontWeight: '500', whiteSpace: 'pre-line', padding: '0 clamp(0px, 1vw, 5px)', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+          {renderContentWithLinks(displayedContent)}
+          {isLongText && (
+            <button 
+              onClick={() => setIsExpandedText(!isExpandedText)}
+              style={{ 
+                background: 'none', border: 'none', color: 'var(--accent)', 
+                fontWeight: '600', fontSize: '0.9rem', padding: '0', 
+                marginTop: '5px', cursor: 'pointer', textDecoration: 'underline', display: 'block'
+              }}
+            >
+              {isExpandedText ? 'แสดงน้อยลง' : 'อ่านเพิ่มเติม...'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Package Card */}
       {post.sharedPackage?.title && (() => {
@@ -366,26 +506,118 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
         );
       })()}
 
-      {/* Media Stream */}
-      {post.media && post.media.length > 0 && (
-        <motion.div
-          whileHover={{ scale: 1.01 }}
-          style={{ marginBottom: 'clamp(20px, 4vw, 35px)', borderRadius: 'clamp(20px, 4vw, 40px)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', background: '#000', maxHeight: '700px' }}
-        >
-          {isVideoUrl(post.media[0].url) ? (
-            <HoverVideoPlayer src={getFullUrl(post.media[0].url)} style={{ width: '100%', height: 'auto' }} />
-          ) : (
-            <OptimizedImage 
-              src={getFullUrl(post.media[0].url)} 
-              onClick={() => setSelectedImage(getFullUrl(post.media[0].url))}
-              style={{ width: '100%', height: 'auto', minHeight: '200px', cursor: 'zoom-in' }} 
-              alt="Pipeline media" 
-            />
-          )}
-        </motion.div>
-      )}
+      {/* ── Media Slider ── */}
+      {post.media && post.media.length > 0 && (() => {
+        const mediaItems = post.media;
+        const total = mediaItems.length;
+        const isSingle = total === 1;
+        const current = mediaItems[sliderIndex];
 
-      {/* Tactical Interaction Nodes */}
+        const goTo = (idx) => setSliderIndex((idx + total) % total);
+
+        const openLightbox = (idx) => {
+          if (isVideoUrl(mediaItems[idx].url)) return; // videos play inline
+          setLightboxIndex(idx);
+          setSelectedImage(getFullUrl(mediaItems[idx].url));
+        };
+
+        return (
+          <div style={{ marginBottom: 'clamp(20px, 4vw, 35px)', position: 'relative', borderRadius: 'clamp(20px, 4vw, 40px)', overflow: 'hidden', background: '#000', border: '1px solid rgba(255,255,255,0.05)' }}>
+            {/* Slide */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={sliderIndex}
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.2 }}
+                style={{ width: '100%', maxHeight: '700px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}
+              >
+                {isVideoUrl(current.url) ? (
+                  <HoverVideoPlayer src={getFullUrl(current.url)} style={{ width: '100%', height: 'auto' }} />
+                ) : (
+                  <OptimizedImage
+                    src={getFullUrl(current.url)}
+                    onClick={() => openLightbox(sliderIndex)}
+                    style={{ width: '100%', height: 'auto', maxHeight: '700px', objectFit: 'contain', cursor: 'zoom-in', display: 'block' }}
+                    alt="Post media"
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Arrow Buttons — only when > 1 */}
+            {!isSingle && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); goTo(sliderIndex - 1); }}
+                  style={{
+                    position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff', borderRadius: '50%', width: '38px', height: '38px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', zIndex: 5, backdropFilter: 'blur(6px)',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.85)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
+                >
+                  <FiChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); goTo(sliderIndex + 1); }}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff', borderRadius: '50%', width: '38px', height: '38px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', zIndex: 5, backdropFilter: 'blur(6px)',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.85)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
+                >
+                  <FiChevronRight size={20} />
+                </button>
+
+                {/* Counter badge */}
+                <div style={{
+                  position: 'absolute', top: '12px', right: '14px',
+                  background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)',
+                  color: '#fff', fontSize: '11px', fontWeight: '800',
+                  padding: '3px 10px', borderRadius: '20px',
+                  border: '1px solid rgba(255,255,255,0.12)', zIndex: 5
+                }}>
+                  {sliderIndex + 1} / {total}
+                </div>
+
+                {/* Dot indicators */}
+                <div style={{
+                  position: 'absolute', bottom: '14px', left: '50%', transform: 'translateX(-50%)',
+                  display: 'flex', gap: '6px', zIndex: 5
+                }}>
+                  {mediaItems.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => { e.stopPropagation(); goTo(idx); }}
+                      style={{
+                        width: idx === sliderIndex ? '22px' : '7px',
+                        height: '7px',
+                        borderRadius: '4px',
+                        background: idx === sliderIndex ? 'var(--accent)' : 'rgba(255,255,255,0.4)',
+                        border: 'none', cursor: 'pointer', padding: 0,
+                        transition: 'all 0.25s ease'
+                      }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
+
+
       <div className="feed-post-actions" style={{ display: 'flex', gap: 'clamp(10px, 2vw, 15px)', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
         <motion.button
           whileTap={{ scale: 0.95 }}
@@ -517,7 +749,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
         )}
       </AnimatePresence>
 
-      {/* 🖼️ Fullscreen Image Modal */}
+      {/* 🖼️ Fullscreen Image Lightbox */}
       {selectedImage && createPortal(
         <AnimatePresence>
           <motion.div
@@ -525,40 +757,77 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedImage(null)}
+            onKeyDown={(e) => {
+              const images = post.media?.filter(m => !isVideoUrl(m.url)) || [];
+              if (e.key === 'ArrowRight') { const next = (lightboxIndex + 1) % images.length; setLightboxIndex(next); setSelectedImage(getFullUrl(images[next].url)); }
+              if (e.key === 'ArrowLeft') { const prev = (lightboxIndex - 1 + images.length) % images.length; setLightboxIndex(prev); setSelectedImage(getFullUrl(images[prev].url)); }
+              if (e.key === 'Escape') setSelectedImage(null);
+            }}
+            tabIndex={0}
             style={{
               position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-              background: 'rgba(0,0,0,0.95)', zIndex: 99999, display: 'flex',
+              background: 'rgba(0,0,0,0.96)', zIndex: 99999, display: 'flex',
               alignItems: 'center', justifyContent: 'center', padding: '20px',
-              cursor: 'zoom-out', backdropFilter: 'blur(10px)'
+              cursor: 'zoom-out', backdropFilter: 'blur(12px)',
+              outline: 'none'
             }}
           >
+            {/* Close */}
+            <button
+              onClick={() => setSelectedImage(null)}
+              style={{
+                position: 'fixed', top: '20px', right: '24px',
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                color: '#fff', borderRadius: '50%', width: '42px', height: '42px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', zIndex: 100000, backdropFilter: 'blur(6px)'
+              }}
+            >
+              <FiX size={20} />
+            </button>
+
+            {/* Image */}
             <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              key={lightboxIndex}
               style={{ position: 'relative', maxWidth: '95%', maxHeight: '95%' }}
               onClick={(e) => e.stopPropagation()}
             >
-              <img 
-                src={selectedImage} 
-                alt="Full preview" 
-                style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: '15px', display: 'block', border: '1px solid rgba(255,255,255,0.1)' }} 
+              <img
+                src={selectedImage}
+                alt="Full preview"
+                style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: '15px', display: 'block', border: '1px solid rgba(255,255,255,0.1)', userSelect: 'none' }}
               />
-              <button 
-                onClick={() => setSelectedImage(null)}
-                style={{
-                  position: 'absolute', top: '-40px', right: '0',
-                  background: 'none', border: 'none', color: '#fff',
-                  fontSize: '2rem', cursor: 'pointer', display: 'flex', alignItems: 'center'
-                }}
-              >
-                <FiX />
-              </button>
             </motion.div>
+
+            {/* Prev/Next arrows — only when > 1 image */}
+            {(() => {
+              const images = post.media?.filter(m => !isVideoUrl(m.url)) || [];
+              if (images.length <= 1) return null;
+              const goPrev = (e) => { e.stopPropagation(); const prev = (lightboxIndex - 1 + images.length) % images.length; setLightboxIndex(prev); setSelectedImage(getFullUrl(images[prev].url)); };
+              const goNext = (e) => { e.stopPropagation(); const next = (lightboxIndex + 1) % images.length; setLightboxIndex(next); setSelectedImage(getFullUrl(images[next].url)); };
+              return (
+                <>
+                  <button onClick={goPrev} style={{ position: 'fixed', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 100000, backdropFilter: 'blur(6px)' }}>
+                    <FiChevronLeft size={24} />
+                  </button>
+                  <button onClick={goNext} style={{ position: 'fixed', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 100000, backdropFilter: 'blur(6px)' }}>
+                    <FiChevronRight size={24} />
+                  </button>
+                  {/* Counter */}
+                  <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '13px', fontWeight: '800', padding: '6px 18px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)', zIndex: 100000, backdropFilter: 'blur(6px)' }}>
+                    {lightboxIndex + 1} / {images.length}
+                  </div>
+                </>
+              );
+            })()}
           </motion.div>
         </AnimatePresence>,
         document.body
       )}
+
     </motion.div>
   );
 });

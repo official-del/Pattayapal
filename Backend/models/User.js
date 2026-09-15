@@ -133,7 +133,11 @@ const userSchema = new mongoose.Schema({
     }
   ],
   // 🛡️ [NEW] Token Versioning for Security
-  tokenVersion: { type: Number, default: 0 }
+  tokenVersion: { type: Number, default: 0 },
+
+  // 📅 [NEW] Availability Calendar
+  busyDates: [{ type: String }] // เก็บเป็น "YYYY-MM-DD" strings
+
 }, { timestamps: true });
 
 // 🔒 เข้ารหัสผ่านอัตโนมัติก่อนบันทึกลง Database
