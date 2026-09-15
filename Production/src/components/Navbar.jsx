@@ -9,7 +9,7 @@ import { notificationsAPI } from '../utils/api';
 import {
   FiMenu, FiX, FiBell, FiUser, FiMessageCircle, FiLogOut, FiHome,
   FiZap, FiUsers, FiSettings, FiDollarSign,
-  FiActivity, FiGrid, FiSearch, FiLayers
+  FiActivity, FiGrid, FiSearch, FiLayers, FiGift
 } from 'react-icons/fi';
 import { CoinIcon } from './CoinIcon';
 import RankBadge from './RankBadge';
@@ -145,6 +145,7 @@ function Navbar() {
   const otherLinks = [
     { name: 'User Creations', href: '/works', icon: <FiLayers /> },
     { name: 'Find Freelancers', href: '/freelancers', icon: <FiSearch /> },
+    { name: 'Daily Quests', href: '/dashboard/quests', icon: <FiGift /> },
     { name: 'Messenger', href: '/messenger', icon: <FiMessageCircle /> },
     { name: 'Friends', href: '/friends', icon: <FiUsers /> },
   ];
