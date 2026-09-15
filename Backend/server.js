@@ -414,7 +414,11 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.set('io', io);
 
 // ✅ Serve static files from the 'dist' directory (Frontend Build)
-app.use(express.static(path.join(__dirname, 'dist'), frontendStaticOptions));
+// ⚠️ DEPLOY NOTE: Always put built frontend files in nodejs/dist/ on Hostinger
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(path.join(distPath, 'index.html'))) {
+  app.use(express.static(distPath, frontendStaticOptions));
+}
 
 // ✅ เปิดให้หน้าบ้านดึงไฟล์ในโฟลเดอร์ uploads ไปแสดงผลได้
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), uploadStaticOptions));
