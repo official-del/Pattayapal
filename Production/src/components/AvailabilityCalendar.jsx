@@ -15,7 +15,7 @@ function toDateStr(year, month, day) {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-export default function AvailabilityCalendar({ userId, isOwner }) {
+export default function AvailabilityCalendar({ userId, isOwner, profileName }) {
   const today = new Date();
   const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
 
@@ -322,7 +322,7 @@ export default function AvailabilityCalendar({ userId, isOwner }) {
           fontSize: '0.75rem', color: '#444', fontWeight: '600'
         }}>
           <FiCalendar size={12} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-          ปฏิทินนี้อัปเดตโดย {profile?.name || 'freelancer'} — แดงคือไม่ว่าง
+          ปฏิทินนี้อัปเดตโดย {profileName || 'ฟรีแลนซ์'} — แดงคือไม่ว่าง
         </div>
       )}
     </div>

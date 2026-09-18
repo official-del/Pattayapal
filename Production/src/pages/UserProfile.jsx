@@ -707,7 +707,7 @@ function UserProfile() {
 
                            {activeTab === 'calendar' && (
                               <div style={{ minHeight: '400px' }}>
-                                 <AvailabilityCalendar userId={profile._id} isOwner={isMyProfile} />
+                                 <AvailabilityCalendar userId={profile._id} isOwner={isMyProfile} profileName={profile.name} />
                               </div>
                            )}
 
