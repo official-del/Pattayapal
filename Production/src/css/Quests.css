@@ -959,9 +959,17 @@
   }
 
   .quests-stats-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-2);
     margin-bottom: var(--space-4);
+  }
+  
+  .quests-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    overflow: hidden;
   }
 
   .quest-stat-card {
@@ -992,13 +1000,18 @@
   }
 
   .quest-section-header {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    padding-right: 30px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-right: 10px;
   }
 
   .quest-section-header em {
-    grid-column: 2 / 3;
-    justify-self: start;
+    order: 3;
+    width: 100%;
+    margin-top: 4px;
   }
 
   .quest-review-row {
