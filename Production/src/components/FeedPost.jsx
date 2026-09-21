@@ -506,14 +506,10 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
         );
       })()}
 
-      {/* ── Media Slider ── */}
+      {/* ── Media Grid Collage ── */}
       {post.media && post.media.length > 0 && (() => {
         const mediaItems = post.media;
         const total = mediaItems.length;
-        const isSingle = total === 1;
-        const current = mediaItems[sliderIndex];
-
-        const goTo = (idx) => setSliderIndex((idx + total) % total);
 
         const openLightbox = (idx) => {
           if (isVideoUrl(mediaItems[idx].url)) return; // videos play inline
@@ -521,99 +517,85 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
           setSelectedImage(getFullUrl(mediaItems[idx].url));
         };
 
+        const renderMedia = (idx, customStyle = {}) => {
+          const m = mediaItems[idx];
+          if (isVideoUrl(m.url)) {
+             return (
+               <div style={{ width: '100%', height: '100%', background: '#0a0a0a', overflow: 'hidden' }}>
+                 <HoverVideoPlayer src={getFullUrl(m.url)} style={{ width: '100%', height: '100%', objectFit: 'cover', ...customStyle }} />
+               </div>
+             );
+          }
+          return (
+             <OptimizedImage
+               src={getFullUrl(m.url)}
+               onClick={() => openLightbox(idx)}
+               style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in', display: 'block', ...customStyle }}
+               alt="Post media"
+             />
+          );
+        };
+
+        const gridStyle = {
+          marginBottom: 'clamp(20px, 4vw, 35px)',
+          borderRadius: 'clamp(12px, 3vw, 24px)',
+          overflow: 'hidden',
+          background: '#050505',
+          border: '1px solid rgba(255,255,255,0.06)',
+          display: 'grid',
+          gap: '3px'
+        };
+
+        if (total === 1) {
+          return (
+            <div style={{ ...gridStyle, maxHeight: '700px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               {renderMedia(0, { maxHeight: '700px', objectFit: 'contain' })}
+            </div>
+          );
+        }
+
+        if (total === 2) {
+          return (
+            <div style={{ ...gridStyle, gridTemplateColumns: '1fr 1fr', aspectRatio: '4/3' }}>
+               {renderMedia(0)}
+               {renderMedia(1)}
+            </div>
+          );
+        }
+
+        if (total === 3) {
+          return (
+            <div style={{ ...gridStyle, gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', aspectRatio: '4/3' }}>
+               <div style={{ gridRow: 'span 2' }}>{renderMedia(0)}</div>
+               <div>{renderMedia(1)}</div>
+               <div>{renderMedia(2)}</div>
+            </div>
+          );
+        }
+
+        // 4 or more
         return (
-          <div style={{ marginBottom: 'clamp(20px, 4vw, 35px)', position: 'relative', borderRadius: 'clamp(20px, 4vw, 40px)', overflow: 'hidden', background: '#000', border: '1px solid rgba(255,255,255,0.05)' }}>
-            {/* Slide */}
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={sliderIndex}
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -30 }}
-                transition={{ duration: 0.2 }}
-                style={{ width: '100%', maxHeight: '700px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}
-              >
-                {isVideoUrl(current.url) ? (
-                  <HoverVideoPlayer src={getFullUrl(current.url)} style={{ width: '100%', height: 'auto' }} />
-                ) : (
-                  <OptimizedImage
-                    src={getFullUrl(current.url)}
-                    onClick={() => openLightbox(sliderIndex)}
-                    style={{ width: '100%', height: 'auto', maxHeight: '700px', objectFit: 'contain', cursor: 'zoom-in', display: 'block' }}
-                    alt="Post media"
-                  />
-                )}
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Arrow Buttons — only when > 1 */}
-            {!isSingle && (
-              <>
-                <button
-                  onClick={(e) => { e.stopPropagation(); goTo(sliderIndex - 1); }}
-                  style={{
-                    position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
-                    background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff', borderRadius: '50%', width: '38px', height: '38px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', zIndex: 5, backdropFilter: 'blur(6px)',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.85)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
-                >
-                  <FiChevronLeft size={20} />
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); goTo(sliderIndex + 1); }}
-                  style={{
-                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                    background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff', borderRadius: '50%', width: '38px', height: '38px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', zIndex: 5, backdropFilter: 'blur(6px)',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.85)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
-                >
-                  <FiChevronRight size={20} />
-                </button>
-
-                {/* Counter badge */}
-                <div style={{
-                  position: 'absolute', top: '12px', right: '14px',
-                  background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)',
-                  color: '#fff', fontSize: '11px', fontWeight: '800',
-                  padding: '3px 10px', borderRadius: '20px',
-                  border: '1px solid rgba(255,255,255,0.12)', zIndex: 5
-                }}>
-                  {sliderIndex + 1} / {total}
-                </div>
-
-                {/* Dot indicators */}
-                <div style={{
-                  position: 'absolute', bottom: '14px', left: '50%', transform: 'translateX(-50%)',
-                  display: 'flex', gap: '6px', zIndex: 5
-                }}>
-                  {mediaItems.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={(e) => { e.stopPropagation(); goTo(idx); }}
-                      style={{
-                        width: idx === sliderIndex ? '22px' : '7px',
-                        height: '7px',
-                        borderRadius: '4px',
-                        background: idx === sliderIndex ? 'var(--accent)' : 'rgba(255,255,255,0.4)',
-                        border: 'none', cursor: 'pointer', padding: 0,
-                        transition: 'all 0.25s ease'
-                      }}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+            <div style={{ ...gridStyle, gridTemplateColumns: '2fr 1fr', gridTemplateRows: 'repeat(3, 1fr)', aspectRatio: '4/3' }}>
+               <div style={{ gridRow: 'span 3' }}>{renderMedia(0)}</div>
+               <div>{renderMedia(1)}</div>
+               <div>{renderMedia(2)}</div>
+               <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => total > 4 ? openLightbox(3) : null}>
+                 {renderMedia(3)}
+                 {total > 4 && (
+                   <div 
+                     onClick={() => openLightbox(3)}
+                     style={{
+                       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                       background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(5px)',
+                       display: 'flex', alignItems: 'center', justifyContent: 'center',
+                       color: '#fff', fontSize: '1.75rem', fontWeight: '800'
+                     }}
+                   >
+                     +{total - 3}
+                   </div>
+                 )}
+               </div>
+            </div>
         );
       })()}
 
