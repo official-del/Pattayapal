@@ -23,6 +23,7 @@ const jobSchema = new mongoose.Schema({
     type: Number, 
     required: true 
   },
+  workDate: { type: String, required: false },
   status: { 
     type: String, 
     enum: ['pending', 'accepted', 'completed', 'cancelled'], 

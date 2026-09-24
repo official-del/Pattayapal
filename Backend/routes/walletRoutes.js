@@ -27,7 +27,17 @@ router.post('/topup-manual', protect, topupLimiter, diskUpload.single('slip'), s
 router.get('/transactions', protect, getWalletTransactions);
 
 // Request Withdrawal (Freelancer)
-router.post('/withdraw', protect, requestWithdrawal);
+// ✅ FIX: ป้องกันการยิง Request ถอนเงินสแปม — max 10 req/hr per user
+const withdrawLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'คุณส่งคำขอถอนเงินบ่อยเกินไป กรุณารอ 1 ชั่วโมงก่อนลองใหม่' },
+  validate: { default: false },
+  keyGenerator: (req) => req.user?.id || req.ip,
+});
+router.post('/withdraw', protect, withdrawLimiter, requestWithdrawal);
 
 // Refill Gas (User)
 const gasRefillLimiter = rateLimit({

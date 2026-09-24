@@ -475,7 +475,10 @@ export const updateWithdrawalStatus = async (req, res) => {
     }
 
     // The processing status above is the concurrency lock for this approval.
+    // ✅ FIX: properly initialize a real MongoDB session for atomic operations
+    const { default: mongoose } = await import('mongoose');
     let session = null;
+    try { session = await mongoose.startSession(); session.startTransaction(); } catch (_) { session = null; }
 
     try {
       // Only deduct coins when actually approving

@@ -1,72 +1,48 @@
 import { useRef, useState, useEffect } from 'react';
-import PremiumLoader from './PremiumLoader';
 
 /**
- * HoverVideoPlayer component
- * Shows a poster image by default, plays video on hover.
- * Optimized with Intersection Observer for lazy loading.
+ * HoverVideoPlayer — แสดงวิดีโอใน Feed
+ * - แสดงภาพนิ่งจาก poster หรือ video frame แรก
+ * - กดปุ่ม Play เพื่อเล่นพร้อม native controls
+ * - Pause อัตโนมัติเมื่อ scroll ออกจากหน้า
  */
 const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
-  const [isHovered, setIsHovered] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const [posterReady, setPosterReady] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
-  const shouldLoadVideo = isHovered && isInView;
-  const shouldShowVideoFrame = shouldLoadVideo || (!poster && isInView);
-  const showPoster = poster && (!shouldLoadVideo || !videoReady);
-  const showLoader = (poster && !posterReady) || (shouldShowVideoFrame && !videoReady);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showControls, setShowControls] = useState(false);
 
-  // Lazy loading using Intersection Observer
+  // Lazy load — เริ่ม render video element ต่อเมื่อมองเห็นใน viewport
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          setIsInView(entry.isIntersecting);
-        });
-      },
+      (entries) => entries.forEach(e => setIsInView(e.isIntersecting)),
       { threshold: 0.1 }
     );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
-      }
-    };
+    const el = containerRef.current;
+    if (el) observer.observe(el);
+    return () => { if (el) observer.unobserve(el); };
   }, []);
 
+  // Pause เมื่อ scroll ออกจากหน้า
   useEffect(() => {
-    if (!videoRef.current) return;
+    if (!isInView && videoRef.current && !videoRef.current.paused) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+      setShowControls(false);
+    }
+  }, [isInView]);
 
-    if (shouldLoadVideo) {
-      videoRef.current.currentTime = 0;
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(err => {});
-      }
+  const handlePlayToggle = (e) => {
+    e.stopPropagation();
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play().catch(() => {});
+      setIsPlaying(true);
+      setShowControls(true);
     } else {
       videoRef.current.pause();
-      if (videoRef.current.readyState >= 1) {
-        videoRef.current.currentTime = 0.1;
-      }
-    }
-  }, [shouldLoadVideo, shouldShowVideoFrame]);
-
-  const handleLoadedMetadata = (e) => {
-    if (!poster && !isHovered && e.currentTarget.readyState >= 1) {
-      e.currentTarget.currentTime = 0.1;
-    }
-  };
-
-  const handleTimeUpdate = (e) => {
-    if (isHovered && e.target.currentTime >= 5) {
-      e.target.currentTime = 0;
-      e.target.play().catch(err => {});
+      setIsPlaying(false);
     }
   };
 
@@ -79,93 +55,97 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        cursor: 'pointer',
-        background: '#000',
-        ...style
+        background: '#0a0a0a',
+        ...style,
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
     >
-      {showLoader && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 2,
-          display: 'grid',
-          placeItems: 'center',
-          background: 'linear-gradient(135deg, rgba(0,0,0,0.82), rgba(20,8,4,0.76))',
-          pointerEvents: 'none'
-        }}>
-          <PremiumLoader bare size="tiny" text="Loading cover" />
-        </div>
-      )}
-
-      {showPoster && (
-        <img
-          src={poster}
-          alt=""
-          loading="lazy"
-          onLoad={() => setPosterReady(true)}
-          onError={() => setPosterReady(true)}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            display: 'block',
-            position: 'absolute',
-            inset: 0,
-            zIndex: 1,
-            opacity: posterReady ? 1 : 0,
-            transition: 'opacity 0.18s ease-out',
-          }}
-        />
-      )}
-
-      {shouldShowVideoFrame && (
+      {/* Video element — render ทันทีที่ in-view */}
+      {isInView && (
         <video
           ref={videoRef}
           src={src}
           poster={poster}
           muted
           playsInline
-          preload={poster && !shouldLoadVideo ? "none" : "metadata"}
-          onLoadedMetadata={handleLoadedMetadata}
-          onLoadedData={() => setVideoReady(true)}
-          onCanPlay={() => setVideoReady(true)}
-          onTimeUpdate={handleTimeUpdate}
+          loop
+          preload="metadata"
+          controls={showControls}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => { setIsPlaying(false); setShowControls(false); }}
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            objectFit: showControls ? 'contain' : 'cover',
             display: 'block',
-            position: 'absolute',
-            inset: 0,
-            opacity: videoReady ? 1 : 0,
-            transition: 'opacity 0.18s ease-out, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         />
       )}
 
-      {/* Play Icon Indicator */}
-      {!isHovered && !showLoader && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgba(0,0,0,0.1)',
-          pointerEvents: 'none',
-          zIndex: 3
-        }}>
+      {/* Play Overlay — แสดงเมื่อยังไม่ได้กด play */}
+      {!isPlaying && (
+        <div
+          onClick={handlePlayToggle}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.30)',
+            cursor: 'pointer',
+            zIndex: 4,
+          }}
+        >
+          {/* VIDEO badge มุมบนซ้าย */}
           <div style={{
-            width: '40px', height: '40px', borderRadius: '50%',
-            background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '1px solid rgba(255,255,255,0.1)'
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            background: 'rgba(0,0,0,0.70)',
+            color: '#a855f7',
+            border: '1px solid rgba(168,85,247,0.55)',
+            borderRadius: '6px',
+            padding: '3px 9px',
+            fontSize: '10px',
+            fontWeight: '800',
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            backdropFilter: 'blur(6px)',
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="#a855f7"><path d="M8 5v14l11-7z"/></svg>
+            Video
+          </div>
+
+          {/* ปุ่ม Play ตรงกลาง */}
+          <div
+            style={{
+              width: '58px',
+              height: '58px',
+              borderRadius: '50%',
+              background: 'rgba(168,85,247,0.18)',
+              border: '2px solid rgba(168,85,247,0.72)',
+              backdropFilter: 'blur(10px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'transform 0.18s, background 0.18s',
+              boxShadow: '0 0 24px rgba(168,85,247,0.3)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(168,85,247,0.4)';
+              e.currentTarget.style.transform = 'scale(1.12)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(168,85,247,0.18)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white" style={{ marginLeft: '3px' }}>
               <path d="M8 5v14l11-7z" />
             </svg>
           </div>

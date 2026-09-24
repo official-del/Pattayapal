@@ -3,7 +3,7 @@ import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiHome, FiGrid, FiPackage, FiBriefcase, FiUser, FiArrowLeft, FiMessageCircle, FiSettings, FiZap, FiDollarSign, FiActivity, FiBell, FiSearch, FiGift
+  FiHome, FiGrid, FiPackage, FiBriefcase, FiUser, FiArrowLeft, FiMessageCircle, FiSettings, FiZap, FiDollarSign, FiActivity, FiBell, FiSearch, FiGift, FiCalendar
 } from 'react-icons/fi';
 import { CoinIcon } from './CoinIcon';
 
@@ -37,6 +37,7 @@ function DashboardSidebar({ show, onClose }) {
       { name: 'Creator Overview', icon: <FiHome />, href: '/dashboard' },
       { name: 'Creator Leaderboards', icon: <FiZap />, href: '/rankings' },
       { name: 'Manage Job', icon: <FiBriefcase />, href: '/dashboard/hiring' },
+      { name: 'My Calendar', icon: <FiCalendar />, href: '/dashboard/calendar' },
       { name: 'My Coins', icon: <FiDollarSign />, href: '/dashboard/wallet' },
       { name: 'Daily Quests', icon: <FiGift />, href: '/dashboard/quests' }
     ];

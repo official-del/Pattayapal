@@ -54,7 +54,7 @@ export const createPost = async (req, res) => {
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         const url = await uploadToGCS(file);
-        media.push({ url, publicId: path.basename(url) });
+        media.push({ url, publicId: path.basename(url), mimetype: file.mimetype });
       }
     }
 

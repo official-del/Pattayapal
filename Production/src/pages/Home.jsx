@@ -367,10 +367,10 @@ function CenterFeed({ user }) {
           ))}
         </div>
       </MotionDiv>
-      <div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {userId && <CreatePostBox onPostCreated={handlePostCreated} />}
-      </div>
-      {loading ? (
+        
+        {loading ? (
         <PremiumLoader fullScreen={false} size="small" text="Loading Feed..." />
       ) : fetchError ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(255,0,0,0.05)', borderRadius: '20px' }}>
@@ -394,6 +394,7 @@ function CenterFeed({ user }) {
           </AnimatePresence>
         </MotionDiv>
       )}
+      </div>
     </div>
   );
 }

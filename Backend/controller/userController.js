@@ -764,7 +764,8 @@ export {
   claimQuest,
   broadcastNotification,
   getBusyDates,
-  updateBusyDates
+  updateBusyDates,
+  getMyCalendar
 };
 
 // 📅 GET busy dates ของ user (Public)
@@ -772,7 +773,21 @@ async function getBusyDates(req, res) {
   try {
     const user = await User.findById(req.params.id).select('busyDates');
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
-    res.json({ busyDates: user.busyDates || [] });
+
+    // ดึงคิวงานที่กำลังทำอยู่ (ไม่รวม cancelled, completed)
+    const Job = (await import('../models/Job.js')).default;
+    const activeJobs = await Job.find({
+      freelancer: req.params.id,
+      status: { $nin: ['cancelled', 'completed'] },
+      workDate: { $exists: true, $ne: null }
+    }).select('workDate');
+
+    const jobDates = activeJobs.map(job => job.workDate);
+    
+    // รวมวันที่ตั้งเอง + วันที่มีงาน
+    const combinedBusyDates = [...new Set([...(user.busyDates || []), ...jobDates])];
+
+    res.json({ busyDates: combinedBusyDates });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -786,6 +801,9 @@ async function updateBusyDates(req, res) {
     // Validate: ต้องเป็น array ของ "YYYY-MM-DD"
     if (!Array.isArray(busyDates)) {
       return res.status(400).json({ message: 'busyDates ต้องเป็น array' });
+    }
+    if (busyDates.length > 365) {
+      return res.status(400).json({ message: 'สามารถระบุวันหยุดได้สูงสุด 365 วันเพื่อความปลอดภัยของระบบ' });
     }
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     const isValid = busyDates.every(d => typeof d === 'string' && dateRegex.test(d));
@@ -803,6 +821,29 @@ async function updateBusyDates(req, res) {
     ).select('busyDates');
 
     res.json({ busyDates: user.busyDates });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+// 📅 GET my calendar (สำหรับฟรีแลนซ์ดูตารางงานตัวเอง)
+async function getMyCalendar(req, res) {
+  try {
+    const userId = req.user.id || req.user._id;
+    const user = await User.findById(userId).select('busyDates');
+    
+    const Job = (await import('../models/Job.js')).default;
+    const jobs = await Job.find({
+      freelancer: userId,
+      workDate: { $exists: true, $ne: null }
+    })
+    .populate('employer', 'name profileImage')
+    .sort({ workDate: 1 });
+
+    res.json({
+      busyDates: user.busyDates || [],
+      jobs: jobs
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

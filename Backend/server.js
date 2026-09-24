@@ -31,6 +31,7 @@ import walletRoutes from './routes/walletRoutes.js';
 import questRoutes from './routes/questRoutes.js';
 import questSubmissionRoutes from './routes/questSubmissionRoutes.js';
 import testEmailRoute from './routes/testEmailRoute.js';
+import shareRoutes from './routes/shareRoutes.js';
 import { protect, admin } from './middleware/auth.js';
 import { initCronJobs } from './utils/cronJobs.js';
 
@@ -456,6 +457,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/quests', questRoutes);
 app.use('/api/quest-submissions', questSubmissionRoutes);
 app.use('/api/test', testEmailRoute);
+app.use('/api/share', shareRoutes); // Open Graph proxy for social sharing (Facebook, Line, X)
 
 app.use('/api', (req, res) => {
   res.status(404).json({ message: 'API route not found' });
@@ -563,14 +565,20 @@ app.get('*', async (req, res) => {
           const post = await Post.findById(postMatch[1]).select('content media author').populate('author', 'name profession');
           if (post) {
             const authorName = post.author?.name || "Pattayapal User";
-            title = `Post by ${authorName} | Pattayapal Portfolio`;
-            description = post.content?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `Check out this update from ${authorName} on Pattayapal`;
+            title = `โพสต์จาก ${authorName} | PattayaPal`;
+            // เก็บ Thai characters, Latin, ตัวเลข, และเครื่องหมายวรรคตอนพื้นฐาน
+            const cleanContent = post.content
+              ? post.content.substring(0, 200).replace(/[<>"'&]/g, '').trim()
+              : '';
+            description = cleanContent
+              ? cleanContent
+              : `ดูโพสต์จาก ${authorName} บน PattayaPal — ชุมชนครีเอเตอร์และฟรีแลนซ์`;
             
             const firstImage = Array.isArray(post.media)
               ? post.media.map(toPublicMediaUrl).find((item) => item && !videoExtensions.test(item))
               : '';
             image = firstImage || image;
-            imageAlt = `Post by ${authorName}`;
+            imageAlt = `โพสต์จาก ${authorName} บน PattayaPal`;
           }
         } catch (err) {
           console.error("Post SEO Error:", err);
@@ -578,14 +586,21 @@ app.get('*', async (req, res) => {
       }
 
       // Inject into HTML with flexible regex and adding missing tags
+      // รองรับ attribute ที่สลับลำดับ (property/name ก่อนหรือหลัง content ก็ได้)
       const injectMeta = (htmlContent, property, value, attr = 'property') => {
         const safeValue = escapeHtml(value);
-        const regex = new RegExp(`<meta\\s+${attr}="${property}"[\\s\\S]*?content=".*?"\\s*\\/>`, 'g');
-        if (regex.test(htmlContent)) {
-          return htmlContent.replace(regex, `<meta ${attr}="${property}" content="${safeValue}" />`);
+        const escapedProp = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Match ทั้ง: <meta property="x" content="y" /> และ <meta content="y" property="x" />
+        const regexFwd = new RegExp(`<meta\\s+${attr}=["']${escapedProp}["'][^>]*?>`, 'gi');
+        const regexRev = new RegExp(`<meta\\s+content=["'][^"']*["']\\s+${attr}=["']${escapedProp}["'][^>]*?>`, 'gi');
+        const replacement = `<meta ${attr}="${property}" content="${safeValue}" />`;
+        if (regexFwd.test(htmlContent)) {
+          return htmlContent.replace(new RegExp(`<meta\\s+${attr}=["']${escapedProp}["'][^>]*?>`, 'gi'), replacement);
+        } else if (regexRev.test(htmlContent)) {
+          return htmlContent.replace(new RegExp(`<meta\\s+content=["'][^"']*["']\\s+${attr}=["']${escapedProp}["'][^>]*?>`, 'gi'), replacement);
         } else {
-          // If tag doesn't exist, append it before </head>
-          return htmlContent.replace('</head>', `  <meta ${attr}="${property}" content="${safeValue}" />\n</head>`);
+          // ถ้าไม่มี tag นั้นเลย ให้ inject ก่อน </head>
+          return htmlContent.replace('</head>', `  ${replacement}\n</head>`);
         }
       };
 

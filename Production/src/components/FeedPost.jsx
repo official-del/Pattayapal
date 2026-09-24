@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { postsAPI } from '../utils/api';
+import { CONFIG } from '../utils/config';
 import { FiHeart, FiMessageSquare, FiMoreHorizontal, FiSend, FiClock, FiBriefcase, FiUserCheck, FiTrash2, FiActivity, FiShare2, FiZap, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { getFullUrl, isVideoUrl } from '../utils/mediaUtils';
@@ -12,6 +13,8 @@ import OptimizedImage from './OptimizedImage';
 import React from 'react';
 import { createPortal } from 'react-dom';
 // ── URL Auto-Linker Helper ──
+import EmbeddedPost from './EmbeddedPost'; // Add import at the top
+
 const URL_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
 
 function renderContentWithLinks(text) {
@@ -21,17 +24,38 @@ function renderContentWithLinks(text) {
     if (URL_REGEX.test(part)) {
       URL_REGEX.lastIndex = 0; // Reset regex state
       const href = part.startsWith('http') ? part : `https://${part}`;
-      // Detect internal links (same hostname)
+      // Detect internal links (same frontend hostname OR backend hostname)
       let isInternal = false;
       try {
         const url = new URL(href);
-        isInternal = url.hostname === window.location.hostname;
+        const backendHost = new URL(CONFIG.API_BASE_URL).hostname;
+        isInternal = url.hostname === window.location.hostname || url.hostname === backendHost;
       } catch {}
       
       if (isInternal) {
         try {
           const url = new URL(href);
           const internalPath = url.pathname + url.search + url.hash;
+          
+          // --- NEW: Detect Shared Post Links (frontend & backend OG proxy) ---
+          // Match: /posts/:id  OR  /api/share/posts/:id
+          const postIdMatch =
+            internalPath.match(/^\/posts\/([a-f0-9]{24})/) ||
+            internalPath.match(/^\/api\/share\/posts\/([a-f0-9]{24})/);
+          if (postIdMatch) {
+            const postId = postIdMatch[1];
+            return <EmbeddedPost key={i} postId={postId} />;
+          }
+          // Also check if this is the Backend host (port 5000) with /api/share/posts/:id
+          try {
+            const parsedUrl = new URL(href);
+            const backendMatch = parsedUrl.pathname.match(/^\/api\/share\/posts\/([a-f0-9]{24})/);
+            if (backendMatch) {
+              return <EmbeddedPost key={i} postId={backendMatch[1]} />;
+            }
+          } catch {}
+          // --------------------------------------------------------------------
+
           return (
             <Link
               key={i}
@@ -183,28 +207,43 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/posts/${post._id}`;
-    const title = post.sharedPackage ? `แพ็กเกจบริการจาก ${post.author?.name || 'ฟรีแลนซ์'}` : `โพสต์จาก ${post.author?.name || 'ผู้ใช้'}`;
-    const text = postContent ? (postContent.substring(0, 100) + '...') : (post.sharedPackage?.title || 'คลิกเพื่อดูรายละเอียดเพิ่มเติมบน PattayaPal');
-    
+    // Backend OG proxy URL — Facebook/Line bots fetch OG metadata here,
+    // then real users are auto-redirected to the frontend post page.
+    const shareUrl = `${CONFIG.API_BASE_URL}/api/share/posts/${post._id}`;
+
+    // Build the quote text (content that pre-fills in Facebook's post text box)
+    const quoteText = postContent
+      ? postContent.substring(0, 280)  // Facebook quote limit is ~280 chars
+      : post.sharedPackage?.title || '';
+
+    // On mobile — use native Web Share API (supports title + text + url)
     if (navigator.share) {
       try {
         await navigator.share({
-          title,
-          text,
-          url: shareUrl
+          title: post.sharedPackage
+            ? `แพ็กเกจบริการจาก ${post.author?.name || 'ฟรีแลนซ์'}`
+            : `โพสต์จาก ${post.author?.name || 'ผู้ใช้'}`,
+          text: quoteText,
+          url: shareUrl,
         });
         return;
       } catch (err) {
-        // user cancelled or failed, fallback to clipboard
+        // user cancelled — fall through to Facebook dialog
       }
     }
-    
-    // Fallback to clipboard
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+
+    // On desktop — open Facebook share dialog with quote parameter
+    // The 'quote' param pre-fills the text box in Facebook's post composer
+    const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(quoteText)}`;
+    const popup = window.open(fbShareUrl, 'fb-share', 'width=600,height=500,resizable=yes,scrollbars=yes');
+
+    // If popup was blocked, fallback to copying URL to clipboard
+    if (!popup) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
   };
 
   // ── Read More Logic ──
@@ -519,7 +558,10 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
 
         const renderMedia = (idx, customStyle = {}) => {
           const m = mediaItems[idx];
-          if (isVideoUrl(m.url)) {
+          // ✅ เช็ค video จาก extension หรือ mimetype ที่ backend เก็บไว้
+          const mimeType = m.mimetype || m.type || m.mimeType || '';
+          const isVideo = isVideoUrl(m.url) || mimeType.startsWith('video/');
+          if (isVideo) {
              return (
                <div style={{ width: '100%', height: '100%', background: '#0a0a0a', overflow: 'hidden' }}>
                  <HoverVideoPlayer src={getFullUrl(m.url)} style={{ width: '100%', height: '100%', objectFit: 'cover', ...customStyle }} />
@@ -547,9 +589,12 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
         };
 
         if (total === 1) {
+          const m0 = mediaItems[0];
+          const mimeType0 = m0.mimetype || m0.type || m0.mimeType || '';
+          const isVideo0 = isVideoUrl(m0.url) || mimeType0.startsWith('video/');
           return (
-            <div style={{ ...gridStyle, maxHeight: '700px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-               {renderMedia(0, { maxHeight: '700px', objectFit: 'contain' })}
+            <div style={{ ...gridStyle, aspectRatio: isVideo0 ? '16/9' : undefined, maxHeight: isVideo0 ? 'none' : '700px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: isVideo0 ? '200px' : undefined }}>
+               {renderMedia(0, { maxHeight: isVideo0 ? 'none' : '700px', objectFit: isVideo0 ? 'cover' : 'contain' })}
             </div>
           );
         }

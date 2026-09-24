@@ -31,7 +31,7 @@ const checkAndRefillGas = async (user) => {
 // Create Job
 export const createJob = async (req, res) => {
   try {
-    const { freelancerId, title, description, budget, location } = req.body;
+    const { freelancerId, title, description, budget, location, workDate } = req.body;
     const employerId = req.user.id;
     const safeBudget = normalizePositiveAmount(budget);
     const safeTitle = String(title || '').trim();
@@ -87,6 +87,7 @@ export const createJob = async (req, res) => {
       title: safeTitle,
       description: safeDescription,
       budget: safeBudget,
+      workDate,
       escrowAmount: safeBudget,
       paymentStatus: 'escrow_held',
       location

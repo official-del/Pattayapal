@@ -17,7 +17,8 @@ const postSchema = new mongoose.Schema({
   },
   media: [{
     url: String,
-    publicId: String
+    publicId: String,
+    mimetype: String
   }],
   sharedPackage: {
     title: { type: String },

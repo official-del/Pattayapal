@@ -291,4 +291,5 @@ export const uploadAPI = {
 export const calendarAPI = {
   getBusyDates: (userId) => API.get(`/users/${userId}/busy-dates`).then(res => res.data),
   updateBusyDates: (dates) => API.patch('/users/me/busy-dates', { busyDates: dates }).then(res => res.data),
+  getMyCalendar: () => API.get('/users/me/calendar').then(res => res.data),
 };

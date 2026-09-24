@@ -29,7 +29,8 @@ import {
   changePassword,
   broadcastNotification,
   getBusyDates,
-  updateBusyDates
+  updateBusyDates,
+  getMyCalendar
 } from '../controller/userController.js';
 import { claimQuest as claimQuestReward } from '../controller/questController.js';
 
@@ -207,6 +208,7 @@ router.patch('/me/password', protect, changePassword);
 router.get('/search', protect, searchUsers);
 
 // 📅 Calendar Routes
+router.get('/me/calendar', protect, getMyCalendar);        // ดึงปฏิทินของตัวเองแบบเต็ม (ต้องมาก่อน :id/busy-dates)
 router.get('/:id/busy-dates', getBusyDates);               // Public — ใครก็ดูได้
 router.patch('/me/busy-dates', protect, updateBusyDates);  // เจ้าของเท่านั้น
 

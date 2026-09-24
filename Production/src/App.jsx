@@ -42,6 +42,7 @@ import ManageJobs from './pages/Dashboard/ManageJobs';
 import ManageWallet from './pages/Dashboard/ManageWallet';
 import Notifications from './pages/Dashboard/Notifications';
 import Quests from './pages/Dashboard/Quests';
+import MyCalendar from './pages/Dashboard/MyCalendar';
 
 
 // ── Auth Pages ──
@@ -281,6 +282,7 @@ function App() {
             <Route path="works" element={<ManageWorks />} />
             <Route path="wallet" element={<ManageWallet />} />
             <Route path="quests" element={<Quests />} />
+            <Route path="calendar" element={<MyCalendar />} />
           </Route>
           <Route element={<DashboardLayout />}>
             <Route path="/rankings" element={<RankingsHub />} />

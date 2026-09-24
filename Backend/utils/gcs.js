@@ -106,7 +106,19 @@ export const uploadToGCS = async (file) => {
 
     try {
         const bucket = storage.bucket(bucketName);
-        const fileExtension = path.extname(file.originalname || '');
+        let fileExtension = path.extname(file.originalname || '').toLowerCase();
+        
+        // ถ้าไฟล์ไม่มีนามสกุล หรือเป็น .blob ให้สร้างจาก mimetype
+        if (!fileExtension || fileExtension === '.blob') {
+            if (file.mimetype.startsWith('video/')) {
+                fileExtension = file.mimetype === 'video/webm' ? '.webm' : 
+                                file.mimetype === 'video/quicktime' ? '.mov' : '.mp4';
+            } else if (file.mimetype.startsWith('image/')) {
+                fileExtension = file.mimetype === 'image/png' ? '.png' : 
+                                file.mimetype === 'image/webp' ? '.webp' : '.jpg';
+            }
+        }
+
         const gcsFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
 
         const [gcsFile] = await bucket.upload(file.path, {

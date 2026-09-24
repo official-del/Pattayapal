@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema({
     default: 'General' 
   },
   isAvailableForHire: { type: Boolean, default: true },
+  busyDates: [{ type: String }], // Store dates as 'YYYY-MM-DD' for easy matching
 
   // ✅ โบร๋เขียนตรงนี้ถูกเป๊ะแล้ว! Database พร้อมเก็บรูป
   profileImage: {
