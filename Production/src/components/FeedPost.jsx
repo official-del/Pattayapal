@@ -454,7 +454,8 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
       {/* Package Card */}
       {post.sharedPackage?.title && (() => {
         const pkg = post.sharedPackage;
-        const profilePath = `/${pkg.ownerUsername || `profile/${pkg.ownerId}`}?tab=packages`;
+        const ownerId = pkg.ownerId || post.author?._id || post.author?.id;
+        const profilePath = pkg.ownerUsername ? `/${pkg.ownerUsername}?tab=packages` : `/profile/${ownerId}?tab=packages`;
         return (
           <div style={{ marginBottom: 'clamp(20px, 4vw, 30px)', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(255,87,51,0.18)', background: 'linear-gradient(145deg, rgba(255,87,51,0.06), rgba(0,0,0,0.4))', position: 'relative' }}>
             {/* Header accent strip */}

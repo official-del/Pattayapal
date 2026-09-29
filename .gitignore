@@ -32,3 +32,10 @@ yarn-error.log*
 uploads/
 *.mp4
 *.mov
+
+temp_zip_check/
+hostinger_deploy.zip
+hostinger_deploy_test.zip
+deploy_frontend.zip
+deploy_backend.zip
+scratch/

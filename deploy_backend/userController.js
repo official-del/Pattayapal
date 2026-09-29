@@ -1,0 +1,809 @@
+import User from '../models/User.js';
+import Work from '../models/Work.js';
+import Notification from '../models/Notification.js';
+import Job from '../models/Job.js';
+import Transaction from '../models/Transaction.js';
+import ProfileView from '../models/ProfileView.js';
+
+const normalizeName = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+const normalizeUsername = (value) => String(value || '').trim().toLowerCase();
+
+// GET Public Profile (by ID)
+const getPublicProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('-password -email -friendRequests')
+      .populate('friends', 'name username profileImage _id rank points profession');
+
+    if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
+
+    // ✅ Unique Profile Views (count only once per unique viewer/IP)
+    const viewerId = req.user?.id || req.user?._id;
+    const viewerIp = req.ip;
+    const isOwner = viewerId && viewerId.toString() === user._id.toString();
+
+    if (!isOwner) {
+      try {
+        const viewData = { targetId: user._id };
+        if (viewerId) viewData.viewerId = viewerId;
+        else viewData.viewerIp = viewerIp;
+
+        await ProfileView.create(viewData);
+        user.totalViews = (user.totalViews || 0) + 1;
+        await user.save();
+      } catch (err) {
+        if (err.code !== 11000) {
+          console.error("Profile view error:", err);
+        }
+      }
+    }
+
+    const worksWithComments = await Work.find({ 'comments.userId': user._id })
+      .select('title _id mainImage type videoUrl comments')
+      .limit(20);
+
+    const recentComments = [];
+    worksWithComments.forEach(work => {
+      work.comments
+        .filter(c => c.userId?.toString() === user._id.toString())
+        .forEach(c => {
+          recentComments.push({
+            _id: c._id,
+            text: c.text,
+            createdAt: c.createdAt,
+            work: { _id: work._id, title: work.title, mainImage: work.mainImage }
+          });
+        });
+    });
+
+    recentComments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.status(200).json({
+      user,
+      recentComments: recentComments.slice(0, 10),
+      friendsCount: user.friends?.length || 0
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET Public Profile (by Username)
+const getPublicProfileByUsername = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username.toLowerCase() })
+      .select('-password -email -friendRequests')
+      .populate('friends', 'name username profileImage _id rank points profession');
+
+    if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
+    
+    // ✅ Unique Profile Views (count only once per unique viewer/IP)
+    const viewerId = req.user?.id || req.user?._id;
+    const viewerIp = req.ip;
+    const isOwner = viewerId && viewerId.toString() === user._id.toString();
+
+    if (!isOwner) {
+      try {
+        const viewData = { targetId: user._id };
+        if (viewerId) viewData.viewerId = viewerId;
+        else viewData.viewerIp = viewerIp;
+
+        await ProfileView.create(viewData);
+        user.totalViews = (user.totalViews || 0) + 1;
+        await user.save();
+      } catch (err) {
+        if (err.code !== 11000) {
+          console.error("Profile view error:", err);
+        }
+      }
+    }
+
+    const worksWithComments = await Work.find({ 'comments.userId': user._id })
+      .select('title _id mainImage type videoUrl comments')
+      .limit(20);
+
+    const recentComments = [];
+    worksWithComments.forEach(work => {
+      work.comments
+        .filter(c => c.userId?.toString() === user._id.toString())
+        .forEach(c => {
+          recentComments.push({
+            _id: c._id,
+            text: c.text,
+            createdAt: c.createdAt,
+            work: { _id: work._id, title: work.title, mainImage: work.mainImage }
+          });
+        });
+    });
+
+    recentComments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.status(200).json({
+      user,
+      recentComments: recentComments.slice(0, 10),
+      friendsCount: user.friends?.length || 0
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET Friend Request Status
+const getFriendStatus = async (req, res) => {
+  try {
+    const me = await User.findById(req.user.id);
+    const targetId = req.params.id;
+
+    const isFriend = me.friends.some(f => f.toString() === targetId);
+    if (isFriend) return res.json({ status: 'friends' });
+
+    const target = await User.findById(targetId);
+    const requestFromMe = target?.friendRequests?.find(
+      r => r.from.toString() === req.user.id && r.status === 'pending'
+    );
+    if (requestFromMe) return res.json({ status: 'pending_sent' });
+
+    const requestToMe = me.friendRequests?.find(
+      r => r.from.toString() === targetId && r.status === 'pending'
+    );
+    if (requestToMe) return res.json({ status: 'pending_received', requestId: requestToMe._id });
+
+    return res.json({ status: 'none' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// POST Send Friend Request
+const sendFriendRequest = async (req, res) => {
+  try {
+    const { id: targetId } = req.params;
+    const myId = req.user.id;
+
+    if (targetId === myId) {
+      return res.status(400).json({ message: 'ไม่สามารถเพิ่มตัวเองเป็นเพื่อนได้' });
+    }
+
+    const target = await User.findById(targetId);
+    if (!target) return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+
+    const me = await User.findById(myId);
+
+    if (me.friends.includes(targetId)) {
+      return res.status(400).json({ message: 'เป็นเพื่อนกันแล้ว' });
+    }
+
+    const alreadySent = target.friendRequests?.some(
+      r => r.from.toString() === myId && r.status === 'pending'
+    );
+    if (alreadySent) {
+      return res.status(400).json({ message: 'ส่งคำขอเพื่อนไปแล้ว' });
+    }
+
+    target.friendRequests.push({ from: myId, status: 'pending' });
+    await target.save();
+
+    // Notify recipient
+    try {
+      const note = new Notification({
+        recipient: targetId,
+        sender: myId,
+        type: 'friend_request',
+        referenceId: me._id,
+        text: `${me.name} ส่งคำขอเป็นเพื่อนถึงคุณ`,
+        link: `/profile/${myId}`
+      });
+      await note.save();
+
+      const io = req.app.get('io');
+      if (io) {
+        io.to(targetId.toString()).emit('new_notification', {
+          ...note._doc,
+          sender: { name: me.name, profileImage: me.profileImage }
+        });
+        // ✅ Real-time friend request sync
+        io.to(targetId.toString()).emit('friend_request_received', {
+          from: { _id: me._id, name: me.name, profileImage: me.profileImage, rank: me.rank, points: me.points, profession: me.profession }
+        });
+      }
+    } catch (err) { console.error("Friend Request Notification Error:", err); }
+
+    res.status(200).json({ message: 'ส่งคำขอเพื่อนสำเร็จ', status: 'pending_sent' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Respond to Friend Request
+const respondFriendRequest = async (req, res) => {
+  try {
+    const { action } = req.body;
+    const requesterId = req.params.id;
+    const myId = req.user.id;
+
+    const me = await User.findById(myId);
+    const request = me.friendRequests.find(
+      r => r.from.toString() === requesterId && r.status === 'pending'
+    );
+
+    if (!request) return res.status(404).json({ message: 'ไม่พบคำขอเพื่อน' });
+
+    if (action === 'accept') {
+      request.status = 'accepted';
+      me.friends.push(requesterId);
+      await me.save();
+
+      const requester = await User.findById(requesterId);
+      requester.friends.push(myId);
+      await requester.save();
+
+      const io = req.app.get('io');
+      if (io) {
+        io.to(requesterId.toString()).emit('friend_request_accepted', {
+          _id: me._id, name: me.name, profileImage: me.profileImage, rank: me.rank, points: me.points
+        });
+      }
+
+      res.json({ message: 'ยืนยันเพื่อนสำเร็จ', status: 'friends' });
+    } else if (action === 'reject') {
+      request.status = 'rejected';
+      await me.save();
+      res.json({ message: 'ปฏิเสธคำขอเพื่อนแล้ว', status: 'none' });
+    } else {
+      res.status(400).json({ message: 'action ไม่ถูกต้อง' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Remove Friend
+const removeFriend = async (req, res) => {
+  try {
+    const { id: friendId } = req.params;
+    const myId = req.user.id;
+
+    await User.findByIdAndUpdate(myId, { $pull: { friends: friendId } });
+    await User.findByIdAndUpdate(friendId, { $pull: { friends: myId } });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(friendId.toString()).emit('friend_removed', { friendId: myId });
+    }
+
+    res.json({ message: 'ยกเลิกเพื่อนสำเร็จ', status: 'none' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Cancel Sent Request
+const cancelFriendRequest = async (req, res) => {
+  try {
+    const { id: targetId } = req.params;
+    const myId = req.user.id;
+
+    const target = await User.findById(targetId);
+    if (!target) return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+
+    target.friendRequests = target.friendRequests.filter(
+      r => !(r.from.toString() === myId && r.status === 'pending')
+    );
+    await target.save();
+
+    res.json({ message: 'ยกเลิกคำขอเพื่อนสำเร็จ', status: 'none' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Update Profile
+const updateProfile = async (req, res) => {
+  try {
+    const { 
+      bio, name, profession, isAvailableForHire, serviceTags, servicePackages,
+      phone, address, birthday, gender, username, experience, skills, website 
+    } = req.body;
+    
+    const updateData = { bio };
+    if (name) {
+      const normalizedName = normalizeName(name);
+      const nameKey = normalizedName.toLowerCase();
+      const existingName = await User.findOne({
+        _id: { $ne: req.user.id },
+        $or: [{ nameKey }, { name: normalizedName }],
+      }).collation({ locale: 'en', strength: 2 });
+
+      if (existingName) {
+        return res.status(409).json({ message: 'This user name is already in use.' });
+      }
+      updateData.name = normalizedName;
+      updateData.nameKey = nameKey;
+    }
+    if (username) {
+      const normalizedUsername = normalizeUsername(username);
+      const existingUsername = await User.findOne({
+        _id: { $ne: req.user.id },
+        username: normalizedUsername,
+      }).collation({ locale: 'en', strength: 2 });
+
+      if (existingUsername) {
+        return res.status(409).json({ message: 'This username is already in use.' });
+      }
+      updateData.username = normalizedUsername;
+    }
+    if (profession) updateData.profession = profession;
+    if (typeof isAvailableForHire !== 'undefined') updateData.isAvailableForHire = isAvailableForHire;
+    if (serviceTags) updateData.serviceTags = serviceTags;
+    if (servicePackages) updateData.servicePackages = servicePackages;
+    if (experience) updateData.experience = experience;
+    if (skills) updateData.skills = skills;
+    
+    // [NEW] Fields
+    if (typeof phone !== 'undefined') updateData.phone = phone;
+    if (typeof address !== 'undefined') updateData.address = address;
+    if (typeof birthday !== 'undefined') updateData.birthday = birthday;
+    if (typeof gender !== 'undefined') updateData.gender = gender;
+    if (typeof website !== 'undefined') updateData.website = website;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    // 📡 Emit Real-Time Event
+    const io = req.app.get('io');
+    if (io) io.emit('profile_updated', { userId: req.user.id, ...updateData });
+
+    res.json({ message: 'อัปเดตโปรไฟล์สำเร็จ', user });
+  } catch (err) {
+    if (err?.code === 11000) {
+      const field = Object.keys(err.keyPattern || err.keyValue || {})[0];
+      const message = field === 'username'
+        ? 'This username is already in use.'
+        : 'This user name is already in use.';
+      return res.status(409).json({ message });
+    }
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get Pending Requests
+const getMyFriendRequests = async (req, res) => {
+  try {
+    const me = await User.findById(req.user.id)
+      .populate({
+        path: 'friendRequests.from',
+        select: 'name profileImage _id rank points profession'
+      });
+    
+    const pendingRequests = me.friendRequests.filter(r => r.status === 'pending');
+    res.json(pendingRequests);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Search Users
+const searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    // 🛡️ Discovery Base: Exclude Admin/Client
+    let queryObj = { 
+      _id: { $ne: req.user.id },
+      role: { $nin: ['admin', 'client'] }
+    };
+    
+    // 🔎 If searching, add criteria to existing queryObj
+    if (q && q.trim().length >= 1) {
+      const regex = new RegExp(q, 'i');
+      queryObj.$or = [
+        { name: regex },
+        { profession: regex },
+        { "skills.name": regex },
+        { serviceTags: regex }
+      ];
+    }
+
+    const users = await User.find(queryObj)
+      .select('name profileImage _id role profession isAvailableForHire skills rank points')
+      .limit(20);
+
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get Dashboard Summary
+const getDashboardSummary = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+
+    const works = await Work.find({ createdBy: userId }).select('views');
+    const worksCount = works.length;
+    const totalViews = works.reduce((acc, work) => acc + (work.views || 0), 0);
+
+    const incomingJobsCount = await Job.countDocuments({ freelancer: userId });
+    const notificationsCount = await Notification.countDocuments({ recipient: userId, isRead: false });
+
+    // Client specific stats
+    const jobsPostedCount = await Job.countDocuments({ employer: userId });
+    const activeHiresCount = await Job.countDocuments({ employer: userId, status: 'accepted' });
+    const completedHires = await Job.find({ employer: userId, status: 'completed' });
+    const totalBudgetSpent = completedHires.reduce((acc, job) => acc + (job.budget || 0), 0);
+
+    res.json({
+      role: user.role,
+      profession: user.profession,
+      totalWorks: worksCount,
+      totalViews,
+      totalEarnings: user.totalEarnings || 0,
+      points: user.points || 0,
+      friendsCount: user.friends?.length || 0,
+      incomingJobsCount,
+      notificationsCount,
+      jobsPostedCount,
+      activeHiresCount,
+      totalBudgetSpent,
+      coinBalance: user.coinBalance || 0,
+      gas: user.gas || 0,
+      gasBalance: user.gas || 0
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Admin Stats
+const getAdminStats = async (req, res) => {
+  try {
+    const topByWorks = await Work.aggregate([
+      { $group: { _id: "$createdBy", worksCount: { $sum: 1 } } },
+      { $sort: { worksCount: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      { $unwind: "$user" },
+      {
+        $project: {
+          name: "$user.name",
+          profileImage: "$user.profileImage",
+          rank: "$user.rank",
+          points: "$user.points",
+          worksCount: 1
+        }
+      }
+    ]);
+
+    const topByFriends = await User.find({ profession: { $ne: 'General' } })
+      .select('name profileImage friends')
+      .sort({ "friends.length": -1 })
+      .limit(5)
+      .lean();
+    
+    const formattedTopByFriends = topByFriends.map(fs => ({
+      _id: fs._id,
+      name: fs.name,
+      profileImage: fs.profileImage,
+      friendsCount: fs.friends?.length || 0
+    })).sort((a,b) => b.friendsCount - a.friendsCount);
+
+    const growthStats = await User.aggregate([
+      {
+        $group: {
+          _id: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+      { $limit: 12 }
+    ]);
+
+    const formattedGrowth = growthStats.map(s => ({
+      name: `${s._id.month}/${s._id.year}`,
+      users: s.count
+    }));
+
+    res.json({
+      topByWorks,
+      topByFriends: formattedTopByFriends,
+      growthStats: formattedGrowth
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get Leaderboard
+const getLeaderboard = async (req, res) => {
+  try {
+    const { category } = req.query; // 'points' | 'earnings'
+    let sortQuery = { points: -1, totalEarnings: -1, name: 1 };
+    
+    if (category === 'earnings') sortQuery = { totalEarnings: -1, points: -1, name: 1 };
+    if (category === 'views') sortQuery = { totalViews: -1, points: -1, name: 1 };
+    
+    // ✅ Filter for everyone who has a professional role (Master Division)
+    const users = await User.find({ 
+      profession: { $in: ['Photographer', 'Editor', 'Videographer', 'Director'] } 
+    })
+      .select('name profileImage rank points totalEarnings profession totalViews')
+      .sort(sortQuery)
+      .limit(50);
+    
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get My Rank Progress
+const getRankProgress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('points rank totalEarnings');
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Calculate next tier info
+    const { RANK_TIERS } = await import('../utils/rankHandler.js');
+    const tiers = Object.values(RANK_TIERS);
+    
+    // Robust search for rank
+    let currentIndex = tiers.findIndex(t => t.name.toLowerCase() === (user.rank || 'Bronze').toLowerCase());
+    if (currentIndex === -1) currentIndex = 0; // Fallback to Bronze
+    
+    const nextTier = tiers[currentIndex + 1] || null;
+
+    res.json({
+      currentPoints: user.points || 0,
+      currentRank: user.rank || 'Bronze',
+      totalEarnings: user.totalEarnings || 0,
+      nextRank: nextTier ? nextTier.name : 'Master Rank',
+      pointsToNext: nextTier ? Math.max(0, nextTier.min - user.points) : 0,
+       progress: nextTier 
+        ? Math.min(100, (user.points / nextTier.min) * 100) 
+        : 100
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get Online Users
+const getOnlineUsers = async (req, res) => {
+  try {
+    const onlineUsers = await User.find({ isOnline: true })
+      .select('_id')
+      .lean();
+    res.json(onlineUsers.map(u => String(u._id)));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Admin: Get All Users with Stats
+const getAllUsersAdmin = async (req, res) => {
+  try {
+    const users = await User.find({})
+      .select('name email profileImage role profession rank points totalEarnings coinBalance createdAt isOnline')
+      .lean();
+
+    // Aggregate views per user from Works
+    const viewsAgg = await Work.aggregate([
+      { $group: { _id: '$createdBy', totalViews: { $sum: '$views' }, worksCount: { $sum: 1 } } }
+    ]);
+    const viewsMap = {};
+    viewsAgg.forEach(a => { viewsMap[String(a._id)] = { totalViews: a.totalViews, worksCount: a.worksCount }; });
+
+    const result = users.map(u => ({
+      ...u,
+      totalViews: viewsMap[String(u._id)]?.totalViews || 0,
+      worksCount: viewsMap[String(u._id)]?.worksCount || 0,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Change Password
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+
+    const isMatch = await user.matchPassword(oldPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'รหัสผ่านเดิมไม่ถูกต้อง' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Claim Quest Reward
+const claimQuest = async (req, res) => {
+  return res.status(410).json({ message: 'Use /api/quests/:questId/claim instead' });
+  try {
+    const { questId, reward, xpReward } = req.body;
+    const userId = req.user.id || req.user._id;
+
+    if (!questId) {
+      return res.status(400).json({ message: 'ข้อมูลไม่ครบถ้วน' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+
+    // Check if already claimed today for daily quests
+    if (questId === 'daily_login') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const claimedToday = user.claimedQuests?.find(q => 
+        q.questId === questId && new Date(q.claimedAt) >= today
+      );
+      if (claimedToday) {
+        return res.status(400).json({ message: 'คุณได้รับรางวัลรายวันนี้ไปแล้ว' });
+      }
+    } else {
+      // For one-time quests
+      const alreadyClaimed = user.claimedQuests?.find(q => q.questId === questId);
+      if (alreadyClaimed) {
+        return res.status(400).json({ message: 'เควสนี้ถูกรับไปแล้ว' });
+      }
+    }
+
+    // Update user balance and claimed status
+    if (reward) user.coinBalance = (user.coinBalance || 0) + Number(reward);
+    if (xpReward) user.points = (user.points || 0) + Number(xpReward);
+    if (!user.claimedQuests) user.claimedQuests = [];
+    user.claimedQuests.push({ questId, claimedAt: new Date() });
+    
+    await user.save();
+
+    // Create a transaction log
+    const tx = new Transaction({
+      user: userId,
+      type: 'TOPUP',
+      amount: Number(reward),
+      status: 'completed',
+      reference: `QUEST_REWARD: ${questId}`
+    });
+    await tx.save();
+
+    res.json({ 
+      message: 'รับรางวัลสำเร็จ!', 
+      coinBalance: user.coinBalance,
+      points: user.points,
+      claimedQuests: user.claimedQuests
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Admin: Broadcast System Notification
+const broadcastNotification = async (req, res) => {
+  try {
+    const { text, link } = req.body;
+    const adminId = req.user.id || req.user._id;
+
+    if (!text) {
+      return res.status(400).json({ message: 'ข้อความแจ้งเตือนต้องไม่ว่างเปล่า' });
+    }
+
+    // Get all users except the admin sending the broadcast
+    const users = await User.find({ _id: { $ne: adminId } }).select('_id');
+    const userIds = users.map(u => u._id);
+
+    // Create notifications for all users
+    const notifications = userIds.map(userId => ({
+      recipient: userId,
+      sender: adminId,
+      type: 'system',
+      text: text,
+      link: link || '/admin-dashboard',
+      isRead: false
+    }));
+
+    await Notification.insertMany(notifications);
+
+    // Emit real-time event to all connected clients
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new_notification', {
+        type: 'system',
+        text: text,
+        link: link || '/admin-dashboard',
+        sender: { name: 'System Admin' }
+      });
+    }
+
+    res.json({ message: `ส่งแจ้งเตือนให้ผู้ใช้งาน ${users.length} คนสำเร็จ` });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export {
+  getPublicProfile,
+  getPublicProfileByUsername,
+  getFriendStatus,
+  sendFriendRequest,
+  respondFriendRequest,
+  removeFriend,
+  cancelFriendRequest,
+  updateProfile,
+  getMyFriendRequests,
+  searchUsers,
+  getDashboardSummary,
+  getAdminStats,
+  getAllUsersAdmin,
+  getOnlineUsers,
+  getLeaderboard,
+  getRankProgress,
+  changePassword,
+  claimQuest,
+  broadcastNotification,
+  getBusyDates,
+  updateBusyDates
+};
+
+// 📅 GET busy dates ของ user (Public)
+async function getBusyDates(req, res) {
+  try {
+    const user = await User.findById(req.params.id).select('busyDates');
+    if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+    res.json({ busyDates: user.busyDates || [] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+// 📅 UPDATE busy dates (เจ้าของเท่านั้น)
+async function updateBusyDates(req, res) {
+  try {
+    const { busyDates } = req.body;
+
+    // Validate: ต้องเป็น array ของ "YYYY-MM-DD"
+    if (!Array.isArray(busyDates)) {
+      return res.status(400).json({ message: 'busyDates ต้องเป็น array' });
+    }
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const isValid = busyDates.every(d => typeof d === 'string' && dateRegex.test(d));
+    if (!isValid) {
+      return res.status(400).json({ message: 'รูปแบบวันที่ไม่ถูกต้อง (ต้องเป็น YYYY-MM-DD)' });
+    }
+
+    // กรองวันซ้ำออก
+    const uniqueDates = [...new Set(busyDates)];
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { busyDates: uniqueDates },
+      { new: true }
+    ).select('busyDates');
+
+    res.json({ busyDates: user.busyDates });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}

@@ -52,8 +52,8 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
       className={className}
       style={{
         position: 'relative',
-        width: '100%',
-        height: '100%',
+        width: style?.width || '100%',
+        height: style?.height || '100%',
         overflow: 'hidden',
         background: '#0a0a0a',
         ...style,
@@ -75,9 +75,9 @@ const HoverVideoPlayer = ({ src, poster, className, style, onClick }) => {
           onPause={() => setIsPlaying(false)}
           onEnded={() => { setIsPlaying(false); setShowControls(false); }}
           style={{
-            width: '100%',
-            height: '100%',
-            objectFit: showControls ? 'contain' : 'cover',
+            width: style?.width || '100%',
+            height: style?.height || '100%',
+            objectFit: style?.objectFit || (showControls ? 'contain' : 'cover'),
             display: 'block',
           }}
         />

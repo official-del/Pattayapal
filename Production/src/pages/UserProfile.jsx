@@ -88,6 +88,11 @@ function UserProfile() {
    const [experience, setExperience] = useState([]);
    const [skills, setSkills] = useState([]);
    const [userPosts, setUserPosts] = useState([]);
+   const [activeCommentPostId, setActiveCommentPostId] = useState(null);
+   const handleToggleComments = (postId) => {
+      setActiveCommentPostId(prev => (prev === postId ? null : postId));
+   };
+
 
    const [servicePackages, setServicePackages] = useState([]);
    const [showPkgModal, setShowPkgModal] = useState(false);
@@ -701,13 +706,13 @@ function UserProfile() {
 
                            {activeTab === 'timeline' && (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '700px', margin: '0 auto' }}>
-                                 {userPosts.length > 0 ? userPosts.map(post => <FeedPost key={post._id} post={post} onDelete={(id) => setUserPosts(prev => prev.filter(p => p._id !== id))} />) : <div style={{ padding: '100px', textAlign: 'center', color: '#444', fontWeight: '700', letterSpacing: '4px' }}>NO SOCIAL POSTS RECORDED</div>}
+                                 {userPosts.length > 0 ? userPosts.map(post => <FeedPost key={post._id} post={post} onPostDeleted={(id) => setUserPosts(prev => prev.filter(p => p._id !== id))} isCommentsOpen={activeCommentPostId === post._id} onToggleComments={handleToggleComments} />) : <div style={{ padding: '100px', textAlign: 'center', color: '#444', fontWeight: '700', letterSpacing: '4px' }}>NO SOCIAL POSTS RECORDED</div>}
                               </div>
                            )}
 
                            {activeTab === 'calendar' && (
                               <div style={{ minHeight: '400px' }}>
-                                 <AvailabilityCalendar userId={profile._id} isOwner={isMyProfile} profileName={profile.name} />
+                                 <AvailabilityCalendar userId={profile._id} isOwner={false} profileName={profile.name} />
                               </div>
                            )}
 

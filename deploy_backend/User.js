@@ -1,0 +1,181 @@
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  nameKey: { type: String, unique: true, sparse: true, select: false },
+  username: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ['user', 'client', 'freelancer', 'admin'], default: 'user' },
+  
+  // ✉️ [NEW] Email Verification
+  isEmailVerified: { type: Boolean, default: false },
+  verificationToken: { type: String },
+  verificationTokenExpires: { type: Date },
+
+  // ✅ ระบบ Role & Community
+  profession: { 
+    type: String, 
+    enum: [
+      'Photographer', 'Editor', 'Videographer', 'Director', 
+      'Production Design', 'Creative Content', 'Film Production', 
+      'Post Production', 'Digital Artist', 'General',
+      'AI Operations', 'AI Artist', 'AI Animator', 'AI Sound Designer', 
+      'AI 3D Artist', 'AI Director', 'AI Producer',
+      'KOL', 'Influencer', 'Content Creator', 'Tutor'
+    ], 
+    default: 'General' 
+  },
+  isAvailableForHire: { type: Boolean, default: true },
+
+  // ✅ โบร๋เขียนตรงนี้ถูกเป๊ะแล้ว! Database พร้อมเก็บรูป
+  profileImage: {
+    url: { type: String, default: '' },
+    publicId: { type: String, default: '' }
+  },
+  coverImage: {
+    url: { type: String, default: '' },
+    publicId: { type: String, default: '' }
+  },
+  isOnline: { type: Boolean, default: false },
+  lastSeen: { type: Date, default: Date.now },
+  bio: { type: String, default: '', maxlength: 300 },
+  // ✅ ระบบเพื่อน
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  friendRequests: [
+    {
+      from: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
+
+  // 📦 [NEW] Freelance Workspace Features
+  serviceTags: [{ type: String }],
+  servicePackages: [
+    {
+      title: { type: String, required: true },
+      price: { type: Number, required: true },
+      description: { type: String },
+      features: [{ type: String }],
+      deliveryTime: { type: Number },
+      coverImages: [{
+        url: { type: String, required: true },
+        publicId: { type: String, required: true }
+      }],
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
+
+  // 🎮 [NEW] Quests System
+  claimedQuests: [
+    {
+      questId: { type: String, required: true },
+      claimedAt: { type: Date, default: Date.now }
+    }
+  ],
+  activeQuests: [
+    {
+      questId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quest' },
+      acceptedAt: { type: Date, default: Date.now },
+      deadline: { type: Date }
+    }
+  ],
+  lastLoginDate: { type: Date },
+  canCreateQuest: { type: Boolean, default: false }, // 🌟 สิทธิ์ในการสร้างเควส (แอดมินหรือได้รับอนุญาต)
+
+  // 🔋 [NEW] Gas System (Hire Energy)
+  gas: { type: Number, default: 100, min: 0, max: 100 },
+  lastGasRefill: { type: Date, default: Date.now },
+
+  // 🏆 [GAMIFICATION] Ranking System
+  points: { type: Number, default: 0 },
+  rank: { 
+    type: String, 
+    enum: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Conqueror'], 
+    default: 'Bronze' 
+  },
+  totalEarnings: { type: Number, default: 0 },
+  totalViews: { type: Number, default: 0 },
+  activeFrame: { type: String, default: 'none' },
+
+  // 💰 [NEW] Wallet & Payments
+  coinBalance: { type: Number, default: 0 },
+  bankAccount: {
+    bankName: { type: String, default: '' },
+    accountName: { type: String, default: '' },
+    accountNumber: { type: String, default: '' }
+  },
+  
+  // 📍 [NEW] Contact & Basic Info (Redesign Match)
+  phone: { type: String, default: '' },
+  address: { type: String, default: '' },
+  birthday: { type: Date },
+  website: { type: String, default: '' },
+  gender: { type: String, enum: ['Male', 'Female', 'Other', 'None'], default: 'None' },
+
+  // 💼 [NEW] Professional Experience
+  experience: [
+    {
+      company: { type: String },
+      role: { type: String },
+      duration: { type: String },
+      description: { type: String }
+    }
+  ],
+  // 🔬 [NEW] Skills & Proficiency
+  skills: [
+    {
+      name: { type: String },
+      category: { type: String, default: 'General' },
+      level: { type: Number, default: 0, min: 0, max: 100 }
+    }
+  ],
+  // 🛡️ [NEW] Token Versioning for Security
+  tokenVersion: { type: Number, default: 0 },
+
+  // 📅 [NEW] Availability Calendar
+  busyDates: [{ type: String }] // เก็บเป็น "YYYY-MM-DD" strings
+
+}, { timestamps: true });
+
+// 🔒 เข้ารหัสผ่านอัตโนมัติก่อนบันทึกลง Database
+userSchema.pre('validate', function (next) {
+  if (this.isNew || this.isModified('name')) {
+    this.name = String(this.name || '').replace(/\s+/g, ' ').trim();
+    this.nameKey = this.name.toLowerCase();
+  }
+  if (this.isNew || this.isModified('email')) {
+    this.email = String(this.email || '').trim().toLowerCase();
+  }
+  if (this.username && (this.isNew || this.isModified('username'))) {
+    this.username = String(this.username).trim().toLowerCase();
+  }
+  next();
+});
+
+userSchema.pre('save', async function (next) {
+  // 🕵️ เช็คเฉพาะเมื่อมีการแก้รหัสผ่านจริงๆ เท่านั้น
+  if (this.isModified('password')) {
+    // ป้องกันกรณีที่ password เป็นค่าว่างหรือไม่ได้ตั้งใจส่งมา
+    if (this.password) {
+      this.password = await bcrypt.hash(this.password, 10);
+      
+      // 🛡️ เพิ่มเวอร์ชัน Token เฉพาะเมื่อเป็นการ "เปลี่ยนรหัสผ่าน" ของยูสเซอร์เดิม
+      // ถ้าเป็นยูสเซอร์ใหม่ (isNew) ไม่ต้องเพิ่ม เพราะเพิ่งได้บัตรใบแรก
+      if (!this.isNew) {
+        this.tokenVersion = (this.tokenVersion || 0) + 1;
+      }
+    }
+  }
+  next();
+});
+
+// 🚀 [เพิ่มใหม่] ฟังก์ชันสำหรับเช็ครหัสผ่านตอน Login (ห้ามลืมตัวนี้!)
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+const User = mongoose.model('User', userSchema);
+export default User;
