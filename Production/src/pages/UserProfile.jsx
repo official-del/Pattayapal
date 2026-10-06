@@ -13,7 +13,7 @@ import ImageCropModal from '../components/ImageCropModal';
 import HoverVideoPlayer from '../components/HoverVideoPlayer';
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import { useSocket } from '../context/SocketContext';
-import { formatLastSeen } from '../utils/timeUtils';
+import { formatLastSeen, toLocalIsoStr } from '../utils/timeUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -54,12 +54,7 @@ export const SKILL_CATEGORIES = [
    "Production & Technical", "Marketing & Others", "General"
 ];
 
-const toLocalIsoStr = (date) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
+
 
 function UserProfile() {
    const { userId, username } = useParams();

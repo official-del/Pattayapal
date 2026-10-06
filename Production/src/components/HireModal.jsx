@@ -12,6 +12,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { parseISO, addDays, startOfDay } from 'date-fns';
 import '../css/HireModal.css';
+import { toLocalIsoStr } from '../utils/timeUtils';
 
 const GAS_COSTS = {
   Bronze: 10,
