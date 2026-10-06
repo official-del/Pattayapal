@@ -45,7 +45,7 @@ function MyCalendar() {
   const jobDates = calendarData?.jobs?.map(j => j.workDate).filter(Boolean) || [];
 
   const toggleBusyDate = (date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = toLocalIsoStr(date);
 
     // ไม่สามารถเปลี่ยนวันที่มีงานอยู่แล้ว
     if (jobDates.includes(dateStr)) {
@@ -74,7 +74,7 @@ function MyCalendar() {
   };
 
   // Jobs ของวันที่เลือก
-  const selectedDateStr = selectedDate ? selectedDate.toISOString().split('T')[0] : null;
+  const selectedDateStr = selectedDate ? toLocalIsoStr(selectedDate) : null;
   const jobsOnSelectedDate = selectedDateStr
     ? (calendarData?.jobs || []).filter(j => j.workDate === selectedDateStr)
     : [];
@@ -127,13 +127,13 @@ function MyCalendar() {
               minDate={new Date()}
               excludeDates={[]}
               dayClassName={(date) => {
-                const dateStr = date.toISOString().split('T')[0];
-                if (jobDates.includes(dateStr)) return 'cal-day-job';
+                const dateStr = toLocalIsoStr(date);
+                if (jobDates.includes(dateStr)) return `${y}-${m}-${d}`;
                 if (localBusyDates.includes(dateStr)) return 'cal-day-blocked';
                 return undefined;
               }}
               renderDayContents={(day, date) => {
-                const dateStr = date.toISOString().split('T')[0];
+                const dateStr = toLocalIsoStr(date);
                 const hasJob = jobDates.includes(dateStr);
                 const isBlocked = localBusyDates.includes(dateStr);
                 return (

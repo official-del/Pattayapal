@@ -24,7 +24,7 @@ const GAS_COSTS = {
 
 function getStoredUser() {
   try {
-    return JSON.parse(window.safeStorage.getItem('userInfo') || '{}');
+    return `${y}-${m}-${d}`;
   } catch {
     return {};
   }
@@ -192,7 +192,7 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
     }
 
     // Format to YYYY-MM-DD
-    const workDateStr = workDate.toISOString().split('T')[0];
+    const workDateStr = toLocalIsoStr(workDate);
 
     setLoading(true);
     try {
@@ -302,7 +302,7 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
                   dateFormat="dd/MM/yyyy"
                   placeholderText="เลือกวันที่ฟรีแลนซ์ว่าง..."
                   dayClassName={(date) => {
-                    const dateStr = date.toISOString().split('T')[0];
+                    const dateStr = toLocalIsoStr(date);
                     return busyDates.includes(dateStr) ? 'hire-busy-day' : undefined;
                   }}
                   inline

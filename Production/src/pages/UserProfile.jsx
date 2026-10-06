@@ -54,6 +54,13 @@ export const SKILL_CATEGORIES = [
    "Production & Technical", "Marketing & Others", "General"
 ];
 
+const toLocalIsoStr = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 function UserProfile() {
    const { userId, username } = useParams();
    const navigate = useNavigate();
@@ -262,7 +269,7 @@ function UserProfile() {
             setUsernameText(data.user?.username || '');
             setPhoneText(data.user?.phone || '');
             setAddressText(data.user?.address || '');
-            setBirthdayText(data.user?.birthday ? new Date(data.user.birthday).toISOString().split('T')[0] : '');
+            setBirthdayText(data.user?.birthday ? toLocalIsoStr(new Date(data.user.birthday)) : '');
             setGenderText(data.user?.gender || 'None');
             setExperience(data.user?.experience || []);
             setSkills(data.user?.skills || []);
