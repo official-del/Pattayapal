@@ -1,4 +1,4 @@
-import { customConfirm } from '../utils/customConfirm';
+﻿import { customConfirm } from '../utils/customConfirm';
 import { toast } from 'react-hot-toast';
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
@@ -243,7 +243,7 @@ function UserProfile() {
          try {
             let data;
             if (username) {
-               data = await usersAPI.getPublicProfileByUsername(username);
+                 try { data = await usersAPI.getPublicProfileByUsername(username); } catch(err) { data = await usersAPI.getPublicProfile(username); }
             } else {
                data = await usersAPI.getPublicProfile(identifier);
             }
@@ -292,7 +292,7 @@ function UserProfile() {
    }, [userId, username, currentUserId, currentToken]);
 
    const handleFriendAction = async () => {
-      if (!currentToken) return toast.error('กรุณาเข้าสู่ระบบก่อนครับ');
+      if (!currentToken) return toast.error('เธเธฃเธธเธ“เธฒเน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธเธเนเธญเธเธเธฃเธฑเธ');
       setFriendLoading(true);
       try {
          if (friendStatus === 'none') {
@@ -306,7 +306,7 @@ function UserProfile() {
             setFriendStatus('friends');
             setProfile(p => ({ ...p, friends: [...(p.friends || []), { _id: currentUser._id, name: currentUser.name }] }));
          } else if (friendStatus === 'friends') {
-            if (!await customConfirm(`ยกเลิกเพื่อนกับ ${profile?.name}?`)) return;
+            if (!await customConfirm(`เธขเธเน€เธฅเธดเธเน€เธเธทเนเธญเธเธเธฑเธ ${profile?.name}?`)) return;
             await usersAPI.removeFriend(targetProfileId, currentToken);
             setFriendStatus('none');
          }
@@ -315,7 +315,7 @@ function UserProfile() {
    };
 
    const handlePackageSubmit = () => {
-      if (!pkgForm.title || !pkgForm.price) return toast.error('โปรดกรอกชื่อและราคาแพ็กเกจ');
+      if (!pkgForm.title || !pkgForm.price) return toast.error('เนเธเธฃเธ”เธเธฃเธญเธเธเธทเนเธญเนเธฅเธฐเธฃเธฒเธเธฒเนเธเนเธเน€เธเธ');
       const newPkg = {
          ...pkgForm,
          title: pkgForm.title.trim(),
@@ -355,7 +355,7 @@ function UserProfile() {
    };
 
    const handleDeletePackage = async (index) => {
-      if (await customConfirm('ยืนยันการลบแพ็กเกจนี้?')) {
+      if (await customConfirm('เธขเธทเธเธขเธฑเธเธเธฒเธฃเธฅเธเนเธเนเธเน€เธเธเธเธตเน?')) {
          setServicePackages(servicePackages.filter((_, i) => i !== index));
       }
    };
@@ -458,7 +458,7 @@ function UserProfile() {
    };
 
    const handleStartChat = async () => {
-      if (!currentToken) return toast.error('กรุณาเข้าสู่ระบบก่อนครับ');
+      if (!currentToken) return toast.error('เธเธฃเธธเธ“เธฒเน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธเธเนเธญเธเธเธฃเธฑเธ');
       try {
          const conv = await chatAPI.getOrCreateConversation(targetProfileId, currentToken);
          navigate(`/messenger/${conv._id}`);
@@ -466,7 +466,7 @@ function UserProfile() {
    };
 
    if (loading) return (
-      <PremiumLoader text="Syncing Identity..." subtext="กำลังโหลดข้อมูลโปรไฟล์..." />
+      <PremiumLoader text="Syncing Identity..." subtext="เธเธณเธฅเธฑเธเนเธซเธฅเธ”เธเนเธญเธกเธนเธฅเนเธเธฃเนเธเธฅเน..." />
    );
 
    if (!profile) return (
@@ -488,8 +488,8 @@ function UserProfile() {
      : `${profile?.name} | ${profile?.profession || 'Freelancer'} | Pattayapal Portfolio`;
      
    const pageDesc = sharedPkg 
-     ? (sharedPkg.description ? sharedPkg.description.substring(0, 150) : `แพ็กเกจบริการโดย ${profile?.name}`)
-     : (profile?.bio ? profile.bio.substring(0, 150) : `โปรไฟล์ของ ${profile?.name} บน PattayaPal`);
+     ? (sharedPkg.description ? sharedPkg.description.substring(0, 150) : `เนเธเนเธเน€เธเธเธเธฃเธดเธเธฒเธฃเนเธ”เธข ${profile?.name}`)
+     : (profile?.bio ? profile.bio.substring(0, 150) : `เนเธเธฃเนเธเธฅเนเธเธญเธ ${profile?.name} เธเธ PattayaPal`);
      
    const pageImage = sharedPkg && sharedPkg.coverImages?.length > 0
      ? getFullUrl(sharedPkg.coverImages[0].url || sharedPkg.coverImages[0])
@@ -926,7 +926,7 @@ function UserProfile() {
                                  className="profile-edit-cancel" 
                                  style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }} 
                                  onClick={async () => {
-                                    if (await customConfirm('ยืนยันการลบแพ็กเกจนี้?')) {
+                                    if (await customConfirm('เธขเธทเธเธขเธฑเธเธเธฒเธฃเธฅเธเนเธเนเธเน€เธเธเธเธตเน?')) {
                                        setServicePackages(prev => prev.filter((_, i) => i !== pkgEditingIndex));
                                        handlePackageClose();
                                     }
@@ -945,7 +945,7 @@ function UserProfile() {
          </AnimatePresence>
 
          {sharePackage && <SharePackageModal pkg={sharePackage} profile={profile} onClose={() => setSharePackage(null)} />}
-         {showHireModal && <HireModal freelancerId={targetProfileId} freelancerName={profile?.name} currentToken={currentToken} initialData={selectedPackage ? { title: `จ้างงาน: ${selectedPackage.title}`, budget: selectedPackage.price, description: `จ้างงานตามแพ็กเกจ ${selectedPackage.title}` } : null} onClose={() => { setShowHireModal(false); setSelectedPackage(null); }} />}
+         {showHireModal && <HireModal freelancerId={targetProfileId} freelancerName={profile?.name} currentToken={currentToken} initialData={selectedPackage ? { title: `เธเนเธฒเธเธเธฒเธ: ${selectedPackage.title}`, budget: selectedPackage.price, description: `เธเนเธฒเธเธเธฒเธเธ•เธฒเธกเนเธเนเธเน€เธเธ ${selectedPackage.title}` } : null} onClose={() => { setShowHireModal(false); setSelectedPackage(null); }} />}
          </>, document.body)}
          
          <Footer />

@@ -1,0 +1,46 @@
+[2026-04-21T06:20:10.322Z] FATAL Error in sendMessage:
+Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at GoogleAuth.getApplicationDefaultAsync (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:287:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async GoogleAuth._GoogleAuth_determineClient (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:834:32)
+    at async GoogleAuth.getClient (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:698:20)
+    at async GoogleAuth.request (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:753:24)
+    at async Upload.makeRequest (file:///C:/Users/ppatt/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/@google-cloud/storage/build/esm/src/resumable-upload.js:782:21)
+    at async AsyncRetry.retries (file:///C:/Users/ppatt/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/@google-cloud/storage/build/esm/src/resumable-upload.js:419:29)
+    at async Upload.createURIAsync (file:///C:/Users/ppatt/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/@google-cloud/storage/build/esm/src/resumable-upload.js:416:21)
+
+[2026-04-21T06:23:22.227Z] FATAL Error in sendMessage:
+Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at GoogleAuth.getApplicationDefaultAsync (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:287:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async GoogleAuth._GoogleAuth_determineClient (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:834:32)
+    at async GoogleAuth.getClient (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:698:20)
+    at async GoogleAuth.request (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:753:24)
+    at async Upload.makeRequest (file:///C:/Users/ppatt/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/@google-cloud/storage/build/esm/src/resumable-upload.js:782:21)
+    at async AsyncRetry.retries (file:///C:/Users/ppatt/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/@google-cloud/storage/build/esm/src/resumable-upload.js:419:29)
+    at async Upload.createURIAsync (file:///C:/Users/ppatt/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/@google-cloud/storage/build/esm/src/resumable-upload.js:416:21)
+
+[2026-04-21T06:23:23.249Z] FATAL Error in sendMessage:
+Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at GoogleAuth.getApplicationDefaultAsync (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:287:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async GoogleAuth._GoogleAuth_determineClient (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:834:32)
+    at async GoogleAuth.getClient (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:698:20)
+    at async GoogleAuth.request (C:\Users\ppatt\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\google-auth-library\build\src\auth\googleauth.js:753:24)
+    at async Upload.makeRequest (file:///C:/Users/ppatt/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/@google-cloud/storage/build/esm/src/resumable-upload.js:782:21)
+    at async AsyncRetry.retries (file:///C:/Users/ppatt/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/@google-cloud/storage/build/esm/src/resumable-upload.js:419:29)
+    at async Upload.createURIAsync (file:///C:/Users/ppatt/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/@google-cloud/storage/build/esm/src/resumable-upload.js:416:21)
+
+[2026-07-04T04:03:00.175Z] OPTIONS /api/users/login
+Error: Not allowed by CORS
+    at corsOrigin (file:///C:/Users/touch/OneDrive/Desktop/Pattayapal-Portfolio/Backend/server.js:64:12)
+    at C:\Users\touch\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (C:\Users\touch\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (C:\Users\touch\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handle [as handle_request] (C:\Users\touch\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\touch\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\touch\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\express\lib\router\index.js:286:9
+    at router.process_params (C:\Users\touch\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\touch\OneDrive\Desktop\Pattayapal-Portfolio\Backend\node_modules\express\lib\router\index.js:280:10)
+    at internalNext (file:///C:/Users/touch/OneDrive/Desktop/Pattayapal-Portfolio/Backend/node_modules/helmet/index.mjs:527:6)
+
