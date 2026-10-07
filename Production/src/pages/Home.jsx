@@ -345,28 +345,7 @@ function CenterFeed({ user }) {
 
   return (
     <div className="home-feed-column">
-      <MotionDiv className="home-feed-toolbar" variants={toolbarVariants} initial="hidden" animate="show">
-        <div className="home-feed-toolbar-copy">
-          <div className="ui-kicker">PattayaPal Feed</div>
-          <div className="home-feed-toolbar-title">Live community board</div>
-        </div>
-        <div className="home-feed-filters" role="tablist" aria-label="Feed filters">
-          {[
-            ['all', 'All posts'],
-            ['hiring', 'Hiring'],
-            ['work', 'Looking for work']
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={`home-filter-btn ${activeFilter === value ? 'is-active' : ''}`}
-              onClick={() => setActiveFilter(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </MotionDiv>
+      
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {userId && <CreatePostBox onPostCreated={handlePostCreated} />}
         
@@ -548,7 +527,7 @@ function Home() {
     <>
       <div className="home-page">
         {!activeToken && <GuestAuthBar />}
-        <MobileLaunchPad categories={categories} />
+        
         <div className="home-main-container">
           <div className="home-left-sidebar"><LeftSidebar categories={categories} /></div>
           <CenterFeed user={userInfo} />
