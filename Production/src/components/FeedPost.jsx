@@ -594,8 +594,8 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
           const mimeType0 = m0.mimetype || m0.type || m0.mimeType || '';
           const isVideo0 = isVideoUrl(m0.url) || mimeType0.startsWith('video/');
           return (
-            <div style={{ ...gridStyle, aspectRatio: isVideo0 ? '16/9' : undefined, maxHeight: isVideo0 ? 'none' : '700px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: isVideo0 ? '200px' : undefined }}>
-               {renderMedia(0, { maxHeight: isVideo0 ? 'none' : '700px', objectFit: isVideo0 ? 'cover' : 'contain' })}
+            <div style={{ ...gridStyle, aspectRatio: undefined, maxHeight: 'min(75vh, 700px)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: isVideo0 ? '300px' : undefined, background: '#0a0a0a', overflow: 'hidden' }}>
+               {renderMedia(0, { maxHeight: 'min(75vh, 700px)', height: 'auto', width: '100%', objectFit: 'contain' })}
             </div>
           );
         }
