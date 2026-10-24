@@ -17,6 +17,35 @@ API.interceptors.request.use(config => {
   return config;
 });
 
+// 🚨 Centralized 401 Unauthorized Response Interceptor
+let isHandling401 = false;
+API.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 401) {
+      const url = error.config?.url || '';
+      const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/register');
+
+      if (!isAuthRoute && !isHandling401) {
+        isHandling401 = true;
+        console.warn('🔑 [401 Unauthorized] Token expired or invalid. Clearing session...');
+        try {
+          window.safeStorage.removeItem('token');
+          window.safeStorage.removeItem('userToken');
+          window.safeStorage.removeItem('userInfo');
+        } catch (e) {}
+
+        window.dispatchEvent(new CustomEvent('auth:session-expired', {
+          detail: { message: error.response?.data?.message || 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง' }
+        }));
+
+        setTimeout(() => { isHandling401 = false; }, 3000);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ── Auth ──
 export const authAPI = {
   login:      (email, password) =>

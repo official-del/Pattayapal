@@ -5,4 +5,8 @@ node_modules/
 uploads/
 *.log
 *.mp4
-node_modules/
+gcs-key.json
+**/gcs-key.json
+**/*gcs-key*.json
+**/*service-account*.json
+dist/

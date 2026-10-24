@@ -340,7 +340,42 @@ io.on('connection', (socket) => {
 // 1. MIDDLEWARE (ต้องประกาศก่อน Routes เสมอ!)
 // ==========================================
 app.use(helmet({
-  crossOriginResourcePolicy: false, 
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "blob:",
+        "https://storage.googleapis.com",
+        "https://*.googleusercontent.com",
+        "https://via.placeholder.com",
+        "https://images.unsplash.com",
+        "https://*.tile.openstreetmap.org",
+        "https://unpkg.com",
+      ],
+      mediaSrc: [
+        "'self'",
+        "data:",
+        "blob:",
+        "https://storage.googleapis.com",
+      ],
+      connectSrc: [
+        "'self'",
+        "https://pattayapal.com",
+        "https://*.pattayapal.com",
+        "https://storage.googleapis.com",
+        "wss://pattayapal.com",
+        "ws://localhost:*",
+        "http://localhost:*",
+      ],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://unpkg.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      frameSrc: ["'self'"],
+    },
+  },
 }));
 
 app.use(cors({

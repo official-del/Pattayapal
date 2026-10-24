@@ -21,6 +21,9 @@ Thumbs.db
 
 # Secrets (Specific)
 Backend/config/gcs-key.json
+**/gcs-key.json
+**/*gcs-key*.json
+**/*service-account*.json
 
 # Logs
 *.log

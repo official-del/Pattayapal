@@ -134,7 +134,7 @@ export default function AvailabilityCalendar({ userId, isOwner, profileName }) {
         background: 'rgba(255,255,255,0.02)',
         border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: '24px',
-        overflow: 'hidden'
+        overflow: 'visible'
       }}>
 
         {/* Month Header */}

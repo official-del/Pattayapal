@@ -142,7 +142,7 @@ router.delete('/profile-image', protect, async (req, res) => {
       await deleteFromGCS(user.profileImage.url);
     }
 
-    user.profileImage = null;
+    user.profileImage = { url: '', publicId: '' };
     await user.save();
     res.json({ message: "ลบรูปโปรไฟล์สำเร็จ" });
   } catch (err) { res.status(500).json({ message: err.message }); }
@@ -159,7 +159,7 @@ router.delete('/cover-image', protect, async (req, res) => {
       await deleteFromGCS(user.coverImage.url);
     }
 
-    user.coverImage = null;
+    user.coverImage = { url: '', publicId: '' };
     await user.save();
     res.json({ message: "ลบรูปพื้นหลังสำเร็จ" });
   } catch (err) { res.status(500).json({ message: err.message }); }

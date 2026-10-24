@@ -166,24 +166,49 @@ export const deletePost = async (req, res) => {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    if (post.author.toString() !== req.user.id) {
-       // Allow admins to also delete in the future, for now protect it
-       const user = await User.findById(req.user.id);
-       if (user.role !== 'admin') {
-         return res.status(403).json({ message: "Not authorized" });
-       }
+    const currentUserId = (req.user?._id || req.user?.id)?.toString();
+    const authorId = (post.author?._id || post.author)?.toString();
+    const isAdmin = req.user?.role === 'admin';
+
+    if (authorId !== currentUserId && !isAdmin) {
+      return res.status(403).json({ message: "คุณไม่มีสิทธิ์ลบโพสต์นี้" });
     }
 
-    // ลบไฟล์ Media จาก GCS
+    // ลบไฟล์ Media จาก GCS (Wrap try-catch เพื่อไม่ให้ความล้มเหลวในการลบไฟล์คลาวด์บล็อกการลบโพสต์ใน DB)
     if (post.media && post.media.length > 0) {
       for (const item of post.media) {
-        if (item.url) await deleteFromGCS(item.url);
+        if (item.url) {
+          try {
+            await deleteFromGCS(item.url);
+          } catch (gcsErr) {
+            console.warn('[deletePost] GCS media deletion warning:', gcsErr.message);
+          }
+        }
+      }
+    }
+
+    if (post.sharedPackage?.coverImages && post.sharedPackage.coverImages.length > 0) {
+      for (const img of post.sharedPackage.coverImages) {
+        if (img.url) {
+          try {
+            await deleteFromGCS(img.url);
+          } catch (gcsErr) {
+            console.warn('[deletePost] GCS package image deletion warning:', gcsErr.message);
+          }
+        }
       }
     }
 
     await Post.findByIdAndDelete(req.params.id);
-    res.json({ message: "Post removed" });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('post_deleted', { postId: req.params.id });
+    }
+
+    res.json({ message: "Post removed", id: req.params.id });
   } catch (err) {
+    console.error('Delete post error:', err);
     res.status(500).json({ message: err.message });
   }
 };

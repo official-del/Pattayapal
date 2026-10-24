@@ -1,3 +1,4 @@
+import { toast } from 'react-hot-toast';
 import { useState, useContext, useRef, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { postsAPI } from '../utils/api';
@@ -118,7 +119,12 @@ function CreatePostBox({ onPostCreated }) {
       if (onPostCreated) onPostCreated(newPost);
     } catch (err) {
       console.error(err);
-      alert('เกิดข้อผิดพลาดในการโพสต์ โปรดลองอีกครั้ง');
+      if (err.response?.status === 401) {
+        toast.error('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+        setIsModalOpen(false);
+      } else {
+        toast.error(err.response?.data?.message || 'เกิดข้อผิดพลาดในการโพสต์ โปรดลองอีกครั้ง');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -136,7 +142,11 @@ function CreatePostBox({ onPostCreated }) {
       <div className="create-post-trigger" onClick={() => openModal('text')}>
         <div className="trigger-content glass">
           <div className="profile-pic-wrapper">
-            <img src={userInfo?.profileImage?.url ? (getFullUrl(userInfo.profileImage.url) + `?t=${profileUpdateTag}`) : 'https://via.placeholder.com/60'} alt="Profile" />
+            <img 
+              src={userInfo?.profileImage?.url ? (getFullUrl(userInfo.profileImage.url) + `?t=${profileUpdateTag}`) : 'https://via.placeholder.com/60'} 
+              alt="Profile" 
+              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://via.placeholder.com/60'; }}
+            />
           </div>
           <div className="trigger-input-fake">
             แนะนำตัวให้คอมมูนิตี้ หรือแชร์ไอเดียของคุณ...

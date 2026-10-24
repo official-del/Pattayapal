@@ -9,7 +9,8 @@ import { getFullUrl, getMediaUrl, getWorkPosterUrl, getWorkVideoUrl, workIsVideo
 import {
   FiZap, FiAlertTriangle,
   FiUsers, FiCamera, FiVideo, FiSliders, FiFilm, FiLayout, FiPenTool,
-  FiMaximize, FiCpu, FiBriefcase, FiStar, FiEye, FiChevronRight, FiLogIn, FiUserPlus
+  FiMaximize, FiCpu, FiBriefcase, FiStar, FiEye, FiChevronRight, FiChevronLeft, FiLogIn, FiUserPlus,
+  FiTrendingUp, FiArrowUpRight, FiPlay
 } from 'react-icons/fi';
 import OptimizedImage from '../components/OptimizedImage';
 import PremiumLoader from '../components/PremiumLoader';
@@ -41,6 +42,7 @@ function RightSidebar() {
   const [loadingTrending, setLoadingTrending] = useState(true);
   const [loadingFreelancers, setLoadingFreelancers] = useState(true);
   const [currentTrendingIndex, setCurrentTrendingIndex] = useState(0);
+  const [isTrendingHovered, setIsTrendingHovered] = useState(false);
 
   useEffect(() => {
     // Fetch Trending
@@ -63,20 +65,38 @@ function RightSidebar() {
   }, []);
 
   useEffect(() => {
-    if (trending.length === 0) return;
+    if (trending.length <= 1 || isTrendingHovered) return;
     const interval = setInterval(() => {
       setCurrentTrendingIndex(prev => (prev + 1) % trending.length);
-    }, 5000);
+    }, 4500);
     return () => clearInterval(interval);
-  }, [trending.length]);
+  }, [trending.length, isTrendingHovered]);
+
+  const handlePrevTrending = (e) => {
+    e?.stopPropagation();
+    setCurrentTrendingIndex(prev => (prev === 0 ? trending.length - 1 : prev - 1));
+  };
+
+  const handleNextTrending = (e) => {
+    e?.stopPropagation();
+    setCurrentTrendingIndex(prev => (prev + 1) % trending.length);
+  };
 
   return (
     <aside className="home-right-rail">
 
       {/* Trending Section */}
-      <div className="home-sidebar-panel home-support-panel">
-        <div className="home-panel-label">
-          HEATING UP THE FEED
+      <div className="home-sidebar-panel home-support-panel home-trending-panel">
+        <div className="home-panel-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <FiTrendingUp style={{ color: 'var(--accent)', fontSize: '0.85rem' }} />
+            <span>HEATING UP THE FEED</span>
+          </span>
+          {trending.length > 0 && (
+            <span className="trending-counter-pill">
+              {currentTrendingIndex + 1} / {trending.length}
+            </span>
+          )}
         </div>
         <div className="home-panel-heading">
           Trending creations
@@ -85,95 +105,150 @@ function RightSidebar() {
         {loadingTrending ? (
           <PremiumLoader fullScreen={false} size="small" text="Loading Trends..." />
         ) : trending.length > 0 ? (
-          <div className="home-trending-frame">
-            {trending.map((item, index) => {
-              const diff = index - currentTrendingIndex;
-              const isActive = index === currentTrendingIndex;
-
-              return (
+          <div
+            className="home-trending-showcase"
+            onMouseEnter={() => setIsTrendingHovered(true)}
+            onMouseLeave={() => setIsTrendingHovered(false)}
+          >
+            {/* Main Interactive Card */}
+            <div
+              className="trending-media-container"
+              onClick={() => navigate(`/works/${trending[currentTrendingIndex]?._id}`)}
+            >
+              <AnimatePresence mode="wait">
                 <MotionDiv
-                  key={item._id}
-                  className={`home-trending-card ${isActive ? 'is-active' : ''}`}
-                  animate={{
-                    x: diff * 14,
-                    scale: isActive ? 1 : 0.78,
-                    opacity: isActive ? 1 : 0.18,
-                    zIndex: isActive ? 10 : 1,
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  style={{
-                    position: 'absolute', width: '220px', height: '220px',
-                    borderRadius: '24px', overflow: 'hidden', cursor: 'pointer',
-                    boxShadow: isActive ? '0 20px 40px rgba(0,0,0,0.5)' : 'none',
-                    border: isActive ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                    willChange: 'transform, opacity'
-                  }}
-                  onClick={() => navigate(`/works/${item._id}`)}
+                  key={trending[currentTrendingIndex]?._id || currentTrendingIndex}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.03 }}
+                  transition={{ duration: 0.32, ease: 'easeOut' }}
+                  style={{ position: 'absolute', inset: 0 }}
                 >
-                  {/* Author Avatar at Top-Left */}
-                  <div style={{ position: 'absolute', top: '15px', left: '15px', zIndex: 11 }}>
-                    <div style={{
-                      width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden',
-                      border: '2px solid rgba(255,255,255,0.2)', background: '#111',
-                      boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
-                    }}>
-                      {item.createdBy?.profileImage?.url || item.author?.profileImage?.url ? (
-                        <OptimizedImage
-                          src={getFullUrl(item.createdBy?.profileImage?.url || item.author?.profileImage?.url)}
-                          alt=""
-                          style={{ width: '100%', height: '100%' }}
-                        />
-                      ) : (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', fontSize: '10px', fontWeight: '900' }}>
-                          {(item.createdBy?.name || item.author?.name || 'PP').slice(0, 2).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {workIsVideo(item) ? (
+                  {workIsVideo(trending[currentTrendingIndex]) ? (
                     <video
-                      src={getWorkVideoUrl(item)}
-                      poster={getWorkPosterUrl(item)}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onLoadedMetadata={(e) => e.target.currentTime = 0.1}
+                      src={getWorkVideoUrl(trending[currentTrendingIndex])}
+                      poster={getWorkPosterUrl(trending[currentTrendingIndex])}
+                      className="trending-media-img"
+                      onLoadedMetadata={(e) => (e.target.currentTime = 0.1)}
                       muted
                       playsInline
                       preload="metadata"
                     />
                   ) : (
-                    <OptimizedImage src={getMediaUrl(item)} alt="" style={{ width: '100%', height: '100%' }} />
-                  )}
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%)' }}></div>
-                  {isActive && (
-                    <div style={{ position: 'absolute', bottom: '15px', left: '15px', right: '15px', textAlign: 'left' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                        <div style={{ color: 'var(--accent)', fontSize: '0.6rem', fontWeight: '800', letterSpacing: '1px' }}>
-                          {item.category?.name?.toUpperCase() || 'GENERAL'}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.5)', fontSize: '0.6rem', fontWeight: '700' }}>
-                          <FiEye size={10} /> {Number(item.views || 0).toLocaleString()}
-                        </div>
-                      </div>
-                      <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: '800', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.title}
-                      </div>
-                    </div>
+                    <OptimizedImage
+                      src={getMediaUrl(trending[currentTrendingIndex])}
+                      alt={trending[currentTrendingIndex]?.title || 'Work'}
+                      className="trending-media-img"
+                    />
                   )}
                 </MotionDiv>
-              );
-            })}
+              </AnimatePresence>
 
-            <div className="home-trending-dots">
-              {trending.map((_, i) => (
-                <div key={i} style={{
-                  width: i === currentTrendingIndex ? '16px' : '6px',
-                  height: '6px', borderRadius: '3px',
-                  background: i === currentTrendingIndex ? 'var(--accent)' : '#444',
-                  transition: 'all 0.3s ease'
-                }} />
-              ))}
+              {/* Cinematic Vignette Overlay */}
+              <div className="trending-cinematic-overlay" />
+
+              {/* Floating Top Glass Badges */}
+              <div className="trending-top-bar">
+                <div className="trending-category-badge">
+                  <span>🔥</span>
+                  <span>{trending[currentTrendingIndex]?.category?.name || 'GENERAL'}</span>
+                </div>
+                <div className="trending-views-badge">
+                  <FiEye size={12} />
+                  <span>{Number(trending[currentTrendingIndex]?.views || 0).toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Video Play Badge */}
+              {workIsVideo(trending[currentTrendingIndex]) && (
+                <div className="trending-video-indicator" title="Video Showcase">
+                  <FiPlay />
+                </div>
+              )}
+
+              {/* Interactive Left/Right Arrows */}
+              {trending.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="trending-nav-arrow prev"
+                    onClick={handlePrevTrending}
+                    aria-label="Previous trending work"
+                  >
+                    <FiChevronLeft size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className="trending-nav-arrow next"
+                    onClick={handleNextTrending}
+                    aria-label="Next trending work"
+                  >
+                    <FiChevronRight size={16} />
+                  </button>
+                </>
+              )}
+
+              {/* Bottom Creator & Title Layer */}
+              <div className="trending-bottom-info">
+                {(() => {
+                  const creator =
+                    trending[currentTrendingIndex]?.createdBy ||
+                    trending[currentTrendingIndex]?.author;
+                  return (
+                    <div className="trending-creator-row">
+                      <div className="trending-creator-avatar">
+                        {creator?.profileImage?.url ? (
+                          <OptimizedImage
+                            src={getFullUrl(creator.profileImage.url)}
+                            alt={creator?.name || 'Creator'}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#fff',
+                              fontSize: '10px',
+                              fontWeight: '900',
+                              background: '#222',
+                            }}
+                          >
+                            {(creator?.name || 'PP').slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <span className="trending-creator-name">
+                        {creator?.name || 'Creator'}
+                      </span>
+                    </div>
+                  );
+                })()}
+
+                <div className="trending-work-title">
+                  <span className="trending-title-text">{trending[currentTrendingIndex]?.title || 'Untitled Work'}</span>
+                  <span className="trending-explore-cta">
+                    View <FiArrowUpRight size={13} />
+                  </span>
+                </div>
+              </div>
             </div>
+
+            {/* Segmented Progress Track */}
+            {trending.length > 1 && (
+              <div className="trending-pagination-bar">
+                {trending.map((_, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setCurrentTrendingIndex(i)}
+                    className={`trending-pagination-dot ${i === currentTrendingIndex ? 'active' : ''}`}
+                    title={`Slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ) : null}
       </div>
@@ -309,7 +384,6 @@ function CenterFeed({ user }) {
       setPosts(data || []);
       setFetchError(false);
     } catch (err) {
-      console.error('Failed to fetch posts:', err);
       setFetchError(true);
     } finally {
       setLoading(false);
@@ -520,7 +594,7 @@ function Home() {
         const data = Array.isArray(res) ? res : (res?.categories || res?.data || []);
         setCategories(data);
       })
-      .catch(err => console.error('Categories load error:', err));
+      .catch(() => {});
   }, []);
 
   return (

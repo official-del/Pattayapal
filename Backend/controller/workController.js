@@ -209,19 +209,33 @@ export const deleteWork = async (req, res) => {
     if (!work) return res.status(404).json({ message: 'Not found' });
 
     // 🔐 Ownership Check
-    const isOwner = work.createdBy.toString() === req.user.id;
-    const isAdmin = req.user.role === 'admin';
+    const currentUserId = (req.user?._id || req.user?.id)?.toString();
+    const creatorId = (work.createdBy?._id || work.createdBy)?.toString();
+    const isOwner = creatorId === currentUserId;
+    const isAdmin = req.user?.role === 'admin';
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ message: 'คุณไม่มีสิทธิ์ลบผลงานนี้' });
     }
 
-    // 1. ลบรูปหลักจาก GCS
-    if (work.mainImage?.url) await deleteFromGCS(work.mainImage.url);
+    // 1. ลบรูปหลักจาก GCS (Safe Try-Catch)
+    if (work.mainImage?.url) {
+      try {
+        await deleteFromGCS(work.mainImage.url);
+      } catch (e) {
+        console.warn('[deleteWork] GCS mainImage delete warning:', e.message);
+      }
+    }
 
-    // 2. ลบรูปอัลบั้มทั้งหมด
+    // 2. ลบรูปอัลบั้มทั้งหมด (Safe Try-Catch)
     if (work.album && work.album.length > 0) {
       for (const item of work.album) {
-        if (item.url) await deleteFromGCS(item.url);
+        if (item.url) {
+          try {
+            await deleteFromGCS(item.url);
+          } catch (e) {
+            console.warn('[deleteWork] GCS album delete warning:', e.message);
+          }
+        }
       }
     }
 

@@ -21,8 +21,8 @@ const OptimizedImage = ({ src, alt, style, className, onClick, placeholder = 'rg
   const [errorType, setErrorType] = useState(null); // 'gcs', 'cloudinary', or 'general'
 
   const handleError = () => {
-    // 1. Handle GCS Fallback to Local
-    if (src && src.includes('storage.googleapis.com') && !src.includes('fallback=true')) {
+    // 1. Handle GCS Fallback to Local (local development only)
+    if (!import.meta.env.PROD && src && src.includes('storage.googleapis.com') && !src.includes('fallback=true')) {
       const fileName = src.split('/').pop();
       setCurrentSrc(`/uploads/${fileName}`);
       setErrorType('gcs');

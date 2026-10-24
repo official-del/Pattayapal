@@ -1,4 +1,4 @@
-import { customConfirm } from '../utils/customConfirm';
+﻿import { customConfirm } from '../utils/customConfirm';
 import { toast } from 'react-hot-toast';
 import { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
@@ -12,7 +12,7 @@ import HoverVideoPlayer from './HoverVideoPlayer';
 import OptimizedImage from './OptimizedImage';
 import React from 'react';
 import { createPortal } from 'react-dom';
-// ── URL Auto-Linker Helper ──
+// โ”€โ”€ URL Auto-Linker Helper โ”€โ”€
 import EmbeddedPost from './EmbeddedPost'; // Add import at the top
 
 const URL_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
@@ -141,12 +141,16 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
       setIsEditing(false);
       toast.success('แก้ไขโพสต์สำเร็จ', { style: { borderRadius: '10px', background: '#333', color: '#fff' } });
     } catch (err) { 
-      toast.error('แก้ไขไม่สำเร็จ'); 
+      toast.error('แก้ไขไม่สำเร็จ');
     }
   };
 
 
-  const isAuthor = userInfo && (post.author?._id === (userInfo._id || userInfo.id));
+  const postAuthorId = (post.author?._id || (typeof post.author === 'string' ? post.author : post.author?.id))?.toString();
+  const currentUserId = (userInfo?._id || userInfo?.id)?.toString();
+  const isAuthor = Boolean(currentUserId && postAuthorId && postAuthorId === currentUserId);
+  const isAdmin = userInfo?.role === 'admin';
+  const canDelete = isAuthor || isAdmin;
   const displayAuthor = isAuthor ? userInfo : post.author;
   const isHiring = post.postType === 'hiring';
   const accentColor = isHiring ? '#3b82f6' : '#22c55e';
@@ -191,23 +195,27 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!await customConfirm('คุณต้องการลบคอมเมนต์นี้ใช่หรือไม่?')) return;
+      if (!await customConfirm('คุณต้องการลบคอมเมนต์นี้ใช่หรือไม่?')) return;
     try {
       const updatedComments = await postsAPI.deleteComment(post._id, commentId, currentToken);
       setComments(updatedComments);
-    } catch (err) { toast.success('ลบไม่สำเร็จ'); }
+      } catch (err) { toast.error('ลบไม่สำเร็จ'); }
   };
 
   const handleDeletePost = async () => {
     if (!await customConfirm('คุณต้องการลบโพสต์นี้ใช่หรือไม่?')) return;
     try {
-      await postsAPI.delete(post._id, currentToken);
+      await postsAPI.delete(post._id);
+      toast.success('ลบโพสต์สำเร็จ');
       if (onPostDeleted) onPostDeleted(post._id);
-    } catch (err) { toast.success('ลบไม่สำเร็จ'); }
+    } catch (err) {
+      console.error('Delete post error:', err);
+      toast.error(err.response?.data?.message || 'ลบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    }
   };
 
   const handleShare = async () => {
-    // Backend OG proxy URL — Facebook/Line bots fetch OG metadata here,
+    // Backend OG proxy URL โ€” Facebook/Line bots fetch OG metadata here,
     // then real users are auto-redirected to the frontend post page.
     const shareUrl = `${CONFIG.API_BASE_URL}/api/share/posts/${post._id}`;
 
@@ -216,23 +224,23 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
       ? postContent.substring(0, 280)  // Facebook quote limit is ~280 chars
       : post.sharedPackage?.title || '';
 
-    // On mobile — use native Web Share API (supports title + text + url)
+    // On mobile โ€” use native Web Share API (supports title + text + url)
     if (navigator.share) {
       try {
         await navigator.share({
           title: post.sharedPackage
-            ? `แพ็กเกจบริการจาก ${post.author?.name || 'ฟรีแลนซ์'}`
-            : `โพสต์จาก ${post.author?.name || 'ผู้ใช้'}`,
+          ? `แพ็กเกจบริการจาก ${post.author?.name || 'ฟรีแลนซ์'}`
+          : `โพสต์จาก ${post.author?.name || 'ผู้ใช้'}`,
           text: quoteText,
           url: shareUrl,
         });
         return;
       } catch (err) {
-        // user cancelled — fall through to Facebook dialog
+        // user cancelled โ€” fall through to Facebook dialog
       }
     }
 
-    // On desktop — open Facebook share dialog with quote parameter
+    // On desktop โ€” open Facebook share dialog with quote parameter
     // The 'quote' param pre-fills the text box in Facebook's post composer
     const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(quoteText)}`;
     const popup = window.open(fbShareUrl, 'fb-share', 'width=600,height=500,resizable=yes,scrollbars=yes');
@@ -246,7 +254,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
     }
   };
 
-  // ── Read More Logic ──
+  // โ”€โ”€ Read More Logic โ”€โ”€
   const MAX_LINES = 4;
   const contentText = postContent || '';
   const textLines = contentText.split('\n');
@@ -272,7 +280,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
         marginBottom: 'clamp(10px, 2vw, 15px)', border: '1px solid rgba(255,255,255,0.03)', background: 'rgba(255,255,255,0.01)', boxSizing: 'border-box'
       }}
     >
-      {/* 🚀 Signal Category Beam */}
+      {/* ๐€ Signal Category Beam */}
       <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '3px', background: 'var(--accent)', opacity: 0.9, borderRadius: '10px 10px 0 0' }} />
 
       {/* Operative Header */}
@@ -316,7 +324,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
                 transition: 'all 0.2s ease',
                 marginRight: '8px'
               }}
-              title='แก้ไขโพสต์'
+                      title="แก้ไขโพสต์"
             >
               <svg stroke='currentColor' fill='none' strokeWidth='2' viewBox='0 0 24 24' strokeLinecap='round' strokeLinejoin='round' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'></path><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'></path></svg>
             </motion.button>
@@ -338,7 +346,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
               transition: 'all 0.2s ease',
               position: 'relative'
             }}
-            title="แชร์โพสต์"
+                      title="แชร์โพสต์"
           >
             {copied ? <FiZap style={{ width: '18px', height: '18px' }} /> : <FiShare2 style={{ width: '18px', height: '18px' }} />}
             <AnimatePresence>
@@ -355,7 +363,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
             </AnimatePresence>
           </motion.button>
 
-          {isAuthor && (
+          {canDelete && (
             <motion.button 
               whileHover={{ scale: 1.1, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }} 
               onClick={handleDeletePost} 
@@ -372,7 +380,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
                 justifyContent: 'center',
                 transition: 'all 0.2s ease'
               }}
-              title="ลบโพสต์"
+                      title="ลบโพสต์"
             >
               <FiTrash2 style={{ width: '18px', height: '18px' }} />
             </motion.button>
@@ -415,7 +423,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
                 cursor: 'pointer'
               }}
             >
-              ยกเลิก
+                    ยกเลิก
             </button>
             <button
               onClick={handleUpdatePost}
@@ -429,7 +437,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
                 fontWeight: 'bold'
               }}
             >
-              บันทึก
+                    บันทึก
             </button>
           </div>
         </div>
@@ -490,7 +498,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
                 <h4 style={{ margin: 0, fontSize: 'clamp(1rem,2.5vw,1.25rem)', fontWeight: '800', color: '#fff', lineHeight: 1.3, flex: 1 }}>{pkg.title}</h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,87,51,0.12)', border: '1px solid rgba(255,87,51,0.25)', borderRadius: '10px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: '900', color: 'var(--accent)' }}>⬡ {Number(pkg.price || 0).toLocaleString()}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '900', color: 'var(--accent)' }}>โฌก {Number(pkg.price || 0).toLocaleString()}</span>
                   <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600' }}>Coins</span>
                 </div>
               </div>
@@ -499,7 +507,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
               {pkg.deliveryTime && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', fontWeight: '600', marginBottom: '12px' }}>
                   <FiClock size={12} />
-                  <span>{pkg.deliveryTime} วัน Delivery</span>
+              <span>{pkg.deliveryTime} วัน Delivery</span>
                 </div>
               )}
 
@@ -514,7 +522,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
               {pkg.features?.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
                   {pkg.features.slice(0, 4).map((f, i) => (
-                    <span key={i} style={{ fontSize: '0.7rem', fontWeight: '700', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '3px 10px' }}>✓ {f}</span>
+                    <span key={i} style={{ fontSize: '0.7rem', fontWeight: '700', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '3px 10px' }}>โ“ {f}</span>
                   ))}
                   {pkg.features.length > 4 && <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', padding: '3px 6px' }}>+{pkg.features.length - 4} more</span>}
                 </div>
@@ -546,7 +554,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
         );
       })()}
 
-      {/* ── Media Grid Collage ── */}
+      {/* โ”€โ”€ Media Grid Collage โ”€โ”€ */}
       {post.media && post.media.length > 0 && (() => {
         const mediaItems = post.media;
         const total = mediaItems.length;
@@ -559,13 +567,13 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
 
         const renderMedia = (idx, customStyle = {}) => {
           const m = mediaItems[idx];
-          // ✅ เช็ค video จาก extension หรือ mimetype ที่ backend เก็บไว้
+          // โ… เน€ช็ค video จาก extension หรือ mimetype ที่ backend เน€ก็บไว้
           const mimeType = m.mimetype || m.type || m.mimeType || '';
           const isVideo = isVideoUrl(m.url) || mimeType.startsWith('video/');
           if (isVideo) {
              return (
-               <div style={{ width: '100%', height: '100%', background: '#0a0a0a', overflow: 'hidden' }}>
-                 <HoverVideoPlayer src={getFullUrl(m.url)} style={{ width: '100%', height: '100%', objectFit: 'cover', ...customStyle }} />
+               <div style={{ width: '100%', background: '#050505', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                 <HoverVideoPlayer src={getFullUrl(m.url)} style={{ width: '100%', height: 'auto', maxHeight: 'min(78vh, 650px)', objectFit: 'contain', ...customStyle }} />
                </div>
              );
           }
@@ -593,14 +601,32 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
           const m0 = mediaItems[0];
           const mimeType0 = m0.mimetype || m0.type || m0.mimeType || '';
           const isVideo0 = isVideoUrl(m0.url) || mimeType0.startsWith('video/');
+          if (isVideo0) {
+            // วิดีโอ: แสดงเต็มสัดส่วน (ไม่ครอป และคุมความสูงไม่ให้ยาวย้วยหรือกระพริบ)
+            return (
+              <div style={{ ...gridStyle, maxHeight: 'min(78vh, 650px)', overflow: 'hidden', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {renderMedia(0, { width: '100%', height: 'auto', maxHeight: 'min(78vh, 650px)', objectFit: 'contain' })}
+              </div>
+            );
+          }
           return (
-            <div style={{ ...gridStyle, aspectRatio: undefined, maxHeight: 'min(75vh, 700px)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: isVideo0 ? '300px' : undefined, background: '#0a0a0a', overflow: 'hidden' }}>
+            <div style={{ ...gridStyle, aspectRatio: undefined, maxHeight: 'min(75vh, 700px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', overflow: 'hidden' }}>
                {renderMedia(0, { maxHeight: 'min(75vh, 700px)', height: 'auto', width: '100%', objectFit: 'contain' })}
             </div>
           );
         }
 
         if (total === 2) {
+          const hasVideo2 = mediaItems.slice(0, 2).some(m => isVideoUrl(m.url) || (m.mimetype || m.type || '').startsWith('video/'));
+          if (hasVideo2) {
+            // มีวิดีโอ: stack แนวตั้งให้เห็นเต็ม
+            return (
+              <div style={{ ...gridStyle, display: 'flex', flexDirection: 'column', overflow: 'visible' }}>
+                {renderMedia(0)}
+                {renderMedia(1)}
+              </div>
+            );
+          }
           return (
             <div style={{ ...gridStyle, gridTemplateColumns: '1fr 1fr', aspectRatio: '4/3' }}>
                {renderMedia(0)}
@@ -677,7 +703,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
 
       </div>
 
-      {/* 🧬 Responses Feed Sub-System */}
+      {/* ๐งฌ Responses Feed Sub-System */}
       <AnimatePresence>
         {isCommentsOpen && (
           <motion.div
@@ -723,10 +749,82 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
                       {/* Reply Input Box */}
                       <AnimatePresence>
                         {replyingTo === c._id && (
-                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ marginLeft: 'clamp(32px, 8vw, 40px)', marginTop: '5px', paddingLeft: 'clamp(8px, 1.5vw, 15px)' }}>
-                            <form onSubmit={(e) => handleReply(e, c._id)} style={{ display: 'flex', gap: 'clamp(8px, 1.5vw, 10px)', minWidth: 0 }}>
-                              <input value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Reply to this comment..." style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '20px', padding: 'clamp(8px, 1.5vw, 10px) clamp(12px, 2vw, 15px)', fontSize: 'clamp(0.75rem, 1.3vw, 0.85rem)', minWidth: 0, boxSizing: 'border-box' }} />
-                              <button type="submit" disabled={!replyText.trim()} style={{ background: replyText.trim() ? 'var(--accent)' : '#222', color: '#000', border: 'none', borderRadius: '20px', padding: '0 clamp(10px, 2vw, 15px)', fontWeight: '700', cursor: 'pointer', flexShrink: 0, fontSize: 'clamp(0.7rem, 1.2vw, 0.8rem)' }}>Send</button>
+                          <motion.div 
+                            initial={{ opacity: 0, y: -4, height: 0 }} 
+                            animate={{ opacity: 1, y: 0, height: 'auto' }} 
+                            exit={{ opacity: 0, y: -4, height: 0 }} 
+                            style={{ 
+                              marginLeft: 'clamp(28px, 6vw, 36px)', 
+                              marginTop: '8px', 
+                              marginBottom: '6px' 
+                            }}
+                          >
+                            <form 
+                              onSubmit={(e) => handleReply(e, c._id)} 
+                              style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                background: 'rgba(255, 255, 255, 0.04)', 
+                                border: '1px solid rgba(255, 87, 51, 0.35)', 
+                                borderRadius: '9999px', 
+                                padding: '4px 6px 4px 14px', 
+                                boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                                transition: 'border-color 0.2s ease',
+                                width: '100%',
+                                boxSizing: 'border-box'
+                              }}
+                            >
+                              <input 
+                                value={replyText} 
+                                onChange={e => setReplyText(e.target.value)} 
+                                placeholder="ตอบกลับคอมเมนต์นี้..." 
+                                autoFocus
+                                style={{ 
+                                  flex: 1, 
+                                  background: 'transparent', 
+                                  border: 'none', 
+                                  outline: 'none', 
+                                  color: '#fff', 
+                                  fontSize: '0.84rem', 
+                                  minWidth: 0,
+                                  padding: '4px 0'
+                                }} 
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => setReplyingTo(null)}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: '#777',
+                                  fontSize: '0.78rem',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  padding: '4px 8px'
+                                }}
+                              >
+                                ยกเลิก
+                              </button>
+                              <button 
+                                type="submit" 
+                                disabled={!replyText.trim()} 
+                                style={{ 
+                                  background: replyText.trim() ? 'var(--accent, #ff5733)' : 'rgba(255,255,255,0.08)', 
+                                  color: replyText.trim() ? '#fff' : '#666', 
+                                  border: 'none', 
+                                  borderRadius: '9999px', 
+                                  padding: '6px 14px', 
+                                  fontWeight: '700', 
+                                  cursor: replyText.trim() ? 'pointer' : 'default', 
+                                  flexShrink: 0, 
+                                  fontSize: '0.8rem',
+                                  transition: 'all 0.2s ease',
+                                  boxShadow: replyText.trim() ? '0 2px 8px rgba(255,87,51,0.3)' : 'none'
+                                }}
+                              >
+                                ส่ง
+                              </button>
                             </form>
                           </motion.div>
                         )}
@@ -764,7 +862,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
                   <div className="feed-comment-input-shell">
                     <input
                       value={commentText} onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="ตอบกลับคอมเม้นท์..."
+                      placeholder="เขียนความคิดเห็นของคุณ..."
                     />
                     <motion.button whileTap={{ scale: 0.9 }} type="submit" disabled={!commentText.trim()}>
                       <FiSend style={{ width: '22px', height: '22px' }} />
@@ -777,7 +875,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
         )}
       </AnimatePresence>
 
-      {/* 🖼️ Fullscreen Image Lightbox */}
+      {/* ๐–ผ๏ธ Fullscreen Image Lightbox */}
       {selectedImage && createPortal(
         <AnimatePresence>
           <motion.div
@@ -830,7 +928,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
               />
             </motion.div>
 
-            {/* Prev/Next arrows — only when > 1 image */}
+            {/* Prev/Next arrows โ€” only when > 1 image */}
             {(() => {
               const images = post.media?.filter(m => !isVideoUrl(m.url)) || [];
               if (images.length <= 1) return null;
@@ -845,7 +943,7 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
                     <FiChevronRight size={24} />
                   </button>
                   {/* Counter */}
-                  <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '13px', fontWeight: '800', padding: '6px 18px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)', zIndex: 100000, backdropFilter: 'blur(6px)' }}>
+                  <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.7)', color: '#fff', fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums', fontSize: '13px', fontWeight: '800', padding: '6px 18px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)', zIndex: 100000, backdropFilter: 'blur(6px)' }}>
                     {lightboxIndex + 1} / {images.length}
                   </div>
                 </>

@@ -13,26 +13,32 @@ export default function PremiumLoader({
   const isSmall = size === 'small';
   const isTiny = size === 'tiny';
 
-  const cube = (
+  const loaderElement = (
     <div
-      className={`loadingspinner ${isSmall ? 'is-small' : ''} ${isTiny ? 'is-tiny' : ''}`}
-      style={{ margin: bare ? 0 : '0 auto' }}
+      className={`jimu-loader-wrap ${isSmall ? 'is-small' : ''} ${isTiny ? 'is-tiny' : ''}`}
+      style={{
+        position: 'relative',
+        width: isTiny ? '28px' : isSmall ? '46px' : '64px',
+        height: isTiny ? '24px' : isSmall ? '34px' : '48px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: bare ? 0 : '0 auto',
+      }}
       role="status"
       aria-label={text || 'Loading'}
     >
-      <div className="square1"></div>
-      <div className="square2"></div>
-      <div className="square3"></div>
-      <div className="square4"></div>
-      <div className="square5"></div>
+      <div className="loader">
+        <div className="jimu-primary-loading"></div>
+      </div>
     </div>
   );
 
-  if (bare) return cube;
+  if (bare) return loaderElement;
 
   const loaderContent = (
     <div className="premium-loader-container">
-      {cube}
+      {loaderElement}
       {text && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <h3
@@ -72,7 +78,7 @@ export default function PremiumLoader({
             position: 'absolute',
             width: isSmall ? '200px' : '320px',
             height: isSmall ? '200px' : '320px',
-            background: 'radial-gradient(circle, rgba(255, 69, 0, 0.12) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(255, 87, 51, 0.14) 0%, transparent 70%)',
             filter: 'blur(40px)',
             pointerEvents: 'none',
           }}
@@ -107,7 +113,7 @@ export default function PremiumLoader({
           position: 'absolute',
           width: '500px',
           height: '500px',
-          background: 'radial-gradient(circle, rgba(255, 69, 0, 0.18) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(255, 87, 51, 0.22) 0%, transparent 70%)',
           filter: 'blur(60px)',
           pointerEvents: 'none',
           zIndex: -1,

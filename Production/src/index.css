@@ -257,17 +257,7 @@ select:focus-visible {
 .pp-card::after,
 .pp-panel::after,
 .pp-modal::after {
-  content: '';
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  width: 8px;
-  height: 8px;
-  background: var(--accent);
-  box-shadow:
-    -12px 0 0 rgba(255, 87, 51, 0.42),
-    0 12px 0 rgba(255, 87, 51, 0.42);
-  pointer-events: none;
+  display: none !important;
 }
 
 .pp-card-header,
@@ -1673,7 +1663,7 @@ select:disabled {
   100% { background-position: 200% 0; }
 }
 
-/* 🔮 Premium Pattayapal Cube Loader (User Code Modified for unique namespace) */
+/* 🔮 PattayaPal Jimu Loader Style (Signature Orange #ff5733) */
 .premium-loader-backdrop {
   position: fixed;
   inset: 0;
@@ -1698,75 +1688,101 @@ select:disabled {
   text-align: center;
 }
 
-.loadingspinner {
-  --square: 26px;
-  --offset: 30px;
-  --duration: 2.4s;
-  --delay: 0.2s;
-  --timing-function: ease-in-out;
-  --in-duration: 0.4s;
-  --in-delay: 0.1s;
-  --in-timing-function: ease-out;
-  width: calc( 3 * var(--offset) + var(--square));
-  height: calc( 2 * var(--offset) + var(--square));
-  padding: 0px;
-  margin-left: auto;
-  margin-right: auto;
+/* ─── User Requested Jimu Key Loader ─── */
+.jimu-loader-wrap {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.loadingspinner.is-small {
-  --square: 16px;
-  --offset: 18px;
-}
-
-.loadingspinner.is-tiny {
-  --square: 10px;
-  --offset: 12px;
-}
-
-.loadingspinner div {
-  display: inline-block;
-  background: var(--accent, darkorange);
-  border: none;
-  border-radius: 2px;
-  width: var(--square);
-  height: var(--square);
+.jimu-loader-wrap .loader {
   position: absolute;
-  padding: 0px;
-  margin: 0px;
-  font-size: 6pt;
-  color: black;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
 }
 
-.loadingspinner .square1 {
-  left: calc( 0 * var(--offset) );
-  top: calc( 0 * var(--offset) );
-  animation: square1 2.4s 0.2s ease-in-out infinite, squarefadein 0.4s 0.1s ease-out both;
+.jimu-loader-wrap.is-small .loader {
+  transform: scale(0.68);
+  transform-origin: center center;
 }
 
-.loadingspinner .square2 {
-  left: calc( 0 * var(--offset) );
-  top: calc( 1 * var(--offset) );
-  animation: square2 2.4s 0.2s ease-in-out infinite, squarefadein 0.4s 0.1s ease-out both;
+.jimu-loader-wrap.is-tiny .loader {
+  transform: scale(0.42);
+  transform-origin: center center;
 }
 
-.loadingspinner .square3 {
-  left: calc( 1 * var(--offset) );
-  top: calc( 1 * var(--offset) );
-  animation: square3 2.4s 0.2s ease-in-out infinite, squarefadein 0.4s 0.2s ease-out both;
+.jimu-primary-loading:before,
+.jimu-primary-loading:after {
+  position: absolute;
+  top: 0;
+  content: '';
 }
 
-.loadingspinner .square4 {
-  left: calc( 2 * var(--offset) );
-  top: calc( 1 * var(--offset) );
-  animation: square4 2.4s 0.2s ease-in-out infinite, squarefadein 0.4s 0.3s ease-out both;
+.jimu-primary-loading:before {
+  left: -19.992px;
 }
 
-.loadingspinner .square5 {
-  left: calc( 3 * var(--offset) );
-  top: calc( 1 * var(--offset) );
-  animation: square5 2.4s 0.2s ease-in-out infinite, squarefadein 0.4s 0.4s ease-out both;
+.jimu-primary-loading:after {
+  left: 19.992px;
+  -webkit-animation-delay: 0.32s !important;
+  animation-delay: 0.32s !important;
+}
+
+.jimu-primary-loading:before,
+.jimu-primary-loading:after,
+.jimu-primary-loading {
+  background: var(--accent, #ff5733);
+  -webkit-animation: loading-keys-app-loading 0.8s infinite ease-in-out;
+  animation: loading-keys-app-loading 0.8s infinite ease-in-out;
+  width: 13.6px;
+  height: 32px;
+  border-radius: 2px;
+}
+
+.jimu-primary-loading {
+  text-indent: -9999em;
+  margin: auto;
+  position: absolute;
+  right: calc(50% - 6.8px);
+  top: calc(50% - 16px);
+  -webkit-animation-delay: 0.16s !important;
+  animation-delay: 0.16s !important;
+}
+
+@-webkit-keyframes loading-keys-app-loading {
+  0%,
+  80%,
+  100% {
+    opacity: .75;
+    box-shadow: 0 0 var(--accent, #ff5733);
+    height: 32px;
+  }
+
+  40% {
+    opacity: 1;
+    box-shadow: 0 -8px var(--accent, #ff5733);
+    height: 40px;
+  }
+}
+
+@keyframes loading-keys-app-loading {
+  0%,
+  80%,
+  100% {
+    opacity: .75;
+    box-shadow: 0 0 var(--accent, #ff5733);
+    height: 32px;
+  }
+
+  40% {
+    opacity: 1;
+    box-shadow: 0 -8px var(--accent, #ff5733);
+    height: 40px;
+  }
 }
 
 .premium-loader-text {
@@ -1778,7 +1794,7 @@ select:disabled {
   text-transform: uppercase;
   margin: 0;
   animation: pp-loader-text-pulse 2s infinite ease-in-out;
-  text-shadow: 0 0 10px rgba(255, 140, 0, 0.26);
+  text-shadow: 0 0 10px rgba(255, 87, 51, 0.26);
 }
 
 .premium-loader-subtext {
@@ -1791,58 +1807,46 @@ select:disabled {
 }
 
 @keyframes pp-loader-text-pulse {
-  0%, 100% { opacity: 0.68; filter: drop-shadow(0 0 2px rgba(255, 140, 0, 0.12)); }
-  50% { opacity: 1; filter: drop-shadow(0 0 8px rgba(255, 140, 0, 0.32)); }
+  0%, 100% { opacity: 0.68; filter: drop-shadow(0 0 2px rgba(255, 87, 51, 0.12)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 8px rgba(255, 87, 51, 0.32)); }
 }
 
-@keyframes square1 {
-  0% { left: calc( 0 * var(--offset) ); top: calc( 0 * var(--offset) ); }
-  8.333% { left: calc( 0 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  100% { left: calc( 0 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-}
 
-@keyframes square2 {
-  0% { left: calc( 0 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  8.333% { left: calc( 0 * var(--offset) ); top: calc( 2 * var(--offset) ); }
-  16.67% { left: calc( 1 * var(--offset) ); top: calc( 2 * var(--offset) ); }
-  25.00% { left: calc( 1 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  83.33% { left: calc( 1 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  91.67% { left: calc( 1 * var(--offset) ); top: calc( 0 * var(--offset) ); }
-  100% { left: calc( 0 * var(--offset) ); top: calc( 0 * var(--offset) ); }
+/* Disable 3-dot corner pixel decorations site-wide */
+.pp-card::after,
+.pp-panel::after,
+.pp-modal::after,
+.home-sidebar-panel::before,
+.home-feed-toolbar::before,
+.db-header::before,
+.chart-container::before,
+.friend-card::before,
+.friends-empty-state::before,
+.friends-stat-card::before,
+.mj-header::before,
+.job-card::before,
+.mj-empty-state::before,
+.wallet-hero::before,
+.wallet-stat-card::before,
+.wallet-panel::before,
+.wallet-pending::before,
+.mw-stat-card::before,
+.mw-toolbar::before,
+.work-card::before,
+.mw-empty-state::before,
+.nt-stat-card::before,
+.nt-board::before,
+.nt-card::before,
+.nt-empty-state::before,
+.quest-card::before,
+.quests-empty::before,
+.quest-proof-modal::before,
+.quest-toast::before,
+.quest-stat-card::before,
+.rankings-hero::before,
+.rankings-board::before,
+.role-rankings-hero::before,
+.role-rank-card::before {
+  display: none !important;
+  content: none !important;
 }
-
-@keyframes square3 {
-  0%,100% { left: calc( 1 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  16.67% { left: calc( 1 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  25.00% { left: calc( 1 * var(--offset) ); top: calc( 0 * var(--offset) ); }
-  33.33% { left: calc( 2 * var(--offset) ); top: calc( 0 * var(--offset) ); }
-  41.67% { left: calc( 2 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  66.67% { left: calc( 2 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  75.00% { left: calc( 2 * var(--offset) ); top: calc( 2 * var(--offset) ); }
-  83.33% { left: calc( 1 * var(--offset) ); top: calc( 2 * var(--offset) ); }
-  91.67% { left: calc( 1 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-}
-
-@keyframes square4 {
-  0% { left: calc( 2 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  33.33% { left: calc( 2 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  41.67% { left: calc( 2 * var(--offset) ); top: calc( 2 * var(--offset) ); }
-  50.00% { left: calc( 3 * var(--offset) ); top: calc( 2 * var(--offset) ); }
-  58.33% { left: calc( 3 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  100% { left: calc( 3 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-}
-
-@keyframes square5 {
-  0% { left: calc( 3 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  50.00% { left: calc( 3 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  58.33% { left: calc( 3 * var(--offset) ); top: calc( 0 * var(--offset) ); }
-  66.67% { left: calc( 2 * var(--offset) ); top: calc( 0 * var(--offset) ); }
-  75.00% { left: calc( 2 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-  100% { left: calc( 2 * var(--offset) ); top: calc( 1 * var(--offset) ); }
-}
-
-@keyframes squarefadein {
-  0% { transform: scale(0.75); opacity: 0.0; }
-  100% { transform: scale(1.0); opacity: 1.0; }
-}
-

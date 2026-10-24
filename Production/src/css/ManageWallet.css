@@ -26,15 +26,7 @@
 .wallet-stat-card::before,
 .wallet-panel::before,
 .wallet-pending::before {
-  content: '';
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 8px;
-  height: 8px;
-  background: var(--accent);
-  box-shadow: -11px 0 0 rgba(255, 87, 51, 0.38), 0 11px 0 rgba(255, 87, 51, 0.38);
-  pointer-events: none;
+  display: none !important;
 }
 
 .wallet-hero {

@@ -34,16 +34,19 @@ export const protect = async (req, res, next) => {
     const user = await User.findById(decoded.id).select('-password');
 
     if (!user) {
+      console.warn(`🔒 [Auth 401] User not found for token ID: ${decoded.id} (${req.method} ${req.originalUrl})`);
       return res.status(401).json({ message: 'User no longer exists. Please login again.' });
     }
 
     if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== (user.tokenVersion || 0)) {
+      console.warn(`🔒 [Auth 401] Token version mismatch (${req.method} ${req.originalUrl})`);
       return res.status(401).json({ message: 'Session expired. Please login again.' });
     }
 
     req.user = user;
     next();
   } catch (error) {
+    console.warn(`🔒 [Auth 401] Token error: ${error.message} (${req.method} ${req.originalUrl})`);
     const status = error.message === 'JWT_SECRET is not configured' ? 500 : 401;
     return res.status(status).json({
       message: status === 500 ? 'Server authentication is not configured' : 'Invalid or expired token',

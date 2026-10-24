@@ -34,16 +34,7 @@
 .friends-row-card::before,
 .friend-card::before,
 .friends-empty-state::before {
-  content: '';
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 0;
-  width: 8px;
-  height: 8px;
-  background: var(--accent);
-  box-shadow: -11px 0 0 rgba(255, 87, 51, 0.38), 0 11px 0 rgba(255, 87, 51, 0.38);
-  pointer-events: none;
+  display: none !important;
 }
 
 .friends-hero > *,
@@ -147,11 +138,7 @@
 }
 
 .friends-stat-card::before {
-  top: 10px;
-  right: 10px;
-  width: 7px;
-  height: 7px;
-  box-shadow: -10px 0 0 rgba(255, 87, 51, 0.36), 0 10px 0 rgba(255, 87, 51, 0.36);
+  display: none !important;
 }
 
 .friends-stat-card.is-orange {

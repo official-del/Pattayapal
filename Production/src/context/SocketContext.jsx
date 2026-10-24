@@ -61,7 +61,7 @@ export const SocketProvider = ({ children }) => {
       const ids = await usersAPI.getOnlineUsers();
       setOnlineUsers(new Set(ids.map(String)));
     } catch (err) {
-      console.error('fetchOnlineUsers error:', err.message);
+      // quiet on background polling
     }
   }, []);
 
@@ -82,12 +82,17 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     const socketToken = window.safeStorage.getItem('token') || window.safeStorage.getItem('userToken');
     const newSocket = io(SOCKET_URL, {
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+      reconnectionAttempts: 5,
       auth: { token: socketToken },
+    });
+
+    newSocket.on('connect_error', () => {
+      // quiet background reconnect without flooding console
     });
 
     socketRef.current = newSocket;

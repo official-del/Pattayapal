@@ -341,8 +341,32 @@ io.on('connection', (socket) => {
 // 1. MIDDLEWARE (ต้องประกาศก่อน Routes เสมอ!)
 // ==========================================
 app.use(helmet({
-  crossOriginResourcePolicy: false, 
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: false, // จัดการ CSP เองด้านล่างเพื่อ override LiteSpeed
 }));
+
+// ✅ ตั้ง CSP โดยตรงเพื่อให้ override LiteSpeed/Cloudflare ที่อาจส่ง CSP ทับ
+const CSP_VALUE = [
+  "default-src 'self' https://storage.googleapis.com https://*.googleusercontent.com",
+  "img-src 'self' data: blob: https://storage.googleapis.com https://*.googleusercontent.com https://via.placeholder.com https://images.unsplash.com https://*.tile.openstreetmap.org https://unpkg.com",
+  "media-src 'self' data: blob: https://storage.googleapis.com https://*.googleusercontent.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com",
+  "script-src-elem 'self' 'unsafe-inline' https://unpkg.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
+  "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "connect-src 'self' https://pattayapal.com https://*.pattayapal.com https://storage.googleapis.com wss://pattayapal.com ws://localhost:* http://localhost:*",
+  "worker-src 'self' blob:",
+  "child-src 'self' blob:",
+  "frame-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+].join('; ');
+
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', CSP_VALUE);
+  next();
+});
 
 app.use(cors({
   origin: corsOrigin,

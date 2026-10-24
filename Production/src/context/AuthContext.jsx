@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useRef } from 'react';
-import { authAPI, walletAPI } from '../utils/api'; // 👈 ต้องตรงกับชื่อที่ export ในไฟล์ api.js
+import { authAPI, walletAPI } from '../utils/api';
+import { toast } from 'react-hot-toast'; // 👈 ต้องตรงกับชื่อที่ export ในไฟล์ api.js
 
 export const AuthContext = createContext();
 
@@ -31,6 +32,18 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   }, [token]);
+
+  // 🔔 Listen for global session expiry (401)
+  useEffect(() => {
+    const handleSessionExpired = (e) => {
+      logout();
+      const msg = e.detail?.message || 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง';
+      toast.error(msg, { id: 'session-expired-toast', duration: 4500 });
+    };
+
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, []);
 
   const fetchProfile = async () => {
     if (isFetching.current || !token) return; // ป้องกัน double call และ token ว่าง

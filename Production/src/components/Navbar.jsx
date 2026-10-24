@@ -54,7 +54,7 @@ function Navbar() {
       try {
         const data = await notificationsAPI.getMine(currentToken);
         setUnreadCount(data.filter(n => !n.isRead).length);
-      } catch (err) { console.error("Notif error", err); }
+      } catch (err) { /* silent on polling error */ }
     };
     fetchNotifs();
     const handleNewNotification = () => {
