@@ -4,7 +4,7 @@ import { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { postsAPI } from '../utils/api';
 import { CONFIG } from '../utils/config';
-import { FiHeart, FiMessageSquare, FiMoreHorizontal, FiSend, FiClock, FiBriefcase, FiUserCheck, FiTrash2, FiActivity, FiShare2, FiZap, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiCheck,  FiHeart, FiMessageSquare, FiMoreHorizontal, FiSend, FiClock, FiBriefcase, FiUserCheck, FiTrash2, FiActivity, FiShare2, FiZap, FiX, FiChevronLeft, FiChevronRight  } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { getFullUrl, isVideoUrl } from '../utils/mediaUtils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -498,7 +498,8 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
                 <h4 style={{ margin: 0, fontSize: 'clamp(1rem,2.5vw,1.25rem)', fontWeight: '800', color: '#fff', lineHeight: 1.3, flex: 1 }}>{pkg.title}</h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,87,51,0.12)', border: '1px solid rgba(255,87,51,0.25)', borderRadius: '10px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: '900', color: 'var(--accent)' }}>โฌก {Number(pkg.price || 0).toLocaleString()}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px', background: 'var(--accent)', borderRadius: '50%', fontSize: '0.6rem', fontWeight: '900', color: '#fff', flexShrink: 0 }}>P</span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: '900', color: 'var(--accent)' }}>{Number(pkg.price || 0).toLocaleString()}</span>
                   <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600' }}>Coins</span>
                 </div>
               </div>
@@ -522,7 +523,10 @@ const FeedPost = React.memo(({ post, onPostDeleted, isCommentsOpen = false, onTo
               {pkg.features?.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
                   {pkg.features.slice(0, 4).map((f, i) => (
-                    <span key={i} style={{ fontSize: '0.7rem', fontWeight: '700', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '6px', padding: '3px 10px' }}>โ“ {f}</span>
+                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', fontWeight: '700', color: 'rgba(255,255,255,0.72)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', padding: '4px 10px' }}>
+                      <FiCheck size={11} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                      <span>{f}</span>
+                    </span>
                   ))}
                   {pkg.features.length > 4 && <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', padding: '3px 6px' }}>+{pkg.features.length - 4} more</span>}
                 </div>

@@ -217,13 +217,18 @@ function CreatePostBox({ onPostCreated }) {
                   {mediaPreview.length === 0 ? (
                     <div className="empty-drop-zone">
                       <div className="upload-icons">
-                        <FiUploadCloud size={32} />
+                        <FiUploadCloud size={28} />
                       </div>
-                      <p>ลากรูปภาพหรือวิดีโอมาวางที่นี่</p>
-                      <span>หรือ</span>
+                      <p>แตะหรือลากรูปภาพ/วิดีโอมาวางที่นี่</p>
                       <div className="upload-buttons">
-                        <button onClick={() => imageInputRef.current.click()} type="button">เลือกรูปภาพ</button>
-                        <button onClick={() => videoInputRef.current.click()} type="button" className="video">เลือกวิดีโอ</button>
+                        <button onClick={() => imageInputRef.current.click()} type="button" className="photo-btn">
+                          <FiImage size={17} />
+                          <span>เลือกรูปภาพ</span>
+                        </button>
+                        <button onClick={() => videoInputRef.current.click()} type="button" className="video-btn">
+                          <FiVideo size={17} />
+                          <span>เลือกวิดีโอ</span>
+                        </button>
                       </div>
                     </div>
                   ) : (
@@ -480,9 +485,11 @@ function CreatePostBox({ onPostCreated }) {
         .post-modal-body {
           padding: 24px 28px;
           overflow-y: auto;
+          flex: 1;
           display: flex;
           flex-direction: column;
           gap: 20px;
+          min-height: 0;
         }
         
         .post-author-info {
@@ -569,62 +576,74 @@ function CreatePostBox({ onPostCreated }) {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 48px 20px;
-          gap: 16px;
+          padding: 18px 16px;
+          gap: 10px;
           text-align: center;
         }
         .upload-icons {
-          color: #a855f7;
-          margin-bottom: 4px;
-          filter: drop-shadow(0 4px 12px rgba(168,85,247,0.4));
+          color: var(--accent, #ff5733);
+          margin-bottom: 2px;
+          filter: drop-shadow(0 4px 12px rgba(255, 87, 51, 0.4));
           animation: float 3s ease-in-out infinite;
         }
         @keyframes float {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
+          50% { transform: translateY(-4px); }
         }
         .empty-drop-zone p {
           margin: 0;
           color: #e5e7eb;
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 500;
         }
-        .empty-drop-zone span {
-          color: rgba(255,255,255,0.3);
-          font-size: 13px;
-        }
         .upload-buttons {
-          display: flex;
-          gap: 12px;
-          margin-top: 8px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          width: 100%;
+          max-width: 360px;
+          margin-top: 4px;
         }
         .upload-buttons button {
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.12);
           color: #fff;
-          padding: 10px 20px;
-          border-radius: 10px;
-          font-size: 14px;
+          padding: 10px 14px;
+          border-radius: 12px;
+          font-size: 13.5px;
           cursor: pointer;
           font-weight: 600;
           transition: all 0.2s ease;
-          display: flex;
+          display: inline-flex;
           align-items: center;
+          justify-content: center;
           gap: 8px;
+          white-space: nowrap;
         }
         .upload-buttons button:hover {
           background: rgba(255,255,255,0.1);
-          border-color: rgba(255,255,255,0.2);
-          transform: translateY(-2px);
+          border-color: rgba(255,255,255,0.25);
+          transform: translateY(-1px);
         }
-        .upload-buttons button.video {
-          background: rgba(168, 85, 247, 0.1);
-          border-color: rgba(168, 85, 247, 0.2);
-          color: #e9d5ff;
+        .upload-buttons button.photo-btn {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.14);
+          color: #f3f4f6;
         }
-        .upload-buttons button.video:hover {
-          background: rgba(168, 85, 247, 0.2);
-          border-color: rgba(168, 85, 247, 0.4);
+        .upload-buttons button.photo-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 87, 51, 0.4);
+          color: #fff;
+        }
+        .upload-buttons button.video-btn {
+          background: rgba(255, 87, 51, 0.08);
+          border-color: rgba(255, 87, 51, 0.28);
+          color: #ff9d85;
+        }
+        .upload-buttons button.video-btn:hover {
+          background: rgba(255, 87, 51, 0.18);
+          border-color: rgba(255, 87, 51, 0.6);
+          color: #fff;
         }
 
         /* ── PREVIEW GRID ── */
@@ -823,25 +842,39 @@ function CreatePostBox({ onPostCreated }) {
         /* ── RESPONSIVE (Mobile <= 480px) ── */
         @media (max-width: 480px) {
           .post-modal-overlay {
-            padding: 10px;
+            padding: 0;
+            align-items: flex-end;
+          }
+          .post-modal-content {
+            border-radius: 20px 20px 0 0 !important;
+            max-height: 92svh;
+            max-height: 92vh;
           }
           .post-modal-header {
-            padding: 16px 20px;
+            padding: 14px 18px;
           }
           .post-modal-body {
-            padding: 16px 20px;
-            gap: 16px;
+            padding: 14px 18px;
+            gap: 14px;
+          }
+          .empty-drop-zone {
+            padding: 16px 16px;
+            gap: 10px;
           }
           .empty-drop-zone p {
             font-size: 14px;
           }
           .upload-buttons {
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
             width: 100%;
           }
           .upload-buttons button {
             width: 100%;
             justify-content: center;
+            padding: 10px 8px;
+            font-size: 13px;
           }
           .post-modal-footer {
             padding: 16px 20px;
