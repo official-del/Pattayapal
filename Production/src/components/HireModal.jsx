@@ -25,7 +25,8 @@ const GAS_COSTS = {
 
 function getStoredUser() {
   try {
-    return `${y}-${m}-${d}`;
+    const raw = window.safeStorage?.getItem('userInfo');
+    return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
   }
@@ -237,146 +238,146 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
           <div className="hire-modal-body">
             <div className="hire-form-column">
               <div className="hire-field-group">
-              <label htmlFor="hire-title">ชื่องาน / โปรเจกต์</label>
-              <input
-                id="hire-title"
-                type="text"
-                required
-                placeholder="เช่น ถ่ายภาพงานแต่งงาน หรือออกแบบโปสเตอร์"
-                value={formData.title}
-                onChange={(event) => setFormData({ ...formData, title: event.target.value })}
-              />
-            </div>
-
-            <div className="hire-field-group">
-              <label htmlFor="hire-budget">งบประมาณ (Gold Coins)</label>
-              <input
-                id="hire-budget"
-                type="number"
-                required
-                min="0"
-                placeholder="0.00"
-                value={formData.budget === 0 ? '' : formData.budget}
-                onChange={(event) => setFormData({ ...formData, budget: Number(event.target.value) })}
-              />
-            </div>
-
-            <div className="hire-field-group">
-              <label htmlFor="hire-description">รายละเอียดงาน / วันเวลา</label>
-              <textarea
-                id="hire-description"
-                required
-                placeholder="ระบุสิ่งที่ต้องการจ้าง วันเวลา สถานที่ และผลลัพธ์ที่คาดหวัง..."
-                value={formData.description}
-                onChange={(event) => setFormData({ ...formData, description: event.target.value })}
-              />
-            </div>
-
-            <div className="hire-field-group">
-              <label htmlFor="hire-location">สถานที่ / ที่อยู่ทำงาน</label>
-              <div className="hire-location-row">
+                <label htmlFor="hire-title">ชื่องาน / โปรเจกต์</label>
                 <input
-                  id="hire-location"
+                  id="hire-title"
                   type="text"
-                  placeholder="เลือกตำแหน่งจากแผนที่..."
-                  value={formData.location.address}
-                  readOnly
+                  required
+                  placeholder="เช่น ถ่ายภาพงานแต่งงาน หรือออกแบบโปสเตอร์"
+                  value={formData.title}
+                  onChange={(event) => setFormData({ ...formData, title: event.target.value })}
                 />
-                <button type="button" className="hire-map-button" onClick={() => setShowMap(true)} aria-label="เลือกตำแหน่งจากแผนที่">
-                  <FiMapPin />
-                </button>
+              </div>
+
+              <div className="hire-field-group">
+                <label htmlFor="hire-budget">งบประมาณ (Gold Coins)</label>
+                <input
+                  id="hire-budget"
+                  type="number"
+                  required
+                  min="0"
+                  placeholder="0.00"
+                  value={formData.budget === 0 ? '' : formData.budget}
+                  onChange={(event) => setFormData({ ...formData, budget: Number(event.target.value) })}
+                />
+              </div>
+
+              <div className="hire-field-group">
+                <label htmlFor="hire-description">รายละเอียดงาน / วันเวลา</label>
+                <textarea
+                  id="hire-description"
+                  required
+                  placeholder="ระบุสิ่งที่ต้องการจ้าง วันเวลา สถานที่ และผลลัพธ์ที่คาดหวัง..."
+                  value={formData.description}
+                  onChange={(event) => setFormData({ ...formData, description: event.target.value })}
+                />
+              </div>
+
+              <div className="hire-field-group">
+                <label htmlFor="hire-location">สถานที่ / ที่อยู่ทำงาน</label>
+                <div className="hire-location-row">
+                  <input
+                    id="hire-location"
+                    type="text"
+                    placeholder="เลือกตำแหน่งจากแผนที่..."
+                    value={formData.location.address}
+                    readOnly
+                  />
+                  <button type="button" className="hire-map-button" onClick={() => setShowMap(true)} aria-label="เลือกตำแหน่งจากแผนที่">
+                    <FiMapPin />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="hire-form-column">
+              <div className="hire-field-group">
+                <label>📅 วันที่ต้องการจ้างงาน</label>
+                {loadingDates ? (
+                  <div className="hire-calendar-loading">กำลังโหลดตารางงาน...</div>
+                ) : (
+                  <DatePicker
+                    selected={workDate}
+                    onChange={(date) => setWorkDate(date)}
+                    minDate={addDays(startOfDay(new Date()), 1)}
+                    excludeDates={busyDates.map(d => parseISO(d))}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="เลือกวันที่ฟรีแลนซ์ว่าง..."
+                    dayClassName={(date) => {
+                      const dateStr = toLocalIsoStr(date);
+                      return busyDates.includes(dateStr) ? 'hire-busy-day' : undefined;
+                    }}
+                    inline
+                  />
+                )}
+                {workDate && (
+                  <div className="hire-selected-date">
+                    ✅ <strong>{workDate.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong>
+                  </div>
+                )}
+              </div>
+
+              <div className="hire-escrow-note">
+                <FiAlertCircle size={18} />
+                <div className="hire-escrow-note-content">
+                  <strong>Escrow protection</strong>
+                  <p>ระบบจะพักเงินของคุณทันที เพื่อยืนยันโปรเจกต์กับฟรีแลนซ์</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="hire-form-column">
-            <div className="hire-field-group">
-              <label>📅 วันที่ต้องการจ้างงาน</label>
-              {loadingDates ? (
-                <div className="hire-calendar-loading">กำลังโหลดตารางงาน...</div>
+          <section className="hire-summary-panel">
+            <div className="hire-summary-grid">
+              <div className="hire-summary-item">
+                <div className="hire-summary-header">
+                  Coin ของคุณ
+                  {isInsufficientCoins && (
+                    <Link to="/dashboard/wallet" className="hire-refill-link">เติม Coin</Link>
+                  )}
+                </div>
+                <div className={`hire-summary-value ${isInsufficientCoins ? 'error-text' : ''}`}>
+                  <CoinBadge amount={coinBalance} size="sm" />
+                </div>
+              </div>
+
+              <div className={`hire-summary-item ${isInsufficientGas ? 'is-warning' : ''}`}>
+                <div className="hire-summary-header">
+                  Energy Gas
+                  {isInsufficientGas && (
+                    <button type="button" className="hire-refill-link" onClick={handleRefillGas} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>เติม Gas</button>
+                  )}
+                </div>
+                <div className="hire-summary-value" style={{ gap: '12px' }}>
+                  <GasIcon gas={currentGas} size="32px" />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>{currentGas}%</span>
+                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: '500' }}>
+                      ใช้ {gasCost}% สำหรับ {rankName}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="hire-submit-button"
+              disabled={loading || isInsufficientCoins || isInsufficientGas}
+            >
+              {loading ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FiZap className="hire-spin" /> กำลังส่งคำขอ...
+                </span>
+              ) : isInsufficientCoins ? (
+                'ยอด Coin ไม่เพียงพอ'
+              ) : isInsufficientGas ? (
+                'Gas ไม่เพียงพอ'
               ) : (
-                <DatePicker
-                  selected={workDate}
-                  onChange={(date) => setWorkDate(date)}
-                  minDate={addDays(startOfDay(new Date()), 1)}
-                  excludeDates={busyDates.map(d => parseISO(d))}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="เลือกวันที่ฟรีแลนซ์ว่าง..."
-                  dayClassName={(date) => {
-                    const dateStr = toLocalIsoStr(date);
-                    return busyDates.includes(dateStr) ? 'hire-busy-day' : undefined;
-                  }}
-                  inline
-                />
+                'ยืนยันจ้างงานและวางเงิน'
               )}
-              {workDate && (
-                <div className="hire-selected-date">
-                  ✅ <strong>{workDate.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong>
-                </div>
-              )}
-            </div>
-
-            <div className="hire-escrow-note">
-              <FiAlertCircle size={18} />
-              <div className="hire-escrow-note-content">
-                <strong>Escrow protection</strong>
-                <p>ระบบจะพักเงินของคุณทันที เพื่อยืนยันโปรเจกต์กับฟรีแลนซ์</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <section className="hire-summary-panel">
-          <div className="hire-summary-grid">
-            <div className="hire-summary-item">
-              <div className="hire-summary-header">
-                Coin ของคุณ
-                {isInsufficientCoins && (
-                  <Link to="/dashboard/wallet" className="hire-refill-link">เติม Coin</Link>
-                )}
-              </div>
-              <div className={`hire-summary-value ${isInsufficientCoins ? 'error-text' : ''}`}>
-                <CoinBadge amount={coinBalance} size="sm" />
-              </div>
-            </div>
-
-            <div className={`hire-summary-item ${isInsufficientGas ? 'is-warning' : ''}`}>
-              <div className="hire-summary-header">
-                Energy Gas
-                {isInsufficientGas && (
-                  <button type="button" className="hire-refill-link" onClick={handleRefillGas} style={{background:'none',border:'none',padding:0,cursor:'pointer'}}>เติม Gas</button>
-                )}
-              </div>
-              <div className="hire-summary-value" style={{ gap: '12px' }}>
-                <GasIcon gas={currentGas} size="32px" />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '1.1rem' }}>{currentGas}%</span>
-                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: '500' }}>
-                    ใช้ {gasCost}% สำหรับ {rankName}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="hire-submit-button"
-            disabled={loading || isInsufficientCoins || isInsufficientGas}
-          >
-            {loading ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FiZap className="hire-spin" /> กำลังส่งคำขอ...
-              </span>
-            ) : isInsufficientCoins ? (
-              'ยอด Coin ไม่เพียงพอ'
-            ) : isInsufficientGas ? (
-              'Gas ไม่เพียงพอ'
-            ) : (
-              'ยืนยันจ้างงานและวางเงิน'
-            )}
-          </button>
-        </section>
+            </button>
+          </section>
         </form>
       </motion.div>
 

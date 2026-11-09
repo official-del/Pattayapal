@@ -11,10 +11,10 @@ import PremiumLoader from '../../components/PremiumLoader';
 import { toLocalIsoStr } from '../../utils/timeUtils';
 
 const STATUS_LABELS = {
-  pending:   { label: 'รอตอบรับ',   color: '#fbca1f' },
-  accepted:  { label: 'กำลังทำงาน', color: '#22d3ee' },
-  completed: { label: 'เสร็จสิ้น',  color: '#4ade80' },
-  cancelled: { label: 'ยกเลิก',     color: '#f87171' },
+  pending: { label: 'รอตอบรับ', color: '#fbca1f' },
+  accepted: { label: 'กำลังทำงาน', color: '#22d3ee' },
+  completed: { label: 'เสร็จสิ้น', color: '#4ade80' },
+  cancelled: { label: 'ยกเลิก', color: '#f87171' },
 };
 
 function MyCalendar() {
@@ -121,15 +121,12 @@ function MyCalendar() {
             </div>
             <DatePicker
               selected={selectedDate}
-              onChange={(date) => {
-                setSelectedDate(date);
-                toggleBusyDate(date);
-              }}
+              onChange={(date) => setSelectedDate(date)}
               minDate={new Date()}
               excludeDates={[]}
               dayClassName={(date) => {
                 const dateStr = toLocalIsoStr(date);
-                if (jobDates.includes(dateStr)) return `${y}-${m}-${d}`;
+                if (jobDates.includes(dateStr)) return 'cal-day-job';
                 if (localBusyDates.includes(dateStr)) return 'cal-day-blocked';
                 return undefined;
               }}
@@ -159,6 +156,12 @@ function MyCalendar() {
                 <h3 className="cal-day-title">
                   📋 {selectedDate.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </h3>
+
+                {!jobDates.includes(selectedDateStr) && (
+                  <button className="cal-lock-btn" onClick={() => toggleBusyDate(selectedDate)}>
+                    {localBusyDates.includes(selectedDateStr) ? '🔓 ปลดล็อกวันนี้' : '🔒 ล็อกวันนี้'}
+                  </button>
+                )}
 
                 {jobsOnSelectedDate.length === 0 ? (
                   <div className="cal-empty-day">
@@ -332,6 +335,15 @@ function MyCalendar() {
         .cal-stat-card svg { color: #fbca1f; }
         .cal-stat-card span { color: #fff; font-size: 20px; font-weight: 800; }
         .cal-stat-card small { color: rgba(255,255,255,0.45); font-size: 11px; }
+        .cal-lock-btn {
+        align-self: flex-start;
+  padding: 8px 16px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05); color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: all 0.15s ease;
+}
+.cal-lock-btn:hover { background: rgba(255,255,255,0.1); }
       `}</style>
     </div>
   );
