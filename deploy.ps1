@@ -1,77 +1,110 @@
 # =====================================================
 # PattayaPal Deploy Script for Hostinger
 # =====================================================
-Write-Host '🚀 PattayaPal Deploy Script' -ForegroundColor Cyan
-Write-Host '=====================================' -ForegroundColor Cyan
 
-# Step 1: Build Frontend
-Write-Host "
-[1/4] Building Frontend..." -ForegroundColor Yellow
-Set-Location -Path "$PSScriptRoot\Production"
-npm run build
-if ($LASTEXITCODE -ne 0) { Write-Host '❌ Build failed!' -ForegroundColor Red; pause; exit 1 }
-Write-Host '✅ Build Success' -ForegroundColor Green
+$rootDir     = "C:\Users\touch\OneDrive\Desktop\Pattayapal-Portfolio"
+$frontendDir = "$rootDir\Production"
+$backendDir  = "$rootDir\Backend"
+$zipPath     = "$rootDir\hostinger_deploy.zip"
 
-# Step 2: Copy dist to Backend/dist
-Write-Host "
-[2/4] Copying dist to Backend/dist..." -ForegroundColor Yellow
-Set-Location -Path "$PSScriptRoot"
-if (Test-Path 'Backend\dist') { Remove-Item -Recurse -Force 'Backend\dist' }
-Copy-Item -Recurse -Force 'Production\dist' 'Backend\dist'
-Write-Host '✅ Copy Success' -ForegroundColor Green
+function Fail($msg) {
+    Write-Host ""
+    Write-Host "ERROR: $msg" -ForegroundColor Red
+    Write-Host ""
+    Read-Host "Press Enter to exit"
+    exit 1
+}
 
-# Step 3: Create ZIP (Exclude node_modules, .env, uploads, scratch)
-Write-Host "
-[3/4] Creating hostinger_deploy.zip..." -ForegroundColor Yellow
-if (Test-Path 'hostinger_deploy.zip') { Remove-Item -Force 'hostinger_deploy.zip' }
+Write-Host "PattayaPal Deploy Script" -ForegroundColor Cyan
+Write-Host "=====================================" -ForegroundColor Cyan
 
-# --- Collect files to include (exclude node_modules, .env, uploads, scratch, logs) ---
-$srcDir = "$PSScriptRoot\Backend"
-$exclude = @('node_modules', '.env', 'uploads', 'scratch', '.codex-dev.err.log', '.codex-dev.log', 'error_log.txt')
+# ── Step 1: Build Frontend ──────────────────────────
+Write-Host ""
+Write-Host "[1/4] Building Frontend..." -ForegroundColor Yellow
 
-$filesToZip = Get-ChildItem -Path $srcDir -Recurse -File | Where-Object {
-    $relativePath = $_.FullName.Substring($srcDir.Length + 1)
-    $parts = $relativePath -split '\\'
+if (-not (Test-Path $frontendDir)) { Fail "ไม่พบโฟลเดอร์ $frontendDir" }
+
+Set-Location $frontendDir
+
+if (-not (Test-Path "$frontendDir\node_modules")) {
+    Write-Host "ไม่พบ node_modules กำลัง npm install..." -ForegroundColor Yellow
+    & npm install
+    if ($LASTEXITCODE -ne 0) { Fail "npm install ล้มเหลว" }
+}
+
+& npm run build
+if ($LASTEXITCODE -ne 0) { Fail "Build ล้มเหลว กรุณาดู error ด้านบน" }
+
+Write-Host "Build Success" -ForegroundColor Green
+
+# ── Step 2: Copy dist ──────────────────────────────
+Write-Host ""
+Write-Host "[2/4] Copying dist to Backend..." -ForegroundColor Yellow
+
+Set-Location $rootDir
+
+$distSrc  = "$frontendDir\dist"
+$distDest = "$backendDir\dist"
+
+if (-not (Test-Path $distSrc)) { Fail "ไม่พบ $distSrc" }
+if (Test-Path $distDest) { Remove-Item -Recurse -Force $distDest }
+Copy-Item -Recurse -Force $distSrc $distDest
+
+Write-Host "Copy Success" -ForegroundColor Green
+
+# ── Step 3: Create ZIP ──────────────────────────────
+Write-Host ""
+Write-Host "[3/4] Creating hostinger_deploy.zip..." -ForegroundColor Yellow
+
+if (Test-Path $zipPath) { Remove-Item -Force $zipPath }
+
+$exclude = @('node_modules', '.env', 'uploads', 'scratch',
+             '.codex-dev.err.log', '.codex-dev.log', 'error_log.txt')
+
+$filesToZip = Get-ChildItem -Path $backendDir -Recurse -File | Where-Object {
+    $rel  = $_.FullName.Substring($backendDir.Length + 1)
     $skip = $false
-    foreach ($part in $parts) {
-        if ($exclude -contains $part) { $skip = $true; break }
+    foreach ($p in ($rel -split '\\')) {
+        if ($exclude -contains $p) { $skip = $true; break }
     }
     -not $skip
 }
 
-# Create a temp staging folder to preserve directory structure in ZIP
-$tempDir = "$PSScriptRoot\_deploy_temp"
+Write-Host "Files to zip: $($filesToZip.Count)" -ForegroundColor DarkGray
+
+if ($filesToZip.Count -eq 0) { Fail "ไม่มีไฟล์ใน Backend" }
+
+$tempDir = "$rootDir\_deploy_temp"
 if (Test-Path $tempDir) { Remove-Item -Recurse -Force $tempDir }
 New-Item -ItemType Directory -Path $tempDir | Out-Null
 
 foreach ($file in $filesToZip) {
-    $relativePath = $file.FullName.Substring($srcDir.Length + 1)
-    $destPath = Join-Path $tempDir $relativePath
-    $destFolder = Split-Path $destPath -Parent
-    if (-not (Test-Path $destFolder)) { New-Item -ItemType Directory -Path $destFolder | Out-Null }
-    Copy-Item -Path $file.FullName -Destination $destPath
+    $rel    = $file.FullName.Substring($backendDir.Length + 1)
+    $dest   = Join-Path $tempDir $rel
+    $folder = Split-Path $dest -Parent
+    if (-not (Test-Path $folder)) { New-Item -ItemType Directory -Path $folder | Out-Null }
+    Copy-Item $file.FullName $dest
 }
 
-Compress-Archive -Path "$tempDir\*" -DestinationPath 'hostinger_deploy.zip' -CompressionLevel Optimal
+Compress-Archive -Path "$tempDir\*" -DestinationPath $zipPath -CompressionLevel Optimal
 Remove-Item -Recurse -Force $tempDir
 
-$sizeMB = [math]::Round((Get-Item 'hostinger_deploy.zip').Length / 1MB, 2)
-Write-Host "✅ Created hostinger_deploy.zip ($sizeMB MB)" -ForegroundColor Green
-Write-Host "   ⚠️  node_modules ไม่รวมใน ZIP — ต้อง npm install บน Hostinger Terminal ด้วย" -ForegroundColor Yellow
+$sizeMB = [math]::Round((Get-Item $zipPath).Length / 1MB, 2)
+Write-Host "Created hostinger_deploy.zip ($sizeMB MB)" -ForegroundColor Green
 
-# Step 4: Done
-Write-Host "
-[4/4] Done!" -ForegroundColor Cyan
-Write-Host '=====================================' -ForegroundColor Cyan
-Write-Host ''
-Write-Host '🚀 File to Upload: hostinger_deploy.zip' -ForegroundColor White
-Write-Host ''
-Write-Host '💡 Deploy Steps for Hostinger:' -ForegroundColor White
-Write-Host '  1. Go to hPanel > File Manager > nodejs/' -ForegroundColor Gray
-Write-Host '  2. Upload hostinger_deploy.zip to nodejs/' -ForegroundColor Gray
-Write-Host '  3. Extract ZIP and OVERWRITE existing files' -ForegroundColor Gray
-Write-Host '  4. Open hPanel > Terminal, then cd into nodejs/ and run: npm install --omit=dev' -ForegroundColor Gray
-Write-Host '  5. hPanel > Websites > Node.js > Restart' -ForegroundColor Gray
-Write-Host ''
-Start-Process explorer.exe $PSScriptRoot
-pause
+# ── Step 4: Done ────────────────────────────────────
+Write-Host ""
+Write-Host "[4/4] Done!" -ForegroundColor Cyan
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "File to Upload : hostinger_deploy.zip"
+Write-Host ""
+Write-Host "Next steps on Hostinger hPanel:"
+Write-Host "  1. File Manager -- nodejs/ -- Upload ZIP"
+Write-Host "  2. Extract and Overwrite"
+Write-Host "  3. Terminal: cd nodejs/ then: npm install --omit=dev"
+Write-Host "  4. Node.js -- Restart"
+Write-Host ""
+
+Start-Process explorer.exe $rootDir
+Read-Host "Press Enter to exit"
