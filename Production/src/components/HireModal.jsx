@@ -80,8 +80,9 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
     const initialLng = formData.location.lng || 100.5018;
     const map = L.map(mapContainerRef.current, { zoomControl: false }).setView([initialLat, initialLng], 13);
 
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      subdomains: 'abc',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
