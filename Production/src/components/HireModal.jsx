@@ -90,6 +90,7 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
     const marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
     mapInstanceRef.current = map;
     markerInstanceRef.current = marker;
+    const resizeTimer = setTimeout(() => map.invalidateSize(), 250);
 
     const updateLocation = (lat, lng) => reverseGeocode(lat, lng);
 
@@ -105,6 +106,7 @@ function HireModal({ freelancerId, freelancerName, freelancerRank, onClose, curr
 
     return () => {
       if (mapInstanceRef.current) {
+        clearTimeout(resizeTimer);
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
         markerInstanceRef.current = null;
