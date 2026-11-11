@@ -1,4 +1,4 @@
-// --- บรรทัดบนสุดของ server.js --- 
+// --- DEPENDENCIES ---
 import './config/env.js';
 import express from 'express';
 import mongoose from 'mongoose';
@@ -240,7 +240,7 @@ io.on('connection', (socket) => {
         conversationId: data.conversationId,
         readerId: userId
       });
-    } catch {}
+    } catch { }
   });
 
   socket.on('typing', async (data) => {
@@ -254,7 +254,7 @@ io.on('connection', (socket) => {
         userId,
         userName: data.userName,
       });
-    } catch {}
+    } catch { }
   });
 
   socket.on('stop_typing', async (data) => {
@@ -265,7 +265,7 @@ io.on('connection', (socket) => {
       const allowed = await isConversationParticipant(data.roomId, userId);
       if (!allowed) return;
       socket.to(data.roomId).emit('user_stop_typing', { userId });
-    } catch {}
+    } catch { }
   });
 
   // 📞 WebRTC Signaling for Video/Voice Calls
@@ -318,10 +318,10 @@ io.on('connection', (socket) => {
     const userId = userSocketMap.get(socket.id);
     if (userId) {
       userSocketMap.delete(socket.id);
-      
+
       // 🕵️ Check if user has other active sockets (e.g., other tabs)
       const isStillConnected = [...userSocketMap.values()].includes(userId);
-      
+
       if (!isStillConnected) {
         try {
           await User.findByIdAndUpdate(userId, {
@@ -355,7 +355,7 @@ const CSP_VALUE = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
   "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "connect-src 'self' https://pattayapal.com https://*.pattayapal.com https://storage.googleapis.com https://nominatim.openstreetmap.org wss://pattayapal.com ws://localhost:* http://localhost:*",  "worker-src 'self' blob:",
+  "connect-src 'self' https://pattayapal.com https://*.pattayapal.com https://storage.googleapis.com https://nominatim.openstreetmap.org wss://pattayapal.com ws://localhost:* http://localhost:*", "worker-src 'self' blob:",
   "child-src 'self' blob:",
   "frame-src 'self'",
   "object-src 'none'",
@@ -520,7 +520,7 @@ const getWorkShareImage = (work) => {
 app.get('*', async (req, res) => {
   const indexPath = path.join(__dirname, 'dist', 'index.html');
   setHtmlNoCacheHeaders(res);
-  
+
   if (fs.existsSync(indexPath)) {
     try {
       let html = fs.readFileSync(indexPath, 'utf8');
@@ -539,15 +539,15 @@ app.get('*', async (req, res) => {
           const work = await Work.findById(workMatch[1])
             .select('title description shortDescription mainImage album type createdBy')
             .populate('createdBy', 'name profession');
-          
+
           if (work) {
             const authorName = work.createdBy?.name || "Pattayapal Creator";
             title = `${work.title} by ${authorName} | Pattayapal Portfolio`;
-            
+
             // Construct a more descriptive share text
             const cleanDesc = work.description?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || "";
             description = cleanDesc ? `${cleanDesc} - ผลงานโดย ${authorName}` : `ชมผลงาน ${work.title} โดย ${authorName} บน Pattayapal`;
-            
+
             image = getWorkShareImage(work) || image;
             imageAlt = `${work.title} by ${authorName}`;
           }
@@ -563,18 +563,31 @@ app.get('*', async (req, res) => {
         let user;
         try {
           if (identifier.length === 24 && /^[0-9a-fA-F]+$/.test(identifier)) {
-            user = await User.findById(identifier).select('name username bio profileImage profession');
+            user = await User.findById(identifier).select('name username bio profileImage profession servicePackages');
           } else {
-            user = await User.findOne({ username: identifier.toLowerCase() }).select('name username bio profileImage profession');
+            user = await User.findOne({ username: identifier.toLowerCase() }).select('name username bio profileImage profession servicePackages');
           }
-
           if (user) {
-            title = `${user.name} (@${user.username}) | ${user.profession || 'Freelancer'} | Pattayapal`;
+            title = `${user.name}${user.username ? ` (@${user.username})` : ''} | ${user.profession || 'Freelancer'} | Pattayapal`;
             description = user.bio?.substring(0, 160).replace(/[^\w\s\u0E00-\u0E7F]/g, '') || `${user.name} - ${user.profession || 'Freelancer'} on Pattayapal. View portfolio and contact for work.`;
             if (user.profileImage?.url) {
               image = toPublicMediaUrl(user.profileImage.url) || image;
             }
             imageAlt = `${user.name} on PattayaPal`;
+
+            const pkgId = String(req.query.pkgId || '');
+            if (pkgId) {
+              const pkg = (user.servicePackages || []).find((p) => String(p._id) === pkgId);
+              if (pkg) {
+                title = `${pkg.title} | ${user.name} | Pattayapal`;
+                const price = Number(pkg.price || 0).toLocaleString();
+                const rawDesc = (pkg.description || '').replace(/\s+/g, ' ').trim().substring(0, 140);
+                description = `${price} Coins${pkg.deliveryTime ? ` · ${pkg.deliveryTime} วัน` : ''}${rawDesc ? ` — ${rawDesc}` : ''}`;
+                const coverImage = toPublicMediaUrl(pkg.coverImages?.[0]);
+                if (coverImage && !videoExtensions.test(coverImage)) image = coverImage;
+                imageAlt = `${pkg.title} by ${user.name}`;
+              }
+            }
           }
         } catch (err) {
           console.error("Profile SEO Error:", err);
@@ -596,7 +609,7 @@ app.get('*', async (req, res) => {
             description = cleanContent
               ? cleanContent
               : `ดูโพสต์จาก ${authorName} บน PattayaPal — ชุมชนครีเอเตอร์และฟรีแลนซ์`;
-            
+
             const firstImage = Array.isArray(post.media)
               ? post.media.map(toPublicMediaUrl).find((item) => item && !videoExtensions.test(item))
               : '';
@@ -628,10 +641,10 @@ app.get('*', async (req, res) => {
       };
 
       html = html.replace(/<title>.*?<\/title>/g, `<title>${escapeHtml(title)}</title>`);
-      
+
       // Standard Meta
       html = injectMeta(html, 'description', description, 'name');
-      
+
       // OpenGraph
       html = injectMeta(html, 'og:title', title);
       html = injectMeta(html, 'og:description', description);
@@ -643,7 +656,7 @@ app.get('*', async (req, res) => {
       html = injectMeta(html, 'og:url', url);
       html = injectMeta(html, 'og:site_name', 'Pattayapal Portfolio');
       html = injectMeta(html, 'og:type', workMatch || postMatch ? 'article' : 'website');
-      
+
       // Twitter
       html = injectMeta(html, 'twitter:card', 'summary_large_image');
       html = injectMeta(html, 'twitter:title', title);
@@ -700,7 +713,7 @@ const createFirstAdmin = async () => {
 // ==========================================
 app.use((err, req, res, next) => {
   const errorDetails = `[${new Date().toISOString()}] ${req.method} ${req.url}\n${err.stack}\n\n`;
-  fs.promises.appendFile(path.join(__dirname, 'error_log.txt'), errorDetails).catch(() => {});
+  fs.promises.appendFile(path.join(__dirname, 'error_log.txt'), errorDetails).catch(() => { });
   console.error(err.stack || err);
 
   if (err.message === 'Not allowed by CORS') {
@@ -736,7 +749,7 @@ const connectDatabase = async () => {
 const startServer = async () => {
   try {
     await connectDatabase();
-    
+
     // Initialize cron jobs after DB connection
     initCronJobs(io);
 
