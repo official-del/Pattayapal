@@ -27,41 +27,56 @@ function escapeHtml(str = '') {
 router.get('/posts/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
-      .populate('author', 'name username profilePicture');
+      .populate('author', 'name username profileImage');
 
     if (!post) {
       return res.redirect(`${FRONTEND_URL}/community`);
     }
 
     // ── Build Open Graph values ──
-    const authorName  = post.author?.name || 'PattayaPal User';
-    const title       = escapeHtml(`โพสต์จาก ${authorName} — PattayaPal`);
+    const authorName = post.author?.name || 'PattayaPal User';
+    const title = escapeHtml(`โพสต์จาก ${authorName} — PattayaPal`);
     const description = escapeHtml(
       post.content
         ? post.content.substring(0, 200).replace(/\n/g, ' ')
         : post.sharedPackage?.title || 'ดูโพสต์นี้บน PattayaPal'
     );
 
-    // Pick the best image: first post media → package cover → author picture → site default
-    let imageUrl = null;
-    if (post.media && post.media.length > 0) {
-      const firstItem = post.media[0];
-      // Only use image (not video) as OG image; video mimetype check
-      const isVideo = firstItem.mimetype && firstItem.mimetype.startsWith('video/');
-      if (!isVideo) imageUrl = firstItem.url;
+    // ── Helpers: แปลงเป็น URL เต็ม และแยกวิดีโอ ──
+    const SITE_URL = String(process.env.PUBLIC_SITE_URL || FRONTEND_URL).replace(/\/+$/, '');
+    const videoExt = /\.(mp4|webm|mov|avi|mkv)(?:$|[?#])/i;
+
+    const toFullUrl = (value) => {
+      const raw = typeof value === 'string' ? value : value?.url;
+      if (!raw || typeof raw !== 'string') return '';
+      if (/^https?:\/\//i.test(raw)) return raw;
+      return `${SITE_URL}/${raw.replace(/^\/+/, '')}`;
+    };
+
+    const isVideoItem = (item) => {
+      const url = toFullUrl(item);
+      const mime = typeof item === 'object' ? (item?.mimetype || item?.type || '') : '';
+      return String(mime).startsWith('video') || videoExt.test(url);
+    };
+
+    // ── เลือกรูปที่ดีที่สุด: รูปแรกของโพสต์ → ปกแพ็กเกจ → รูปโปรไฟล์ → รูปค่าเริ่มต้น ──
+    let imageUrl = '';
+    if (Array.isArray(post.media)) {
+      const firstImage = post.media.find((item) => !isVideoItem(item) && toFullUrl(item));
+      if (firstImage) imageUrl = toFullUrl(firstImage);
     }
     if (!imageUrl && post.sharedPackage?.coverImages?.length > 0) {
-      imageUrl = post.sharedPackage.coverImages[0].url;
+      imageUrl = toFullUrl(post.sharedPackage.coverImages[0]);
     }
-    if (!imageUrl && post.author?.profilePicture) {
-      imageUrl = post.author.profilePicture;
+    if (!imageUrl && post.author?.profileImage?.url) {
+      imageUrl = toFullUrl(post.author.profileImage.url);
     }
     if (!imageUrl) {
-      imageUrl = `${FRONTEND_URL}/og-default.png`; // fallback (add a nice image to your public folder)
+      imageUrl = `${SITE_URL}/og-image.jpg`;
     }
 
-    const postUrl     = `${FRONTEND_URL}/posts/${post._id}`;
-    const safeImage   = escapeHtml(imageUrl);
+    const postUrl = `${FRONTEND_URL}/posts/${post._id}`;
+    const safeImage = escapeHtml(imageUrl);
     const safePostUrl = escapeHtml(postUrl);
 
     // ── Return minimal HTML with OG tags + instant JS redirect for real users ──
