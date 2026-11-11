@@ -601,11 +601,15 @@ app.get('*', async (req, res) => {
             .select('content media author sharedPackage')
             .populate('author', 'name profession profileImage'); if (post) {
               const authorName = post.author?.name || "Pattayapal User";
-              title = `โพสต์จาก ${authorName} | PattayaPal`;
+
               // เก็บ Thai characters, Latin, ตัวเลข, และเครื่องหมายวรรคตอนพื้นฐาน
               const cleanContent = post.content
-                ? post.content.substring(0, 200).replace(/[<>"'&]/g, '').trim()
+                ? post.content.replace(/\s+/g, ' ').replace(/[<>]/g, '').trim().substring(0, 200)
                 : '';
+              const headline = cleanContent ? cleanContent.substring(0, 80) : '';
+              title = headline
+                ? `${headline}${cleanContent.length > 80 ? '…' : ''} | PattayaPal`
+                : `โพสต์จาก ${authorName} | PattayaPal`;
               description = cleanContent
                 ? cleanContent
                 : `ดูโพสต์จาก ${authorName} บน PattayaPal — ชุมชนครีเอเตอร์และฟรีแลนซ์`;

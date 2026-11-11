@@ -35,10 +35,14 @@ router.get('/posts/:id', async (req, res) => {
 
     // ── Build Open Graph values ──
     const authorName = post.author?.name || 'PattayaPal User';
-    const title = escapeHtml(`โพสต์จาก ${authorName} — PattayaPal`);
+    const cleanContent = (post.content || '').replace(/\s+/g, ' ').trim();
+    const headline = cleanContent
+      ? `${cleanContent.substring(0, 80)}${cleanContent.length > 80 ? '…' : ''}`
+      : `โพสต์จาก ${authorName}`;
+    const title = escapeHtml(`${headline} — PattayaPal`);
     const description = escapeHtml(
-      post.content
-        ? post.content.substring(0, 200).replace(/\n/g, ' ')
+      cleanContent
+        ? cleanContent.substring(0, 200)
         : post.sharedPackage?.title || 'ดูโพสต์นี้บน PattayaPal'
     );
 
