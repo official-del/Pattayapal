@@ -557,8 +557,7 @@ app.get('*', async (req, res) => {
       }
 
       // 2. Check for Profile (/profile/:id or /profile/:username or /:username)
-      const profileMatch = req.url.match(/\/profile\/([a-zA-Z0-9_-]+)/) || (req.url !== '/' && !req.url.startsWith('/api') && req.url.match(/\/([a-zA-Z0-9_-]+)/));
-      if (profileMatch && !workMatch && !req.url.startsWith('/works') && !req.url.startsWith('/posts')) {
+      const profileMatch = req.url.match(/\/profile\/([a-zA-Z0-9_.-]+)/) || (req.url !== '/' && !req.url.startsWith('/api') && req.url.match(/\/([a-zA-Z0-9_.-]+)/)); if (profileMatch && !workMatch && !req.url.startsWith('/works') && !req.url.startsWith('/posts')) {
         const identifier = profileMatch[1];
         let user;
         try {
