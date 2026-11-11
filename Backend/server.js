@@ -597,24 +597,26 @@ app.get('*', async (req, res) => {
       const postMatch = req.url.match(/\/posts\/([a-zA-Z0-9]+)/);
       if (postMatch) {
         try {
-          const post = await Post.findById(postMatch[1]).select('content media author').populate('author', 'name profession');
-          if (post) {
-            const authorName = post.author?.name || "Pattayapal User";
-            title = `โพสต์จาก ${authorName} | PattayaPal`;
-            // เก็บ Thai characters, Latin, ตัวเลข, และเครื่องหมายวรรคตอนพื้นฐาน
-            const cleanContent = post.content
-              ? post.content.substring(0, 200).replace(/[<>"'&]/g, '').trim()
-              : '';
-            description = cleanContent
-              ? cleanContent
-              : `ดูโพสต์จาก ${authorName} บน PattayaPal — ชุมชนครีเอเตอร์และฟรีแลนซ์`;
+          const post = await Post.findById(postMatch[1])
+            .select('content media author sharedPackage')
+            .populate('author', 'name profession profileImage'); if (post) {
+              const authorName = post.author?.name || "Pattayapal User";
+              title = `โพสต์จาก ${authorName} | PattayaPal`;
+              // เก็บ Thai characters, Latin, ตัวเลข, และเครื่องหมายวรรคตอนพื้นฐาน
+              const cleanContent = post.content
+                ? post.content.substring(0, 200).replace(/[<>"'&]/g, '').trim()
+                : '';
+              description = cleanContent
+                ? cleanContent
+                : `ดูโพสต์จาก ${authorName} บน PattayaPal — ชุมชนครีเอเตอร์และฟรีแลนซ์`;
 
-            const firstImage = Array.isArray(post.media)
-              ? post.media.map(toPublicMediaUrl).find((item) => item && !videoExtensions.test(item))
-              : '';
-            image = firstImage || image;
-            imageAlt = `โพสต์จาก ${authorName} บน PattayaPal`;
-          }
+              const firstImage = Array.isArray(post.media)
+                ? post.media.map(toPublicMediaUrl).find((item) => item && !videoExtensions.test(item))
+                : '';
+              const packageCover = toPublicMediaUrl(post.sharedPackage?.coverImages?.[0]);
+              const authorImage = toPublicMediaUrl(post.author?.profileImage?.url);
+              image = firstImage || packageCover || authorImage || image; imageAlt = `โพสต์จาก ${authorName} บน PattayaPal`;
+            }
         } catch (err) {
           console.error("Post SEO Error:", err);
         }
