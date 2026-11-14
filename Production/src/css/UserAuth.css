@@ -152,8 +152,8 @@
   margin: 0;
   max-width: 11ch;
   color: var(--text-strong);
-  font-family: var(--font-title);
-  font-size: clamp(2.25rem, 5vw, 4rem);
+  font-family: Silkscreen, sans-serif;
+  font-size: clamp(2rem, 3.5vw, 3rem);
   font-weight: 800;
   line-height: 1.06;
   text-wrap: balance;
@@ -740,39 +740,6 @@
     flex: 1;
   }
 }
-
-@media (max-width: 380px) {
-  .auth-shell {
-    padding-inline: 10px;
-  }
-
-  .auth-layout {
-    gap: var(--space-3);
-  }
-
-  .auth-brand-panel,
-  .auth-form-panel,
-  .verify-card {
-    padding: var(--space-3);
-    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.72);
-  }
-
-  .auth-brand-logo {
-    width: 58px;
-    height: 58px;
-  }
-
-  .auth-brand-panel h1 {
-    font-size: 1.9rem;
-  }
-
-  .auth-form-panel form,
-  .auth-role-grid,
-  .auth-stat-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-
 @media (max-width: 400px) {
 
   /* Main Layout */
