@@ -1,9 +1,19 @@
+/* Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap');
+
+/*Form page*/
 .auth-shell {
   min-height: 100vh;
+  min-height: 100svh;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(var(--space-5), 5vw, var(--space-12)) var(--space-4);
+
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(16px, 4vw, 48px);
+
   color: var(--text-primary, var(--text-strong));
   background:
     linear-gradient(rgba(255, 87, 51, 0.04) 1px, transparent 1px),
@@ -19,9 +29,14 @@
 
 .auth-layout {
   width: min(1080px, 100%);
+
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1fr);
-  gap: var(--space-5);
+  grid-template-columns:
+    minmax(0, 0.9fr) 
+    minmax(0, 1fr);
+
+  gap: clamp(10px, 2vw, 24px);
+
   align-items: stretch;
 }
 
@@ -758,4 +773,169 @@
   }
 }
 
+@media (max-width: 400px) {
 
+  /* Main Layout */
+  .auth-shell {
+    padding: 8px;
+    align-items: flex-start;
+    padding-top: 10;
+  }
+
+  .auth-layout {
+    width: 100%;
+    gap: 8px;
+  }
+
+  /* Brand Panel */
+  .auth-brand-panel {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .auth-brand-logo {
+    width: 48px;
+    height: 48px;
+    padding: 5px;
+  }
+
+  .auth-brand-panel h1 {
+    font-size: 1.4rem !important; 
+    font-weight: 700;
+    max-width: none;
+    white-space: wrap;
+    font-size: clamp(20px, 6vw, 24px);
+    line-height: 1.2;
+    font-family: Silkscreen, sans-serif;
+  }
+
+  /* Form Panel */
+  .auth-form-panel {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 12px;
+  }
+
+  /* Form Heading */
+  .auth-form-heading {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .auth-form-heading h2 {
+    font-size: 1.5rem !important;
+    font-weight: 500;
+  }
+
+  .auth-form-heading p:not(.auth-kicker) {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* Login / Register Switch */
+  .auth-mode-switch {
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .auth-mode-switch button {
+    min-height: 34px;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+
+  /* Form Fields */
+  .auth-form,
+  .auth-register-fields {
+    gap: 10px;
+  }
+
+  .auth-field {
+    gap: 5px;
+  }
+
+  .auth-field > span {
+    font-size: 10px;
+  }
+
+  /* Input */
+  .auth-input-shell {
+    min-height: 35px;
+  padding: 0 5px;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+  }
+
+  .auth-input-shell input,
+  .auth-input-shell select {
+    font-size: 10px !important;
+  }
+
+  /* Terms */
+  .auth-terms-row {
+    padding: 9px;
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  /* Submit Button */
+  .auth-submit {
+    min-height: 36px;
+    padding-inline: 2px;
+    font-size: 12px;
+  }
+
+  /* Footer */
+  .auth-footer-note {
+    margin-top: 12px;
+    font-size: 12px;
+  }
+   .auth-register-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    align-items: start;
+  }
+
+  /* Field */
+  .auth-register-fields .auth-field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* Input */
+  .auth-input-shell {
+    min-width: 0;
+    padding-inline: 8px;
+    gap: 6px;
+  }
+
+  .auth-input-shell input {
+    min-width: 0;
+    width: 100%;
+    font-size: 13px;
+  }
+
+  .auth-role-trigger {
+  min-height: 38px;
+  font-size: 13px;
+  padding: 0 8px;
+}
+
+.auth-role-trigger span {
+  font-size: 10px;
+}
+
+.auth-role-chevron {
+  width: 14px;
+  height: 14px;
+}
+body:has(.auth-shell) {
+  background-color: #050505;
+  background-image:
+    linear-gradient(rgba(255, 87, 51, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 87, 51, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+}
